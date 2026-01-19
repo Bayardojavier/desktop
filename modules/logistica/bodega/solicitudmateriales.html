@@ -1,0 +1,1334 @@
+<!-- 🔹 CONTENEDOR PRINCIPAL: OCUPA TODO EL ÁREA DE TRABAJO -->
+<div class="logistica-container" style="display: flex; flex-direction: column; height: calc(85vh - 100px);">
+
+  <!-- TÍTULO + BOTÓN EN LA MISMA LÍNEA -->
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; background: rgba(0, 0, 0, 0.767); padding: 12px 24px; border-bottom: 5px solid var(--accent); margin-bottom: 12px; border-radius: 8px">
+    <div>
+      <h2 style="font-size: 16pt; margin: 0; color: #f5f6f7; display: flex; align-items: center; gap: 8px;">
+        <span>📤</span>
+        Generar Solicitud de Materiales
+      </h2>
+      <p style="color: #bebcbc; font-size: 12px; margin: 6px 0 0 0;">
+        Seleccione evento y defina los materiales requeridos.
+      </p>
+    </div>
+    <button id="btn-enviar" class="btn-submit" style="width: auto; padding: 8px 16px; font-size: 13px; height: fit-content; align-self: flex-end;">
+      🚀 ENVIAR A BODEGA
+    </button>
+  </div>
+
+  <!-- CONTENEDOR DE LAS DOS COLUMNAS -->
+  <div style="display: flex; gap: 20px; height: 700px; overflow: hidden;">
+
+    <!-- Columna izquierda: datos generales + evento -->
+    <div style="width: 290px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; background: rgba(0, 0, 0, 0.767); padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0;">
+      <div>
+        <label class="log-label" style="font-size: 12px; margin-bottom: 4px;">Evento Destino:</label>
+        <select id="sol-evento" class="log-select" required style="font-size: 13px;">
+          <option value="">-- Seleccione un Evento --</option>
+          <!-- Los eventos se cargarán aquí desde localStorage -->
+        </select>
+      </div>
+      <div>
+        <label class="log-label" style="font-size: 12px; margin-bottom: 4px;">Encargado de Operaciones:</label>
+        <input type="text" id="sol-responsable" class="log-input" value="Carlos Méndez" style="font-size: 13px;">
+      </div>
+
+      <div style="padding-top: 10px; border-top: 1px solid #e2e8f0;">
+        <h3 class="log-titulo" style="font-size: 13px; margin: 0 0 6px 0; color: #dfe2e6;">Modo de Ingreso</h3>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="log-tab-btn active" data-modo="receta" style="font-size: 12px; padding: 6px 10px;">Por Receta</button>
+          <button type="button" class="log-tab-btn" data-modo="item" style="font-size: 12px; padding: 6px 10px;">Por Ítem</button>
+        </div>
+      </div>
+
+      <div id="panelResumenEvento" style="background: #0f172a; color: #f1f5f9; padding: 14px; border-radius: 8px; min-height: 180px; display: none;">
+        <h3 style="color: #93c5fd; font-size: 13pt; border-bottom: 2px solid #334155; padding-bottom: 6px; margin: 0 0 10px 0;">📋 Información del Evento</h3>
+        <div style="display: grid; grid-template-columns: 1fr; gap: 10px; font-size: 9.5pt;">
+          <div><div style="font-weight: bold; color: #94a3b8; margin-bottom: 2px;">Nombre</div><div id="resumen-nombre">—</div></div>
+          <div><div style="font-weight: bold; color: #94a3b8; margin-bottom: 2px;">Cliente</div><div id="resumen-cliente">—</div></div>
+          <div><div style="font-weight: bold; color: #94a3b8; margin-bottom: 2px;">Lugar</div><div id="resumen-lugar">—</div></div>
+          <div><div style="font-weight: bold; color: #94a3b8; margin-bottom: 2px;">Servicio Solicitado</div><div id="resumen-descripcion">—</div></div>
+          <div><div style="font-weight: bold; color: #94a3b8; margin-bottom: 2px;">Montaje</div><div id="resumen-montaje">—</div></div>
+          <div><div style="font-weight: bold; color: #94a3b8; margin-bottom: 2px;">Desmontaje</div><div id="resumen-desmontaje">—</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Columna derecha: contenido dinámico -->
+    <div style="flex: 1; overflow-y: auto; background: rgba(0, 0, 0, 0.767); padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0;">
+      <div id="contenidoDinamico"></div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  (function() {
+    // Recetas se cargarán desde Supabase
+    let recetasSimuladas = [];
+    let recetasDisponibles = [];
+
+    // =============================================================================
+    // 🔹 ESTADO
+    // =============================================================================
+    let estado = {
+      modoIngreso: "receta",
+      recetasSeleccionadas: [],
+      itemsAdicionales: [],
+      itemsPorItem: []
+    };
+
+    // =============================================================================
+    // 🔹 UTILIDADES
+    // =============================================================================
+    function formatDateTime(fecha, hora) {
+      return fecha && hora ? `${fecha} ${hora}` : "—";
+    }
+
+    function getMaterial(codigo) {
+      return materialesCatalogo.find(m => m.cod === codigo);
+    }
+
+    function decodeTipoYObs(observacion) {
+      const raw = (observacion || '').toString().trim();
+      if (!raw) return { tipo: 'ITEM', obs: '' };
+      if (raw === 'CASE') return { tipo: 'CASE', obs: '' };
+      if (raw.startsWith('CASE|')) return { tipo: 'CASE', obs: raw.substring(5) };
+      if (raw.startsWith('CASE:')) return { tipo: 'CASE', obs: raw.substring(5).trim() };
+      return { tipo: 'ITEM', obs: raw };
+    }
+
+    function isCaseBaseCodigo(codigo) {
+      return (codigo || '').toString().startsWith('CASEBASE|');
+    }
+
+    function getCaseBaseFromCodigo(codigo) {
+      const s = (codigo || '').toString();
+      if (!s.startsWith('CASEBASE|')) return '';
+      return s.substring('CASEBASE|'.length).trim();
+    }
+
+    function formatMedidas(dimensiones) {
+      if (!dimensiones) return '';
+      if (typeof dimensiones === 'object') {
+        const d = dimensiones;
+        if (d.alto && d.ancho && d.profundidad && d.unidad) {
+          return `${d.alto}x${d.ancho}x${d.profundidad}${d.unidad}`;
+        }
+        if (d.largo && d.ancho && d.alto) {
+          return `${d.largo}x${d.ancho}x${d.alto}`;
+        }
+      }
+      if (typeof dimensiones === 'string') return dimensiones;
+      return '';
+    }
+
+    function asBool(v) {
+      if (v === true) return true;
+      if (v === false || v == null) return false;
+      if (v === 1 || v === '1') return true;
+      if (typeof v === 'string') {
+        const t = v.trim().toLowerCase();
+        return t === 't' || t === 'true' || t === 'yes' || t === 'si' || t === 'sí';
+      }
+      return false;
+    }
+
+    function coalesceTipoAlta(cp) {
+      if (!cp) return '';
+      const keys = ['tipo_alta', 'Tipo de alta', 'Tipo Alta', 'Tipo de Alta'];
+      for (const k of keys) {
+        const val = cp[k] || cp[k.toLowerCase()] || cp[k.replace(/\s+/g, '_')];
+        if (val) return (val || '').toString().trim().toUpperCase();
+      }
+      return '';
+    }
+
+    const _caseTemplateCache = new Map();
+    async function getCaseTemplateItems(caseCodigo) {
+      const key = (caseCodigo || '').toString().trim();
+      if (!key) return [];
+      if (_caseTemplateCache.has(key)) return _caseTemplateCache.get(key);
+
+      const p = (async () => {
+        // 1) Hijos del Case por campos_personalizados: {nombre:'Case Padre',tipo:'text',valor:key}
+        let hijos = [];
+        try {
+          const CATALOGOS = [
+            { table: 'catalogo_hierros' },
+            { table: 'catalogo_audiovisual' },
+            { table: 'catalogo_consumibles' }
+          ];
+          for (const c of CATALOGOS) {
+            const selectStr = c.table === 'catalogo_consumibles'
+              ? 'codigo, nombre, dimensiones, color, unidad_medida, campos_personalizados'
+              : 'codigo, nombre, dimensiones, color, unidad_medida, campos_personalizados';
+            const { data, error } = await window.supabaseClient
+              .from(c.table)
+              .select(selectStr)
+              .eq('es_contenedor', false)
+              .contains('campos_personalizados', [{ nombre: 'Case Padre', tipo: 'text', valor: key }]);
+            if (error) {
+              console.warn(`Error al consultar ${c.table}:`, error);
+              continue;
+            }
+            const part = (data || []).map(r => ({
+              codigo: r.codigo,
+              nombre: r.nombre || r.codigo,
+              medidas: formatMedidas(r.dimensiones),
+              color: r.color || ''
+            }));
+            hijos.push(...part);
+          }
+        } catch (e) {
+          console.warn('No se pudo cargar hijos del Case desde catálogo:', e);
+          return [];
+        }
+
+        if (hijos.length === 0) return [];
+
+        // 2) Cantidades actuales dentro del Case (si hay ubicación en movimientos_bodega)
+        const qtyByCode = new Map();
+        try {
+          const codigos = hijos.map(h => h.codigo);
+          const { data: movs, error: movErr } = await window.supabaseClient
+            .from('movimientos_bodega')
+            .select('material_codigo, cantidad, signo, ubicacion_codigo')
+            .eq('ubicacion_codigo', key)
+            .in('material_codigo', codigos);
+          if (movErr) throw movErr;
+
+          (movs || []).forEach(m => {
+            const c = (m.material_codigo || '').toString().trim();
+            if (!c) return;
+            const delta = (Number(m.cantidad) || 0) * (Number(m.signo) || 0);
+            qtyByCode.set(c, (qtyByCode.get(c) || 0) + delta);
+          });
+        } catch (e) {
+          console.warn('No se pudo calcular cantidades por ubicación; fallback 1 por hijo:', e);
+          hijos.forEach(h => qtyByCode.set(h.codigo, 1));
+        }
+
+        return hijos
+          .map(h => ({
+            codigo: h.codigo,
+            nombre: h.nombre,
+            cantidad: Math.max(0, Number(qtyByCode.get(h.codigo) || 0)) || 0,
+            medidas: h.medidas || '',
+            color: h.color || ''
+          }))
+          .filter(x => (Number(x.cantidad) || 0) > 0);
+      })();
+
+      _caseTemplateCache.set(key, p);
+      return p;
+    }
+
+    function mostrarNotificacion(mensaje, tipo = 'info') {
+      // Crear elemento de notificación
+      const notif = document.createElement('div');
+      notif.style = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${tipo === 'error' ? '#dc3545' : tipo === 'success' ? '#28a745' : '#007bff'};
+        color: white;
+        padding: 12px 16px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 10000;
+        font-size: 14px;
+        max-width: 400px;
+        word-wrap: break-word;
+      `;
+      notif.textContent = mensaje;
+      document.body.appendChild(notif);
+
+      // Auto-remover después de 3 segundos
+      setTimeout(() => {
+        if (notif.parentNode) {
+          notif.parentNode.removeChild(notif);
+        }
+      }, 3000);
+    }
+
+    // =============================================================================
+    // 🔹 MODAL: MATERIALES ADICIONALES
+    // =============================================================================
+    function abrirModalAdicionales() {
+      if (document.getElementById('modal-adicionales')) return;
+
+      const modal = document.createElement('div');
+      modal.id = 'modal-adicionales';
+      modal.style = `
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+      `;
+      modal.innerHTML = `
+        <div style="background: white; width: 90%; max-width: 800px; max-height: 80vh; overflow: hidden; border-radius: 12px; display: flex; flex-direction: column;">
+          <div style="padding: 16px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; font-size: 16px; color: #1a365d;">➕ Seleccionar Material Adicional</h3>
+            <button id="btn-cerrar-modal" style="background: none; border: none; font-size: 20px; cursor: pointer;">✕</button>
+          </div>
+          <div style="padding: 16px; border-bottom: 1px solid #e2e8f0;">
+            <div style="display: flex; gap: 12px; align-items: center;">
+              <input type="text" id="busqueda-materiales" placeholder="Buscar por código o nombre..." style="flex: 1; padding: 8px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 14px;">
+              <select id="filtro-bodega" style="padding: 8px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 14px;">
+                <option value="">Todas las bodegas</option>
+              </select>
+            </div>
+          </div>
+          <div style="flex: 1; overflow-y: auto; padding: 16px;">
+            <table class="log-table" style="font-size: 13px; width: 100%;">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Material</th>
+                  <th>Ubicación</th>
+                  <th>Stock</th>
+                  <th>Bodega</th>
+                  <th>Contenedor</th>
+                  <th style="text-align: center;">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="modal-cat-body"></tbody>
+            </table>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      // Poblar filtro de bodegas
+      const filtroBodega = modal.querySelector('#filtro-bodega');
+      const bodegas = [...new Set(materialesCatalogo.map(m => m.bodegaPrincipal).filter(b => b))];
+      bodegas.forEach(b => {
+        const option = document.createElement('option');
+        option.value = b;
+        option.textContent = b;
+        filtroBodega.appendChild(option);
+      });
+
+      // Función para renderizar tabla filtrada
+      function renderTablaFiltrada() {
+        const busqueda = modal.querySelector('#busqueda-materiales').value.toLowerCase();
+        const bodega = filtroBodega.value;
+        
+        // Crear set de códigos en recetas para filtrar
+        const codigosEnRecetas = new Set();
+        if (estado.recetasSeleccionadas) {
+          estado.recetasSeleccionadas.forEach(receta => {
+            if (receta.materiales) {
+              receta.materiales.forEach(mat => {
+                if (mat && mat.codigo) {
+                  codigosEnRecetas.add(mat.codigo.trim().toLowerCase());
+                }
+              });
+            }
+          });
+        }
+        
+        const filtrados = materialesCatalogo.filter(m => {
+          const matchBusqueda = m.cod.toLowerCase().includes(busqueda) || m.nom.toLowerCase().includes(busqueda);
+          const matchBodega = !bodega || m.bodegaPrincipal === bodega;
+          const notInRecetas = !codigosEnRecetas.has(m.cod.trim().toLowerCase());
+          return matchBusqueda && matchBodega && notInRecetas;
+        });
+        const tbody = modal.querySelector('#modal-cat-body');
+        tbody.innerHTML = filtrados.map(m => `
+          <tr>
+            <td><span class="code-badge" style="font-size: 11px;">${m.cod}</span></td>
+            <td>${m.nom}</td>
+            <td>${m.ubicacionNombre}</td>
+            <td>${m.stockActual}</td>
+            <td>${m.bodegaPrincipal}</td>
+            <td>${m.contenedor}</td>
+            <td style="text-align: center;">
+              <button class="btn-add" data-cod="${m.cod}" style="font-size: 12px; padding: 4px 8px;">＋ Agregar</button>
+            </td>
+          </tr>
+        `).join('');
+        // Re-agregar event listeners
+        tbody.querySelectorAll('[data-cod]').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const cod = e.currentTarget.dataset.cod;
+            const m = getMaterial(cod);
+            if (!m) return;
+            const existe = estado.itemsAdicionales.find(i => i.codigo === cod);
+            if (existe) {
+              existe.cantidad++;
+              mostrarNotificacion(`➕ Cantidad aumentada: ${m.nom} (${cod}) ahora tiene ${existe.cantidad} unidades.`, 'info');
+            } else {
+              if (estado.recetasSeleccionadas && estado.recetasSeleccionadas.some(receta => receta.materiales && receta.materiales.some(mat => mat && mat.codigo === cod))) {
+                mostrarNotificacion(`❌ Material ${m.nom} (${cod}) ya está incluido en la receta. No se puede agregar como adicional.`, 'error');
+                return;
+              }
+              estado.itemsAdicionales.push({
+                codigo: m.cod,
+                nombre: m.nom,
+                ubicacionNombre: m.ubicacionNombre,
+                stockActual: m.stockActual,
+                bodegaPrincipal: m.bodegaPrincipal,
+                contenedor: m.contenedor,
+                cantidad: 1
+              });
+              mostrarNotificacion(`✅ Material adicional agregado: ${m.nom} (${cod}).`, 'success');
+            }
+            renderResumenAdicionales();
+          });
+        });
+      }
+
+      // Llamar inicialmente
+      renderTablaFiltrada();
+
+      // Event listeners
+      modal.querySelector('#busqueda-materiales').addEventListener('input', renderTablaFiltrada);
+      filtroBodega.addEventListener('change', renderTablaFiltrada);
+
+      modal.querySelector('#btn-cerrar-modal').onclick = () => {
+        document.body.removeChild(modal);
+      };
+      modal.onclick = (e) => {
+        if (e.target === modal) document.body.removeChild(modal);
+      };
+    }
+
+    // =============================================================================
+    // 🔹 MODAL: RECETAS
+    // =============================================================================
+    async function abrirModalRecetas() {
+      if (document.getElementById('modal-recetas')) return;
+
+      // Cargar recetas desde Supabase
+      await cargarRecetas();
+
+      const modal = document.createElement('div');
+      modal.id = 'modal-recetas';
+      modal.style = `
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+      `;
+      modal.innerHTML = `
+        <div style="background: white; width: 90%; max-width: 900px; max-height: 85vh; overflow: hidden; border-radius: 12px; display: flex; flex-direction: column;">
+          <div style="padding: 16px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; font-size: 16px; color: #1a365d;">📋 Seleccionar Receta</h3>
+            <button id="btn-cerrar-modal" style="background: none; border: none; font-size: 20px; cursor: pointer;">✕</button>
+          </div>
+          <div style="flex: 1; overflow-y: auto; padding: 16px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;">
+              ${recetasDisponibles.map(receta => `
+                <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; background: #f8fafc;">
+                  <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #1a365d;">${receta.nombre}</h4>
+                  <div style="font-size: 12px; margin-bottom: 12px;">
+                    ${receta.items.map(item => {
+                      if (item.tipo === 'CASE' || isCaseBaseCodigo(item.codigo)) {
+                        const baseName = getCaseBaseFromCodigo(item.codigo) || 'Case';
+                        return `<div>• CASE ${baseName} × ${item.cantidad}</div>`;
+                      }
+                      const mat = getMaterial(item.codigo);
+                      return `<div>• ${item.codigo}: ${mat?.nom || 'Desconocido'} × ${item.cantidad}</div>`;
+                    }).join('')}
+                  </div>
+                  <button class="btn-add" data-receta="${receta.nombre}" style="width: 100%; font-size: 12px; padding: 6px;">Seleccionar Receta</button>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      modal.querySelector('#btn-cerrar-modal').onclick = () => {
+        document.body.removeChild(modal);
+      };
+      modal.onclick = (e) => {
+        if (e.target === modal) document.body.removeChild(modal);
+      };
+
+      modal.querySelectorAll('[data-receta]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const nombreReceta = e.currentTarget.dataset.receta;
+          const receta = recetasDisponibles.find(r => r.nombre === nombreReceta);
+          if (receta) {
+            // Verificar si la receta ya está seleccionada
+            const yaSeleccionada = estado.recetasSeleccionadas.some(grupo => grupo.receta.nombre === nombreReceta);
+            if (yaSeleccionada) {
+              mostrarNotificacion(`⚠️ La receta "${nombreReceta}" ya está seleccionada.`, 'error');
+              return;
+            }
+
+            estado.recetasSeleccionadas.push({
+              receta: receta,
+              cantidadRecetas: 1
+            });
+            renderResumenRecetas();
+            document.body.removeChild(modal);
+            mostrarNotificacion(`✅ Receta "${nombreReceta}" agregada correctamente.`, 'success');
+          }
+        });
+      });
+    }
+
+    // =============================================================================
+    // 🔹 RENDERIZADO
+    // =============================================================================
+    function renderContenidoDinamico() {
+      const contenedor = document.getElementById("contenidoDinamico");
+      if (estado.modoIngreso === "receta") {
+        renderModoReceta(contenedor);
+      } else {
+        renderModoItem(contenedor);
+      }
+    }
+
+    function renderModoReceta(contenedor) {
+      contenedor.innerHTML = `
+        <div style="display: flex; gap: 20px; height: 620px; overflow: hidden;">
+
+          <!-- Columna izquierda: resumen de recetas -->
+          <div style="flex: 2; overflow-y: auto; background: #f1f5f9; padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <h3 class="log-titulo" style="font-size: 15px; margin: 0; color: #1a365d;">1. Recetas Seleccionadas</h3>
+              <button id="btn-abrir-modal-recetas" class="btn-add" style="font-size: 12px; padding: 4px 8px; height: fit-content;">+ Agregar Receta</button>
+            </div>
+            <div id="resumen-recetas-contenedor"></div>
+            <div id="msg-recetas-vacio" style="padding: 16px; text-align: center; color: #94a3b8; font-style: italic; font-size: 12px; display: ${estado.recetasSeleccionadas.length === 0 ? 'block' : 'none'};">
+              No hay recetas seleccionadas.
+            </div>
+          </div>
+
+          <!-- Columna derecha: resumen de materiales adicionales -->
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 14px; background: white; padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <h3 class="log-titulo" style="font-size: 13px; margin: 0; color: #1a365d;">Materiales Adicionales</h3>
+              <button id="btn-abrir-modal-adicionales" class="btn-add" style="font-size: 12px; padding: 4px 8px; height: fit-content;">+ Agregar</button>
+            </div>
+            <div style="border: 1px solid var(--accent); border-radius: 8px; background: white; flex: 1; display: flex; flex-direction: column;">
+              <div style="overflow-y: auto; flex: 1;">
+                <table class="log-table" style="font-size: 12px;">
+                  <thead>
+                    <tr style="background: rgba(55, 148, 255, 0.05);">
+                      <th style="width: 60%;">Descripción</th>
+                      <th style="width: 20%;">Cant.</th>
+                      <th style="width: 20%; text-align: center;">Quitar</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ped-adicionales-body"></tbody>
+                </table>
+                <div id="msg-adicionales-vacio" style="padding: 16px; text-align: center; color: #94a3b8; font-style: italic; font-size: 12px; display: none;">No hay materiales adicionales.</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      `;
+
+      renderResumenRecetas();
+      renderResumenAdicionales();
+
+      document.getElementById("btn-abrir-modal-recetas").addEventListener("click", () => {
+        abrirModalRecetas();
+      });
+
+      document.getElementById("btn-abrir-modal-adicionales").addEventListener("click", () => {
+        abrirModalAdicionales();
+      });
+    }
+
+    function renderResumenRecetas() {
+      const contenedor = document.getElementById("resumen-recetas-contenedor");
+      const msg = document.getElementById("msg-recetas-vacio");
+      
+      if (estado.recetasSeleccionadas.length === 0) {
+        contenedor.innerHTML = '';
+        msg.style.display = 'block';
+        return;
+      }
+      msg.style.display = 'none';
+
+      contenedor.innerHTML = estado.recetasSeleccionadas.map((grupo, index) => `
+        <div style="margin-bottom: 16px; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <strong style="font-size: 13px; color: #1a365d;">${grupo.receta.nombre}</strong>
+            <button class="btn-remove" data-index="${index}" style="width: 24px; height: 24px; padding: 0; font-size: 14px;">✕</button>
+          </div>
+          <div style="display: flex; gap: 12px; align-items: end; margin-bottom: 12px;">
+            <div style="flex: 1;">
+              <label class="log-label" style="font-size: 12px; margin-bottom: 4px;">Cantidad de Recetas</label>
+              <input type="number" class="log-input" min="1" value="${grupo.cantidadRecetas}" data-index="${index}" data-campo="cantidadRecetas" style="width: 100%; font-size: 13px;"/>
+            </div>
+          </div>
+          <div style="margin-top: 10px;">
+            <table class="log-table" style="font-size: 12px;">
+              <thead>
+                <tr>
+                  <th>Material</th>
+                  <th>Cantidad</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${grupo.receta.items.map(item => {
+                  const cantidadTotal = (item.cantidad || 0) * (grupo.cantidadRecetas || 1);
+                  if (item.tipo === 'CASE' || isCaseBaseCodigo(item.codigo)) {
+                    return `
+                      <tr>
+                        <td>
+                          <strong>CASE ${getCaseBaseFromCodigo(item.codigo) || 'Case'}</strong><br>
+                          <small>Se selecciona el Case físico en despacho</small>
+                        </td>
+                        <td>${cantidadTotal}</td>
+                      </tr>
+                    `;
+                  }
+                  const mat = getMaterial(item.codigo);
+                  return `
+                    <tr>
+                      <td>
+                        <strong>${item.codigo}</strong><br>
+                        <small>${mat ? `${mat.nom} (${mat.med}) – ${mat.col}` : 'Desconocido'}</small>
+                      </td>
+                      <td>${cantidadTotal}</td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `).join('');
+
+      document.querySelectorAll('#resumen-recetas-contenedor [data-campo="cantidadRecetas"]').forEach(input => {
+        input.addEventListener('input', (e) => {
+          const idx = parseInt(e.target.dataset.index);
+          estado.recetasSeleccionadas[idx].cantidadRecetas = parseInt(e.target.value) || 1;
+          renderResumenRecetas();
+        });
+      });
+
+      document.querySelectorAll('#resumen-recetas-contenedor .btn-remove').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const idx = parseInt(e.currentTarget.dataset.index);
+          estado.recetasSeleccionadas.splice(idx, 1);
+          renderResumenRecetas();
+        });
+      });
+    }
+
+    function renderResumenAdicionales() {
+      const tbody = document.getElementById('ped-adicionales-body');
+      const msg = document.getElementById('msg-adicionales-vacio');
+      if (estado.itemsAdicionales.length === 0) {
+        tbody.innerHTML = '';
+        msg.style.display = 'block';
+        return;
+      }
+      msg.style.display = 'none';
+      tbody.innerHTML = estado.itemsAdicionales.map((item, idx) => `
+        <tr>
+          <td>
+            <strong>${item.codigo}</strong><br>
+            <small>${item.nombre} (Ubicación: ${item.ubicacionNombre}) – Stock: ${item.stockActual}</small>
+          </td>
+          <td>
+            <input type="number" class="log-input" min="1" max="${item.stockActual}" value="${item.cantidad}" data-index="${idx}" style="width: 60px; padding: 4px; font-size: 12px;" />
+          </td>
+          <td style="text-align: center;">
+            <button class="btn-remove" data-index="${idx}" style="width: 24px; height: 24px; padding: 0; font-size: 12px;">✕</button>
+          </td>
+        </tr>
+      `).join('');
+      document.querySelectorAll('#ped-adicionales-body [data-index]').forEach(el => {
+        if (el.tagName === 'INPUT') {
+          el.addEventListener('input', (e) => {
+            const idx = parseInt(e.target.dataset.index);
+            let val = parseInt(e.target.value) || 1;
+            if (val > estado.itemsAdicionales[idx].stockActual) {
+              val = estado.itemsAdicionales[idx].stockActual;
+              e.target.value = val;
+              mostrarNotificacion(`Cantidad ajustada al stock disponible: ${val}`, 'warning');
+            }
+            estado.itemsAdicionales[idx].cantidad = val;
+          });
+        } else if (el.classList.contains('btn-remove')) {
+          el.addEventListener('click', (e) => {
+            const idx = parseInt(e.currentTarget.dataset.index);
+            estado.itemsAdicionales.splice(idx, 1);
+            renderResumenAdicionales();
+          });
+        }
+      });
+    }
+
+    function renderModoItem(contenedor) {
+      contenedor.innerHTML = `
+        <h3 class="log-titulo" style="font-size: 15px; margin: 12px 0 10px 0; color: #fefcff;">Catálogo de Inventario</h3>
+        
+        <!-- División en dos columnas -->
+        <div style="display: flex; gap: 20px; height: 620px; overflow: hidden;">
+
+          <!-- Columna izquierda: catálogo -->
+          <div style="flex: 2; overflow-y: auto; background: #f8fafc; padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <div style="max-height: 540px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; background: white;">
+              <table class="log-table" style="font-size: 12px;">
+                <thead style="position: sticky; top: 0; background: #f8fafc;">
+                  <tr>
+                    <th>Código</th>
+                    <th>Material</th>
+                    <th>Ubicación</th>
+                    <th>Stock</th>
+                    <th>Bodega</th>
+                    <th>Contenedor</th>
+                    <th style="text-align: center;">Acción</th>
+                  </tr>
+                </thead>
+                <tbody id="cat-item-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Columna derecha: resumen del pedido -->
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 14px; background: white; padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <h3 class="log-titulo" style="font-size: 13px; margin: 0 0 8px 0; color: #1a365d;">Resumen de Pedido</h3>
+            <div style="border: 1px solid var(--accent); border-radius: 8px; overflow: hidden; background: white; flex: 1;">
+              <table class="log-table" style="font-size: 12px;">
+                <thead>
+                  <tr style="background: rgba(55, 148, 255, 0.05);">
+                    <th style="width: 60%;">Descripción</th>
+                    <th style="width: 20%;">Cant.</th>
+                    <th style="width: 20%; text-align: center;">Quitar</th>
+                  </tr>
+                </thead>
+                <tbody id="ped-item-body"></tbody>
+              </table>
+              <div id="msg-item-vacio" style="padding: 16px; text-align: center; color: #94a3b8; font-style: italic; font-size: 12px; display: ${estado.itemsPorItem.length === 0 ? 'block' : 'none'};">
+                No hay materiales en la lista.
+              </div>
+            </div>
+          </div>
+
+        </div>
+      `;
+      renderCatalogoItem();
+      renderResumenItem();
+    }
+
+    function renderCatalogoItem() {
+      const tbody = document.getElementById('cat-item-body');
+      tbody.innerHTML = materialesCatalogo.map(m => `
+        <tr>
+          <td><span class="code-badge" style="font-size: 11px;">${m.cod}</span></td>
+          <td>${m.nom}</td>
+          <td>${m.ubicacionNombre}</td>
+          <td>${m.stockActual}</td>
+          <td>${m.bodegaPrincipal}</td>
+          <td>${m.contenedor}</td>
+          <td style="text-align: center;">
+            <button class="btn-add" data-cod="${m.cod}" style="font-size: 12px; padding: 4px 8px;">＋ Agregar</button>
+          </td>
+        </tr>
+      `).join('');
+      document.querySelectorAll('[data-cod]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const cod = e.currentTarget.dataset.cod;
+          const m = getMaterial(cod);
+          if (!m) return;
+          const existe = estado.itemsPorItem.find(i => i.codigo === cod);
+          if (existe) {
+            existe.cantidad++;
+            mostrarNotificacion(`➕ Cantidad aumentada: ${m.nom} (${cod}) ahora tiene ${existe.cantidad} unidades.`, 'info');
+          } else {
+            estado.itemsPorItem.push({
+              codigo: m.cod,
+              nombre: m.nom,
+              ubicacionNombre: m.ubicacionNombre,
+              stockActual: m.stockActual,
+              bodegaPrincipal: m.bodegaPrincipal,
+              contenedor: m.contenedor,
+              cantidad: 1
+            });
+            mostrarNotificacion(`✅ Material agregado: ${m.nom} (${cod}).`, 'success');
+          }
+          renderResumenItem();
+        });
+      });
+    }
+
+    function renderResumenItem() {
+      const tbody = document.getElementById('ped-item-body');
+      const msg = document.getElementById('msg-item-vacio');
+      if (estado.itemsPorItem.length === 0) {
+        tbody.innerHTML = '';
+        msg.style.display = 'block';
+        return;
+      }
+      msg.style.display = 'none';
+      tbody.innerHTML = estado.itemsPorItem.map((item, idx) => `
+        <tr>
+          <td>
+            <strong>${item.codigo}</strong><br>
+            <small>${item.nombre} (${item.ubicacionNombre})</small>
+          </td>
+          <td>
+            <input type="number" class="log-input" min="1" max="${item.stockActual}" value="${item.cantidad}" data-index="${idx}" style="width: 60px; padding: 4px; font-size: 12px;" />
+          </td>
+          <td style="text-align: center;">
+            <button class="btn-remove" data-index="${idx}" style="width: 24px; height: 24px; padding: 0; font-size: 12px;">✕</button>
+          </td>
+        </tr>
+      `).join('');
+      document.querySelectorAll('#ped-item-body [data-index]').forEach(el => {
+        if (el.tagName === 'INPUT') {
+          el.addEventListener('input', (e) => {
+            const idx = parseInt(e.target.dataset.index);
+            let val = parseInt(e.target.value) || 1;
+            if (val > estado.itemsPorItem[idx].stockActual) {
+              val = estado.itemsPorItem[idx].stockActual;
+              e.target.value = val;
+              mostrarNotificacion(`Cantidad ajustada al stock disponible: ${val}`, 'warning');
+            }
+            estado.itemsPorItem[idx].cantidad = val;
+          });
+        } else if (el.classList.contains('btn-remove')) {
+          el.addEventListener('click', (e) => {
+            const idx = parseInt(e.currentTarget.dataset.index);
+            estado.itemsPorItem.splice(idx, 1);
+            renderResumenItem();
+          });
+        }
+      });
+    }
+
+    // =============================================================================
+    // 🔹 CARGAR DATOS DESDE SUPABASE
+    // =============================================================================
+    let eventos = [];
+    let materialesCatalogo = [];
+    let recetas = [];
+
+    async function cargarEventos() {
+      try {
+        const { data, error } = await window.supabaseClient
+          .from('eventos')
+          .select('id, nombre, cliente, lugar, fecha_montaje, hora_montaje, fecha_desmontaje, hora_desmontaje, descripcion, estado, cotizacion_id')
+          .eq('estado', 'activo')
+          .order('fecha_montaje', { ascending: false });
+
+        if (error) {
+          console.error('Error al cargar eventos:', error);
+          eventos = [];
+          return;
+        }
+
+        eventos = data || [];
+      } catch (err) {
+        console.error('Error:', err);
+        eventos = [];
+      }
+    }
+
+    async function cargarMaterialesCatalogo() {
+      try {
+        const allRows = [];
+        const STOCK_VIEWS = [
+          { key: 'HIERROS', label: 'Hierros', view: 'stock_hierros' },
+          { key: 'AUDIOVISUAL', label: 'Audiovisual', view: 'stock_audiovisual' },
+          { key: 'CONSUMIBLES', label: 'Consumibles', view: 'stock_consumibles' }
+        ];
+        for (const v of STOCK_VIEWS) {
+          const { data, error } = await window.supabaseClient
+            .from(v.view)
+            .select('material_codigo, material_nombre, precio, stock_actual, bodega_principal, bodega_secundaria, contenedor, ubicacion_nombre, fecha_compra')
+            .order('material_codigo', { ascending: true });
+          if (error) {
+            console.error(`Error al cargar ${v.view}:`, error);
+            continue;
+          }
+          const rows = (data || []).map(r => ({ ...r, __stock_view: v.view }));
+          allRows.push(...rows);
+        }
+
+        materialesCatalogo = allRows.map(item => ({
+          cod: item.material_codigo,
+          nom: item.material_nombre,
+          med: '', // Dimensiones no disponibles en vistas de stock
+          col: '', // Color no disponible
+          bodegaPrincipal: item.bodega_principal || '',
+          bodegaSecundaria: item.bodega_secundaria || '',
+          contenedor: item.contenedor || '',
+          ubicacionNombre: item.ubicacion_nombre || '',
+          stockActual: item.stock_actual || 0,
+          fechaCompra: item.fecha_compra || null,
+          __stock_view: item.__stock_view
+        }));
+
+      } catch (err) {
+        console.error('Error cargando materiales:', err);
+        materialesCatalogo = [];
+      }
+    }
+
+    async function cargarRecetas() {
+      try {
+        const { data, error } = await window.supabaseClient
+          .from('recetas')
+          .select(`
+            id,
+            nombre,
+            recetas_materiales (
+              material_codigo,
+              cantidad,
+              observacion
+            )
+          `)
+          .order('nombre', { ascending: true });
+
+        if (error) {
+          console.error('Error al cargar recetas:', error);
+          return;
+        }
+
+        recetasDisponibles = (data || []).map(receta => ({
+          nombre: receta.nombre,
+          items: receta.recetas_materiales.map(item => ({
+            codigo: item.material_codigo,
+            cantidad: item.cantidad,
+            tipo: isCaseBaseCodigo(item.material_codigo) ? 'CASE' : decodeTipoYObs(item.observacion).tipo,
+            observacion: isCaseBaseCodigo(item.material_codigo) ? (item.observacion || '') : decodeTipoYObs(item.observacion).obs
+          }))
+        }));
+      } catch (err) {
+        console.error('Error:', err);
+      }
+    }
+
+    // =============================================================================
+    // 🔹 CARGAR EVENTOS DESDE SUPABASE
+    // =============================================================================
+    function cargarEventosEnSelect() {
+      const select = document.getElementById('sol-evento');
+      select.innerHTML = '<option value="">-- Seleccione un Evento --</option>';
+
+      eventos.forEach(evento => {
+        const option = document.createElement('option');
+        option.value = evento.nombre;
+        option.textContent = `${evento.nombre} - ${evento.cliente}`;
+        select.appendChild(option);
+      });
+    }
+
+    // =============================================================================
+    // 🔹 ACTUALIZAR PANEL DE EVENTO (DESDE SUPABASE)
+    // =============================================================================
+    async function actualizarPanelEvento(nombreEvento) {
+      const panel = document.getElementById('panelResumenEvento');
+      if (!panel) return;
+
+      const evento = eventos.find(e => e.nombre === nombreEvento);
+
+      if (!evento) {
+        panel.style.display = 'none';
+        return;
+      }
+
+      // Obtener servicios con cantidades desde la cotización
+      let serviciosTexto = 'No disponible';
+      if (evento.cotizacion_id) {
+        console.log('Consultando cotización:', evento.cotizacion_id);
+        try {
+          const { data: cotizacion, error: cotError } = await window.supabaseClient
+            .from('cotizaciones')
+            .select('servicios')
+            .eq('id', evento.cotizacion_id)
+            .single();
+
+          if (cotError) {
+            console.error('Error consultando cotización:', cotError);
+          } else {
+            console.log('Cotización obtenida:', cotizacion);
+          }
+
+          if (!cotError && cotizacion?.servicios && cotizacion.servicios.length > 0) {
+            serviciosTexto = cotizacion.servicios.map(s => {
+              const cantidad = s.cantidad || 1;
+              const nombre = s.nombre || 'Servicio sin nombre';
+              return `• ${cantidad} ${nombre}`;
+            }).join('<br>');
+            console.log('Servicios texto generado:', serviciosTexto);
+          }
+        } catch (cotErr) {
+          console.warn('Error al cargar servicios de cotización:', cotErr);
+          // Fallback a la descripción guardada en el evento
+          serviciosTexto = (Array.isArray(evento.descripcion) ? evento.descripcion : [evento.descripcion])
+            .map(i => `• ${i}`).join('<br>') || "No disponible";
+        }
+      } else {
+        console.log('Evento sin cotizacion_id:', evento);
+        // Fallback a la descripción guardada en el evento
+        serviciosTexto = (Array.isArray(evento.descripcion) ? evento.descripcion : [evento.descripcion])
+          .map(i => `• ${i}`).join('<br>') || "No disponible";
+      }
+
+      panel.style.display = 'block';
+      document.getElementById("resumen-nombre").textContent = evento.nombre || "—";
+      document.getElementById("resumen-cliente").textContent = evento.cliente || "—";
+      document.getElementById("resumen-lugar").textContent = evento.lugar || "—";
+      document.getElementById("resumen-descripcion").innerHTML = serviciosTexto;
+      document.getElementById("resumen-montaje").textContent = 
+        formatDateTime(evento.fecha_montaje, evento.hora_montaje);
+      document.getElementById("resumen-desmontaje").textContent = 
+        formatDateTime(evento.fecha_desmontaje, evento.hora_desmontaje);
+    }
+
+    // =============================================================================
+    // 🔹 LÓGICA PRINCIPAL
+    // =============================================================================
+    async function obtenerItemsParaGuardar() {
+      const agg = new Map();
+
+      function addOrSum(row) {
+        const code = (row.codigo || '').toString().trim();
+        if (!code) return;
+        const prev = agg.get(code);
+        if (!prev) {
+          agg.set(code, { ...row });
+          return;
+        }
+        prev.cantidad = (Number(prev.cantidad) || 0) + (Number(row.cantidad) || 0);
+        if (!prev.nombre && row.nombre) prev.nombre = row.nombre;
+        if (!prev.medidas && row.medidas) prev.medidas = row.medidas;
+        if (!prev.color && row.color) prev.color = row.color;
+      }
+
+      if (estado.modoIngreso === "receta") {
+        for (const grupo of estado.recetasSeleccionadas) {
+          if (!grupo.receta) continue;
+          const factorReceta = (Number(grupo.cantidadRecetas) || 1);
+
+          for (const item of (grupo.receta.items || [])) {
+            const base = (Number(item.cantidad) || 0) * factorReceta;
+            if (base <= 0) continue;
+
+            // CASE genérico (por base): NO se expande aquí. Bodega elige Case físico al despachar.
+            if (isCaseBaseCodigo(item.codigo) || item.tipo === 'CASE') {
+              const baseName = getCaseBaseFromCodigo(item.codigo) || 'Case';
+              const codigoPlantilla = isCaseBaseCodigo(item.codigo) ? item.codigo : `CASEBASE|${baseName}`;
+              addOrSum({
+                codigo: codigoPlantilla,
+                nombre: baseName,
+                cantidad: base,
+                estado: "pendiente",
+                observacion: `Requiere ${baseName} (selección de Case físico en despacho)`,
+                medidas: "",
+                color: ""
+              });
+            } else {
+              const mat = getMaterial(item.codigo);
+              addOrSum({
+                codigo: item.codigo,
+                nombre: mat?.nom || "Desconocido",
+                cantidad: base,
+                estado: "pendiente",
+                observacion: "",
+                medidas: mat?.med || "",
+                color: mat?.col || ""
+              });
+            }
+          }
+        }
+
+        estado.itemsAdicionales.forEach(item => {
+          addOrSum({
+            codigo: item.codigo,
+            nombre: item.nombre,
+            cantidad: item.cantidad,
+            estado: "pendiente",
+            observacion: "Material adicional (fuera de receta)",
+            medidas: item.medidas,
+            color: item.color
+          });
+        });
+      } else {
+        estado.itemsPorItem.forEach(item => {
+          addOrSum({
+            codigo: item.codigo,
+            nombre: item.nombre,
+            cantidad: item.cantidad,
+            estado: "pendiente",
+            observacion: "",
+            medidas: item.medidas,
+            color: item.color
+          });
+        });
+      }
+
+      return Array.from(agg.values()).filter(x => (Number(x.cantidad) || 0) > 0);
+    }
+
+    async function generarIdSolicitud() {
+      try {
+        // Buscar el ID más alto existente que empiece con SOL-
+        const { data, error } = await window.supabaseClient
+          .from('solicitudes_logistica')
+          .select('id')
+          .like('id', 'SOL-%')
+          .order('id', { ascending: false })
+          .limit(1);
+
+        if (error) {
+          console.error('Error al obtener último ID:', error);
+          // Si hay error, usar 1 como fallback
+          return 'SOL-00001';
+        }
+
+        let nextNumber = 1;
+        if (data && data.length > 0) {
+          // Extraer el número del ID (SOL-XXXXX)
+          const lastId = data[0].id;
+          const match = lastId.match(/^SOL-(\d+)$/);
+          if (match) {
+            nextNumber = parseInt(match[1]) + 1;
+          }
+        }
+
+        // Formatear con 5 dígitos, cero-padded
+        return `SOL-${nextNumber.toString().padStart(5, '0')}`;
+      } catch (err) {
+        console.error('Error al generar ID:', err);
+        return 'SOL-00001';
+      }
+    }
+
+    async function enviarSolicitudFinal() {
+      const evento = document.getElementById('sol-evento').value;
+      if (!evento) {
+        alert("⚠️ Seleccione un evento.");
+        return;
+      }
+      const items = await obtenerItemsParaGuardar();
+      if (items.length === 0) {
+        alert("⚠️ Agregue al menos un material.");
+        return;
+      }
+
+      try {
+        // Generar ID secuencial para la solicitud
+        const idSolicitud = await generarIdSolicitud();
+
+        const responsable = document.getElementById('sol-responsable').value;
+
+        // Insertar solicitud principal
+        const { data: solicitud, error: errorSolicitud } = await window.supabaseClient
+          .from('solicitudes_logistica')
+          .insert({
+            id: idSolicitud,
+            tipo: "despacho",
+            estado: "pendiente_bodega",
+            evento: evento,
+            encargado_evento: responsable,
+            prioridad: "Normal",
+            modo_ingreso: estado.modoIngreso,
+            fecha_solicitud: new Date().toISOString()
+          })
+          .select()
+          .single();
+
+        if (errorSolicitud) {
+          console.error('Error al guardar solicitud:', errorSolicitud);
+          alert('❌ Error al guardar la solicitud.');
+          return;
+        }
+
+        // Insertar items de la solicitud
+        const itemsParaInsertar = items.map(item => ({
+          solicitud_id: idSolicitud,
+          codigo_material: item.codigo,
+          nombre_material: item.nombre || (getMaterial(item.codigo)?.nom || 'Desconocido'),
+          cantidad_solicitada: item.cantidad,
+          estado: item.estado,
+          observacion: item.observacion,
+          medidas: item.medidas,
+          color: item.color
+        }));
+
+        const { error: errorItems } = await window.supabaseClient
+          .from('items_solicitud_logistica')
+          .insert(itemsParaInsertar);
+
+        if (errorItems) {
+          console.error('Error al guardar items de solicitud:', errorItems);
+          alert('❌ Error al guardar los items de la solicitud.');
+          return;
+        }
+
+        alert(`✅ Solicitud ${idSolicitud} enviada a Bodega.`);
+
+        // Reiniciar estado
+        estado = { modoIngreso: "receta", recetasSeleccionadas: [], itemsAdicionales: [], itemsPorItem: [] };
+        renderContenidoDinamico();
+        document.getElementById('sol-evento').value = "";
+        const panel = document.getElementById('panelResumenEvento');
+        if (panel) panel.style.display = 'none';
+
+      } catch (err) {
+        console.error('Error al enviar solicitud:', err);
+        alert('❌ Error al enviar la solicitud.');
+      }
+    }
+
+    // =============================================================================
+    // 🔹 EVENTOS
+    // =============================================================================
+    document.getElementById('sol-evento').addEventListener('change', async (e) => {
+      await actualizarPanelEvento(e.target.value);
+    });
+
+    document.querySelectorAll('.log-tab-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.log-tab-btn').forEach(b => b.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        estado.modoIngreso = e.currentTarget.dataset.modo;
+        renderContenidoDinamico();
+      });
+    });
+
+    document.getElementById('btn-enviar').addEventListener('click', enviarSolicitudFinal);
+
+    // =============================================================================
+    // 🔹 SOPORTE PARA EDICIÓN
+    // =============================================================================
+    async function cargarSolicitudDesdeURL() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const editId = urlParams.get('edit');
+      if (!editId) return;
+
+      try {
+        // Cargar solicitud desde Supabase
+        const { data: solicitud, error } = await window.supabaseClient
+          .from('solicitudes_logistica')
+          .select(`
+            id,
+            evento,
+            encargado_evento,
+            modo_ingreso,
+            items_solicitud_logistica (
+              codigo_material,
+              nombre_material,
+              cantidad_solicitada,
+              observacion,
+              medidas,
+              color
+            )
+          `)
+          .eq('id', editId)
+          .eq('estado', 'pendiente_bodega')
+          .single();
+
+        if (error || !solicitud) {
+          alert("⚠️ Solicitud no encontrada o ya fue procesada.");
+          return;
+        }
+
+        document.getElementById('sol-evento').value = solicitud.evento;
+        document.getElementById('sol-responsable').value = solicitud.encargado_evento || "Carlos Méndez";
+        await actualizarPanelEvento(solicitud.evento);
+
+        estado = {
+          modoIngreso: solicitud.modo_ingreso || "receta",
+          recetasSeleccionadas: [],
+          itemsAdicionales: [],
+          itemsPorItem: []
+        };
+
+        // Reconstruir el estado desde los items guardados
+        solicitud.items_solicitud_logistica.forEach(item => {
+          if (item.observacion === "Material adicional (fuera de receta)") {
+            estado.itemsAdicionales.push({
+              codigo: item.codigo_material,
+              nombre: item.nombre_material,
+              medidas: item.medidas,
+              color: item.color,
+              cantidad: item.cantidad_solicitada
+            });
+          } else {
+            // Intentar encontrar la receta correspondiente
+            const receta = recetas.find(r =>
+              r.items.some(ri => ri.codigo === item.codigo_material)
+            );
+            if (receta) {
+              const itemReceta = receta.items.find(ri => ri.codigo === item.codigo_material);
+              const cantidadRecetas = Math.floor(item.cantidad_solicitada / (itemReceta?.cantidad || 1));
+              const existing = estado.recetasSeleccionadas.find(r => r.receta.nombre === receta.nombre);
+              if (existing) {
+                existing.cantidadRecetas = Math.max(existing.cantidadRecetas, cantidadRecetas);
+              } else {
+                estado.recetasSeleccionadas.push({
+                  receta: receta,
+                  cantidadRecetas: cantidadRecetas
+                });
+              }
+            } else {
+              // Si no es de receta, agregarlo como item individual
+              estado.itemsPorItem.push({
+                codigo: item.codigo_material,
+                nombre: item.nombre_material,
+                medidas: item.medidas,
+                color: item.color,
+                cantidad: item.cantidad_solicitada
+              });
+            }
+          }
+        });
+
+        renderContenidoDinamico();
+        document.querySelector(`.log-tab-btn[data-modo="${estado.modoIngreso}"]`).click();
+
+      } catch (err) {
+        console.error('Error al cargar solicitud:', err);
+        alert('❌ Error al cargar la solicitud para edición.');
+      }
+    }
+
+    // =============================================================================
+    // 🔹 INICIO
+    // =============================================================================
+    async function inicializarModulo() {
+      try {
+        // Cargar datos desde Supabase
+        await cargarEventos();
+        await cargarMaterialesCatalogo();
+        await cargarRecetas();
+
+        // Actualizar la variable recetasSimuladas para compatibilidad
+        recetasSimuladas = recetas;
+
+        // Renderizar interfaz
+        cargarEventosEnSelect();
+        renderContenidoDinamico();
+        await cargarSolicitudDesdeURL();
+
+      } catch (err) {
+        console.error('Error al inicializar módulo:', err);
+        alert('❌ Error al cargar el módulo de solicitudes.');
+      }
+    }
+
+    // Iniciar cuando el DOM esté listo
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', inicializarModulo);
+    } else {
+      inicializarModulo();
+    }
+  })();
+</script>

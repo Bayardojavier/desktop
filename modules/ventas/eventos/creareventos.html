@@ -1,0 +1,389 @@
+<!-- creareventos.html (fragmento para cargar en ventas) -->
+
+<div class="ventas-area-dinamica">
+
+  <!-- TÍTULO -->
+  <div style="margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--accent);">
+    <h2 style="font-size: 18pt; margin: 0; color: #1e1e1e; display: flex; align-items: center; gap: 8px;">
+      <span>📅</span>
+      Crear Evento desde Cotización
+    </h2>
+    <p style="color: #4a5568; font-size: 13px; margin-top: 6px;">
+      Seleccione una cotización activa para generar el evento.
+    </p>
+  </div>
+
+  <!-- LISTA DE COTIZACIONES ACTIVAS -->
+  <div id="lista-cotizaciones" style="display: block;">
+    <!-- Las cotizaciones se cargarán aquí -->
+  </div>
+
+  <!-- FORMULARIO DE EVENTO (inicialmente oculto) -->
+  <div id="formulario-evento" style="display: none; background: var(--panel-bg); padding: 20px; border-radius: 8px; border: 1px solid var(--border); color: var(--panel-text);">
+
+    <!-- Cotización origen (solo lectura) -->
+    <div style="background: #1e293b; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--border);">
+      <h3 style="font-size: 14px; margin: 0 0 12px 0; color: #93c5fd;">Cotización de Origen</h3>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div>
+          <div><strong>ID Cotización:</strong> <span id="cot-id">—</span></div>
+          <div><strong>Cliente:</strong> <span id="cot-cliente">—</span></div>
+          <div><strong>RUC:</strong> <span id="cot-ruc">—</span></div>
+          <div><strong>Dirección:</strong> <span id="cot-direccion">—</span></div>
+        </div>
+        <div>
+          <div><strong>Contacto:</strong> <span id="cot-contacto">—</span></div>
+          <div><strong>Teléfono:</strong> <span id="cot-telefono">—</span></div>
+          <div><strong>Email:</strong> <span id="cot-email">—</span></div>
+          <div><strong>Fecha Cotización:</strong> <span id="cot-fecha">—</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Servicios contratados -->
+    <div style="margin-bottom: 20px;">
+      <h3 style="font-size: 14px; margin: 0 0 12px 0; color: #93c5fd;">Servicios Contratados</h3>
+      <div style="background: #2d3748; padding: 12px; border-radius: 8px; overflow-y: auto; max-height: 200px;">
+        <div style="display: grid; grid-template-columns: 0.8fr 3fr 1.2fr; gap: 12px; padding: 8px 0; border-bottom: 2px solid #4a5568; font-weight: bold; color: #cbd5e1;">
+          <div>Cant.</div>
+          <div>Descripción</div>
+          <div style="text-align: right;">Precio</div>
+        </div>
+        <div id="servicios-cotizacion" style="margin-top: 8px;">
+          <!-- Servicios se cargarán aquí -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Datos del evento (editables) -->
+    <div style="margin-bottom: 16px;">
+      <label style="font-size: 12px; margin-bottom: 4px; display: block; color: #cbd5e1;">* Nombre del Evento</label>
+      <input type="text" id="evento-nombre" class="ventas-input" placeholder="Ej: Feria Managua 2025">
+      <div id="error-nombre" style="color: #ef4445; font-size: 12px; margin-top: 4px;"></div>
+    </div>
+
+    <div style="margin-bottom: 16px;">
+      <label style="font-size: 12px; margin-bottom: 4px; display: block; color: #cbd5e1;">* Lugar del Evento</label>
+      <input type="text" id="evento-lugar" class="ventas-input" placeholder="Dirección exacta del evento">
+      <div id="error-lugar" style="color: #ef4445; font-size: 12px; margin-top: 4px;"></div>
+    </div>
+
+    <!-- Contacto del evento -->
+    <div style="margin-bottom: 16px;">
+      <label style="font-size: 12px; margin-bottom: 4px; display: block; color: #cbd5e1;">Contacto del Evento</label>
+      <input type="text" id="evento-contacto" class="ventas-input" placeholder="Nombre del contacto en el evento">
+    </div>
+
+    <div style="margin-bottom: 16px;">
+      <label style="font-size: 12px; margin-bottom: 4px; display: block; color: #cbd5e1;">Teléfono del Evento</label>
+      <input type="text" id="evento-telefono" class="ventas-input" placeholder="Número de contacto en el evento">
+    </div>
+
+    <!-- Fechas compactas -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; margin-bottom: 16px;">
+      <div>
+        <label style="font-size: 12px; margin-bottom: 4px; display: block; color: #cbd5e1;">* Fecha Montaje</label>
+        <input type="date" id="evento-fecha-montaje" class="ventas-input">
+      </div>
+      <div>
+        <label style="font-size: 12px; margin-bottom: 4px; display: block; color: #cbd5e1;">* Hora Montaje</label>
+        <input type="time" id="evento-hora-montaje" class="ventas-input">
+      </div>
+      <div>
+        <label style="font-size: 12px; margin-bottom: 4px; display: block; color: #cbd5e1;">Fecha Desmontaje</label>
+        <input type="date" id="evento-fecha-desmontaje" class="ventas-input">
+      </div>
+      <div>
+        <label style="font-size: 12px; margin-bottom: 4px; display: block; color: #cbd5e1;">Hora Desmontaje</label>
+        <input type="time" id="evento-hora-desmontaje" class="ventas-input">
+      </div>
+    </div>
+
+    <!-- Botones -->
+    <div style="display: flex; gap: 12px; justify-content: flex-end;">
+      <button id="btn-guardar-evento" class="ventas-btn-guardar">💾 Guardar Evento</button>
+      <button id="btn-cancelar-form" class="ventas-btn-nav">
+        ← Volver a Cotizaciones
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // =============================================================================
+  // 🔹 CARGAR COTIZACIONES ACTIVAS DESDE SUPABASE
+  // =============================================================================
+  async function cargarCotizacionesActivas() {
+    const contenedor = document.getElementById('lista-cotizaciones');
+
+    try {
+      // Cargar cotizaciones no usadas para eventos
+      const { data: cotizaciones, error } = await window.supabaseClient
+        .from('cotizaciones')
+        .select(`
+          *,
+          clientes (
+            id,
+            nombre,
+            ruc,
+            contacto,
+            telefono,
+            email,
+            direccion
+          )
+        `)
+        .eq('eventocreado', false)
+        .order('fechacreacion', { ascending: false });
+
+      if (error) {
+        console.error('Error al cargar cotizaciones:', error);
+        contenedor.innerHTML = `
+          <div style="padding: 20px; text-align: center; color: #ef4444;">
+            Error al cargar cotizaciones: ${error.message}
+          </div>
+        `;
+        return;
+      }
+
+      if (!cotizaciones || cotizaciones.length === 0) {
+        contenedor.innerHTML = `
+          <div style="padding: 20px; text-align: center; color: #64748b;">
+            No hay cotizaciones activas disponibles para crear eventos.
+          </div>
+        `;
+        return;
+      }
+
+      contenedor.innerHTML = cotizaciones.map(cot => `
+        <div style="background: #1e293b; padding: 16px; border-radius: 8px; margin-bottom: 12px; border: 1px solid var(--border);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <h3 style="margin: 0; color: #93c5fd; font-size: 14pt;">${cot.id}</h3>
+              <p style="color: #cbd5e1; margin: 6px 0 0 0; font-size: 12px;">
+                Cliente: ${cot.clientes?.nombre || '—'}<br>
+                Fecha: ${cot.fechacreacion ? new Date(cot.fechacreacion).toLocaleDateString() : '—'}
+              </p>
+            </div>
+            <button data-id="${cot.id}" class="ventas-btn-guardar" style="padding: 6px 12px; font-size: 12px;">
+              📅 Crear Evento
+            </button>
+          </div>
+          <div style="margin-top: 12px; font-size: 12px; color: #94a3b8;">
+            <strong>Servicios:</strong> ${cot.servicios?.length || 0} ítems
+          </div>
+        </div>
+      `).join('');
+
+      contenedor.querySelectorAll('[data-id]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const cotId = e.currentTarget.dataset.id;
+          mostrarFormularioEvento(cotId);
+        });
+      });
+    } catch (err) {
+      console.error('Error:', err);
+      contenedor.innerHTML = `
+        <div style="padding: 20px; text-align: center; color: #ef4444;">
+          Error al cargar cotizaciones.
+        </div>
+      `;
+    }
+  }
+
+  // =============================================================================
+  // 🔹 MOSTRAR FORMULARIO DE EVENTO
+  // =============================================================================
+  async function mostrarFormularioEvento(cotizacionId) {
+    try {
+      const { data: cot, error } = await window.supabaseClient
+        .from('cotizaciones')
+        .select(`
+          *,
+          clientes (
+            id,
+            nombre,
+            ruc,
+            contacto,
+            telefono,
+            email,
+            direccion
+          )
+        `)
+        .eq('id', cotizacionId)
+        .single();
+
+      if (error || !cot) {
+        alert("❌ Cotización no encontrada.");
+        return;
+      }
+
+      // Llenar datos de cotización (cliente en dos columnas)
+      document.getElementById('cot-id').textContent = cot.id;
+      document.getElementById('cot-cliente').textContent = cot.clientes?.nombre || '—';
+      document.getElementById('cot-ruc').textContent = cot.clientes?.ruc || '—';
+      document.getElementById('cot-direccion').textContent = cot.clientes?.direccion || '—';
+      document.getElementById('cot-contacto').textContent = cot.clientes?.contacto || '—';
+      document.getElementById('cot-telefono').textContent = cot.clientes?.telefono || '—';
+      document.getElementById('cot-email').textContent = cot.clientes?.email || '—';
+      document.getElementById('cot-fecha').textContent = cot.fechacreacion ? new Date(cot.fechacreacion).toLocaleDateString() : '—';
+
+      // Llenar servicios contratados (tabla mejorada)
+      const serviciosDiv = document.getElementById('servicios-cotizacion');
+      if (cot.servicios && cot.servicios.length > 0) {
+        serviciosDiv.innerHTML = cot.servicios.map(s => {
+          // Concatenar descripción corta y larga
+          const descCorta = s.nombre || '—';
+          const descLarga = s.descripcion || '';
+          const descripcionCompleta = descLarga ? `${descCorta} - ${descLarga}` : descCorta;
+
+          return `
+            <div style="display: grid; grid-template-columns: 0.8fr 3fr 1.2fr; gap: 12px; padding: 8px 0; border-bottom: 1px solid #334155; font-size: 13px;">
+              <div>${s.cantidad || 1}</div>
+              <div>${descripcionCompleta}</div>
+              <div style="text-align: right;">C$${(s.total || 0).toFixed(2)}</div>
+            </div>
+          `;
+        }).join('');
+      } else {
+        serviciosDiv.innerHTML = '<p style="color: #64748b; text-align: center; padding: 10px;">No hay servicios definidos.</p>';
+      }
+
+      // Guardar ID de cotización
+      if (!document.getElementById('campo-cot-id')) {
+        const campo = document.createElement('input');
+        campo.type = 'hidden';
+        campo.id = 'campo-cot-id';
+        campo.value = cot.id;
+        document.getElementById('formulario-evento').appendChild(campo);
+      } else {
+        document.getElementById('campo-cot-id').value = cot.id;
+      }
+
+      // Mostrar formulario
+      document.getElementById('lista-cotizaciones').style.display = 'none';
+      document.getElementById('formulario-evento').style.display = 'block';
+    } catch (err) {
+      console.error('Error:', err);
+      alert("❌ Error al cargar la cotización.");
+    }
+  }
+
+  // =============================================================================
+  // 🔹 GUARDAR EVENTO
+  // =============================================================================
+  async function guardarEvento() {
+    const cotId = document.getElementById('campo-cot-id').value;
+
+    // Validar campos obligatorios
+    const nombre = document.getElementById('evento-nombre').value.trim();
+    const lugar = document.getElementById('evento-lugar').value.trim();
+    const fechaMontaje = document.getElementById('evento-fecha-montaje').value;
+    const horaMontaje = document.getElementById('evento-hora-montaje').value;
+
+    if (!nombre) {
+      document.getElementById('error-nombre').textContent = "El nombre del evento es obligatorio.";
+      return;
+    }
+    if (!lugar) {
+      document.getElementById('error-lugar').textContent = "El lugar del evento es obligatorio.";
+      return;
+    }
+    if (!fechaMontaje) {
+      alert("⚠️ La fecha de montaje es obligatoria.");
+      return;
+    }
+    if (!horaMontaje) {
+      alert("⚠️ La hora de montaje es obligatoria.");
+      return;
+    }
+
+    try {
+      // Obtener datos del cliente desde la cotización
+      const { data: cot, error: cotError } = await window.supabaseClient
+        .from('cotizaciones')
+        .select(`
+          *,
+          clientes (
+            nombre,
+            contacto,
+            telefono
+          )
+        `)
+        .eq('id', cotId)
+        .single();
+
+      if (cotError || !cot) {
+        alert("❌ Cotización no encontrada.");
+        return;
+      }
+
+      // Crear evento
+      const evento = {
+        nombre: nombre,
+        cliente: cot.clientes?.nombre || '',
+        lugar: lugar,
+        fecha_montaje: fechaMontaje,
+        hora_montaje: horaMontaje,
+        fecha_desmontaje: document.getElementById('evento-fecha-desmontaje').value || null,
+        hora_desmontaje: document.getElementById('evento-hora-desmontaje').value || null,
+        contacto_evento: document.getElementById('evento-contacto').value.trim() || cot.clientes?.contacto || '',
+        telefono_evento: document.getElementById('evento-telefono').value.trim() || cot.clientes?.telefono || '',
+        descripcion: cot.servicios?.map(s => s.nombre) || [],
+        estado: "activo",
+        cotizacion_id: cot.id
+      };
+
+      // Insertar evento en Supabase
+      const { data: eventoData, error: eventoError } = await window.supabaseClient
+        .from('eventos')
+        .insert(evento)
+        .select()
+        .single();
+
+      if (eventoError) {
+        console.error('Error al guardar evento:', eventoError);
+        alert('❌ Error al guardar el evento.');
+        return;
+      }
+
+      // Marcar cotización como usada
+      const { error: updateError } = await window.supabaseClient
+        .from('cotizaciones')
+        .update({
+          eventocreado: true,
+          eventoid: eventoData.id
+        })
+        .eq('id', cotId);
+
+      if (updateError) {
+        console.error('Error al actualizar cotización:', updateError);
+        // No es crítico, continuar
+      }
+
+      alert(`✅ Evento "${eventoData.nombre}" creado exitosamente.`);
+
+      // Volver a la lista
+      document.getElementById('lista-cotizaciones').style.display = 'block';
+      document.getElementById('formulario-evento').style.display = 'none';
+      await cargarCotizacionesActivas();
+
+    } catch (err) {
+      console.error('Error:', err);
+      alert('❌ Error al guardar el evento.');
+    }
+  }
+
+  // =============================================================================
+  // 🔹 INICIALIZACIÓN
+  // =============================================================================
+  setTimeout(async () => {
+    await cargarCotizacionesActivas();
+    
+    document.getElementById('btn-guardar-evento').addEventListener('click', guardarEvento);
+    
+    document.getElementById('btn-cancelar-form').addEventListener('click', () => {
+      document.getElementById('formulario-evento').style.display = 'none';
+      document.getElementById('lista-cotizaciones').style.display = 'block';
+    });
+  }, 50);
+</script>

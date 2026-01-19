@@ -1,0 +1,828 @@
+<!-- desktop/modules/rrhh/modificar.html -->
+<div class="formulario-rrhh">
+  <h2 style="color: #1a365d; margin-bottom: 20px; font-size: 22px;">✏️ Modificar Empleado</h2>
+
+  <div class="rrhh-nav-buttons" style="display: flex; justify-content: space-between; margin-bottom: 16px;">
+    <button class="rrhh-nav-btn" id="btn-anterior" style="background-color: #2b6cb0; color: white; border: none; padding: 8px 16px; border-radius: 8px; display: flex; align-items: center; gap: 6px;">
+      <span>←</span> Anterior
+    </button>
+    <button class="rrhh-nav-btn" id="btn-siguiente" style="background-color: #2b6cb0; color: white; border: none; padding: 8px 16px; border-radius: 8px; display: flex; align-items: center; gap: 6px;">
+      Siguiente <span>→</span>
+    </button>
+  </div>
+
+  <div class="rrhh-input-group" style="margin-bottom: 16px;">
+    <label class="rrhh-label">Buscar Empleado</label>
+    <select class="rrhh-select" id="empleado-selector">
+      <!-- Se llenará dinámicamente desde Supabase -->
+    </select>
+  </div>
+
+  <div style="text-align: right; margin-bottom: 20px; display: flex; gap: 12px; justify-content: flex-end;">
+    <button id="btn-estatus-general" class="rrhh-button" style="min-width: 100px;"></button>
+    <button id="btn-editar" class="rrhh-button rrhh-edit" style="background-color: #6c757d;">
+      ✏️ Editar
+    </button>
+  </div>
+
+  <div style="text-align: center; margin-bottom: 24px;">
+    <input type="file" id="foto-input-mod" accept="image/*" style="display: none;">
+    <div 
+        class="rrhh-photo-container" 
+        id="foto-container-mod"
+        title="Haga click para cambiar la foto"
+    > 
+        <img id="foto-preview-mod" src="" alt="Foto de Perfil" style="display: none;">
+        <div id="foto-icono-mod" style="display: block;">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span style="font-size: 12px; color: #2b6cb0; margin-top: 6px;">Foto de Perfil</span>
+        </div>
+    </div>
+  </div>
+
+  <div class="rrhh-form" id="form-empleado">
+    <div class="rrhh-grid">
+      <div class="rrhh-input-group">
+        <label for="nombres" class="rrhh-label">Nombres</label>
+        <input id="nombres" class="rrhh-input" type="text" />
+      </div>
+      <div class="rrhh-input-group">
+        <label for="apellidos" class="rrhh-label">Apellidos</label>
+        <input id="apellidos" class="rrhh-input" type="text" />
+      </div>
+      <div class="rrhh-input-group">
+        <label for="identificacion" class="rrhh-label">Identificación</label>
+        <input id="identificacion" class="rrhh-input" type="text" />
+      </div>
+      <div class="rrhh-input-group">
+        <label for="edad" class="rrhh-label">Edad</label>
+        <input id="edad" class="rrhh-input" type="number" min="0" />
+      </div>
+
+      <div class="rrhh-input-group">
+        <label class="rrhh-label">Fecha de Nacimiento</label>
+        <div style="display:flex; gap:8px;">
+          <select id="nac-dia" class="rrhh-select" style="width:70px;"></select>
+          <select id="nac-mes" class="rrhh-select" style="width:90px;"></select>
+          <select id="nac-ano" class="rrhh-select" style="width:90px;"></select>
+        </div>
+      </div>
+
+      <div class="rrhh-input-group">
+        <label for="telefono1" class="rrhh-label">Teléfono 1</label>
+        <input id="telefono1" class="rrhh-input" type="tel" />
+      </div>
+      <div class="rrhh-input-group">
+        <label for="telefono2" class="rrhh-label">Teléfono 2</label>
+        <input id="telefono2" class="rrhh-input" type="tel" />
+      </div>
+      <div class="rrhh-input-group">
+        <label for="email" class="rrhh-label">Email</label>
+        <input id="email" class="rrhh-input" type="email" />
+      </div>
+
+      <div class="rrhh-input-group">
+        <label for="puesto" class="rrhh-label">Puesto</label>
+        <input id="puesto" class="rrhh-input" type="text" />
+      </div>
+      <div class="rrhh-input-group">
+        <label for="estatus" class="rrhh-label">Estatus</label>
+        <select id="estatus" class="rrhh-select">
+          <option value="Fijo">Fijo</option>
+          <option value="Eventual">Eventual</option>
+        </select>
+      </div>
+
+      <div id="fecha-ingreso-container" class="rrhh-input-group">
+        <label class="rrhh-label">Fecha de Ingreso</label>
+        <div style="display:flex; gap:8px;">
+          <select id="ing-dia" class="rrhh-select" style="width:70px;"></select>
+          <select id="ing-mes" class="rrhh-select" style="width:90px;"></select>
+          <select id="ing-ano" class="rrhh-select" style="width:90px;"></select>
+        </div>
+      </div>
+
+      <div class="rrhh-input-group">
+        <label for="estado-civil" class="rrhh-label">Estado Civil</label>
+        <select id="estado-civil" class="rrhh-select">
+          <option value="Soltero(a)">Soltero(a)</option>
+          <option value="Casado(a)">Casado(a)</option>
+          <option value="Divorciado(a)">Divorciado(a)</option>
+          <option value="Viudo(a)">Viudo(a)</option>
+        </select>
+      </div>
+
+      <div class="rrhh-input-group">
+        <label id="salario-label" for="salario" class="rrhh-label">Salario</label>
+        <input id="salario" class="rrhh-input" type="number" step="0.01" />
+      </div>
+
+      <div class="rrhh-input-group" style="display:flex; align-items:center; gap:10px;">
+        <label class="rrhh-label" style="margin:0;">Licencia</label>
+        <input id="tiene-licencia" type="checkbox" />
+        <select id="categoria-licencia" class="rrhh-select" style="flex:1;">
+          <option value="">Sin licencia</option>
+
+<!-- Licencias ordinarias (O) -->
+<option value="O-1">O-1 · Motocicleta</option>
+<option value="O-2">O-2 · Motocicleta y automóvil</option>
+<option value="O-3">O-3 · Motocicleta, automóvil y camión liviano</option>
+<option value="O-12">O-12 · Motocicleta y automóvil (ampliada)</option>
+<option value="O-123">O-123 · Motocicleta, automóvil y camión</option>
+
+<!-- Licencias particulares / profesionales (P) -->
+<option value="P-1">P-1 · Automóvil particular</option>
+<option value="P-2">P-2 · Transporte público liviano</option>
+<option value="P-3">P-3 · Transporte pesado</option>
+<option value="P-4A">P-4A · Camión pesado</option>
+<option value="P-4B">P-4B · Cabezal / tráiler</option>
+        </select>
+      </div>
+
+      <div id="licencia-detalles" class="rrhh-input-group">
+        <label class="rrhh-label">Vencimiento Licencia</label>
+        <div style="display:flex; gap:8px;">
+          <select id="ven-dia" class="rrhh-select" style="width:70px;"></select>
+          <select id="ven-mes" class="rrhh-select" style="width:90px;"></select>
+          <select id="ven-ano" class="rrhh-select" style="width:90px;"></select>
+        </div>
+      </div>
+
+      <div class="rrhh-input-group" style="display:flex; align-items:center; gap:10px;">
+        <label class="rrhh-label" style="margin:0;">Seguro</label>
+        <input id="tiene-seguro" type="checkbox" />
+        <input id="numero-seguro" class="rrhh-input" type="text" placeholder="Número de seguro" />
+      </div>
+
+      <div id="seguro-detalles" class="rrhh-input-group">
+        <!-- contenido extra si se necesita -->
+      </div>
+
+      <div class="rrhh-input-group" style="grid-column:1 / span 2;">
+        <label for="direccion" class="rrhh-label">Dirección</label>
+        <textarea id="direccion" class="rrhh-input" rows="2"></textarea>
+      </div>
+
+      <div class="rrhh-input-group" style="grid-column:1 / span 2;">
+        <label for="observaciones" class="rrhh-label">Observaciones</label>
+        <textarea id="observaciones" class="rrhh-input" rows="2"></textarea>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+:root {
+  --rrhh-azul-oscuro: #0f3d5f;
+  --rrhh-azul: #1f6feb;
+  --rrhh-turquesa: #1bb3a8;
+  --rrhh-gris-claro: #f4f6fb;
+  --rrhh-borde: #d9e2ec;
+  --rrhh-texto: #0f172a;
+}
+
+.formulario-rrhh {
+  background: linear-gradient(135deg, #ffffff 0%, #f7fbff 100%);
+  padding: 18px 18px 24px 18px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(15, 61, 95, 0.12);
+  color: var(--rrhh-texto);
+}
+
+.formulario-rrhh h2 {
+  color: var(--rrhh-azul-oscuro);
+  letter-spacing: 0.3px;
+  margin-bottom: 18px;
+}
+
+.rrhh-form { padding: 0 16px; }
+.rrhh-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.rrhh-row { display: flex; justify-content: space-between; gap: 12px; margin: 8px 0; }
+.rrhh-input-group { flex: 1; margin: 6px 0; display: flex; flex-direction: column; }
+.rrhh-label { display: block; font-size: 14px; font-weight: 700; color: var(--rrhh-azul-oscuro); margin-bottom: 6px; }
+.rrhh-label-small { display: block; font-size: 12px; font-weight: 600; color: var(--rrhh-azul-oscuro); margin-bottom: 4px; }
+.rrhh-input, .rrhh-select, textarea.rrhh-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--rrhh-borde);
+  border-radius: 10px;
+  font-size: 16px;
+  min-height: 44px;
+  box-sizing: border-box;
+  background: #fff;
+  color: var(--rrhh-texto);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.rrhh-input:focus, .rrhh-select:focus, textarea.rrhh-input:focus {
+  outline: none;
+  border-color: var(--rrhh-azul);
+  box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.12);
+}
+.rrhh-textarea { padding-top: 12px; resize: vertical; }
+.rrhh-readonly { background-color: #f2f4f7; color: #6b7280; }
+.rrhh-checkbox-row { margin: 14px 0; }
+.rrhh-checkbox-container { display: flex; align-items: center; font-size: 14px; color: #2d3748; cursor: pointer; }
+.rrhh-checkbox-container input { display: none; }
+.rrhh-checkmark { width: 20px; height: 20px; border: 2px solid var(--rrhh-azul); border-radius: 4px; background-color: var(--rrhh-azul); margin-right: 10px; display: flex; justify-content: center; align-items: center; color: white; }
+.rrhh-checkbox-container input:checked + .rrhh-checkmark::after { content: "✓"; font-size: 14px; }
+.rrhh-button-row { display: flex; justify-content: center; gap: 20px; margin-top: 24px; }
+.rrhh-button { padding: 12px 24px; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; color: white; cursor: pointer; min-width: 120px; box-shadow: 0 6px 12px rgba(15, 61, 95, 0.15); transition: transform 0.1s ease, box-shadow 0.1s ease; }
+.rrhh-button:hover { transform: translateY(-1px); box-shadow: 0 10px 18px rgba(15, 61, 95, 0.18); }
+.rrhh-button:active { transform: translateY(0); box-shadow: 0 6px 12px rgba(15, 61, 95, 0.15); }
+.rrhh-save { background: linear-gradient(135deg, var(--rrhh-azul) 0%, var(--rrhh-turquesa) 100%); }
+.rrhh-new { background-color: #6c757d; }
+.rrhh-photo-container {
+  width: 140px;
+  height: 180px;
+  background: linear-gradient(145deg, #eef4ff 0%, #e0f7f3 100%);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto;
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+  border: 1px solid var(--rrhh-borde);
+  box-shadow: inset 0 0 0 1px rgba(31, 111, 235, 0.05), 0 8px 18px rgba(15, 61, 95, 0.08);
+}
+.rrhh-photo-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.rrhh-photo-container:hover {
+  box-shadow: inset 0 0 0 1px rgba(27, 179, 168, 0.15), 0 10px 24px rgba(15, 61, 95, 0.12);
+}
+.rrhh-nav-btn {
+  background: linear-gradient(135deg, var(--rrhh-azul-oscuro), var(--rrhh-azul));
+  color: white;
+  border: none;
+  padding: 9px 16px;
+  border-radius: 10px;
+  box-shadow: 0 6px 12px rgba(15, 61, 95, 0.12);
+}
+.rrhh-select:disabled, .rrhh-input:disabled { background: #f5f7fb; color: #6b7280; }
+</style>
+
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../src/config/supabaseClient.js"></script>
+
+<script>
+const FOTO_DEFAULT_BASE64 = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjY2NjIiBzdHJva2Utd2lkdGg9IjIiPgogIDxwYXRoIGQ9Ik0yMCAyMXYtMmE0IDQgMCAwIDAtNC00SDhhNCA0IDAgMCAwLTQgNHYyIj48L3BhdGg+CiAgPGNpcmNsZSBjeD0iMTIiIGN5PSI3IiByPSI0Ij48L2NpcmNsZT4KPC9zdmc+';
+
+// =============================================================================
+// 🔹 FUNCIONES DE UTILIDAD
+// =============================================================================
+function llenarSelectsFechaModificar() {
+  const curr = new Date().getFullYear();
+  const selects = {
+    'nac-dia': { max: 31, start: 1, pad: true },
+    'nac-mes': { max: 12, start: 1, pad: true },
+    'nac-ano': { max: curr, start: curr - 100, pad: false, reverse: true },
+    'ing-dia': { max: 31, start: 1, pad: true },
+    'ing-mes': { max: 12, start: 1, pad: true },
+    'ing-ano': { max: curr, start: curr - 30, pad: false, reverse: true },
+    'ven-dia': { max: 31, start: 1, pad: true },
+    'ven-mes': { max: 12, start: 1, pad: true },
+    'ven-ano': { max: curr + 10, start: curr, pad: false, reverse: false }
+  };
+  for (const id in selects) {
+    const sel = document.getElementById(id);
+    if (sel) {
+      const config = selects[id];
+      let options = [];
+      for (let i = config.start; i <= config.max; i++) {
+        const val = config.pad ? i.toString().padStart(2, '0') : i.toString();
+        options.push(`<option value="${val}">${val}</option>`);
+      }
+      if (config.reverse) options.reverse();
+      sel.innerHTML = `<option value=""></option>` + options.join('');
+    }
+  }
+}
+
+function validarCedulaModificar(cedula) {
+  const clean = cedula.replace(/-/g, '').toUpperCase();
+  if (clean.length !== 14) return { valido: false, mensaje: 'Debe tener 14 caracteres.' };
+  if (!/^\d{13}[A-Z]$/.test(clean)) return { valido: false, mensaje: 'Formato inválido.' };
+  const birthPart = clean.substring(3, 9);
+  const dia = parseInt(birthPart.slice(0, 2), 10);
+  const mes = parseInt(birthPart.slice(2, 4), 10) - 1;
+  const yy = parseInt(birthPart.slice(4, 6), 10);
+  const now = new Date();
+  const currentYY = now.getFullYear() % 100;
+  const yyyy = yy <= currentYY ? 2000 + yy : 1900 + yy;
+  const fecha = new Date(yyyy, mes, dia);
+  const esValida = fecha.getFullYear() === yyyy && fecha.getMonth() === mes && fecha.getDate() === dia && dia >= 1 && dia <= 31 && mes >= 0 && mes <= 11;
+  if (!esValida) return { valido: false, mensaje: 'Fecha inválida.' };
+  return { valido: true, edad: now.getFullYear() - yyyy, fechaNac: { dia: birthPart.slice(0, 2), mes: birthPart.slice(2, 4), año: yyyy } };
+}
+
+function compressImage(file, maxWidth = 800, quality = 0.7) {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    img.onload = () => {
+      const scaleFactor = maxWidth / img.width;
+      const newWidth = maxWidth;
+      const newHeight = Math.round(img.height * scaleFactor);
+      canvas.width = newWidth;
+      canvas.height = newHeight;
+      ctx.drawImage(img, 0, 0, newWidth, newHeight);
+      canvas.toBlob(resolve, 'image/jpeg', quality);
+    };
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+function buildDateOrNull(idAno, idMes, idDia) {
+  const ano = document.getElementById(idAno)?.value;
+  const mes = document.getElementById(idMes)?.value;
+  const dia = document.getElementById(idDia)?.value;
+  if (!ano || !mes || !dia) return null;
+  return `${ano}-${mes}-${dia}`;
+}
+
+// =============================================================================
+// 🔹 CARGAR EMPLEADOS DESDE SUPABASE
+// =============================================================================
+let empleados = [];
+let indiceActual = 0;
+let modoEdicion = false;
+
+async function cargarEmpleadosDesdeSupabase() {
+  try {
+    const { data, error } = await supabaseClient
+      .from('empleados')
+      .select('*')
+      .order('nombres', { ascending: true });
+
+    if (error) throw error;
+    empleados = data || [];
+    renderSelectorEmpleados();
+  } catch (err) {
+    console.error('Error al cargar empleados:', err);
+    alert('❌ No se pudieron cargar los empleados desde Supabase.');
+  }
+}
+
+function renderSelectorEmpleados() {
+  const selector = document.getElementById('empleado-selector');
+  selector.innerHTML = '<option value="">Seleccione un empleado...</option>';
+  empleados.forEach(emp => {
+    const option = document.createElement('option');
+    option.value = emp.id;
+    option.textContent = `${emp.nombres} ${emp.apellidos}`;
+    selector.appendChild(option);
+  });
+}
+
+// =============================================================================
+// 🔹 CARGAR EMPLEADO (desde Supabase)
+// =============================================================================
+function cargarEmpleado(idx) {
+  if (idx < 0 || idx >= empleados.length) return;
+  
+  const emp = empleados[idx];
+  indiceActual = idx;
+
+  // Verifica que existan los campos esperados en el DOM antes de asignarles valores.
+  const requiredIds = [
+    'nombres','apellidos','identificacion','edad',
+    'nac-dia','nac-mes','nac-ano',
+    'telefono1','telefono2','email',
+    'puesto','estatus','fecha-ingreso-container','ing-dia','ing-mes','ing-ano',
+    'estado-civil','salario','tiene-licencia','categoria-licencia',
+    'tiene-seguro','numero-seguro','direccion','observaciones',
+    'licencia-detalles','ven-dia','ven-mes','ven-ano',
+    'seguro-detalles','btn-estatus-general','empleado-selector',
+    'btn-anterior','btn-siguiente','salario-label'
+  ];
+  const missing = requiredIds.filter(id => !document.getElementById(id));
+  if (missing.length) {
+    console.error('Faltan campos en el DOM para modificar empleado:', missing);
+    alert('⚠️ Faltan campos en el formulario (IDs: ' + missing.join(', ') + '). Agregue esos elementos al HTML para poder cargar el empleado.');
+    return;
+  }
+  
+  // Foto
+  const fotoPreview = document.getElementById('foto-preview-mod');
+  const fotoIcono = document.getElementById('foto-icono-mod');
+  if (emp.foto_url) {
+    fotoPreview.src = emp.foto_url;
+    fotoPreview.style.display = 'block';
+    fotoIcono.style.display = 'none';
+  } else {
+    fotoPreview.style.display = 'none';
+    fotoIcono.style.display = 'block';
+  }
+
+  // Llenar formulario
+  document.getElementById('nombres').value = emp.nombres || '';
+  document.getElementById('apellidos').value = emp.apellidos || '';
+  document.getElementById('identificacion').value = emp.identificacion || '';
+  document.getElementById('edad').value = emp.edad || '';
+  
+  // Fechas de nacimiento
+  if (emp.fecha_nacimiento) {
+    const fechaNac = new Date(emp.fecha_nacimiento);
+    document.getElementById('nac-dia').value = String(fechaNac.getDate()).padStart(2, '0');
+    document.getElementById('nac-mes').value = String(fechaNac.getMonth() + 1).padStart(2, '0');
+    document.getElementById('nac-ano').value = fechaNac.getFullYear();
+  }
+
+  // Contacto
+  document.getElementById('telefono1').value = emp.telefono1 || '';
+  document.getElementById('telefono2').value = emp.telefono2 || '';
+  document.getElementById('email').value = emp.email || '';
+
+  // Laboral
+  document.getElementById('puesto').value = emp.puesto || '';
+  document.getElementById('estatus').value = emp.estatus || 'Fijo';
+  
+  // Fecha de ingreso
+  const containerIngreso = document.getElementById('fecha-ingreso-container');
+  if (emp.estatus === 'Fijo' && emp.fecha_ingreso) {
+    const fechaIng = new Date(emp.fecha_ingreso);
+    containerIngreso.style.display = 'block';
+    document.getElementById('ing-dia').value = String(fechaIng.getDate()).padStart(2, '0');
+    document.getElementById('ing-mes').value = String(fechaIng.getMonth() + 1).padStart(2, '0');
+    document.getElementById('ing-ano').value = fechaIng.getFullYear();
+  } else {
+    containerIngreso.style.display = 'none';
+  }
+
+  // Otros campos
+  document.getElementById('estado-civil').value = emp.estado_civil || 'Soltero(a)';
+  document.getElementById('salario').value = emp.salario || '';
+  document.getElementById('tiene-licencia').checked = emp.tiene_licencia || false;
+  document.getElementById('categoria-licencia').value = emp.categoria_licencia || '';
+  document.getElementById('tiene-seguro').checked = emp.tiene_seguro || false;
+  document.getElementById('numero-seguro').value = emp.numero_seguro || '';
+  document.getElementById('direccion').value = emp.direccion || '';
+  document.getElementById('observaciones').value = emp.observaciones || '';
+
+  // Detalles de licencia
+  const licenciaDetalles = document.getElementById('licencia-detalles');
+  licenciaDetalles.style.display = (emp.tiene_licencia) ? 'block' : 'none';
+  if (emp.vencimiento_licencia) {
+    const fechaVen = new Date(emp.vencimiento_licencia);
+    document.getElementById('ven-dia').value = String(fechaVen.getDate()).padStart(2, '0');
+    document.getElementById('ven-mes').value = String(fechaVen.getMonth() + 1).padStart(2, '0');
+    document.getElementById('ven-ano').value = fechaVen.getFullYear();
+  }
+
+  // Detalles de seguro
+  const seguroDetalles = document.getElementById('seguro-detalles');
+  seguroDetalles.style.display = (emp.tiene_seguro) ? 'block' : 'none';
+
+  // Estatus general
+  const btnEstatusGeneral = document.getElementById('btn-estatus-general');
+  const estatusGeneral = emp.estatus_general || 'Activo';
+  if (estatusGeneral === 'Activo') {
+    btnEstatusGeneral.textContent = '✅ Activo';
+    btnEstatusGeneral.style.backgroundColor = '#28a745';
+  } else {
+    btnEstatusGeneral.textContent = '⛔ Inactivo';
+    btnEstatusGeneral.style.backgroundColor = '#6c757d';
+  }
+
+  // Actualizar selector
+  document.getElementById('empleado-selector').value = emp.id;
+
+  // Actualizar botones de navegación
+  document.getElementById('btn-anterior').disabled = idx === 0;
+  document.getElementById('btn-siguiente').disabled = idx === empleados.length - 1;
+  document.getElementById('btn-anterior').style.opacity = idx === 0 ? '0.4' : '1';
+  document.getElementById('btn-siguiente').style.opacity = idx === empleados.length - 1 ? '0.4' : '1';
+
+  // Actualizar etiqueta de salario
+  const salarioLabel = document.getElementById('salario-label');
+  salarioLabel.textContent = emp.estatus === 'Fijo' ? 'Salario Mensual' : 'Salario por Día de Evento';
+}
+
+// =============================================================================
+// 🔹 GUARDAR CAMBIOS EN SUPABASE
+// =============================================================================
+async function guardarCambiosEnSupabase() {
+  const emp = empleados[indiceActual];
+  if (!emp || !emp.id) {
+    alert('❌ No hay un empleado cargado para actualizar.');
+    return false;
+  }
+
+  // Subir foto si hay cambio
+  let fotoUrl = emp.foto_url;
+  const previewImg = document.getElementById('foto-preview-mod');
+  if (previewImg.src && previewImg.src.startsWith('data:image')) {
+    try {
+      const res = await fetch(previewImg.src);
+      const blob = await res.blob();
+      const file = new File([blob], 'foto.jpg', { type: 'image/jpeg' });
+      const compressedFile = await compressImage(file);
+      const fileName = `empleados-fotos/${emp.codigo_empleado || emp.id}.jpg`;
+
+      const { error: uploadError } = await supabaseClient
+        .storage
+        .from('empleados-fotos')
+        .upload(fileName, compressedFile, { upsert: true, contentType: 'image/jpeg' });
+
+      if (uploadError) throw uploadError;
+
+      const { data: publicData, error: publicUrlError } = supabaseClient
+        .storage
+        .from('empleados-fotos')
+        .getPublicUrl(fileName);
+
+      if (publicUrlError) throw publicUrlError;
+      fotoUrl = publicData?.publicUrl || null;
+    } catch (err) {
+      console.warn('No se pudo subir la foto:', err.message);
+      alert('⚠️ La foto no se pudo actualizar, pero los demás datos se guardarán.');
+    }
+  }
+
+  // Validaciones mínimas para columnas NOT NULL
+  const telefono1Val = document.getElementById('telefono1').value || emp.telefono1 || '';
+  const puestoVal = document.getElementById('puesto').value || emp.puesto || '';
+  const estatusVal = document.getElementById('estatus').value || emp.estatus || 'Fijo';
+
+  if (!telefono1Val.trim()) {
+    alert('❌ Teléfono 1 es obligatorio.');
+    return false;
+  }
+  if (!puestoVal.trim()) {
+    alert('❌ Puesto es obligatorio.');
+    return false;
+  }
+  if (!estatusVal.trim()) {
+    alert('❌ Estatus es obligatorio.');
+    return false;
+  }
+
+  // Preparar payload
+  const payload = {
+    nombres: document.getElementById('nombres').value.trim(),
+    apellidos: document.getElementById('apellidos').value.trim(),
+    identificacion: document.getElementById('identificacion').value.trim(),
+    edad: (() => {
+      const val = parseInt(document.getElementById('edad').value, 10);
+      return Number.isNaN(val) ? null : val;
+    })(),
+    telefono1: telefono1Val,
+    telefono2: document.getElementById('telefono2').value || null,
+    email: document.getElementById('email').value.trim() || null,
+    puesto: puestoVal,
+    estatus: estatusVal,
+    estado_civil: document.getElementById('estado-civil').value,
+    salario: (() => {
+      const raw = document.getElementById('salario').value;
+      const existing = emp.salario;
+      if (raw === '' || raw === null || typeof raw === 'undefined') return existing ?? 0;
+      const num = parseFloat(raw);
+      return Number.isNaN(num) ? existing ?? 0 : num;
+    })(),
+    tiene_licencia: document.getElementById('tiene-licencia').checked,
+    categoria_licencia: document.getElementById('categoria-licencia').value || null,
+    tiene_seguro: document.getElementById('tiene-seguro').checked,
+    numero_seguro: document.getElementById('numero-seguro').value || null,
+    direccion: document.getElementById('direccion').value.trim() || null,
+    observaciones: document.getElementById('observaciones').value.trim() || null,
+    foto_url: fotoUrl,
+    estatus_general: emp.estatus_general || 'Activo'
+  };
+
+  // Fechas
+  payload.fecha_nacimiento = buildDateOrNull('nac-ano', 'nac-mes', 'nac-dia');
+  
+  if (payload.estatus === 'Fijo') {
+    payload.fecha_ingreso = buildDateOrNull('ing-ano', 'ing-mes', 'ing-dia');
+  } else {
+    payload.fecha_ingreso = null;
+  }
+
+  if (payload.tiene_licencia) {
+    payload.vencimiento_licencia = buildDateOrNull('ven-ano', 'ven-mes', 'ven-dia');
+  } else {
+    payload.vencimiento_licencia = null;
+  }
+
+  // Actualizar en Supabase
+  const { error } = await supabaseClient
+    .from('empleados')
+    .update(payload)
+    .eq('id', emp.id);
+
+  if (error) {
+    console.error('Error al guardar:', error);
+    alert('❌ Error al guardar en Supabase: ' + error.message);
+    return false;
+  }
+
+  // Actualizar caché local
+  empleados[indiceActual] = { ...empleados[indiceActual], ...payload };
+  return true;
+}
+
+// =============================================================================
+// 🔹 EVENTOS Y LÓGICA PRINCIPAL
+// =============================================================================
+async function initModificarEmpleado() {
+  llenarSelectsFechaModificar();
+  await cargarEmpleadosDesdeSupabase();
+  
+  if (empleados.length > 0) {
+    cargarEmpleado(0);
+  }
+
+  // Eventos de navegación
+  document.getElementById('btn-anterior').addEventListener('click', () => {
+    if (indiceActual > 0) cargarEmpleado(indiceActual - 1);
+  });
+  
+  document.getElementById('btn-siguiente').addEventListener('click', () => {
+    if (indiceActual < empleados.length - 1) cargarEmpleado(indiceActual + 1);
+  });
+
+  document.getElementById('empleado-selector').addEventListener('change', (e) => {
+    const id = e.target.value;
+    const idx = empleados.findIndex(emp => emp.id === id);
+    if (idx !== -1) cargarEmpleado(idx);
+  });
+
+  // Click en foto (si no está en modo edición, se avisa)
+  const fotoContainer = document.getElementById('foto-container-mod');
+  const fotoInput = document.getElementById('foto-input-mod');
+  if (fotoContainer && fotoInput) {
+    fotoContainer.addEventListener('click', () => {
+      if (!modoEdicion) {
+        alert('Presione "Editar" para cambiar la foto.');
+        return;
+      }
+      fotoInput.click();
+    });
+  }
+
+  // Evento de edición
+  document.getElementById('btn-editar').addEventListener('click', async () => {
+    if (modoEdicion) {
+      const exito = await guardarCambiosEnSupabase();
+      if (exito) {
+        alert('✅ Empleado actualizado exitosamente.');
+        modoEdicion = false;
+        const inputs = document.querySelectorAll('#form-empleado input, #form-empleado select, #form-empleado textarea');
+        inputs.forEach(input => {
+          input.readOnly = true;
+          if (input.tagName === 'SELECT') input.disabled = true;
+          input.classList.add('rrhh-readonly');
+        });
+        document.getElementById('btn-editar').textContent = '✏️ Editar';
+        document.getElementById('btn-editar').style.backgroundColor = '#6c757d';
+        document.getElementById('empleado-selector').disabled = false;
+        document.getElementById('foto-input-mod').disabled = true;
+      }
+    } else {
+      const emp = empleados[indiceActual];
+      if (emp.estatus_general !== 'Activo') {
+        alert('No se puede editar un empleado inactivo. Por favor, actívelo primero.');
+        return;
+      }
+      modoEdicion = true;
+      const inputs = document.querySelectorAll('#form-empleado input, #form-empleado select, #form-empleado textarea');
+      inputs.forEach(input => {
+        input.readOnly = false;
+        if (input.tagName === 'SELECT') input.disabled = false;
+        input.classList.remove('rrhh-readonly');
+      });
+      document.getElementById('btn-editar').textContent = '✅ Guardar';
+      document.getElementById('btn-editar').style.backgroundColor = '#28a745';
+      document.getElementById('empleado-selector').disabled = true;
+      document.getElementById('foto-input-mod').disabled = false;
+    }
+  });
+
+  // Evento de estatus general
+  document.getElementById('btn-estatus-general').addEventListener('click', async () => {
+    const emp = empleados[indiceActual];
+    if (!emp) return;
+
+    let nuevoEstatus;
+    if (emp.estatus_general === 'Activo') {
+      if (confirm('¿Desea inhabilitar a este empleado?')) {
+        nuevoEstatus = 'Inactivo';
+      }
+    } else {
+      if (confirm('¿Desea reactivar a este empleado?')) {
+        nuevoEstatus = 'Activo';
+      }
+    }
+
+    if (nuevoEstatus) {
+      const { error } = await supabaseClient
+        .from('empleados')
+        .update({ estatus_general: nuevoEstatus })
+        .eq('id', emp.id);
+
+      if (error) {
+        alert('❌ Error al actualizar el estatus: ' + error.message);
+      } else {
+        emp.estatus_general = nuevoEstatus;
+        cargarEmpleado(indiceActual);
+        if (nuevoEstatus === 'Activo') {
+          alert('Empleado reactivado. Por favor, actualice su estatus (Fijo/Eventual) y, si aplica, la fecha de ingreso.');
+        }
+      }
+    }
+  });
+
+  // Evento de foto
+  document.getElementById('foto-input-mod').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        document.getElementById('foto-preview-mod').src = ev.target.result;
+        document.getElementById('foto-preview-mod').style.display = 'block';
+        document.getElementById('foto-icono-mod').style.display = 'none';
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  // Cedula -> edad y fecha nac
+  const identInput = document.getElementById('identificacion');
+  if (identInput) {
+    identInput.addEventListener('blur', function() {
+      const cedula = this.value.trim();
+      const edadInput = document.getElementById('edad');
+      const nacDia = document.getElementById('nac-dia');
+      const nacMes = document.getElementById('nac-mes');
+      const nacAno = document.getElementById('nac-ano');
+      if (!cedula) {
+        edadInput.value = '';
+        nacDia.value = nacMes.value = nacAno.value = '';
+        return;
+      }
+      const resultado = validarCedulaModificar(cedula);
+      if (resultado.valido) {
+        edadInput.value = resultado.edad.toString();
+        nacDia.value = resultado.fechaNac.dia;
+        nacMes.value = resultado.fechaNac.mes;
+        nacAno.value = resultado.fechaNac.año.toString();
+      } else {
+        alert('⚠️ ' + resultado.mensaje);
+        edadInput.value = 'Inválida';
+        nacDia.value = nacMes.value = nacAno.value = '';
+      }
+    });
+  }
+
+  // Estatus cambia fecha ingreso + etiqueta salario
+  const estatusSelect = document.getElementById('estatus');
+  const fechaIngresoContainer = document.getElementById('fecha-ingreso-container');
+  const salarioLabel = document.getElementById('salario-label');
+  function toggleFechaIngreso() {
+    if (!estatusSelect || !fechaIngresoContainer) return;
+    fechaIngresoContainer.style.display = estatusSelect.value === 'Fijo' ? 'block' : 'none';
+  }
+  function actualizarEtiquetaSalario() {
+    if (!estatusSelect || !salarioLabel) return;
+    salarioLabel.textContent = estatusSelect.value === 'Fijo' ? 'Salario Mensual' : 'Salario por Día de Evento';
+  }
+  if (estatusSelect) {
+    estatusSelect.addEventListener('change', () => {
+      toggleFechaIngreso();
+      actualizarEtiquetaSalario();
+    });
+    toggleFechaIngreso();
+    actualizarEtiquetaSalario();
+  }
+
+  // Licencia y seguro toggle
+  const tieneLicencia = document.getElementById('tiene-licencia');
+  const licenciaDetalles = document.getElementById('licencia-detalles');
+  if (tieneLicencia && licenciaDetalles) {
+    tieneLicencia.addEventListener('change', () => {
+      licenciaDetalles.style.display = tieneLicencia.checked ? 'block' : 'none';
+    });
+  }
+  const tieneSeguro = document.getElementById('tiene-seguro');
+  const seguroDetalles = document.getElementById('seguro-detalles');
+  if (tieneSeguro && seguroDetalles) {
+    tieneSeguro.addEventListener('change', () => {
+      seguroDetalles.style.display = tieneSeguro.checked ? 'block' : 'none';
+    });
+  }
+}
+
+// Iniciar
+initModificarEmpleado();
+</script>

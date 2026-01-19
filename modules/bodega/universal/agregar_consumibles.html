@@ -1,0 +1,534 @@
+﻿<!-- desktop/modules/bodega/universal/agregar_consumibles.html -->
+<div style="display:flex; gap:16px; height:100%;">
+
+  <div style="width: 320px; background: rgba(20, 30, 60, 0.45); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; padding: 12px; overflow:auto;">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px;">
+      <div style="font-weight:800; color:#cbd5e1;">Bodegas</div>
+      <div style="color:#94a3b8; font-size:12px;">Modo: Consumibles</div>
+    </div>
+    <div style="margin-bottom:10px; color:#94a3b8; font-size:12px; line-height:1.35;">Flujo: 1) Principal  2) Secundaria  3) Contenedor (opcional)  4) Formulario.</div>
+    <div style="border-top:1px solid rgba(148,163,184,0.15); padding-top:10px;">
+      <div style="font-weight:700; color:#cbd5e1;">Principal</div>
+      <input id="principal-nombre" class="audiovisual-input" placeholder="Nombre principal (ej: Bodega Consumibles)" />
+    </div>
+    <div style="border-top:1px solid rgba(148,163,184,0.15); padding-top:10px; margin-top:10px;">
+      <div style="font-weight:700; color:#cbd5e1;">Secundaria</div>
+      <input id="secundaria-nombre" class="audiovisual-input" placeholder="Nombre secundaria (ej: Pinturas)" />
+    </div>
+    <div style="border-top:1px solid rgba(148,163,184,0.15); padding-top:10px; margin-top:10px;">
+      <div style="font-weight:700; color:#cbd5e1;">Contenedor / Ubicación</div>
+      <input id="contenedor-nombre" class="audiovisual-input" placeholder="Ej: Estante 01 / Caja A" />
+      <select id="contenedor-tipo" class="audiovisual-input">
+        <option value="">(sin contenedor)</option>
+        <option value="Caja">Caja</option>
+        <option value="Estante">Estante</option>
+        <option value="Gabeta">Gabeta</option>
+        <option value="Rack">Rack</option>
+        <option value="Otro">Otro</option>
+      </select>
+    </div>
+  </div>
+
+  <div style="flex:1; min-width: 420px; overflow:auto;">
+    <div class="bodega-encabezado" style="margin-bottom: 12px;">
+      <h1 id="ua-titulo" class="bodega-titulo" style="margin:0;">+ Agregar Material (Consumibles)</h1>
+      <p id="ua-subtitulo" class="bodega-subtitulo" style="margin:6px 0 0 0;">Solo se guarda en catálogo.</p>
+    </div>
+
+    <div id="estado-seleccion" style="margin-bottom: 12px; color:#cbd5e1; display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
+      <div style="padding-top:2px;"><strong>Selección:</strong> <span id="sel-resumen">(pendiente)</span></div>
+      <div id="sel-codigo-host" style="display:none;"></div>
+    </div>
+
+    <form id="form-universal" style="display:flex; flex-direction:column; gap:14px; max-width: 860px;">
+      <div style="background: rgba(15,23,42,0.22); border: 1px solid rgba(148,163,184,0.15); border-radius: 10px; padding: 10px;">
+        <div style="font-weight:800; color:#cbd5e1; margin-bottom:6px;">Tipo de alta</div>
+        <div style="display:flex; gap:14px; align-items:center; color:#cbd5e1;">
+          <label style="display:inline-flex; gap:8px; align-items:center;"><input type="radio" name="ua-tipo-alta" value="MATERIAL" checked /> Material</label>
+          <label style="display:inline-flex; gap:8px; align-items:center;"><input type="radio" name="ua-tipo-alta" value="CONTENEDOR" /> Contenedor</label>
+          <label id="ua-tipo-case-wrap" style="display:inline-flex; gap:8px; align-items:center;"><input type="radio" name="ua-tipo-alta" value="CASE" /> Case</label>
+        </div>
+      </div>
+
+      <div id="ua-grupo-nombre-numero-contenedor" style="display:none;">
+        <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Identificación del contenedor</label>
+        <div style="display:flex; gap:10px;">
+          <select id="cont-tipo" class="audiovisual-input" style="width: 180px;">
+            <option value="Caja">Caja</option>
+            <option value="Estante">Estante</option>
+            <option value="Gabeta">Gabeta</option>
+            <option value="Rack">Rack</option>
+            <option value="Otro">Otro</option>
+          </select>
+          <input id="cont-nombre-base" class="audiovisual-input" placeholder="Nombre (Caja / Estante)" style="flex:1;" />
+          <input id="cont-numero" class="audiovisual-input" placeholder="Número (01, 02)" style="width: 120px;" />
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px;">
+        <div style="flex:1;">
+          <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Nombre del Producto</label>
+          <input id="nombre-producto" class="audiovisual-input" placeholder="Ej: Cinta Gaffer" required />
+        </div>
+        <div style="width: 220px;">
+          <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Abreviación (código)</label>
+          <input id="nombre-abrev" class="audiovisual-input" placeholder="Ej: CNTA" maxlength="8" />
+          <div style="margin-top:6px; color:#94a3b8; font-size:12px;">Si queda vacío, se genera automática.</div>
+        </div>
+        <div id="ua-codigo-host" style="width: 220px;">
+          <div id="ua-codigo-group">
+            <label style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; font-weight:700; color:#cbd5e1;">
+              <span>Código</span>
+              <button type="button" id="btn-config-codigo" class="bodega-export-pdf-btn" style="padding:6px 10px;">Refrescar</button>
+            </label>
+            <input id="codigo-material" class="audiovisual-input" value="Se genera al guardar" readonly style="background:#11182755; color:#94a3b8;" />
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Foto (opcional)</label>
+        <div style="display:flex; align-items:flex-start; gap:12px;">
+          <div id="photo-preview" style="width: 110px; height: 110px; border: 2px dashed rgba(148,163,184,0.35); border-radius: 10px; display:flex; align-items:center; justify-content:center; color:#94a3b8; font-size: 14px; background: rgba(15, 23, 42, 0.35);">Sin foto</div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <button type="button" id="select-photo-btn" class="audiovisual-boton audiovisual-new" style="padding: 8px 14px;">Seleccionar Foto</button>
+            <input type="file" id="photo-input" accept="image/*" style="display:none;" />
+            <small style="color:#94a3b8;">Se sube a Supabase Storage si está configurado.</small>
+          </div>
+        </div>
+      </div>
+
+      <div id="ua-grupo-tipo" style="display:flex; gap:10px;">
+        <div style="flex:1;">
+          <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Tipo de Uso</label>
+          <input id="tipo-uso" class="audiovisual-input" placeholder="Ej: Consumo / Servicio" />
+        </div>
+        <div style="flex:1;">
+          <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Tipo de Material</label>
+          <input id="tipo-material" class="audiovisual-input" placeholder="Ej: Adhesivo / Pintura" />
+        </div>
+      </div>
+
+      <div>
+        <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Color</label>
+        <div id="paleta-colores" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+        <input type="hidden" id="color-seleccionado" />
+      </div>
+
+      <div id="ua-grupo-unidad">
+        <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Unidad de medida</label>
+        <div style="display:flex; gap:12px; align-items:center; color:#cbd5e1;">
+          <label style="display:inline-flex; gap:6px; align-items:center;"><input type="radio" name="unidad" value="UND" checked /> Unidad</label>
+          <label style="display:inline-flex; gap:6px; align-items:center;"><input type="radio" name="unidad" value="PAR" /> Par</label>
+          <label style="display:inline-flex; gap:6px; align-items:center;"><input type="radio" name="unidad" value="CAJ" /> Caja</label>
+          <label style="display:inline-flex; gap:6px; align-items:center;"><input type="radio" name="unidad" value="SIN" /> Sin medida</label>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px;">
+        <div style="flex:1;">
+          <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Cantidad por unidad</label>
+          <input type="number" id="cantidad-unidad" class="audiovisual-input" step="0.01" />
+        </div>
+        <div style="flex:1;">
+          <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Precio unitario</label>
+          <input type="number" id="precio" class="audiovisual-input" step="0.01" />
+        </div>
+      </div>
+
+      <div id="ua-grupo-hechizo">
+        <label style="display:inline-flex; gap:8px; align-items:center; color:#cbd5e1;"><input type="checkbox" id="producto-hechizo" /> Producto Hechizo</label>
+      </div>
+
+      <div id="grupo-marca-modelo" style="display:flex; gap:10px;">
+        <input id="marca" class="audiovisual-input" placeholder="Marca" />
+        <input id="modelo" class="audiovisual-input" placeholder="Modelo" />
+      </div>
+
+      <div id="ua-grupo-campos" style="border-top: 1px solid rgba(148,163,184,0.15); padding-top: 10px;">
+        <div style="font-weight:800; color:#cbd5e1; margin-bottom:6px;">Campos extra</div>
+        <div id="campos-template" style="display:flex; flex-direction:column; gap:8px; margin-bottom:8px;"></div>
+        <div style="display:flex; gap:8px;">
+          <select id="nuevo-campo-tipo">
+            <option value="text">Texto</option>
+            <option value="number">Número</option>
+            <option value="textarea">Área de texto</option>
+            <option value="date">Fecha</option>
+          </select>
+          <input id="nuevo-campo-nombre" placeholder="Nombre del campo" style="flex:1;" />
+          <button type="button" id="btn-agregar-campo" class="audiovisual-boton audiovisual-new">+ Campo</button>
+        </div>
+      </div>
+
+      <div>
+        <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Notas</label>
+        <textarea id="notas" rows="3" class="audiovisual-input" placeholder="Notas u observaciones"></textarea>
+      </div>
+
+      <button id="ua-btn-submit" type="submit" class="audiovisual-boton audiovisual-save" style="align-self:flex-start; padding: 12px 18px;">Guardar en catálogo</button>
+    </form>
+  </div>
+</div>
+
+<script>
+(function() {
+  const formEl = document.getElementById('form-universal');
+  if (!formEl || formEl.dataset.init === '1') return;
+  formEl.dataset.init = '1';
+
+  const supa = window.supabaseClient;
+  if (!supa) {
+    const resumen = document.getElementById('sel-resumen');
+    if (resumen) resumen.textContent = 'Supabase no inicializado';
+    return;
+  }
+
+  const STORAGE_BUCKET = 'materiales-fotos';
+  const TABLE_CATALOGO = 'catalogo_consumibles';
+
+  const state = { altaTipo: 'MATERIAL', camposExtra: [], color: null, fotoFile: null, fotoObjectUrl: null };
+  const palette = ['#f97316','#0ea5e9','#8b5cf6','#22c55e','#eab308','#ef4444','#94a3b8','#0f172a'];
+
+  renderPaleta();
+  bindInputs();
+  applyAltaTipoUI();
+  updateResumen();
+
+  function bindInputs() {
+    document.querySelectorAll('input[name="ua-tipo-alta"]').forEach(r => r.addEventListener('change', () => { state.altaTipo = r.value; applyAltaTipoUI(); updateCodigoPreview(); }));
+    ['principal-nombre','secundaria-nombre','contenedor-nombre','contenedor-tipo','nombre-producto','nombre-abrev'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', () => { updateResumen(); updateCodigoPreview(); });
+      if (el && el.tagName === 'SELECT') el.addEventListener('change', () => { updateResumen(); updateCodigoPreview(); });
+    });
+    const cfg = document.getElementById('btn-config-codigo');
+    if (cfg) cfg.addEventListener('click', updateCodigoPreview);
+    const addCampo = document.getElementById('btn-agregar-campo');
+    if (addCampo) addCampo.addEventListener('click', addCampoExtra);
+    const photoBtn = document.getElementById('select-photo-btn');
+    const photoInput = document.getElementById('photo-input');
+    if (photoBtn && photoInput) {
+      photoBtn.addEventListener('click', () => photoInput.click());
+      photoInput.addEventListener('change', () => {
+        const f = photoInput.files?.[0];
+        state.fotoFile = f || null;
+        if (state.fotoObjectUrl) {
+          try { URL.revokeObjectURL(state.fotoObjectUrl); } catch (_) {}
+          state.fotoObjectUrl = null;
+        }
+        if (f) {
+          state.fotoObjectUrl = URL.createObjectURL(f);
+          setPhotoPreview(state.fotoObjectUrl);
+        } else {
+          setPhotoPreview(null);
+        }
+      });
+    }
+    formEl.addEventListener('submit', onSubmit);
+  }
+
+  function setPhotoPreview(url) {
+    const preview = document.getElementById('photo-preview');
+    if (!preview) return;
+    preview.style.backgroundSize = 'cover';
+    preview.style.backgroundPosition = 'center';
+    preview.style.backgroundRepeat = 'no-repeat';
+    if (url) {
+      preview.style.backgroundImage = `url("${String(url).replace(/\"/g, '')}")`;
+      preview.textContent = '';
+    } else {
+      preview.style.backgroundImage = '';
+      preview.textContent = 'Sin foto';
+    }
+  }
+
+  async function compressImageFile(file, opts = {}) {
+    if (!file) return null;
+    const type = String(file.type || '');
+    if (!type.startsWith('image/')) {
+      return { blob: file, contentType: type || 'application/octet-stream', ext: (String(file.name || 'bin').split('.').pop() || 'bin') };
+    }
+
+    const maxDim = Number.isFinite(opts.maxDim) ? opts.maxDim : 1600;
+    const quality = Number.isFinite(opts.quality) ? opts.quality : 0.82;
+    if (file.size && file.size < 250 * 1024) {
+      return { blob: file, contentType: type, ext: (String(file.name || 'jpg').split('.').pop() || 'jpg') };
+    }
+
+    try {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      await new Promise((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error('No se pudo cargar la imagen para comprimir'));
+        img.src = url;
+      });
+      try { URL.revokeObjectURL(url); } catch (_) {}
+
+      const w = img.naturalWidth || img.width;
+      const h = img.naturalHeight || img.height;
+      if (!w || !h) throw new Error('Dimensiones inválidas');
+
+      const scale = Math.min(1, maxDim / Math.max(w, h));
+      const tw = Math.max(1, Math.round(w * scale));
+      const th = Math.max(1, Math.round(h * scale));
+
+      const canvas = document.createElement('canvas');
+      canvas.width = tw;
+      canvas.height = th;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Canvas no disponible');
+      ctx.drawImage(img, 0, 0, tw, th);
+
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
+      if (!blob) throw new Error('toBlob devolvió null');
+      return { blob, contentType: 'image/jpeg', ext: 'jpg' };
+    } catch (e) {
+      console.warn('Compresión falló, subo original', e);
+      return { blob: file, contentType: type || 'application/octet-stream', ext: (String(file.name || 'bin').split('.').pop() || 'bin') };
+    }
+  }
+
+  function renderPaleta() {
+    const host = document.getElementById('paleta-colores');
+    if (!host) return;
+    host.innerHTML = '';
+    palette.forEach(hex => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.style.width = '26px';
+      btn.style.height = '26px';
+      btn.style.borderRadius = '6px';
+      btn.style.border = '2px solid rgba(255,255,255,0.1)';
+      btn.style.background = hex;
+      btn.addEventListener('click', () => {
+        state.color = hex;
+        const hidden = document.getElementById('color-seleccionado');
+        if (hidden) hidden.value = hex;
+      });
+      host.appendChild(btn);
+    });
+  }
+
+  function addCampoExtra() {
+    const nombre = document.getElementById('nuevo-campo-nombre').value.trim();
+    const tipo = document.getElementById('nuevo-campo-tipo').value;
+    if (!nombre) { alert('Define el nombre del campo extra'); return; }
+    state.camposExtra.push({ nombre, tipo });
+    document.getElementById('nuevo-campo-nombre').value = '';
+    renderCamposExtra();
+  }
+
+  function renderCamposExtra() {
+    const host = document.getElementById('campos-template');
+    host.innerHTML = '';
+    state.camposExtra.forEach((c, idx) => {
+      const row = document.createElement('div');
+      row.style.display = 'flex';
+      row.style.gap = '6px';
+      const input = document.createElement(c.tipo === 'textarea' ? 'textarea' : 'input');
+      input.dataset.campoIdx = idx;
+      input.placeholder = c.nombre;
+      input.className = 'audiovisual-input';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = 'Quitar';
+      btn.className = 'bodega-export-pdf-btn';
+      btn.style.padding = '6px 10px';
+      btn.addEventListener('click', () => { state.camposExtra.splice(idx, 1); renderCamposExtra(); });
+      row.appendChild(input);
+      row.appendChild(btn);
+      host.appendChild(row);
+    });
+  }
+
+  function applyAltaTipoUI() {
+    const tipo = state.altaTipo;
+    const grupoCont = document.getElementById('ua-grupo-nombre-numero-contenedor');
+    const grupoUnidad = document.getElementById('ua-grupo-unidad');
+    const grupoDim = document.getElementById('grupo-dimensiones');
+    if (tipo === 'CONTENEDOR' || tipo === 'CASE') {
+      if (grupoCont) grupoCont.style.display = '';
+      if (grupoUnidad) grupoUnidad.style.display = 'none';
+      if (grupoDim) grupoDim.style.display = 'none';
+    } else {
+      if (grupoCont) grupoCont.style.display = 'none';
+      if (grupoUnidad) grupoUnidad.style.display = '';
+      if (grupoDim) grupoDim.style.display = '';
+    }
+    updateResumen();
+  }
+
+  function updateResumen() {
+    const p = document.getElementById('principal-nombre').value.trim() || '(principal)';
+    const s = document.getElementById('secundaria-nombre').value.trim() || '(secundaria)';
+    const c = document.getElementById('contenedor-nombre').value.trim();
+    const tipo = state.altaTipo;
+    const span = document.getElementById('sel-resumen');
+    const cont = c ? ` > Cont: ${c}` : '';
+    if (span) span.textContent = `P: ${p} > S: ${s}${cont} [${tipo}]`;
+  }
+
+  function abrev(txt) {
+    return (txt || '').toString().trim().toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,4) || 'GEN';
+  }
+
+  async function updateCodigoPreview() {
+    const principal = document.getElementById('principal-nombre').value;
+    const secundaria = document.getElementById('secundaria-nombre').value;
+    const tipo = state.altaTipo;
+    const abre = document.getElementById('nombre-abrev').value.trim() || abrev(document.getElementById('nombre-producto').value);
+    const prefix = `${abrev(principal)}-${abrev(secundaria)}-${tipo === 'MATERIAL' ? 'MAT' : tipo === 'CONTENEDOR' ? 'CON' : 'CAS'}-${abre}`;
+    const next = await obtenerSiguienteConsecutivo(prefix);
+    const code = `${prefix}-${next}`;
+    const input = document.getElementById('codigo-material');
+    if (input) input.value = code;
+    return code;
+  }
+
+  async function obtenerSiguienteConsecutivo(prefix) {
+    try {
+      const { data, error } = await supa
+        .from(TABLE_CATALOGO)
+        .select('codigo')
+        .ilike('codigo', `${prefix}-%`)
+        .order('codigo', { ascending: false })
+        .limit(1);
+      if (error) throw error;
+      if (!data || !data.length) return '000001';
+      const last = data[0].codigo || '';
+      const parts = last.split('-');
+      const numStr = parts[parts.length - 1];
+      const num = parseInt(numStr, 10);
+      if (isNaN(num)) return '000001';
+      return String(num + 1).padStart(6, '0');
+    } catch (e) {
+      console.warn('No pude calcular consecutivo, uso 000001', e);
+      return '000001';
+    }
+  }
+
+  async function uploadFotoIfNeeded() {
+    if (!state.fotoFile) return null;
+    try {
+      const compressed = await compressImageFile(state.fotoFile);
+      if (!compressed) return null;
+      const ext = compressed.ext || 'jpg';
+      const path = `consumibles/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error } = await supa.storage.from(STORAGE_BUCKET).upload(path, compressed.blob, { upsert: true, contentType: compressed.contentType });
+      if (error) throw error;
+      const { data } = supa.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+      return data?.publicUrl || null;
+    } catch (e) {
+      console.warn('No se pudo subir la foto, continuo sin foto', e);
+      return null;
+    }
+  }
+
+  function numVal(id) {
+    const v = document.getElementById(id).value;
+    const n = parseFloat(v);
+    return isNaN(n) ? null : n;
+  }
+
+  function collectCamposExtra() {
+    const values = [];
+    document.querySelectorAll('#campos-template [data-campo-idx]').forEach(el => {
+      const idx = parseInt(el.dataset.campoIdx, 10);
+      const cfg = state.camposExtra[idx];
+      if (cfg) values.push({ nombre: cfg.nombre, tipo: cfg.tipo, valor: el.value });
+    });
+    return values.length ? values : null;
+  }
+
+  async function insertConFallback(table, payload) {
+    const stripUndefined = (obj) => {
+      const out = {};
+      Object.keys(obj || {}).forEach(k => {
+        const v = obj[k];
+        if (v !== undefined) out[k] = v;
+      });
+      return out;
+    };
+
+    let attempt = stripUndefined({ ...payload });
+    while (true) {
+      const { error } = await supa.from(table).insert([attempt]);
+      if (!error) return { ok: true };
+      if (error.code === '42703') {
+        const col = (error.details || '').match(/column "?(.*?)"?/i)?.[1];
+        if (col && col in attempt) { delete attempt[col]; continue; }
+      }
+      if (error.code === '22P02') {
+        const col = (error.details || '').match(/column "?(.*?)"?/i)?.[1];
+        if (col && col in attempt) { delete attempt[col]; continue; }
+      }
+      return { ok: false, error: error.message || JSON.stringify(error) };
+    }
+  }
+
+  async function onSubmit(ev) {
+    ev.preventDefault();
+    const codigo = await updateCodigoPreview();
+    const nombre = document.getElementById('nombre-producto').value.trim();
+    const bodega_principal = document.getElementById('principal-nombre').value.trim() || null;
+    const bodega_secundaria = document.getElementById('secundaria-nombre').value.trim() || null;
+    const unidad_medida = document.querySelector('input[name="unidad"]:checked')?.value || null;
+    const es_contenedor = state.altaTipo === 'CONTENEDOR' || state.altaTipo === 'CASE';
+
+    const campos = {
+      tipo_alta: state.altaTipo,
+      contenedor: document.getElementById('contenedor-nombre').value.trim() || null,
+      contenedor_tipo: document.getElementById('contenedor-tipo').value || null,
+      abreviacion: document.getElementById('nombre-abrev').value.trim() || null,
+      cantidad_unidad: numVal('cantidad-unidad'),
+      precio_unitario: numVal('precio'),
+      notas: document.getElementById('notas').value.trim() || null,
+      extras: collectCamposExtra()
+    };
+
+    // Insert compatible con el schema mínimo de catalogo_consumibles.
+    const payload = {
+      codigo,
+      nombre,
+      bodega_principal,
+      bodega_secundaria,
+      tipo_uso: document.getElementById('tipo-uso').value.trim() || null,
+      tipo_material: document.getElementById('tipo-material').value.trim() || null,
+      unidad_medida: es_contenedor ? null : unidad_medida,
+      color: state.color || null,
+      es_hechizo: !!document.getElementById('producto-hechizo').checked,
+      marca: document.getElementById('marca').value.trim() || null,
+      modelo: document.getElementById('modelo').value.trim() || null,
+      campos_personalizados: campos,
+      es_contenedor
+    };
+
+    const fotoUrl = await uploadFotoIfNeeded();
+    if (fotoUrl) payload.foto_url = fotoUrl;
+
+    const res = await insertConFallback(TABLE_CATALOGO, payload);
+    if (res.ok) {
+      alert(`Guardado en catálogo: ${codigo}`);
+      formEl.reset();
+      state.camposExtra = [];
+      state.color = null;
+      state.fotoFile = null;
+      renderCamposExtra();
+      updateResumen();
+      const preview = document.getElementById('photo-preview');
+      if (preview) preview.textContent = 'Sin foto';
+      document.getElementById('codigo-material').value = 'Se genera al guardar';
+    } else {
+      alert('Error al guardar: ' + res.error);
+    }
+  }
+
+})();
+</script>
+
+
+
+
+
+

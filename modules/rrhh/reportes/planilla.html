@@ -1,0 +1,559 @@
+<div class="rrhh-contenedor">
+  <h2 style="color: #1a365d; margin-bottom: 20px; font-size: 22px;">📄 Planilla por Período (Individual)</h2>
+
+  <div class="rrhh-form" style="margin-bottom: 24px;">
+    <div class="rrhh-row" style="gap: 16px;">
+      <div class="rrhh-input-group" style="flex: 2;">
+        <label class="rrhh-label">Período</label>
+        <select class="rrhh-select" id="selector-periodo">
+          <option value="1-15">1 al 15 de diciembre de 2025</option>
+          <option value="16-31">16 al 31 de diciembre de 2025</option>
+        </select>
+      </div>
+      <div class="rrhh-input-group" style="flex: 3;">
+        <label class="rrhh-label">Empleado</label>
+        <select class="rrhh-select" id="selector-empleado" disabled>
+          <option value="">Seleccione un empleado</option>
+        </select>
+      </div>
+      <div class="rrhh-input-group" style="display: flex; align-items: end;">
+        <button id="btn-generar" class="rrhh-button" style="background-color: #2b6cb0; min-width: 120px;">Ver Planilla</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="contenedor-planilla" style="display: none; margin-top: 20px;">
+    <div id="encabezado-empleado" style="border: 1px solid #ccc; padding: 16px; background-color: #f9f9f9; border-radius: 8px; margin-bottom: 20px;">
+      <h3 style="margin: 0 0 12px 0; color: #1a365d;">Empleado: <span id="nom-emp"></span></h3>
+      <div class="rrhh-row" style="gap: 20px; flex-wrap: wrap;">
+        <div><strong>Cédula:</strong> <span id="ced-emp"></span></div>
+        <div><strong>Puesto:</strong> <span id="pue-emp"></span></div>
+        <div><strong>Estatus:</strong> <span id="est-emp"></span></div>
+        <div><strong>Salario:</strong> <span id="sal-emp"></span></div>
+      </div>
+    </div>
+
+    <div class="rrhh-tabla-contenedor">
+      <table class="rrhh-tabla" id="tabla-dias">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Día</th>
+            <th>Estado</th>
+            <th>Tipo</th>
+            <th>Lugar</th>
+            <th>Justificación</th>
+            <th>Monto</th>
+          </tr>
+        </thead>
+        <tbody id="cuerpo-dias">
+        </tbody>
+      </table>
+    </div>
+
+    <div style="margin-top: 24px; padding: 16px; background-color: #f0f7ff; border-radius: 8px; max-width: 500px;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+        <span>Días trabajados:</span>
+        <strong id="dias-trab">0</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+        <span>Subtotal:</span>
+        <strong id="subtotal">C$ 0.00</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+        <span>Deducciones por inasistencia:</span>
+        <strong id="deduccion-inasistencia">C$ 0.00</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+        <span>Otras deducciones:</span>
+        <strong>C$ 0.00</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 18px; margin-top: 12px; padding-top: 12px; border-top: 2px solid #2b6cb0;">
+        <span>Total a pagar:</span>
+        <span id="total-pagar">C$ 0.00</span>
+      </div>
+    </div>
+
+    <div style="text-align: right; margin-top: 20px;">
+      <button id="btn-exportar" class="rrhh-button" style="background-color: #28a745;">📄 Exportar a PDF</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.rrhh-contenedor { padding: 20px; }
+.rrhh-row { display: flex; gap: 16px; margin-bottom: 12px; }
+.rrhh-input-group { flex: 1; }
+.rrhh-label { display: block; font-size: 14px; font-weight: 600; color: #1a365d; margin-bottom: 4px; }
+.rrhh-select, .rrhh-button { width: 100%; padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 6px; }
+.rrhh-button { background-color: #2b6cb0; color: white; cursor: pointer; border: none; }
+.rrhh-tabla-contenedor { overflow-x: auto; margin: 20px 0; }
+.rrhh-tabla { width: 100%; border-collapse: collapse; min-width: 800px; }
+.rrhh-tabla th, .rrhh-tabla td { padding: 8px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 13px; }
+.rrhh-tabla th { background-color: #f0f4ff; color: #1a365d; font-weight: 600; }
+</style>
+
+<script>
+// === FUNCIÓN: EXTRAER DEPARTAMENTO DE NICARAGUA ===
+function extraerDepartamento(justificacion) {
+  const texto = justificacion.toLowerCase();
+  if (texto.includes("managua") || texto.includes("metrocentro") || texto.includes("carretera a masaya")) return "Managua";
+  if (texto.includes("león") || texto.includes("feria de león")) return "León";
+  if (texto.includes("granada") || texto.includes("xolotlán") || texto.includes("zapatera")) return "Granada";
+  if (texto.includes("matagalpa") || texto.includes("selva negra")) return "Matagalpa";
+  if (texto.includes("estelí") || texto.includes("somoto")) return "Estelí";
+  if (texto.includes("chinandega") || texto.includes("coatape")) return "Chinandega";
+  if (texto.includes("rivas") || texto.includes("san juan del sur") || texto.includes("ometepe")) return "Rivas";
+  if (texto.includes("masaya") || texto.includes("volcán masaya")) return "Masaya";
+  if (texto.includes("jinotega") || texto.includes("café jinotega")) return "Jinotega";
+  if (texto.includes("boaco")) return "Boaco";
+  if (texto.includes("carazo") || texto.includes("diriamba")) return "Carazo";
+  if (texto.includes("nueva segovia") || texto.includes("ocotal")) return "Nueva Segovia";
+  if (texto.includes("madriz") && texto.includes("somoto")) return "Madriz";
+  if (texto.includes("atlántico norte") || texto.includes("puerto cabezas")) return "Atlántico Norte";
+  if (texto.includes("atlántico sur") || texto.includes("bluefields")) return "Atlántico Sur";
+  if (texto.includes("río san juan") || texto.includes("san carlos")) return "Río San Juan";
+  return "Managua";
+}
+
+const EMPLEADOS = [
+  {
+    id: "001",
+    nombre: "Carlos Martínez",
+    cedula: "001-010190-1234M",
+    puesto: "Técnico Audiovisual",
+    estatus: "Fijo",
+    salario: "15000",
+    estatus_general: "Activo"
+  },
+  {
+    id: "002",
+    nombre: "Ana López",
+    cedula: "002-150595-5678F",
+    puesto: "Ayudante",
+    estatus: "Eventual",
+    salario: "500",
+    estatus_general: "Activo"
+  }
+];
+
+const VERIFICACIONES = {
+  "2025-12-01": { "001": { estado: "presente", tipo_trabajo: "evento", justificacion: "Concierto Bronco Día 1 en León" }, "002": { estado: "presente", tipo_trabajo: "evento", justificacion: "Montaje escenario en Granada" } },
+  "2025-12-02": { "001": { estado: "presente", tipo_trabajo: "evento", justificacion: "Concierto Bronco Día 2 en León" }, "002": { estado: "ausente" } },
+  "2025-12-03": { "001": { estado: "permiso", trabajo_medio_dia: true, tipo_trabajo: "bodega", justificacion: "Cita médica en Managua" }, "002": { estado: "permiso", trabajo_medio_dia: true, tipo_trabajo: "bodega", justificacion: "Emergencia familiar en Managua" } },
+  "2025-12-04": { "001": { estado: "ausente" }, "002": { estado: "presente", tipo_trabajo: "bodega", justificacion: "Organización bodega en Managua" } },
+  "2025-12-05": { "001": { estado: "presente", tipo_trabajo: "bodega", justificacion: "Apoyo logística en Managua" }, "002": { estado: "presente", tipo_trabajo: "evento", justificacion: "Evento privado en Masaya" } },
+  "2025-12-06": { "001": { estado: "presente", tipo_trabajo: "evento", justificacion: "Feria tech en Chinandega" }, "002": { estado: "abandono" } },
+  "2025-12-07": { "001": null, "002": null },
+  "2025-12-08": { "001": { estado: "presente", tipo_trabajo: "evento", justificacion: "Concierto local en Managua" }, "002": { estado: "presente", tipo_trabajo: "bodega", justificacion: "Guardia en Managua" } },
+  "2025-12-09": { "001": { estado: "ausente" }, "002": { estado: "presente", tipo_trabajo: "evento", justificacion: "Instalación sonido en Matagalpa" } },
+  "2025-12-10": { "001": { estado: "permiso", trabajo_medio_dia: true, tipo_trabajo: "bodega", justificacion: "Trámite bancario en Managua" }, "002": { estado: "presente", tipo_trabajo: "bodega", justificacion: "Apoyo bodega en Managua" } },
+  "2025-12-11": { "001": { estado: "presente", tipo_trabajo: "evento", justificacion: "Evento corporativo en Rivas" }, "002": { estado: "ausente" } },
+  "2025-12-12": { "001": { estado: "presente", tipo_trabajo: "bodega", justificacion: "Inventario en Managua" }, "002": { estado: "presente", tipo_trabajo: "evento", justificacion: "Show en bar en León" } },
+  "2025-12-13": { "001": { estado: "ausente" }, "002": { estado: "permiso", trabajo_medio_dia: true, tipo_trabajo: "evento", justificacion: "Cita médica en Estelí" } },
+  "2025-12-14": { "001": null, "002": null },
+  "2025-12-15": { "001": { estado: "presente", tipo_trabajo: "evento", justificacion: "Montaje final en Bluefields" }, "002": { estado: "presente", tipo_trabajo: "bodega", justificacion: "Cierre mes en Managua" } }
+};
+
+const PERIODOS = {
+  "1-15": { inicio: new Date(2025, 11, 1), fin: new Date(2025, 11, 15) },
+  "16-31": { inicio: new Date(2025, 11, 16), fin: new Date(2025, 11, 31) }
+};
+
+const DIAS_SEMANA = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+
+function esDomingo(fecha) { return fecha.getDay() === 0; }
+function formatoISO(fecha) { return fecha.toISOString().split('T')[0]; }
+function formatoFecha(fecha) { return fecha.toLocaleDateString('es-NI'); }
+
+function llenarEmpleados() {
+  const select = document.getElementById('selector-empleado');
+  select.innerHTML = '<option value="">Seleccione un empleado</option>';
+  EMPLEADOS.filter(e => e.estatus_general === "Activo").forEach(emp => {
+    const opt = document.createElement('option');
+    opt.value = emp.id;
+    opt.textContent = `${emp.nombre} (${emp.estatus})`;
+    select.appendChild(opt);
+  });
+  select.disabled = false;
+}
+
+function generarPlanilla(empleadoId, periodoKey) {
+  const emp = EMPLEADOS.find(e => e.id === empleadoId);
+  const { inicio, fin } = PERIODOS[periodoKey];
+  let subtotal = 0;
+  let diasTrabajados = 0;
+  let faltasInjustificadas = 0;
+  const filas = [];
+  const valorDiaFijo = emp.estatus === "Fijo" ? parseFloat(emp.salario) / 30 : 0;
+
+  for (let f = new Date(inicio); f <= fin; f.setDate(f.getDate() + 1)) {
+    const fechaStr = formatoISO(f);
+    const diaSemana = DIAS_SEMANA[f.getDay()];
+    const registro = VERIFICACIONES[fechaStr]?.[empleadoId];
+    let estado = "—";
+    let tipo = "—";
+    let justificacion = "—";
+    let monto = 0;
+    let lugar = "—";
+
+    if (esDomingo(f)) {
+      estado = "Domingo";
+      tipo = "—";
+      justificacion = "—";
+      monto = 0;
+      lugar = "—";
+    } else if (registro) {
+      if (registro.estado === "presente") {
+        estado = "Presente";
+        tipo = registro.tipo_trabajo === "evento" ? "Evento" : "Bod/Ofic";
+        justificacion = registro.justificacion || "Sin justificación";
+        lugar = registro.tipo_trabajo === "evento" ? extraerDepartamento(justificacion) : "Managua";
+        if (emp.estatus === "Fijo") {
+          monto = 0;
+        } else {
+          monto = registro.tipo_trabajo === "evento" ? parseFloat(emp.salario) : 400;
+        }
+        diasTrabajados++;
+      }
+      else if (registro.estado === "permiso" && registro.trabajo_medio_dia) {
+        estado = "Permiso (+4h)";
+        tipo = registro.tipo_trabajo === "evento" ? "Evento" : "Bod/Ofic";
+        justificacion = registro.justificacion || "Sin justificación";
+        lugar = registro.tipo_trabajo === "evento" ? extraerDepartamento(justificacion) : "Managua";
+        if (emp.estatus === "Fijo") {
+          monto = 0;
+        } else {
+          monto = registro.tipo_trabajo === "evento" ? parseFloat(emp.salario) / 2 : 200;
+        }
+        diasTrabajados++;
+      }
+      else if (["ausente", "abandono"].includes(registro.estado)) {
+        estado = "Ausente";
+        tipo = "—";
+        justificacion = "Sin justificación";
+        lugar = "—";
+        if (emp.estatus === "Fijo") {
+          monto = -valorDiaFijo;
+          faltasInjustificadas++;
+        } else {
+          monto = 0;
+        }
+      }
+    }
+
+    if (emp.estatus === "Eventual") {
+      subtotal += monto;
+    }
+
+    filas.push({ fecha: formatoFecha(f), dia: diaSemana, estado, tipo, lugar, justificacion, monto });
+  }
+
+  let totalPagar = 0;
+  let dedInasistencia = 0;
+  if (emp.estatus === "Fijo") {
+    const salarioQuincenal = parseFloat(emp.salario) / 2;
+    dedInasistencia = faltasInjustificadas * valorDiaFijo;
+    subtotal = salarioQuincenal;
+    totalPagar = salarioQuincenal - dedInasistencia;
+  } else {
+    dedInasistencia = 0;
+    totalPagar = subtotal;
+  }
+
+  document.getElementById('nom-emp').textContent = emp.nombre;
+  document.getElementById('ced-emp').textContent = emp.cedula;
+  document.getElementById('pue-emp').textContent = emp.puesto;
+  document.getElementById('est-emp').textContent = emp.estatus;
+  if (emp.estatus === "Fijo") {
+    document.getElementById('sal-emp').textContent = `C$ ${parseFloat(emp.salario).toFixed(2)} (Quincenal)`;
+  } else {
+    document.getElementById('sal-emp').textContent = `Evento: C$ ${emp.salario} | Bod/Ofic: C$ 400`;
+  }
+
+  const cuerpo = document.getElementById('cuerpo-dias');
+  cuerpo.innerHTML = filas.map(f => {
+    const montoTexto = f.monto === 0 ? "C$ 0.00" : 
+                      f.monto > 0 ? `C$ ${f.monto.toFixed(2)}` : 
+                      `— C$ ${Math.abs(f.monto).toFixed(2)}`;
+    return `
+      <tr>
+        <td>${f.fecha}</td>
+        <td>${f.dia}</td>
+        <td>${f.estado}</td>
+        <td>${f.tipo}</td>
+        <td>${f.lugar}</td>
+        <td>${f.justificacion}</td>
+        <td style="text-align: right;">${montoTexto}</td>
+      </tr>
+    `;
+  }).join('');
+
+  document.getElementById('dias-trab').textContent = diasTrabajados;
+  document.getElementById('subtotal').textContent = `C$ ${subtotal.toFixed(2)}`;
+  document.getElementById('deduccion-inasistencia').textContent = `C$ ${dedInasistencia.toFixed(2)}`;
+  document.getElementById('total-pagar').textContent = `C$ ${totalPagar.toFixed(2)}`;
+
+  document.getElementById('contenedor-planilla').style.display = 'block';
+}
+
+// ✅ FUNCIÓN DE EXPORTACIÓN A PDF CON AUTO-TABLE (MODERNO Y CON BORDES)
+function exportarPDF() {
+  const empleadoId = document.getElementById('selector-empleado').value;
+  if (!empleadoId) {
+    alert("⚠️ Seleccione un empleado primero.");
+    return;
+  }
+
+  const periodoKey = document.getElementById('selector-periodo').value;
+  const { inicio, fin } = PERIODOS[periodoKey];
+  const emp = EMPLEADOS.find(e => e.id === empleadoId);
+  if (!emp) return;
+
+  if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF !== 'function') {
+    alert("❌ jsPDF no está cargado.");
+    return;
+  }
+
+  let totalPagar = 0;
+  let diasTrabajados = 0;
+  let faltasInjustificadas = 0;
+  const filasDias = [];
+  const valorDiaFijo = emp.estatus === "Fijo" ? parseFloat(emp.salario) / 30 : 0;
+
+  for (let f = new Date(inicio); f <= fin; f.setDate(f.getDate() + 1)) {
+    const fechaStr = formatoISO(f);
+    const registro = VERIFICACIONES[fechaStr]?.[empleadoId];
+    let estado = "—";
+    let tipo = "—";
+    let monto = 0;
+    const justificacion = registro?.justificacion || "—";
+    const diaSemana = DIAS_SEMANA[f.getDay()];
+    let lugar = "—";
+
+    if (esDomingo(f)) {
+      estado = "Domingo";
+    } else if (registro) {
+      if (registro.estado === "presente") {
+        estado = "Presente";
+        tipo = registro.tipo_trabajo === "evento" ? "Evento" : "Bod/Ofic";
+        lugar = registro.tipo_trabajo === "evento" ? extraerDepartamento(justificacion) : "Managua";
+        if (emp.estatus === "Fijo") monto = 0;
+        else monto = registro.tipo_trabajo === "evento" ? parseFloat(emp.salario) : 400;
+        diasTrabajados++;
+      } else if (registro.estado === "permiso" && registro.trabajo_medio_dia) {
+        estado = "Permiso (+4h)";
+        tipo = registro.tipo_trabajo === "evento" ? "Evento" : "Bod/Ofic";
+        lugar = registro.tipo_trabajo === "evento" ? extraerDepartamento(justificacion) : "Managua";
+        if (emp.estatus === "Fijo") monto = 0;
+        else monto = registro.tipo_trabajo === "evento" ? parseFloat(emp.salario) / 2 : 200;
+        diasTrabajados++;
+      } else if (["ausente", "abandono"].includes(registro.estado)) {
+        estado = "Ausente";
+        lugar = "—";
+        if (emp.estatus === "Fijo") {
+          monto = -valorDiaFijo;
+          faltasInjustificadas++;
+        }
+      }
+    }
+
+    if (emp.estatus === "Eventual") totalPagar += monto;
+    const montoTexto = monto === 0 ? "C$ 0.00" : 
+                      monto > 0 ? `C$ ${monto.toFixed(2)}` : 
+                      `— C$ ${Math.abs(monto).toFixed(2)}`;
+    filasDias.push({
+      fecha: formatoFecha(f),
+      dia: diaSemana,
+      estado,
+      tipo,
+      lugar,
+      montoTexto,
+      justificacion: justificacion
+    });
+  }
+
+  if (emp.estatus === "Fijo") {
+    const salarioQuincenal = parseFloat(emp.salario) / 2;
+    totalPagar = salarioQuincenal - (faltasInjustificadas * valorDiaFijo);
+  }
+
+  const doc = new window.jspdf.jsPDF('p', 'mm', 'letter');
+  const margin = 15;
+  const letterWidth = 215.9;
+  const availableWidth = letterWidth - (margin * 2);
+  const COLOR_AZUL_OSCURO = [26, 54, 93];
+  const COLOR_AZUL_MEDIO = [43, 108, 176];
+  const COLOR_GRIS_CLARO = [240, 244, 255];
+
+  try {
+    const logoUrl = 'assets/logo.png';
+    const logoWidth = 35;
+    const logoHeight = 11.66;
+    doc.addImage(logoUrl, 'PNG', margin, 10, logoWidth, logoHeight);
+  } catch (e) {
+    console.warn("Advertencia: No se pudo cargar el logo.", e);
+  }
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.setTextColor(COLOR_AZUL_OSCURO[0], COLOR_AZUL_OSCURO[1], COLOR_AZUL_OSCURO[2]);
+  doc.text("Planilla de Pago Individual", margin + 40, 18);
+  doc.setFontSize(10);
+  doc.setTextColor(85, 85, 85);
+  doc.text(`Absolute de Nicaragua – Período ${periodoKey === "1-15" ? "1 al 15" : "16 al 31"} de diciembre de 2025`, margin + 40, 23);
+
+  let y = 35;
+
+  // --- DATOS DEL EMPLEADO MODERNO CON BORDES ---
+  const datosEmpleado = [
+    ["Empleado:", emp.nombre],
+    ["Cédula:", emp.cedula],
+    ["Puesto:", emp.puesto],
+    ["Estatus:", emp.estatus],
+    ["Salario:", emp.estatus === "Fijo" ? `C$ ${parseFloat(emp.salario).toFixed(2)} (Quincenal)` : `Evento: C$ ${emp.salario} | Bod/Ofic: C$ 400`]
+  ];
+
+  const tablaX = margin;
+  const tablaY = y;
+  const col1Width = 40;
+  const col2Width = availableWidth - col1Width - 2;
+  const rowHeight = 6;
+  const tableHeight = datosEmpleado.length * rowHeight;
+
+  // Bordes negros
+  doc.setDrawColor(0, 0, 0);
+  doc.setLineWidth(0.3);
+  doc.rect(tablaX, tablaY, availableWidth, tableHeight);
+
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(26, 54, 93);
+  doc.setFontSize(10);
+  for (let i = 0; i < datosEmpleado.length; i++) {
+    const yRow = tablaY + (i * rowHeight) + 4;
+    doc.text(datosEmpleado[i][0], tablaX + 2, yRow);
+    doc.setFont("helvetica", "normal");
+    doc.text(datosEmpleado[i][1], tablaX + col1Width + 2, yRow);
+    doc.setFont("helvetica", "bold");
+  }
+  y = tablaY + tableHeight + 10;
+
+  // --- TABLA CON AUTO-TABLE ---
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(COLOR_AZUL_OSCURO[0], COLOR_AZUL_OSCURO[1], COLOR_AZUL_OSCURO[2]);
+  doc.text("Detalle de Días del Período", margin, y);
+  y += 2;
+
+  const tableData = filasDias.map(f => [
+    f.fecha, f.dia, f.estado, f.tipo, f.lugar, f.montoTexto, f.justificacion
+  ]);
+
+  doc.autoTable({
+    startY: y,
+    head: [["Fecha", "Día", "Estado", "Tipo", "Lugar", "Monto", "Justificación"]],
+    body: tableData,
+    theme: 'striped',
+    margin: { left: margin, right: margin },
+    headStyles: {
+      fillColor: COLOR_GRIS_CLARO,
+      textColor: COLOR_AZUL_OSCURO,
+      fontStyle: 'bold',
+      fontSize: 9
+    },
+    styles: { fontSize: 8, cellPadding: 2, textColor: [50, 50, 50] },
+    columnStyles: {
+      0: { cellWidth: 20 },
+      1: { cellWidth: 18 },
+      2: { cellWidth: 25 },
+      3: { cellWidth: 17 },
+      4: { cellWidth: 20 },
+      5: { cellWidth: 22, halign: 'right' },
+      6: { cellWidth: 65, overflow: 'linebreak' }
+    }
+  });
+
+  y = doc.autoTable.previous.finalY + 8;
+
+  // --- RESUMEN ---
+  const rectX = margin;
+  const rectY = y;
+  const rectWidth = 80;
+  const rectHeight = 35;
+
+  doc.setFillColor(240, 247, 255);
+  doc.rect(rectX, rectY, rectWidth, rectHeight, 'F');
+
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(9);
+
+  const subtotalPdf = emp.estatus === "Fijo" ? (parseFloat(emp.salario) / 2).toFixed(2) : totalPagar.toFixed(2);
+  const dedInasistencia = (faltasInjustificadas * valorDiaFijo).toFixed(2);
+
+  let currentTextY = rectY + 4;
+  const drawSummaryLine = (label, value) => {
+    doc.text(label, rectX + 2, currentTextY);
+    doc.text(value, rectX + rectWidth - 2, currentTextY, { align: 'right' });
+    currentTextY += 5;
+  };
+
+  drawSummaryLine(`Días trabajados:`, `${diasTrabajados}`);
+  drawSummaryLine(`Subtotal:`, `C$ ${subtotalPdf}`);
+  drawSummaryLine(`Deducciones por inasistencia:`, `C$ ${dedInasistencia}`);
+  drawSummaryLine(`Otras deducciones:`, `C$ 0.00`);
+
+  doc.setDrawColor(COLOR_AZUL_MEDIO[0], COLOR_AZUL_MEDIO[1], COLOR_AZUL_MEDIO[2]);
+  doc.setLineWidth(0.5);
+  doc.line(rectX, rectY + 23, rectX + rectWidth, rectY + 23);
+
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "bold");
+  doc.text(`Total a pagar:`, rectX + 2, rectY + 29);
+  doc.text(`C$ ${totalPagar.toFixed(2)}`, rectX + rectWidth - 2, rectY + 29, { align: 'right' });
+
+  y = rectY + rectHeight + 10;
+
+  // --- FIRMAS ---
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.text("Firmas de Aprobación", margin, y);
+  y += 10;
+  doc.setFont("helvetica", "normal");
+  doc.setDrawColor(0, 0, 0);
+  doc.setLineWidth(0.2);
+  doc.line(margin, y, margin + 50, y);
+  doc.text("Recursos Humanos", margin, y + 4);
+  doc.line(margin + 80, y, margin + 130, y);
+  doc.text("Contabilidad", margin + 80, y + 4);
+
+  y += 15;
+  doc.setFontSize(8);
+  doc.setTextColor(102, 102, 102);
+  const today = new Date();
+  const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+  const creationDateText = `Fecha de creación: ${today.toLocaleDateString('es-NI', dateOptions)}`;
+  doc.text("Documento oficial de pago. Válido con firmas originales.", margin, y);
+  doc.text(creationDateText, letterWidth - margin, y, { align: 'right' });
+
+  doc.save(`Planilla_${emp.nombre.replace(/\s+/g, '_')}_${periodoKey}.pdf`);
+}
+
+document.getElementById('btn-generar').addEventListener('click', () => {
+  const periodo = document.getElementById('selector-periodo').value;
+  const empleado = document.getElementById('selector-empleado').value;
+  if (!empleado) {
+    alert("Por favor, seleccione un empleado.");
+    return;
+  }
+  generarPlanilla(empleado, periodo);
+});
+
+document.getElementById('selector-periodo').addEventListener('change', () => {
+  llenarEmpleados();
+});
+
+document.getElementById('btn-exportar').addEventListener('click', exportarPDF);
+
+llenarEmpleados();
+</script>

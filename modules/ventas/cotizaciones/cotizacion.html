@@ -1,0 +1,1274 @@
+<!-- cotizacion.html -->
+<div class="cot-container">
+  <h1 class="cot-title">🧾 Crear Cotización</h1>
+
+  <!-- Cliente -->
+  <div class="cot-section">
+    <label class="cot-label">Cliente</label>
+    <select id="cot-cliente" class="cot-select">
+      <option value="">Seleccione un cliente...</option>
+      <!-- Se llenará desde localStorage -->
+    </select>
+  </div>
+
+  <!-- Datos del cliente -->
+  <div id="datos-cliente" class="cot-client-card" style="display: none;">
+    <div class="cot-client-row">
+      <div class="cot-client-col">
+        <div><strong>Empresa:</strong> <span id="cliente-nombre">—</span></div>
+        <div><strong>Contacto:</strong> <span id="cliente-contacto">—</span></div>
+        <div><strong>Teléfono:</strong> <span id="cliente-telefono">—</span></div>
+      </div>
+      <div class="cot-client-col">
+        <div><strong>RUC:</strong> <span id="cliente-ruc">—</span></div>
+        <div><strong>Dirección:</strong> <span id="cliente-direccion">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Servicios -->
+  <div class="cot-section">
+    <div class="cot-section-header">
+      <h2 class="cot-section-title">Servicios</h2>
+      <button id="btn-agregar-servicio" class="cot-btn cot-btn-primary">➕ Agregar Servicio</button>
+    </div>
+
+    <!-- Encabezados -->
+    <div class="cot-table-header">
+      <div class="cot-col-2">Servicio</div>
+      <div class="cot-col-06">Cant.</div>
+      <div class="cot-col-06">Nivel</div>
+      <div class="cot-col-08">Precio</div>
+      <div class="cot-col-12">Descuento</div>
+      <div class="cot-col-1">Total</div>
+      <div class="cot-col-01"></div>
+    </div>
+
+    <div id="contenedor-servicios" class="cot-table-body">
+      <p class="cot-empty">No hay servicios agregados.</p>
+    </div>
+  </div>
+
+  <!-- Totales -->
+  <div class="cot-totales-card">
+    <div class="cot-totales-flex">
+      <div class="cot-totales-stack">
+        <div class="cot-bloque">
+          <div class="cot-iva-switches">
+            <button id="btn-iva-sin" class="cot-switch-btn">Sin IVA</button>
+            <button id="btn-iva-con" class="cot-switch-btn cot-switch-active">Con IVA</button>
+          </div>
+        </div>
+        <div class="cot-linea">
+          <span>Subtotal</span>
+          <strong id="subtotal-display">C$0.00</strong>
+        </div>
+        <div class="cot-linea cot-descuento">
+          <span>Descuento Total</span>
+          <strong id="descuento-total-display">C$0.00</strong>
+        </div>
+        <div class="cot-linea">
+          <span>IVA (15%)</span>
+          <strong id="iva-display">C$0.00</strong>
+        </div>
+        <div class="cot-gran-total">
+          <span>Gran Total</span>
+          <strong id="gran-total-display">C$0.00</strong>
+        </div>
+        <div class="cot-bloque">
+          <div class="cot-moneda-row">
+            <button id="btn-moneda-cordoba" class="cot-moneda-btn cot-moneda-active">C$</button>
+            <button id="btn-moneda-dolar" class="cot-moneda-btn">$</button>
+            <span class="cot-tipo-label">TC</span>
+            <input type="number" id="tipo-cambio" value="36.62" step="0.01" class="cot-tipo-input">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Acciones -->
+  <div class="cot-actions">
+    <button id="btn-nuevo" class="cot-btn cot-btn-secondary">🔄 Nuevo</button>
+    <button id="btn-guardar" class="cot-btn cot-btn-save">💾 Guardar Cotización</button>
+  </div>
+</div>
+
+<!-- MODAL PARA SELECCIONAR SERVICIO -->
+<div id="modal-servicios" class="cot-modal-overlay" style="display: none;">
+  <div class="cot-modal-content">
+    <div class="cot-modal-header">
+      <h3 class="cot-modal-title">Seleccionar Servicio</h3>
+      <button id="btn-cerrar-modal" class="cot-modal-close">✕</button>
+    </div>
+
+    <div class="cot-modal-body">
+      <!-- Buscador -->
+      <div class="cot-search-container">
+        <input type="text" id="buscador-servicios" class="cot-search-input" placeholder="Buscar servicios...">
+        <span class="cot-search-icon">🔍</span>
+      </div>
+
+      <!-- Lista de servicios -->
+      <div id="lista-servicios-modal" class="cot-servicios-list">
+        <!-- Los servicios se cargarán aquí -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* =============================================================================
+     ESTILOS PROPIOS PARA COTIZACION (NO DEPENDE DE APP.CSS)
+     ============================================================================= */
+  .cot-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #1e293b;
+  }
+
+  .cot-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: #1e3a8a;
+  }
+
+  .cot-section {
+    margin-bottom: 24px;
+  }
+
+  .cot-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #334155;
+  }
+
+  .cot-select,
+  .cot-input,
+  .cot-tipo-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 14px;
+    background: white;
+    color: #1e293b;
+  }
+
+  .cot-select:focus,
+  .cot-input:focus,
+  .cot-tipo-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  .cot-client-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 16px 0;
+  }
+
+  .cot-client-row {
+    display: flex;
+    gap: 24px;
+  }
+
+  .cot-client-col {
+    flex: 1;
+  }
+
+  .cot-client-col div {
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+
+  .cot-client-col div strong {
+    color: #334155;
+  }
+
+  .cot-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .cot-section-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+    color: #1e3a8a;
+  }
+
+  .cot-table-header {
+    display: grid;
+    grid-template-columns: 2fr 0.6fr 0.6fr 0.8fr 1.2fr 1fr 0.1fr;
+    gap: 12px;
+    padding: 12px 0;
+    font-weight: 600;
+    color: #475569;
+    border-bottom: 2px solid #cbd5e1;
+    margin-bottom: 12px;
+  }
+
+  .cot-table-body {
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    min-height: 80px;
+  }
+
+  .cot-empty {
+    text-align: center;
+    color: #64748b;
+    padding: 20px;
+  }
+
+  .cot-row {
+    display: grid;
+    grid-template-columns: 2fr 0.6fr 0.6fr 0.8fr 1.2fr 1fr 0.1fr;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .cot-row:last-child {
+    border-bottom: none;
+  }
+
+  .cot-btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .cot-btn-primary {
+    background: #3b82f6;
+    color: white;
+  }
+
+  .cot-btn-secondary {
+    background: #64748b;
+    color: white;
+  }
+
+  .cot-btn-save {
+    background: #10b981;
+    color: white;
+  }
+
+  .cot-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  .cot-totales-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 16px;
+  }
+
+  .cot-totales-flex {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .cot-totales-stack {
+    width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .cot-linea {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+  }
+
+  .cot-gran-total {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 2px solid #cbd5e1;
+    display: flex;
+    justify-content: space-between;
+    font-size: 18px;
+    color: #1e3a8a;
+  }
+
+  .cot-bloque {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .cot-iva-switches {
+    display: flex;
+    gap: 8px;
+  }
+
+  .cot-moneda-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .cot-switch-btn,
+  .cot-moneda-btn {
+    padding: 6px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: white;
+    color: #334155;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  .cot-switch-active,
+  .cot-moneda-active {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+  }
+
+  .cot-tipo-label {
+    font-size: 12px;
+    color: #475569;
+  }
+
+  .cot-tipo-input {
+    width: 80px;
+    padding: 6px;
+    font-size: 12px;
+    text-align: center;
+  }
+
+  .cot-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 20px;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .cot-client-row,
+    .cot-totales-flex {
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .cot-table-header,
+    .cot-row {
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+    }
+    
+    .cot-table-header div:nth-child(n+5),
+    .cot-row div:nth-child(n+5) {
+      display: none;
+    }
+    
+    .cot-totales-stack {
+      width: 100%;
+    }
+    
+    .cot-gran-total {
+      text-align: left;
+    }
+  }
+
+  /* =============================================================================
+     MODAL DE SERVICIOS
+     ============================================================================= */
+  .cot-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+
+  .cot-modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow: hidden;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+
+  .cot-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    background: #f9fafb;
+  }
+
+  .cot-modal-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+  }
+
+  .cot-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    transition: all 0.2s;
+  }
+
+  .cot-modal-close:hover {
+    background: #e5e7eb;
+    color: #374151;
+  }
+
+  .cot-modal-body {
+    padding: 24px;
+    max-height: calc(80vh - 80px);
+    overflow-y: auto;
+  }
+
+  .cot-search-container {
+    position: relative;
+    margin-bottom: 16px;
+  }
+
+  .cot-search-input {
+    width: 100%;
+    padding: 12px 16px 12px 44px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+  }
+
+  .cot-search-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  .cot-search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6b7280;
+    font-size: 16px;
+  }
+
+  .cot-servicios-list {
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .cot-servicio-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .cot-servicio-item:hover {
+    border-color: #3b82f6;
+    background: #eff6ff;
+  }
+
+  .cot-servicio-info h4 {
+    margin: 0 0 4px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
+  }
+
+  .cot-servicio-precios {
+    display: flex;
+    gap: 12px;
+    font-size: 13px;
+    color: #6b7280;
+  }
+
+  .cot-servicio-precio {
+    background: #f3f4f6;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .cot-btn-seleccionar {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .cot-btn-seleccionar:hover {
+    background: #2563eb;
+  }
+
+  .cot-no-servicios {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6b7280;
+  }
+
+  .cot-no-servicios p {
+    margin: 0 0 16px 0;
+    font-size: 16px;
+  }
+</style>
+
+<script>
+  setTimeout(async () => {
+    // =============================================================================
+    // 🔹 CARGAR DATOS DESDE SUPABASE
+    // =============================================================================
+    let clientes = [];
+    let servicios = [];
+
+    async function cargarDatos() {
+      try {
+        // Cargar clientes
+        const { data: dataClientes, error: errorClientes } = await window.supabaseClient
+          .from('clientes')
+          .select('*')
+          .order('nombre', { ascending: true });
+
+        if (errorClientes) {
+          console.error('Error al cargar clientes:', errorClientes);
+          clientes = [];
+        } else {
+          clientes = dataClientes || [];
+        }
+
+        // Cargar servicios
+        const { data: dataServicios, error: errorServicios } = await window.supabaseClient
+          .from('servicios')
+          .select('*')
+          .eq('activo', true)
+          .order('nombre', { ascending: true });
+
+        if (errorServicios) {
+          console.error('Error al cargar servicios:', errorServicios);
+          servicios = [];
+        } else {
+          servicios = (dataServicios || []).map(s => ({
+            id: s.id,
+            nombre: s.nombre,
+            precios: { A: s.precio_a, B: s.precio_b, C: s.precio_c }
+          }));
+        }
+      } catch (err) {
+        console.error('Error:', err);
+        clientes = [];
+        servicios = [];
+      }
+    }
+
+    await cargarDatos();
+
+    // =============================================================================
+    // 🔹 VARIABLES Y FUNCIONES
+    // =============================================================================
+    let serviciosSeleccionados = [];
+    let ivaActivo = true;
+    let monedaActiva = 'cordoba';
+    let tipoCambio = 36.62;
+
+    // =============================================================================
+    // 🔹 FUNCIÓN CORREGIDA: FORMATEAR MONEDA
+    // =============================================================================
+    function formatearMoneda(valorEnDolares, esDolar = false) {
+      let monto;
+      if (esDolar) {
+        // Mostrar en dólares (sin conversión)
+        monto = valorEnDolares;
+      } else {
+        // Convertir dólares a córdobas
+        monto = valorEnDolares * tipoCambio;
+      }
+      const simbolo = esDolar ? '$' : 'C$';
+      return `${simbolo}${monto.toFixed(2)}`;
+    }
+
+    function llenarCliente(clienteId) {
+      const div = document.getElementById('datos-cliente');
+      if (!clienteId) {
+        div.style.display = 'none';
+        return;
+      }
+      const cliente = clientes.find(c => c.id === clienteId);
+      if (!cliente) {
+        div.style.display = 'none';
+        return;
+      }
+      document.getElementById('cliente-nombre').textContent = cliente.nombre || '—';
+      document.getElementById('cliente-contacto').textContent = cliente.contacto || '—';
+      document.getElementById('cliente-telefono').textContent = cliente.telefono || '—';
+      document.getElementById('cliente-direccion').textContent = cliente.direccion || '—';
+      document.getElementById('cliente-ruc').textContent = cliente.ruc || '—';
+      div.style.display = 'block';
+    }
+
+    function cargarClientes() {
+      const select = document.getElementById('cot-cliente');
+      select.innerHTML = '<option value="">Seleccione un cliente...</option>';
+      clientes.forEach(cliente => {
+        const option = document.createElement('option');
+        option.value = cliente.id;
+        option.textContent = cliente.nombre;
+        select.appendChild(option);
+      });
+    }
+
+    // =============================================================================
+    // 🔹 FUNCIONES DE CÁLCULO (TRABAJAN EN DÓLARES)
+    // =============================================================================
+    function calcularTotalServicio(item) {
+      const servicio = servicios.find(s => s.id === item.servicioId);
+      const precioUSD = servicio?.precios[item.nivel] || 0;
+      const subtotalUSD = precioUSD * item.cantidad;
+      
+      if (item.descuentoTipo === 'porcentaje') {
+        return subtotalUSD * (1 - (item.descuentoValor / 100));
+      } else if (item.descuentoTipo === 'monto') {
+        return Math.max(0, subtotalUSD - (item.descuentoValor || 0));
+      }
+      return subtotalUSD;
+    }
+
+    function calcularDescuentoServicio(item) {
+      const servicio = servicios.find(s => s.id === item.servicioId);
+      const precioUSD = servicio?.precios?.[item.nivel] || 0;
+      const subtotalUSD = precioUSD * item.cantidad;
+      const totalUSD = calcularTotalServicio(item);
+      return subtotalUSD - totalUSD;
+    }
+
+    function renderServicios() {
+      const cont = document.getElementById('contenedor-servicios');
+      if (serviciosSeleccionados.length === 0) {
+        cont.innerHTML = '<p class="cot-empty">No hay servicios agregados.</p>';
+        actualizarTotales();
+        return;
+      }
+
+      cont.innerHTML = serviciosSeleccionados.map((item, idx) => {
+        const servicio = servicios.find(s => s.id === item.servicioId);
+        const precioUSD = servicio?.precios?.[item.nivel] || 0;
+        const subtotalUSD = precioUSD * item.cantidad;
+        const totalUSD = calcularTotalServicio(item);
+
+        return `
+          <div class="cot-row" data-idx="${idx}">
+            <!-- Servicio -->
+            <select class="cot-select campo-servicio">
+              ${servicios.map(s => `<option value="${s.id}" ${item.servicioId === s.id ? 'selected' : ''}>${s.nombre}</option>`).join('')}
+            </select>
+            <!-- Cantidad -->
+            <input type="number" min="1" value="${item.cantidad}" 
+                   class="cot-input campo-cantidad" data-campo="cantidad">
+            <!-- Nivel -->
+            <select class="cot-select campo-nivel">
+              <option value="A" ${item.nivel === 'A' ? 'selected' : ''}>A</option>
+              <option value="B" ${item.nivel === 'B' ? 'selected' : ''}>B</option>
+              <option value="C" ${item.nivel === 'C' ? 'selected' : ''}>C</option>
+            </select>
+            <!-- Precio base (en moneda seleccionada) -->
+            <div style="text-align: right;">${formatearMoneda(precioUSD, monedaActiva === 'dolar')}</div>
+            <!-- Descuento (switch + input) -->
+            <div style="display: flex; gap: 6px; align-items: center;">
+              <button class="cot-switch-btn ${item.descuentoTipo === 'porcentaje' ? 'cot-switch-active' : ''}" data-tipo="porcentaje">%</button>
+              <button class="cot-switch-btn ${item.descuentoTipo === 'monto' ? 'cot-switch-active' : ''}" data-tipo="monto">$</button>
+              <input type="number" min="0" step="${item.descuentoTipo === 'porcentaje' ? '1' : '0.01'}" 
+                     value="${item.descuentoValor || ''}" 
+                     class="cot-input campo-descuento" style="width: 70px; padding: 6px; text-align: center; font-size: 12px;"
+                     placeholder="${item.descuentoTipo === 'porcentaje' ? '0-100' : 'Monto'}">
+            </div>
+            <!-- Total (en moneda seleccionada) -->
+            <div style="text-align: right; font-weight: bold; color: #1e3a8a;">${formatearMoneda(totalUSD, monedaActiva === 'dolar')}</div>
+            <!-- Eliminar -->
+            <button class="cot-btn cot-btn-secondary" style="padding: 4px; font-size: 12px; width: 24px; height: 24px;">✕</button>
+          </div>
+        `;
+      }).join('');
+
+      // Eventos para selects
+      cont.querySelectorAll('.campo-servicio, .campo-nivel').forEach(el => {
+        el.addEventListener('change', (e) => {
+          const idx = parseInt(e.currentTarget.closest('.cot-row').dataset.idx);
+          if (e.currentTarget.classList.contains('campo-servicio')) {
+            serviciosSeleccionados[idx].servicioId = e.currentTarget.value;
+            serviciosSeleccionados[idx].nivel = 'A';
+          } else {
+            serviciosSeleccionados[idx].nivel = e.currentTarget.value;
+          }
+          renderServicios();
+        });
+      });
+
+      // Eventos para inputs
+     // Eventos para cantidad y descuentos
+cont.querySelectorAll('.campo-cantidad').forEach(el => {
+  el.addEventListener('input', (e) => {
+    const idx = parseInt(e.currentTarget.closest('.cot-row').dataset.idx);
+    const nuevaCantidad = parseInt(e.currentTarget.value) || 1;
+    serviciosSeleccionados[idx].cantidad = nuevaCantidad;
+    
+    // Calcular el nuevo total con la cantidad actualizada
+    const totalUSD = calcularTotalServicio(serviciosSeleccionados[idx]);
+    
+    // Actualizar SOLO el total en la fila (el precio unitario no cambia)
+    const row = e.currentTarget.closest('.cot-row');
+    row.children[5].innerHTML = formatearMoneda(totalUSD, monedaActiva === 'dolar'); // Total
+    
+    // Actualizar totales generales
+    actualizarTotales();
+  });
+});
+
+// Eventos para descuentos
+cont.querySelectorAll('.campo-descuento').forEach(el => {
+  el.addEventListener('input', (e) => {
+    const idx = parseInt(e.currentTarget.closest('.cot-row').dataset.idx);
+    const parent = e.currentTarget.parentElement;
+    const porcentajeBtn = parent.querySelector('.cot-switch-btn[data-tipo="porcentaje"]');
+    const tipoPorc = porcentajeBtn?.classList.contains('cot-switch-active') || false;
+    serviciosSeleccionados[idx].descuentoTipo = tipoPorc ? 'porcentaje' : 'monto';
+    serviciosSeleccionados[idx].descuentoValor = parseFloat(e.currentTarget.value) || 0;
+    
+    // Actualizar solo la fila afectada
+    const totalUSD = calcularTotalServicio(serviciosSeleccionados[idx]);
+    const row = e.currentTarget.closest('.cot-row');
+    row.children[5].innerHTML = formatearMoneda(totalUSD, monedaActiva === 'dolar'); // Total
+    
+    // Actualizar totales generales
+    actualizarTotales();
+  });
+}); 
+
+      // Switch de descuento
+      cont.querySelectorAll('.cot-switch-btn:not(.cot-btn-secondary)').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const idx = parseInt(e.currentTarget.closest('.cot-row').dataset.idx);
+          const tipo = e.currentTarget.dataset.tipo;
+          serviciosSeleccionados[idx].descuentoTipo = tipo;
+          const parent = e.currentTarget.parentElement;
+          parent.querySelectorAll('.cot-switch-btn').forEach(b => b.classList.remove('cot-switch-active'));
+          e.currentTarget.classList.add('cot-switch-active');
+          renderServicios();
+        });
+      });
+
+      // Eliminar
+      cont.querySelectorAll('.cot-btn-secondary').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const idx = parseInt(e.currentTarget.closest('.cot-row').dataset.idx);
+          serviciosSeleccionados.splice(idx, 1);
+          renderServicios();
+        });
+      });
+
+      actualizarTotales();
+    }
+
+    // =============================================================================
+    // 🔹 MODAL DE SERVICIOS
+    // =============================================================================
+    async function mostrarModalServicios() {
+      const modal = document.getElementById('modal-servicios');
+      const lista = document.getElementById('lista-servicios-modal');
+      const buscador = document.getElementById('buscador-servicios');
+
+      try {
+        // Cargar servicios desde Supabase
+        const { data: serviciosData, error } = await window.supabaseClient
+          .from('servicios')
+          .select('*')
+          .eq('activo', true)
+          .order('nombre', { ascending: true });
+
+        if (error) {
+          console.error('Error al cargar servicios:', error);
+          lista.innerHTML = '<div class="cot-no-servicios"><p>❌ Error al cargar servicios</p></div>';
+          modal.style.display = 'flex';
+          return;
+        }
+
+        if (!serviciosData || serviciosData.length === 0) {
+          lista.innerHTML = '<div class="cot-no-servicios"><p>No hay servicios disponibles</p><p>Cree servicios en el módulo de Servicios</p></div>';
+          modal.style.display = 'flex';
+          return;
+        }
+
+        // Guardar servicios para búsqueda
+        window.serviciosDisponibles = serviciosData.map(s => ({
+          id: s.id,
+          nombre: s.nombre,
+          precios: { A: s.precio_a || 0, B: s.precio_b || 0, C: s.precio_c || 0 }
+        }));
+
+        // Renderizar lista inicial
+        renderListaServicios(window.serviciosDisponibles);
+
+        // Mostrar modal
+        modal.style.display = 'flex';
+        buscador.focus();
+
+      } catch (err) {
+        console.error('Error:', err);
+        lista.innerHTML = '<div class="cot-no-servicios"><p>❌ Error al cargar servicios</p></div>';
+        modal.style.display = 'flex';
+      }
+    }
+
+    function renderListaServicios(serviciosList) {
+      const lista = document.getElementById('lista-servicios-modal');
+
+      if (serviciosList.length === 0) {
+        lista.innerHTML = '<div class="cot-no-servicios"><p>No se encontraron servicios</p></div>';
+        return;
+      }
+
+      lista.innerHTML = serviciosList.map(servicio => `
+        <div class="cot-servicio-item" data-id="${servicio.id}">
+          <div class="cot-servicio-info">
+            <h4>${servicio.nombre}</h4>
+            <div class="cot-servicio-precios">
+              <span class="cot-servicio-precio">A: $${servicio.precios.A.toFixed(2)}</span>
+              <span class="cot-servicio-precio">B: $${servicio.precios.B.toFixed(2)}</span>
+              <span class="cot-servicio-precio">C: $${servicio.precios.C.toFixed(2)}</span>
+            </div>
+          </div>
+          <button class="cot-btn-seleccionar" data-id="${servicio.id}">Seleccionar</button>
+        </div>
+      `).join('');
+
+      // Eventos para seleccionar servicio
+      lista.querySelectorAll('.cot-btn-seleccionar').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const servicioId = e.currentTarget.dataset.id;
+          seleccionarServicio(servicioId);
+        });
+      });
+
+      // Evento para toda la fila
+      lista.querySelectorAll('.cot-servicio-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+          if (!e.target.classList.contains('cot-btn-seleccionar')) {
+            const servicioId = e.currentTarget.dataset.id;
+            seleccionarServicio(servicioId);
+          }
+        });
+      });
+    }
+
+    function seleccionarServicio(servicioId) {
+      serviciosSeleccionados.push({
+        servicioId: servicioId,
+        nivel: "A",
+        cantidad: 1,
+        descuentoTipo: null,
+        descuentoValor: 0
+      });
+      renderServicios();
+
+      // Cerrar modal
+      document.getElementById('modal-servicios').style.display = 'none';
+      document.getElementById('buscador-servicios').value = '';
+    }
+
+    // =============================================================================
+    // 🔹 ACTUALIZAR TOTALES (CORREGIDO)
+    // =============================================================================
+    function actualizarTotales() {
+      let subtotalUSD = 0;
+      let descuentoTotalUSD = 0;
+
+      serviciosSeleccionados.forEach(item => {
+        const servicio = servicios.find(s => s.id === item.servicioId);
+        const precioUSD = servicio?.precios?.[item.nivel] || 0;
+        const montoUSD = precioUSD * item.cantidad;
+        subtotalUSD += montoUSD;
+        descuentoTotalUSD += calcularDescuentoServicio(item);
+      });
+
+      const subtotalConDescuentoUSD = subtotalUSD - descuentoTotalUSD;
+      const ivaUSD = ivaActivo ? subtotalConDescuentoUSD * 0.15 : 0;
+      const totalUSD = subtotalConDescuentoUSD + ivaUSD;
+
+      const esDolar = monedaActiva === 'dolar';
+
+      document.getElementById('subtotal-display').textContent = formatearMoneda(subtotalUSD, esDolar);
+      document.getElementById('descuento-total-display').textContent = formatearMoneda(descuentoTotalUSD, esDolar);
+      document.getElementById('iva-display').textContent = formatearMoneda(ivaUSD, esDolar);
+      document.getElementById('gran-total-display').textContent = formatearMoneda(totalUSD, esDolar);
+    }
+
+    async function guardarCotizacion() {
+      const clienteId = document.getElementById('cot-cliente').value;
+      if (!clienteId) {
+        alert("⚠️ Seleccione un cliente.");
+        return;
+      }
+      if (serviciosSeleccionados.length === 0) {
+        alert("⚠️ Agregue al menos un servicio.");
+        return;
+      }
+
+      const cliente = clientes.find(c => c.id === clienteId);
+      if (!cliente) {
+        alert("❌ Cliente no encontrado.");
+        return;
+      }
+
+      let ultimoNumero = parseInt(localStorage.getItem('ultimoNumCotizacion')) || 0;
+      ultimoNumero++;
+      localStorage.setItem('ultimoNumCotizacion', ultimoNumero.toString());
+      const id = `COT-${String(ultimoNumero).padStart(5, '0')}`;
+
+      const cotizacion = {
+        id: id,
+        cliente_id: clienteId,
+        servicios: serviciosSeleccionados.map(item => {
+          const s = servicios.find(ss => ss.id === item.servicioId);
+          const precioUSD = s?.precios[item.nivel] || 0;
+          const subtotalUSD = precioUSD * item.cantidad;
+          const descuentoUSD = calcularDescuentoServicio(item);
+          const totalUSD = subtotalUSD - descuentoUSD;
+          return {
+            nombre: s?.nombre || 'Desconocido',
+            nivel: item.nivel,
+            cantidad: item.cantidad,
+            precioUnitario: precioUSD,
+            descuentoTipo: item.descuentoTipo,
+            descuentoValor: item.descuentoValor,
+            total: totalUSD
+          };
+        }),
+        coniva: ivaActivo,
+        moneda: monedaActiva,
+        tipocambio: tipoCambio,
+        subtotal: parseFloat(document.getElementById('subtotal-display').textContent.replace(/[^0-9.-]/g, '')),
+        descuentototal: parseFloat(document.getElementById('descuento-total-display').textContent.replace(/[^0-9.-]/g, '')),
+        iva: parseFloat(document.getElementById('iva-display').textContent.replace(/[^0-9.-]/g, '')),
+        total: parseFloat(document.getElementById('gran-total-display').textContent.replace(/[^0-9.-]/g, '')),
+        fechacreacion: new Date().toISOString(),
+        eventocreado: false
+      };
+
+      try {
+        const { data, error } = await window.supabaseClient
+          .from('cotizaciones')
+          .insert(cotizacion)
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Error al guardar cotización:', error);
+          alert('❌ Error al guardar la cotización.');
+          return;
+        }
+
+        alert(`✅ Cotización ${data.id} guardada.`);
+        if (confirm("¿Deseas generar el PDF de la cotización?")) {
+          generarPDF(data, cliente);
+        }
+        serviciosSeleccionados = [];
+        renderServicios();
+      } catch (err) {
+        console.error('Error:', err);
+        alert('❌ Error al guardar la cotización.');
+      }
+    }
+
+    // =============================================================================
+    // 🔹 INICIALIZACIÓN
+    // =============================================================================
+    cargarClientes();
+
+    document.getElementById('cot-cliente').addEventListener('change', (e) => {
+      llenarCliente(e.target.value);
+    });
+
+    document.getElementById('btn-agregar-servicio').addEventListener('click', () => {
+      mostrarModalServicios();
+    });
+
+    document.getElementById('btn-guardar').addEventListener('click', guardarCotizacion);
+
+    document.getElementById('btn-nuevo').addEventListener('click', () => {
+      if (confirm("¿Crear nueva cotización?")) {
+        document.getElementById('cot-cliente').value = '';
+        document.getElementById('datos-cliente').style.display = 'none';
+        serviciosSeleccionados = [];
+        renderServicios();
+      }
+    });
+
+    // Switch de IVA
+    document.getElementById('btn-iva-sin').addEventListener('click', () => {
+      ivaActivo = false;
+      document.getElementById('btn-iva-sin').classList.add('cot-switch-active');
+      document.getElementById('btn-iva-con').classList.remove('cot-switch-active');
+      actualizarTotales();
+    });
+
+    document.getElementById('btn-iva-con').addEventListener('click', () => {
+      ivaActivo = true;
+      document.getElementById('btn-iva-con').classList.add('cot-switch-active');
+      document.getElementById('btn-iva-sin').classList.remove('cot-switch-active');
+      actualizarTotales();
+    });
+
+    // Switch de Moneda
+       // Switch de Moneda
+    document.getElementById('btn-moneda-cordoba').addEventListener('click', () => {
+      monedaActiva = 'cordoba';
+      document.getElementById('btn-moneda-cordoba').classList.add('cot-moneda-active');
+      document.getElementById('btn-moneda-dolar').classList.remove('cot-moneda-active');
+      renderServicios(); // Actualiza toda la tabla de servicios
+    });
+
+    document.getElementById('btn-moneda-dolar').addEventListener('click', () => {
+      monedaActiva = 'dolar';
+      document.getElementById('btn-moneda-dolar').classList.add('cot-moneda-active');
+      document.getElementById('btn-moneda-cordoba').classList.remove('cot-moneda-active');
+      renderServicios(); // Actualiza toda la tabla de servicios
+    });
+
+    // Tipo de cambio
+    document.getElementById('tipo-cambio').addEventListener('blur', (e) => {
+      tipoCambio = parseFloat(e.target.value) || 36.62;
+      renderServicios(); // ✅ También actualizar la tabla si cambia el tipo de cambio
+    });
+
+    document.getElementById('tipo-cambio').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') e.target.blur();
+    });
+    
+
+    // =============================================================================
+    // 🔹 EVENTOS DEL MODAL
+    // =============================================================================
+    // Cerrar modal
+    document.getElementById('btn-cerrar-modal').addEventListener('click', () => {
+      document.getElementById('modal-servicios').style.display = 'none';
+      document.getElementById('buscador-servicios').value = '';
+    });
+
+    // Cerrar modal al hacer clic fuera
+    document.getElementById('modal-servicios').addEventListener('click', (e) => {
+      if (e.target.id === 'modal-servicios') {
+        document.getElementById('modal-servicios').style.display = 'none';
+        document.getElementById('buscador-servicios').value = '';
+      }
+    });
+
+    // Búsqueda en tiempo real
+    document.getElementById('buscador-servicios').addEventListener('input', (e) => {
+      const termino = e.target.value.toLowerCase().trim();
+      const serviciosFiltrados = window.serviciosDisponibles.filter(servicio =>
+        servicio.nombre.toLowerCase().includes(termino)
+      );
+      renderListaServicios(serviciosFiltrados);
+    });
+
+    // Buscar al presionar Enter
+    document.getElementById('buscador-servicios').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const termino = e.target.value.toLowerCase().trim();
+        const serviciosFiltrados = window.serviciosDisponibles.filter(servicio =>
+          servicio.nombre.toLowerCase().includes(termino)
+        );
+        renderListaServicios(serviciosFiltrados);
+      }
+    });
+
+  }, 50);
+
+  // =============================================================================
+  // 🔹 GENERAR PDF DE COTIZACIÓN
+  // =============================================================================
+  async function generarPDF(cotizacion, cliente) {
+    if (!cotizacion || !cliente) {
+      alert('No hay datos de la cotización para imprimir.');
+      return;
+    }
+
+    try {
+      // Cargar html2pdf si no está disponible
+      if (typeof window.html2pdf === 'undefined') {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+        document.head.appendChild(script);
+        await new Promise(resolve => script.onload = resolve);
+      }
+      
+      const cont = document.createElement('div');
+      cont.style.cssText = `
+        padding: 24px;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        background: white;
+        color: #1e293b;
+        max-width: 800px;
+        margin: 0 auto;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        border-radius: 8px;
+      `;
+      
+      const servicios = cotizacion.servicios || [];
+      const subtotal = servicios.reduce((sum, s) => sum + (s.precioUnitario * s.cantidad), 0);
+      const descuentoTotal = servicios.reduce((sum, s) => sum + (s.descuentoValor || 0), 0);
+      const subtotalConDescuento = subtotal - descuentoTotal;
+      const iva = cotizacion.coniva ? subtotalConDescuento * 0.15 : 0;
+      const total = subtotalConDescuento + iva;
+      const symbol = cotizacion.moneda === 'dolar' ? '$' : 'C$';
+
+      const rows = servicios.map(s => `
+        <tr>
+          <td style="padding:10px; border-bottom:1px solid #e2e8f0;">${s.nombre}</td>
+          <td style="padding:10px; text-align:center; border-bottom:1px solid #e2e8f0;">${s.nivel}</td>
+          <td style="padding:10px; text-align:center; border-bottom:1px solid #e2e8f0;">${s.cantidad}</td>
+          <td style="padding:10px; text-align:right; border-bottom:1px solid #e2e8f0;">${symbol} ${s.precioUnitario.toFixed(2)}</td>
+          <td style="padding:10px; text-align:right; border-bottom:1px solid #e2e8f0;">${symbol} ${(s.descuentoValor || 0).toFixed(2)}</td>
+          <td style="padding:10px; text-align:right; font-weight:600; border-bottom:1px solid #e2e8f0;">${symbol} ${s.total.toFixed(2)}</td>
+        </tr>
+      `).join('');
+
+      cont.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 3px solid #3b82f6;">
+          <div>
+            <img src="../desktop/assets/logo.png" alt="Logo Absolute" style="height: 50px; margin-bottom: 8px;">
+            <h1 style="margin: 0; color: #1e3a8a; font-size: 24px; font-weight: 800;">Cotización</h1>
+            <p style="margin: 4px 0 0 0; color: #4b5563; font-size: 13px;">Documentación Interna – Absolute</p>
+          </div>
+          <div style="text-align: right; background: #dbeafe; padding: 12px; border-radius: 8px; border: 2px solid #93c5fd;">
+            <div style="font-size: 11px; color: #1e40af; text-transform: uppercase; letter-spacing: 0.5px;">NÚMERO</div>
+            <div style="font-size: 20px; font-weight: 800; color: #1e40af; letter-spacing: 1px;">${cotizacion.id}</div>
+          </div>
+        </div>
+
+        <div style="background: #f8fafc; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-size: 13px;">
+            <div>
+              <div style="color: #4b5563; margin-bottom: 4px; font-weight: 600;">Cliente</div>
+              <div style="color: #1e293b; font-weight: 600;">${cliente.nombre || '—'}</div>
+            </div>
+            <div>
+              <div style="color: #4b5563; margin-bottom: 4px; font-weight: 600;">RUC</div>
+              <div style="color: #1e293b; font-weight: 600;">${cliente.ruc || '—'}</div>
+            </div>
+            <div>
+              <div style="color: #4b5563; margin-bottom: 4px; font-weight: 600;">Contacto</div>
+              <div style="color: #1e293b; font-weight: 600;">${cliente.contacto || '—'}</div>
+            </div>
+            <div>
+              <div style="color: #4b5563; margin-bottom: 4px; font-weight: 600;">Fecha</div>
+              <div style="color: #1e293b; font-weight: 600;">${cotizacion.fechacreacion ? new Date(cotizacion.fechacreacion).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' }) : new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+            </div>
+          </div>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 24px;">
+          <thead>
+            <tr style="background: #3b82f6; color: white;">
+              <th style="padding: 10px; text-align: left;">Servicio</th>
+              <th style="padding: 10px; text-align: center;">Nivel</th>
+              <th style="padding: 10px; text-align: center;">Cant.</th>
+              <th style="padding: 10px; text-align: right;">P. Unit.</th>
+              <th style="padding: 10px; text-align: right;">Descuento</th>
+              <th style="padding: 10px; text-align: right;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+          </tbody>
+        </table>
+
+        <div style="display: flex; justify-content: flex-end; gap: 24px;">
+          <div style="text-align: right; font-size: 13px;">
+            <div style="margin-bottom: 8px; color: #4b5563;">Subtotal</div>
+            <div style="margin-bottom: 8px; color: #4b5563;">Descuento Total</div>
+            ${cotizacion.coniva ? '<div style="margin-bottom: 8px; color: #4b5563;">IVA (15%)</div>' : ''}
+            <div style="font-size: 16px; font-weight: 800; color: #1e40af; padding-top: 8px; border-top: 2px solid #cbd5e1;">Total</div>
+          </div>
+          <div style="text-align: right; font-size: 13px; font-weight: 600;">
+            <div style="margin-bottom: 8px;">${symbol} ${subtotal.toFixed(2)}</div>
+            <div style="margin-bottom: 8px;">${symbol} ${descuentoTotal.toFixed(2)}</div>
+            ${cotizacion.coniva ? `<div style="margin-bottom: 8px;">${symbol} ${iva.toFixed(2)}</div>` : ''}
+            <div style="font-size: 16px; font-weight: 800; color: #1e40af; padding-top: 8px; border-top: 2px solid #cbd5e1;">${symbol} ${total.toFixed(2)}</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 32px; text-align: center; font-size: 12px; color: #64748b; padding-top: 16px; border-top: 1px dashed #e2e8f0;">
+          <p>Esta cotización es válida por 30 días a partir de la fecha de emisión.</p>
+          <p>Gracias por su preferencia.</p>
+        </div>
+      `;
+
+      window.html2pdf()
+        .set({
+          margin: [15, 15, 15, 15],
+          filename: `cotizacion_${cotizacion.id}.pdf`,
+          html2canvas: { 
+            scale: 2, 
+            useCORS: true,
+            backgroundColor: "#ffffff"
+          },
+          jsPDF: { 
+            unit: 'mm', 
+            format: 'a4', 
+            orientation: 'portrait' 
+          }
+        })
+        .from(cont)
+        .save();
+    } catch (err) {
+      console.error('Error al generar PDF:', err);
+      alert('No se pudo generar el PDF: ' + err.message);
+    }
+  }
+</script>
+  <script src="../../../libs/html2pdf.min.js"></script>
+</body>
+</html>

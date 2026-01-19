@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Reporte de Vacaciones</title>
+  <link rel="stylesheet" href="../../../style/app.css">
+  <style>
+    .report-section { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #e2e8f0; }
+    .section-title { color: #1a365d; font-weight: 600; margin-bottom: 12px; }
+    .employee-data { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+    .data-item { background: #f8fafc; padding: 8px 12px; border-radius: 4px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th, td { text-align: left; padding: 10px; border-bottom: 1px solid #edf2f7; }
+    th { background: #2b6cb0; color: white; font-weight: 500; }
+    .btn { 
+      background: #2b6cb0; color: white; border: none; padding: 8px 16px; 
+      border-radius: 4px; cursor: pointer; font-size: 14px; margin-top: 16px;
+    }
+    #employee-select { width: 100%; padding: 8px; margin: 16px 0; }
+    #report-content { display: none; }
+  </style>
+</head>
+<body>
+ <h2>Reporte de Vacaciones</h2>
+
+<!-- Selector de empleado -->
+<select id="employee-select">
+  <option value="">Seleccione un empleado...</option>
+  <option value="1">Ana Martínez (001-010190-1234A)</option>
+  <option value="2">Carlos López (002-150585-5678B)</option>
+  <option value="3">Diana Ruiz (003-220300-9012C)</option>
+</select>
+
+<!-- Contenido para PDF: estilo carné corporativo -->
+<div id="pdf-content" style="display:none; width: 210mm; font-family: Arial, sans-serif; position: relative;">
+
+  <!-- Área superior con forma de ola (igual que el carné) -->
+  <div class="tarjeta-wave-bg" style="
+    height: 180px;
+    background: linear-gradient(135deg, #ffffff 0%, #ffcc80 50%, #f9a825 100%);
+    clip-path: polygon(0 0, 100% 0, 100% 70%, 50% 100%, 0 70%);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 20px;
+  ">
+    <!-- Logo alineado a la derecha -->
+    <div style="position: absolute; top: 15px; right: 20px;">
+      <img src="./assets/logo.png" alt="Logo" style="height: 90px; width: auto; object-fit: contain;">
+    </div>
+    
+    <!-- Título del reporte, centrado y con estilo corporativo -->
+    <div style="text-align: center; margin-top: 20px;">
+      <h1 style="color: #1a365d; font-size: 24px; font-weight: 700; margin: 0; text-transform: uppercase;">
+        Reporte de Vacaciones
+      </h1>
+      <p style="color: #e2630f; font-size: 14px; margin: 6px 0 0; font-weight: 600;">
+        Absolute de Nicaragua
+      </p>
+    </div>
+  </div>
+
+  <!-- Contenido principal (datos del empleado y reportes) -->
+  <div style="padding: 25px; margin-top: -30px; position: relative; z-index: 2; background: white; border-radius: 8px;">
+    <div id="pdf-employee-data"></div>
+    <div id="pdf-status"></div>
+    <div id="pdf-pagos"></div>
+    <div id="pdf-tomadas"></div>
+  </div>
+
+  <!-- Pie de página -->
+  <div style="margin-top: 30px; color: #666; font-size: 12px; text-align: center; padding: 10px;">
+    Generado el: <span id="pdf-date"></span><br>
+    © Absolute de Nicaragua – Confidencial
+  </div>
+</div>
+
+<!-- Contenido del reporte (inicialmente oculto) -->
+<div id="report-content">
+  <!-- Sección A: Datos del empleado -->
+  <div class="report-section">
+    <div class="section-title">A. Datos del Empleado</div>
+    <div class="employee-data">
+      <div class="data-item"><strong>Nombre:</strong> <span id="emp-name">Ana Martínez</span></div>
+      <div class="data-item"><strong>Cédula:</strong> <span id="emp-cedula">001-010190-1234A</span></div>
+      <div class="data-item"><strong>Puesto:</strong> <span id="emp-puesto">Gerente</span></div>
+      <div class="data-item"><strong>Fecha de Ingreso:</strong> <span id="emp-ingreso">01/01/2020</span></div>
+      <div class="data-item"><strong>Estatus:</strong> <span id="emp-estatus">Fijo</span></div>
+    </div>
+  </div>
+
+  <!-- Sección B: Estatus de vacaciones -->
+  <div class="report-section">
+    <div class="section-title">B. Estatus de Vacaciones</div>
+    <div class="employee-data">
+      <div class="data-item"><strong>Días acumulados:</strong> <span id="dias-acumulados">45</span></div>
+      <div class="data-item"><strong>Días pagados:</strong> <span id="dias-pagados">10</span></div>
+      <div class="data-item"><strong>Días tomados:</strong> <span id="dias-tomados">5</span></div>
+      <div class="data-item"><strong>Saldo disponible:</strong> <span id="saldo-disponible">30</span></div>
+    </div>
+  </div>
+
+  <!-- Sección C: Pagos -->
+  <div class="report-section">
+    <div class="section-title">C. Historial de Pagos de Vacaciones</div>
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Fecha</th>
+          <th>Tipo</th>
+          <th>Días Pagados</th>
+          <th>Días Pendientes</th>
+        </tr>
+      </thead>
+      <tbody id="pagos-table">
+        <tr><td>PAG-001</td><td>15/06/2024</td><td>Efectivo</td><td>5</td><td>40</td></tr>
+        <tr><td>PAG-002</td><td>20/11/2024</td><td>Transferencia</td><td>5</td><td>35</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Sección D: Tomadas -->
+  <div class="report-section">
+    <div class="section-title">D. Historial de Vacaciones Tomadas</div>
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Tipo</th>
+          <th>Notas</th>
+        </tr>
+      </thead>
+      <tbody id="tomadas-table">
+        <tr><td>10/12/2024</td><td>Día completo</td><td>Permiso sin entrada</td></tr>
+        <tr><td>25/12/2024</td><td>Medio día</td><td>Permiso con &gt;4h trabajadas</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <button class="btn-export" id="export-pdf">Exportar a PDF</button>
+</div>
+
+<script>
+(function() {
+  const EMPLEADOS = {
+    "1": { nombre: "Ana Martínez", cedula: "001-010190-1234A", puesto: "Gerente", ingreso: "01/01/2020", estatus: "Fijo", diasAcumulados: 45, diasPagados: 10, diasTomados: 5, saldo: 30 },
+    "2": { nombre: "Carlos López", cedula: "002-150585-5678B", puesto: "Vendedor", ingreso: "15/05/2018", estatus: "Fijo", diasAcumulados: 60, diasPagados: 0, diasTomados: 15, saldo: 45 },
+    "3": { nombre: "Diana Ruiz", cedula: "003-220300-9012C", puesto: "Almacén", ingreso: "22/03/2020", estatus: "Fijo", diasAcumulados: 30, diasPagados: 5, diasTomados: 0, saldo: 25 }
+  };
+
+  function updateReport(empId) {
+    const emp = EMPLEADOS[empId];
+    if (!emp) return;
+
+    // Actualizar vista en pantalla
+    document.getElementById('emp-name').textContent = emp.nombre;
+    document.getElementById('emp-cedula').textContent = emp.cedula;
+    document.getElementById('emp-puesto').textContent = emp.puesto;
+    document.getElementById('emp-ingreso').textContent = emp.ingreso;
+    document.getElementById('emp-estatus').textContent = emp.estatus;
+    document.getElementById('dias-acumulados').textContent = emp.diasAcumulados;
+    document.getElementById('dias-pagados').textContent = emp.diasPagados;
+    document.getElementById('dias-tomados').textContent = emp.diasTomados;
+    document.getElementById('saldo-disponible').textContent = emp.saldo;
+  }
+
+  // Nueva función: generar contenido para PDF
+  function generatePdfContent(empId) {
+    const emp = EMPLEADOS[empId];
+    if (!emp) return;
+
+    // Datos del empleado
+    document.getElementById('pdf-employee-data').innerHTML = `
+      <div style="background: #f8fafc; padding: 12px; border-radius: 6px; margin-bottom: 16px;">
+        <h4 style="color: #1a365d; margin: 0 0 10px; font-size: 16px;">A. Datos del Empleado</h4>
+        <div><strong>Nombre:</strong> ${emp.nombre}</div>
+        <div><strong>Cédula:</strong> ${emp.cedula}</div>
+        <div><strong>Puesto:</strong> ${emp.puesto}</div>
+        <div><strong>Fecha de Ingreso:</strong> ${emp.ingreso}</div>
+        <div><strong>Estatus:</strong> ${emp.estatus}</div>
+      </div>
+    `;
+
+    // Estatus
+    document.getElementById('pdf-status').innerHTML = `
+      <div style="background: #f8fafc; padding: 12px; border-radius: 6px; margin-bottom: 16px;">
+        <h4 style="color: #1a365d; margin: 0 0 10px; font-size: 16px;">B. Estatus de Vacaciones</h4>
+        <div><strong>Días acumulados:</strong> ${emp.diasAcumulados}</div>
+        <div><strong>Días pagados:</strong> ${emp.diasPagados}</div>
+        <div><strong>Días tomados:</strong> ${emp.diasTomados}</div>
+        <div><strong>Saldo disponible:</strong> ${emp.saldo}</div>
+      </div>
+    `;
+
+    // Pagos (datos fijos por simplicidad)
+    document.getElementById('pdf-pagos').innerHTML = `
+      <div style="margin-bottom: 16px;">
+        <h4 style="color: #1a365d; margin: 0 0 10px; font-size: 16px;">C. Historial de Pagos de Vacaciones</h4>
+        <table style="width:100%; border-collapse: collapse; font-size: 12px;">
+          <thead>
+            <tr style="background: #2b6cb0; color: white;">
+              <th style="padding: 6px; text-align: left;">ID</th>
+              <th style="padding: 6px; text-align: left;">Fecha</th>
+              <th style="padding: 6px; text-align: left;">Tipo</th>
+              <th style="padding: 6px; text-align: left;">Días</th>
+              <th style="padding: 6px; text-align: left;">Pend.</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom: 1px solid #edf2f7;">
+              <td style="padding: 6px;">PAG-001</td>
+              <td style="padding: 6px;">15/06/2024</td>
+              <td style="padding: 6px;">Efectivo</td>
+              <td style="padding: 6px;">5</td>
+              <td style="padding: 6px;">40</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #edf2f7;">
+              <td style="padding: 6px;">PAG-002</td>
+              <td style="padding: 6px;">20/11/2024</td>
+              <td style="padding: 6px;">Transferencia</td>
+              <td style="padding: 6px;">5</td>
+              <td style="padding: 6px;">35</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    // Tomadas
+    document.getElementById('pdf-tomadas').innerHTML = `
+      <div>
+        <h4 style="color: #1a365d; margin: 0 0 10px; font-size: 16px;">D. Historial de Vacaciones Tomadas</h4>
+        <table style="width:100%; border-collapse: collapse; font-size: 12px;">
+          <thead>
+            <tr style="background: #2b6cb0; color: white;">
+              <th style="padding: 6px; text-align: left;">Fecha</th>
+              <th style="padding: 6px; text-align: left;">Tipo</th>
+              <th style="padding: 6px; text-align: left;">Notas</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom: 1px solid #edf2f7;">
+              <td style="padding: 6px;">10/12/2024</td>
+              <td style="padding: 6px;">Día completo</td>
+              <td style="padding: 6px;">Permiso sin entrada</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #edf2f7;">
+              <td style="padding: 6px;">25/12/2024</td>
+              <td style="padding: 6px;">Medio día</td>
+              <td style="padding: 6px;">Permiso con &gt;4h trabajadas</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    // Fecha de generación
+    const now = new Date();
+    document.getElementById('pdf-date').textContent = now.toLocaleDateString('es-NI', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  async function generatePDF(empId) {
+    const emp = EMPLEADOS[empId];
+    if (!emp) return;
+
+    // Generar contenido para PDF
+    generatePdfContent(empId);
+
+    // Mostrar temporalmente el contenedor PDF
+    const pdfContent = document.getElementById('pdf-content');
+    pdfContent.style.display = 'block';
+    pdfContent.style.padding = '20px';
+    pdfContent.style.maxWidth = '800px';
+    pdfContent.style.margin = '0 auto';
+
+    try {
+      // Capturar el contenido como imagen
+      const canvas = await html2canvas(pdfContent, {
+        scale: 2,
+        useCORS: true,
+        logging: false
+      });
+
+      // Crear PDF
+      const { jsPDF } = window.jspdf;
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210; // Ancho A4 en mm
+      const pageHeight = 295;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      // Añadir páginas si es muy largo (poco probable en este caso)
+      while (heightLeft >= 0) {
+        pdf.addPage();
+        position = heightLeft - imgHeight;
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      // Guardar
+      pdf.save(`Vacaciones_${emp.nombre.replace(/\s+/g, '_')}.pdf`);
+    } catch (error) {
+      console.error('Error al generar PDF:', error);
+      alert('Error al generar el PDF. Ver consola.');
+    } finally {
+      // Ocultar contenedor PDF
+      pdfContent.style.display = 'none';
+    }
+  }
+
+  function initVacacionesReport() {
+    const select = document.getElementById('employee-select');
+    const content = document.getElementById('report-content');
+    const exportBtn = document.getElementById('export-pdf');
+
+    if (!select || !content) return;
+
+    let currentEmpId = null;
+
+    select.addEventListener('change', function(e) {
+      currentEmpId = e.target.value;
+      if (currentEmpId) {
+        updateReport(currentEmpId);
+        content.style.display = 'block';
+      } else {
+        content.style.display = 'none';
+      }
+    });
+
+    if (exportBtn) {
+      exportBtn.addEventListener('click', function() {
+        if (currentEmpId) {
+          generatePDF(currentEmpId);
+        } else {
+          alert('Por favor, seleccione un empleado primero.');
+        }
+      });
+    }
+  }
+
+  setTimeout(initVacacionesReport, 50);
+})();
+</script>

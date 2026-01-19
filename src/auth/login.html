@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Iniciar Sesión</title>
+  <style>
+    /* Reset básico */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .login-container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      width: 100%;
+      max-width: 400px;
+      padding: 32px;
+    }
+
+    .login-container h2 {
+      text-align: center;
+      color: #1e40af;
+      margin-bottom: 24px;
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .input-group {
+      margin-bottom: 18px;
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 6px;
+      color: #374151;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 15px;
+      transition: border-color 0.2s;
+    }
+
+    .input-group input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn:hover {
+      background: #2563eb;
+    }
+
+    .footer-links {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    .footer-links a {
+      color: #3b82f6;
+      text-decoration: none;
+      margin-left: 8px;
+    }
+
+    .footer-links a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 480px) {
+      .login-container {
+        padding: 24px;
+      }
+    }
+
+    /* Elimina duplicado de reset y deja scroll visible para no tapar la UI */
+    body {
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+      min-height: 100vh;
+      padding: 20px;
+      margin: 0;
+      overflow: auto;
+    }
+
+    .login-wrapper {
+      min-height: calc(100vh - 40px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-wrapper">
+    <div class="login-container">
+    <h2>Iniciar Sesión</h2>
+    <form id="formLogin">
+      <div class="input-group">
+        <label for="usuario">Usuario</label>
+        <input type="text" id="usuario" autocomplete="username" required />
+      </div>
+      <div class="input-group">
+        <label for="contrasena">Contraseña</label>
+        <input type="password" id="contrasena" autocomplete="current-password" required />
+      </div>
+      <button type="submit" class="btn">Ingresar</button>
+    </form>
+
+    <div class="footer-links">
+      ¿No tienes cuenta?
+      <a href="#" id="link-registro">Registrarse</a>
+    </div>
+    </div>
+  </div>
+
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../config/supabaseClient.js"></script>
+  <script src="./login.js"></script>
+</body>
+</html>

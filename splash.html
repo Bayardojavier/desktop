@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Splash</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: black;
+      overflow: hidden;
+    }
+    #video-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    #intro-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  </style>
+</head>
+<body>
+  <div id="video-container">
+    <video id="intro-video" autoplay muted playsinline>
+      <source src="./assets/intro.mp4" type="video/mp4">
+    </video>
+  </div>
+
+  <script>
+    // Cerrar splash cuando el video termina
+    const video = document.getElementById('intro-video');
+    video.onended = () => {
+      if (window.electronAPI) {
+        window.electronAPI.closeSplash();
+      } else {
+        // Fallback: cerrar después de 9s
+        setTimeout(() => {
+          require('electron').ipcRenderer.send('close-splash');
+        }, 100);
+      }
+    };
+
+    // Fallback por si el video no se carga
+    setTimeout(() => {
+      if (document.visibilityState !== 'hidden') {
+        if (window.electronAPI) {
+          window.electronAPI.closeSplash();
+        }
+      }
+    }, 9500);
+  </script>
+</body>
+</html>

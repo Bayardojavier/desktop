@@ -1,0 +1,522 @@
+<div style="display: flex; flex-direction: column; gap: 20px; height: 100%;">
+
+  <!-- FILTROS + RESUMEN + EXPORTAR -->
+  <div class="bodega-filtros" style="display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap;">
+
+    <div class="bodega-filtro-grupo">
+      <label for="filtro-bodega-principal">Bodega Principal</label>
+      <select id="filtro-bodega-principal" class="dashboard-select">
+        <option value="todas">Todas</option>
+      </select>
+    </div>
+
+    <div class="bodega-filtro-grupo">
+      <label for="filtro-bodega-secundaria">Bodega Secundaria</label>
+      <select id="filtro-bodega-secundaria" class="dashboard-select">
+        <option value="todas">Todas</option>
+      </select>
+    </div>
+
+    <!-- KPIs EN FILA -->
+    <div style="display: flex; gap: 12px;">
+      <div class="bodega-resumen-card">
+        <div>Materiales</div>
+        <div class="valor" id="kpi-unicos">–</div>
+      </div>
+      <div class="bodega-resumen-card">
+        <div>Unidades</div>
+        <div class="valor" id="kpi-unidades">–</div>
+      </div>
+      <div class="bodega-resumen-card">
+        <div>Agotados</div>
+        <div class="valor" id="kpi-agotados">–</div>
+      </div>
+    </div>
+
+    <button id="btn-exportar-xbodega" class="bodega-export-pdf-btn">
+      📄 Exportar Inventario
+    </button>
+  </div>
+
+  <!-- TABLA -->
+  <div id="tabla-inventario-bodega" style="flex: 1; overflow: auto;"></div>
+
+</div>
+
+<style>
+.bodega-resumen-card {
+  background: rgba(20, 30, 60, 0.6);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 10px;
+  padding: 10px 14px;
+  min-width: 120px;
+  text-align: center;
+  color: #cbd5e1;
+}
+
+.bodega-resumen-card .valor {
+  font-size: 22px;
+  font-weight: bold;
+  color: #64b5f6;
+}
+</style>
+
+
+<script>
+// --- Lógica autónoma para xbodega.html ---
+(function() {
+  const supa = window.supabaseClient;
+  if (!supa) {
+    console.error('❌ Supabase no está inicializado (window.supabaseClient).');
+  }
+
+  const estado = {
+    inventario: [],
+    bodegasPrincipales: [],
+    bodegasSecundarias: [],
+    secundariasPorPrincipal: new Map()
+  };
+
+  function normalizarBodega(b) {
+    return (b || '').toString().trim();
+  }
+
+  async function cargarInventarioDesdeSupabase() {
+    if (!supa) return;
+
+    const cont = document.getElementById('tabla-inventario-bodega');
+    cont.innerHTML = '<p style="color:#cbd5e1; text-align:center; margin-top: 40px;">Cargando inventario…</p>';
+
+    const [{ data: stockData, error: stockError }, { data: catData, error: catError }] = await Promise.all([
+      supa
+        .from('stock_actual_con_precio')
+        .select('material_codigo, material_nombre, bodega_principal, bodega_secundaria, existencia')
+        .order('bodega_principal', { ascending: true })
+        .order('bodega_secundaria', { ascending: true })
+        .order('material_codigo', { ascending: true }),
+      supa
+        .from('catalogo')
+        .select('codigo, nombre, bodega_principal, bodega_secundaria, tipo_material, color')
+        .eq('es_contenedor', false)
+    ]);
+
+    if (stockError) {
+      console.error('Error cargando stock_actual_con_precio:', stockError);
+      cont.innerHTML = `<p style="color:#ef4444; text-align:center; margin-top: 40px;">Error al cargar inventario: ${stockError.message}</p>`;
+      return;
+    }
+
+    if (catError) {
+      console.warn('No se pudo cargar catalogo (tipo/color):', catError);
+    }
+
+    const catMap = new Map();
+    (catData || []).forEach(c => {
+      catMap.set(c.codigo, {
+        codigo: c.codigo,
+        nombre: c.nombre,
+        bodega_principal: c.bodega_principal,
+        bodega_secundaria: c.bodega_secundaria,
+        tipo: c.tipo_material,
+        color: c.color
+      });
+    });
+
+    const inventarioMap = new Map();
+    function makeKey(codigo, principal, secundaria) {
+      return `${String(codigo || '').trim()}||${normalizarBodega(principal) || 'Principal'}||${normalizarBodega(secundaria) || 'General'}`;
+    }
+
+    // Base: filas reales de stock (por principal+secundaria)
+    (stockData || []).forEach(s => {
+      const codigo = String(s.material_codigo || '').trim();
+      if (!codigo) return;
+
+      const bodegaPrincipal = normalizarBodega(s.bodega_principal) || 'Principal';
+      const bodegaSecundaria = normalizarBodega(s.bodega_secundaria) || 'General';
+      const c = catMap.get(codigo) || {};
+      const key = makeKey(codigo, bodegaPrincipal, bodegaSecundaria);
+      const bodegaMostrar = bodegaSecundaria || bodegaPrincipal;
+
+      inventarioMap.set(key, {
+        codigo,
+        nombre: c.nombre || s.material_nombre || codigo,
+        bodega: bodegaMostrar,
+        bodega_principal: bodegaPrincipal,
+        bodega_secundaria: bodegaSecundaria,
+        tipo: c.tipo || '–',
+        color: c.color || '–',
+        existencia: Number(s.existencia) || 0
+      });
+    });
+
+    // Complemento: items del catálogo sin stock aún (existencia=0)
+    (catData || []).forEach(c => {
+      const codigo = String(c.codigo || '').trim();
+      if (!codigo) return;
+
+      const bodegaPrincipal = normalizarBodega(c.bodega_principal) || 'Principal';
+      const bodegaSecundaria = normalizarBodega(c.bodega_secundaria) || 'General';
+      const key = makeKey(codigo, bodegaPrincipal, bodegaSecundaria);
+      if (inventarioMap.has(key)) return;
+
+      const bodegaMostrar = bodegaSecundaria || bodegaPrincipal;
+      inventarioMap.set(key, {
+        codigo,
+        nombre: c.nombre || codigo,
+        bodega: bodegaMostrar,
+        bodega_principal: bodegaPrincipal,
+        bodega_secundaria: bodegaSecundaria,
+        tipo: c.tipo_material || '–',
+        color: c.color || '–',
+        existencia: 0
+      });
+    });
+
+    const inventario = Array.from(inventarioMap.values()).sort((a, b) =>
+      a.bodega_principal.localeCompare(b.bodega_principal)
+      || a.bodega_secundaria.localeCompare(b.bodega_secundaria)
+      || a.codigo.localeCompare(b.codigo)
+    );
+
+    estado.inventario = inventario;
+    estado.bodegasPrincipales = Array.from(new Set(inventario.map(i => i.bodega_principal).filter(Boolean))).sort();
+    estado.bodegasSecundarias = Array.from(new Set(inventario.map(i => i.bodega_secundaria).filter(Boolean))).sort();
+
+    // Mapear secundarias por principal
+    estado.secundariasPorPrincipal = new Map();
+    inventario.forEach(it => {
+      const p = (it.bodega_principal || '').toString().trim();
+      const s = (it.bodega_secundaria || '').toString().trim();
+      if (!p || !s) return;
+      const set = estado.secundariasPorPrincipal.get(p) || new Set();
+      set.add(s);
+      estado.secundariasPorPrincipal.set(p, set);
+    });
+
+    poblarSelectBodegaPrincipal(estado.bodegasPrincipales);
+    poblarSelectBodegaSecundaria(document.getElementById('filtro-bodega-principal')?.value || 'todas');
+  }
+
+  function poblarSelectBodegaPrincipal(principales = []) {
+    const select = document.getElementById('filtro-bodega-principal');
+    if (!select) return;
+    const actual = select.value || 'todas';
+
+    const opciones = ['<option value="todas">Todas</option>'];
+    principales.forEach(b => {
+      const safe = String(b).replace(/"/g, '&quot;');
+      opciones.push(`<option value="${safe}">${safe}</option>`);
+    });
+
+    select.innerHTML = opciones.join('');
+    const disponibles = new Set(['todas', ...principales]);
+    select.value = disponibles.has(actual) ? actual : 'todas';
+  }
+
+  function poblarSelectBodegaSecundaria(principalSeleccionada) {
+    const select = document.getElementById('filtro-bodega-secundaria');
+    if (!select) return;
+    const actual = select.value || 'todas';
+
+    let secundarias = [];
+    if ((principalSeleccionada || 'todas') === 'todas') {
+      secundarias = estado.bodegasSecundarias || [];
+    } else {
+      const set = estado.secundariasPorPrincipal.get(principalSeleccionada) || new Set();
+      secundarias = Array.from(set).sort();
+    }
+
+    const opciones = ['<option value="todas">Todas</option>'];
+    secundarias.forEach(b => {
+      const safe = String(b).replace(/"/g, '&quot;');
+      opciones.push(`<option value="${safe}">${safe}</option>`);
+    });
+
+    select.innerHTML = opciones.join('');
+    const disponibles = new Set(['todas', ...secundarias]);
+    select.value = disponibles.has(actual) ? actual : 'todas';
+  }
+
+  function renderizarTabla(bodegaPrincipalFiltro, bodegaSecundariaFiltro) {
+    let itemsFiltrados = [...(estado.inventario || [])];
+
+    if ((bodegaPrincipalFiltro || 'todas') !== 'todas') {
+      itemsFiltrados = itemsFiltrados.filter(item => item.bodega_principal === bodegaPrincipalFiltro);
+    }
+    if ((bodegaSecundariaFiltro || 'todas') !== 'todas') {
+      itemsFiltrados = itemsFiltrados.filter(item => item.bodega_secundaria === bodegaSecundariaFiltro);
+    }
+
+    let totalUnidades = 0, agotados = 0;
+    let filas = '';
+
+    itemsFiltrados.forEach(item => {
+      const existencia = Number(item.existencia) || 0;
+      totalUnidades += existencia;
+      if (existencia === 0) agotados++;
+      filas += `
+        <tr>
+          <td>${item.codigo}</td>
+          <td>${item.nombre}</td>
+          <td>${item.bodega}</td>
+          <td>${item.tipo}</td>
+          <td>${item.color}</td>
+          <td>${existencia}</td>
+          <td>${existencia > 0 ? 'Disponible' : 'Agotado'}</td>
+        </tr>
+      `;
+    });
+
+    document.getElementById('kpi-unicos').textContent = itemsFiltrados.length;
+    document.getElementById('kpi-unidades').textContent = totalUnidades;
+    document.getElementById('kpi-agotados').textContent = agotados;
+
+    document.getElementById('tabla-inventario-bodega').innerHTML = `
+      <table class="bodega-table">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Bodega</th>
+            <th>Tipo</th>
+            <th>Color</th>
+            <th>Existencia</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filas || '<tr><td colspan="7" style="text-align:center;color:#aaa;">No hay materiales en esta bodega</td></tr>'}
+        </tbody>
+      </table>
+    `;
+  }
+
+  // === INICIALIZAR ===
+  (async function init() {
+    await cargarInventarioDesdeSupabase();
+    renderizarTabla(
+      document.getElementById('filtro-bodega-principal')?.value || 'todas',
+      document.getElementById('filtro-bodega-secundaria')?.value || 'todas'
+    );
+  })();
+
+  // === EVENTOS ===
+  document.getElementById('filtro-bodega-principal').addEventListener('change', (e) => {
+    const principal = e.target.value;
+    poblarSelectBodegaSecundaria(principal);
+    renderizarTabla(principal, document.getElementById('filtro-bodega-secundaria')?.value || 'todas');
+  });
+
+  document.getElementById('filtro-bodega-secundaria').addEventListener('change', (e) => {
+    renderizarTabla(
+      document.getElementById('filtro-bodega-principal')?.value || 'todas',
+      e.target.value
+    );
+  });
+
+  document.getElementById('btn-exportar-xbodega').addEventListener('click', () => {
+  if (typeof html2pdf === 'undefined') {
+    alert('html2pdf no está cargado.');
+    return;
+  }
+
+  const selectPrincipal = document.getElementById('filtro-bodega-principal');
+  const selectSecundaria = document.getElementById('filtro-bodega-secundaria');
+  const valorPrincipal = selectPrincipal?.value || 'todas';
+  const valorSecundaria = selectSecundaria?.value || 'todas';
+  const textoPrincipal = selectPrincipal?.selectedOptions?.[0]?.text || 'Todas';
+  const textoSecundaria = selectSecundaria?.selectedOptions?.[0]?.text || 'Todas';
+  const fecha = new Date().toLocaleDateString('es-NI');
+
+  const grupos = {};
+
+  document.querySelectorAll('#tabla-inventario-bodega tbody tr').forEach(tr => {
+    const c = tr.children;
+    if (c.length < 7) return;
+
+    const bodega = c[2].textContent.trim();
+    if (!grupos[bodega]) grupos[bodega] = [];
+
+    grupos[bodega].push({
+      codigo: c[0].textContent,
+      nombre: c[1].textContent,
+      tipo: c[3].textContent,
+      color: c[4].textContent,
+      existencia: c[5].textContent,
+      estado: c[6].textContent.trim()
+    });
+  });
+
+  const bodegas = Object.keys(grupos);
+
+  let contenido = '';
+
+  bodegas.forEach(bodega => {
+    if (!grupos[bodega]) return;
+
+    let filas = '';
+    grupos[bodega].forEach(i => {
+      filas += `
+        <tr>
+          <td>${i.codigo}</td>
+          <td>${i.nombre}</td>
+          <td>${i.tipo}</td>
+          <td>${i.color}</td>
+          <td style="text-align:center;">${i.existencia}</td>
+          <td class="${i.estado === 'Disponible' ? 'ok' : 'bad'}">${i.estado}</td>
+        </tr>
+      `;
+    });
+
+    contenido += `
+      <h2 class="grupo-bodega">📦 ${bodega}</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Tipo</th>
+            <th>Color</th>
+            <th>Exist.</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>${filas}</tbody>
+      </table>
+    `;
+  });
+
+  const html = `
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      color:#1f2937;
+      margin-bottom:70px;
+    }
+
+    .header {
+      text-align:center;
+      border-bottom:2px solid #2563eb;
+      padding-bottom:8px;
+      margin-bottom:18px;
+    }
+
+    .header h1 {
+      margin:0;
+      font-size:18px;
+      color:#1e3a8a;
+    }
+
+    .header p {
+      margin:4px 0 0;
+      font-size:11px;
+      color:#555;
+    }
+
+    .grupo-bodega {
+      margin:22px 0 8px;
+      font-size:14px;
+      color:#1e40af;
+      border-left:4px solid #2563eb;
+      padding-left:8px;
+      page-break-inside: avoid;
+    }
+
+    table {
+      width:100%;
+      border-collapse:collapse;
+      font-size:10.5px;
+      margin-bottom:18px;
+    }
+
+    thead th {
+      background:#2563eb;
+      color:#fff;
+      padding:6px;
+      text-align:left;
+    }
+
+    tbody td {
+      padding:5px 6px;
+      border-bottom:1px solid #e5e7eb;
+    }
+
+    tbody tr:nth-child(even) {
+      background:#f8fafc;
+    }
+
+    .ok { color:#166534; font-weight:bold; }
+    .bad { color:#991b1b; font-weight:bold; }
+
+    .footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      font-size:10px;
+      color:#555;
+      text-align:center;
+      border-top:1px solid #e5e7eb;
+      padding:6px 0;
+      background:#fff;
+    }
+  </style>
+
+  <div>
+    <div class="header">
+      <img src="assets/logo.png" style="height:48px;margin-bottom:4px;">
+      <h1>Inventario General por Bodega</h1>
+      <p>
+        ${
+          (valorPrincipal === 'todas' && valorSecundaria === 'todas')
+            ? 'Todas las bodegas'
+            : (valorPrincipal !== 'todas' && valorSecundaria === 'todas')
+              ? `Bodega Principal: ${textoPrincipal}`
+              : (valorPrincipal === 'todas' && valorSecundaria !== 'todas')
+                ? `Bodega Secundaria: ${textoSecundaria}`
+                : `Bodega Principal: ${textoPrincipal} • Secundaria: ${textoSecundaria}`
+        }
+        | Fecha: ${fecha}
+      </p>
+    </div>
+
+    ${contenido}
+
+    <div class="footer">
+      Absolute de Nicaragua · Inventario generado automáticamente
+    </div>
+  </div>
+  `;
+
+  html2pdf().from(html).set({
+    margin: [12, 12, 18, 12],
+    filename: `Inventario_${
+      (valorPrincipal === 'todas' && valorSecundaria === 'todas')
+        ? 'General'
+        : (valorPrincipal !== 'todas' && valorSecundaria === 'todas')
+          ? textoPrincipal.replace(/ /g,'_')
+          : (valorPrincipal === 'todas' && valorSecundaria !== 'todas')
+            ? textoSecundaria.replace(/ /g,'_')
+            : (textoPrincipal + '_' + textoSecundaria).replace(/ /g,'_')
+    }.pdf`,
+    html2canvas: { scale: 2 },
+    jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
+  }).save();
+});
+
+
+
+  // === NAVEGACIÓN RÁPIDA ===
+  document.querySelectorAll('.bodega-nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const eventoFake = { target: { dataset: { vista: btn.dataset.vista } } };
+      if (typeof manejarClicVista === 'function') {
+        manejarClicVista(eventoFake);
+      } else {
+        console.warn('manejarClicVista no está disponible');
+      }
+    });
+  });
+})();
+</script>

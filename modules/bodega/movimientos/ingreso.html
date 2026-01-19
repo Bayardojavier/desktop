@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ingreso de Materiales</title>
+</head>
+<body>
+  <div class="movimientos-view">
+  <div class="mov-form-container">
+    <div class="mov-form-card">
+      <h1 class="mov-form-title">📥 Ingreso de Materiales</h1>
+      <p class="mov-form-subtitle">Registre la entrada de materiales a bodega desde órdenes de compra</p>
+      
+      <div class="mov-form-section">
+        <div class="mov-form-row">
+          <div class="mov-form-col">
+            <label class="mov-form-label">Encargado de Ingreso</label>
+            <select id="encargado-ingreso" class="mov-form-select" required>
+              <option value="">Seleccione un empleado...</option>
+            </select>
+          </div>
+          <div class="mov-form-col">
+            <label class="mov-form-label">Fecha</label>
+            <input type="date" id="fecha-ingreso" class="mov-form-input" required />
+          </div>
+        </div>
+      </div>
+      
+      <div class="mov-form-section">
+        <h2 class="mov-form-section-title">Orden de Compra</h2>
+        <div class="mov-form-row">
+          <div class="mov-form-col">
+            <label class="mov-form-label">Número de Orden</label>
+            <select id="numero-orden" class="mov-form-select" required>
+              <option value="">Seleccione una orden...</option>
+            </select>
+          </div>
+          <div class="mov-form-col">
+            <label class="mov-form-label">Proveedor</label>
+            <input type="text" id="proveedor-orden" class="mov-form-input" readonly />
+          </div>
+          <div class="mov-form-col">
+            <label class="mov-form-label">Número de Factura</label>
+            <input type="text" id="numero-factura" class="mov-form-input" placeholder="Factura del proveedor" />
+          </div>
+          <div class="mov-form-col">
+            <label class="mov-form-label">Moneda OC</label>
+            <input type="text" id="moneda-orden" class="mov-form-input" readonly style="background:#f0fdf4;" />
+          </div>
+        </div>
+      </div>
+      
+      <div id="tabla-ingreso-orden" style="margin-top: 20px;"></div>
+      
+      <div class="mov-form-actions">
+        <button id="btn-guardar-ingreso" class="mov-btn mov-btn-primary">Guardar Ingreso</button>
+        <button id="btn-limpiar-ingreso" class="mov-btn mov-btn-secondary">Limpiar</button>
+        <button id="btn-imprimir-ingreso" class="mov-btn mov-btn-secondary" style="display: none;">🖨️ Imprimir</button>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- Modal de tipo de cambio -->
+  <div id="modal-tipo-cambio" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
+    <div style="background:white; padding:24px; border-radius:12px; width:400px;">
+      <h3 style="margin:0 0 16px 0; color:#1e40af;">Tipo de Cambio</h3>
+      <p style="margin-bottom:16px;">Ingrese el valor actual para convertir córdobas a dólares (1 USD = ? C$)</p>
+      <input type="number" id="input-tipo-cambio" step="0.01" value="36.62" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; font-size:16px;" />
+      <div style="display:flex; gap:12px; margin-top:20px;">
+        <button id="btn-aplicar-cambio" style="flex:1; background:#1e40af; color:white; border:none; padding:10px; border-radius:6px; font-weight:bold;">Aplicar</button>
+        <button id="btn-cerrar-cambio" style="flex:1; background:#64748b; color:white; border:none; padding:10px; border-radius:6px;">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    setTimeout(() => {
+      // =============================================================================
+      // 🔹 VARIABLES GLOBALES
+      // =============================================================================
+      let tipoCambio = 36.62;
+      let itemsOrdenSeleccionada = [];
+      let ordenMoneda = 'USD';
+      function fmt(n, dec = 2) {
+        const num = Number(n) || 0;
+        return num.toLocaleString('es-NI', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+      }
+      async function ensureHtml2Pdf() {
+        if (window.html2pdf) return;
+        await new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+          s.onload = () => resolve();
+          s.onerror = (e) => reject(e);
+          document.head.appendChild(s);
+        });
+      }
+      
+      // =============================================================================
+      // 🔹 CARGAR DATOS DE SUPABASE
+      // =============================================================================
+      async function cargarDatos() {
+        try {
+          // Empleados para "Encargado de Ingreso"
+          const { data: empleados, error: errEmp } = await window.supabaseClient
+            .from('empleados')
+            .select('nombres, apellidos')
+            .order('nombres', { ascending: true });
+          if (errEmp) throw errEmp;
+          
+          const selectEmpleados = document.getElementById('encargado-ingreso');
+          empleados.forEach(emp => {
+            const nombre = `${emp.nombres} ${emp.apellidos}`;
+            const opt = document.createElement('option');
+            opt.value = nombre;
+            opt.textContent = nombre;
+            selectEmpleados.appendChild(opt);
+          });
+          
+          // Órdenes de compra pendientes
+          const { data: ordenes, error: errOrd } = await window.supabaseClient
+            .from('ordenes_compra')
+            .select('numero, proveedor, moneda')
+            .eq('estado', 'pendiente')
+            .order('creado_en', { ascending: false });
+          if (errOrd) throw errOrd;
+          
+          const selectOrdenes = document.getElementById('numero-orden');
+          ordenes.forEach(orden => {
+            const opt = document.createElement('option');
+            opt.value = orden.numero;
+            opt.textContent = orden.numero;
+            selectOrdenes.appendChild(opt);
+          });
+          
+          // Fecha actual
+          document.getElementById('fecha-ingreso').value = new Date().toISOString().split('T')[0];
+          
+        } catch (err) {
+          console.error('Error al cargar datos:', err);
+          alert('❌ Error al cargar datos: ' + err.message);
+        }
+      }
+      
+      // =============================================================================
+      // 🔹 CARGAR ORDEN SELECCIONADA
+      // =============================================================================
+      async function cargarOrden(numeroOrden) {
+        try {
+          const { data: orden, error: errOrd } = await window.supabaseClient
+            .from('ordenes_compra')
+            .select('*')
+            .eq('numero', numeroOrden)
+            .single();
+          if (errOrd) throw errOrd;
+          
+          document.getElementById('proveedor-orden').value = orden.proveedor || '';
+          document.getElementById('moneda-orden').value = orden.moneda || 'USD';
+          ordenMoneda = orden.moneda || 'USD';
+          
+          // Cargar ítems de la orden
+          const { data: items, error: errItems } = await window.supabaseClient
+            .from('items_orden_compra')
+            .select('material_codigo, cantidad, precio_unitario')
+            .eq('orden_compra_id', orden.id);
+          if (errItems) throw errItems;
+          
+          // Para cada ítem, cargar datos del material
+          itemsOrdenSeleccionada = await Promise.all(items.map(async (item) => {
+            const { data: mat, error: errMat } = await window.supabaseClient
+              .from('catalogo')
+              .select('codigo, nombre, bodega_principal, bodega_secundaria')
+              .eq('es_contenedor', false)
+              .eq('codigo', item.material_codigo)
+              .maybeSingle(); // Usar maybeSingle en lugar de single para evitar error 400
+            
+            // Convertir precio si es en córdobas
+            let precioDolares = item.precio_unitario;
+            if (orden.moneda === 'NIO') {
+              precioDolares = item.precio_unitario / tipoCambio;
+            }
+            
+            return {
+              codigo: item.material_codigo,
+              nombre: mat?.nombre || 'Material no encontrado',
+              bodega_principal: mat?.bodega_principal || 'Desconocida',
+              bodega_secundaria: mat?.bodega_secundaria || 'Sin clasificar',
+              cantidad: item.cantidad,
+              cantidadRecibida: item.cantidad,
+              precioUnitario: parseFloat(precioDolares.toFixed(4)),
+              observacion: ''
+            };
+          }));
+          
+          renderTablaIngreso();
+          
+          // Si la orden está en córdobas, mostrar modal de tipo de cambio
+          if (orden.moneda === 'NIO') {
+            document.getElementById('modal-tipo-cambio').style.display = 'flex';
+          }
+          
+        } catch (err) {
+          console.error('Error al cargar orden:', err);
+          alert('❌ Error al cargar la orden: ' + err.message);
+        }
+      }
+      
+      // =============================================================================
+      // 🔹 RENDERIZAR TABLA
+      // =============================================================================
+      function renderTablaIngreso() {
+        const contenedor = document.getElementById('tabla-ingreso-orden');
+        if (itemsOrdenSeleccionada.length === 0) {
+          contenedor.innerHTML = '<p style="text-align:center; color:#999;">Seleccione una orden de compra.</p>';
+          return;
+        }
+        
+        contenedor.innerHTML = `
+          <h3 style="margin:0 0 12px 0;">Materiales a Ingresar</h3>
+          <div id="filas-ingreso-orden"></div>
+        `;
+        
+        const tbody = document.getElementById('filas-ingreso-orden');
+        itemsOrdenSeleccionada.forEach((item, index) => {
+          const row = document.createElement('div');
+          row.className = 'mov-table-row';
+          row.innerHTML = `
+            <div class="mov-table-col" style="flex:1.2;">
+              <label class="mov-form-label">Código</label>
+              <input type="text" class="mov-form-input" value="${item.codigo}" readonly style="background:#f8fafc;" />
+            </div>
+            <div class="mov-table-col" style="flex:2;">
+              <label class="mov-form-label">Nombre</label>
+              <input type="text" class="mov-form-input" value="${item.nombre}" readonly style="background:#f8fafc;" />
+            </div>
+            <div class="mov-table-col" style="flex:0.8; text-align:center;">
+              <label class="mov-form-label">Cantidad OC</label>
+              <input type="number" class="mov-form-input" value="${item.cantidad}" readonly style="background:#f8fafc; text-align:center;" />
+            </div>
+            <div class="mov-table-col" style="flex:1; text-align:right;">
+              <label class="mov-form-label">Precio Unitario ($)</label>
+              <input type="number" class="mov-form-input" value="${item.precioUnitario.toFixed(4)}" readonly style="background:#f0fdf4; text-align:right; color:#047857;" />
+            </div>
+            <div class="mov-table-col" style="flex:0.8; text-align:center;">
+              <label class="mov-form-label">Cant. Recibida</label>
+              <input type="number" class="mov-form-input" value="${item.cantidadRecibida}" min="0" max="${item.cantidad}" data-index="${index}" />
+            </div>
+            <div class="mov-table-col" style="flex:1.5;">
+              <label class="mov-form-label">Observación</label>
+              <input type="text" class="mov-form-input" placeholder="Observación" value="${item.observacion || ''}" data-index="${index}" />
+            </div>
+          `;
+          
+          const inputCantidad = row.querySelector('input[data-index][type="number"]');
+          const inputObservacion = row.querySelector('input[data-index][type="text"]');
+          
+          if (inputCantidad) {
+            inputCantidad.addEventListener('input', (e) => {
+              const idx = parseInt(e.target.dataset.index);
+              itemsOrdenSeleccionada[idx].cantidadRecibida = parseInt(e.target.value) || 0;
+            });
+          }
+          
+          if (inputObservacion) {
+            inputObservacion.addEventListener('input', (e) => {
+              const idx = parseInt(e.target.dataset.index);
+              itemsOrdenSeleccionada[idx].observacion = e.target.value;
+            });
+          }
+          
+          tbody.appendChild(row);
+        });
+      }
+      
+      // =============================================================================
+// 🔹 GUARDAR EN MOVIMIENTOS_BODEGA (CON PROVEEDOR Y FACTURA)
+// =============================================================================
+async function guardarIngreso() {
+  const encargado = document.getElementById('encargado-ingreso').value;
+  const fecha = document.getElementById('fecha-ingreso').value;
+  const numeroOrden = document.getElementById('numero-orden').value;
+        const proveedor = document.getElementById('proveedor-orden').value;
+        const numeroFactura = document.getElementById('numero-factura').value.trim();
+
+        if (!encargado || !fecha || !numeroOrden) {
+          alert('⚠️ Complete todos los campos obligatorios.');
+          return;
+        }
+
+        if (!numeroFactura) {
+          alert('⚠️ Ingrese el número de factura.');
+    return;
+  }
+
+  const itemsValidos = itemsOrdenSeleccionada.filter(item => 
+    (item.cantidadRecibida || 0) > 0
+  );
+
+  if (itemsValidos.length === 0) {
+    alert('⚠️ Ingrese al menos una cantidad mayor a 0.');
+    return;
+  }
+
+  try {
+    // 🔹 CAPTURAR EXISTENCIA ANTES DEL INGRESO (para PDF correcto)
+    const itemsConExistenciaPrevia = await Promise.all(
+      itemsValidos.map(async (item) => {
+        let existenciaPrevia = 0;
+        try {
+          const { data: stock, error: stockErr } = await window.supabaseClient
+            .rpc('stock_actual_codigo', { material_codigo_input: item.codigo });
+          if (stockErr) throw stockErr;
+          existenciaPrevia = Array.isArray(stock) ? (stock[0]?.existencia || 0) : 0;
+        } catch (err) {
+          console.warn('No se pudo obtener stock previo para:', item.codigo, err);
+        }
+        return {
+          ...item,
+          existenciaPrevia: existenciaPrevia,
+          existenciaProyectada: existenciaPrevia + (item.cantidadRecibida || 0)
+        };
+      })
+    );
+
+    // Guardar cada movimiento en movimientos_bodega
+    for (const item of itemsConExistenciaPrevia) {
+      const movimiento = {
+        material_codigo: item.codigo,
+        material_nombre: item.nombre,
+        bodega_principal: item.bodega_principal,
+        bodega_secundaria: item.bodega_secundaria,
+        tipo_movimiento: 'ingreso',
+        cantidad: item.cantidadRecibida,
+        signo: 1,
+        referencia_documento: numeroOrden,
+        referencia_tipo: 'orden_compra',
+        responsable: encargado,
+        fecha_movimiento: fecha,
+        observaciones: item.observacion || '',  // Aquí van observaciones específicas del ítem
+        precio_unitario: item.precioUnitario,
+        // ✅ NUEVAS COLUMNAS DE TRAZABILIDAD
+        proveedor: proveedor || null,
+        numero_factura: numeroFactura || null
+      };
+
+      const { error } = await window.supabaseClient
+        .from('movimientos_bodega')
+        .insert([movimiento]);
+
+      if (error) throw error;
+    }
+
+    // Marcar orden como ingresada
+    await window.supabaseClient
+      .from('ordenes_compra')
+      .update({ estado: 'ingresada' })
+      .eq('numero', numeroOrden);
+
+    // Actualizar items con información de existencia previa
+    itemsOrdenSeleccionada = itemsOrdenSeleccionada.map(item => {
+      const itemConExistencia = itemsConExistenciaPrevia.find(i => i.codigo === item.codigo);
+      return itemConExistencia || item;
+    });
+
+    alert('✅ Ingreso registrado exitosamente.');
+    document.getElementById('btn-imprimir-ingreso').style.display = 'inline-block';
+    document.getElementById('btn-guardar-ingreso').style.display = 'none';
+
+  } catch (err) {
+    console.error('Error al guardar ingreso:', err);
+    alert('❌ Error al guardar: ' + err.message);
+  }
+}
+
+      // =============================================================================
+// 🔹 EXPORTAR PDF DEL INGRESO (CON ESTILO CORPORATIVO + EXISTENCIA PROYECTADA)
+// =============================================================================
+async function generarPDFIngreso() {
+  if (itemsOrdenSeleccionada.length === 0) {
+    alert('No hay datos para imprimir.');
+    return;
+  }
+  await ensureHtml2Pdf();
+
+  // 🔹 Colores corporativos para Ingreso (verde profesional)
+  const bgColor = '#f0fdf4';     // Fondo claro
+  const borderColor = '#16a34a'; // Verde Absolute
+  const textColor = '#15803d';   // Verde oscuro
+  const accentColor = '#16a34a';
+
+  const encargado = document.getElementById('encargado-ingreso').value || '';
+  const fecha = document.getElementById('fecha-ingreso').value || '';
+  const numeroOrden = document.getElementById('numero-orden').value || '';
+  const proveedor = document.getElementById('proveedor-orden').value || '';
+  const numeroFactura = document.getElementById('numero-factura').value || '';
+  const symbol = (ordenMoneda || 'USD') === 'USD' ? '$' : 'C$';
+
+  // 🔹 Obtener existencia actual (ya incluye el ingreso realizado)
+  const itemsConExistencia = await Promise.all(
+    itemsOrdenSeleccionada.map(async (it) => {
+      let existenciaActual = 0;
+      try {
+        const { data: stock, error: stockErr } = await window.supabaseClient
+          .rpc('stock_actual_codigo', { material_codigo_input: it.codigo });
+        if (stockErr) throw stockErr;
+        existenciaActual = Array.isArray(stock) ? (stock[0]?.existencia || 0) : 0;
+      } catch (err) {
+        console.warn('No se pudo obtener stock para:', it.codigo, err);
+      }
+      return {
+        ...it,
+        existenciaActual: existenciaActual
+      };
+    })
+  );
+
+  const rows = itemsConExistencia.map(it => {
+    const qty = Number(it.cantidadRecibida) || 0;
+    const pu = Number(it.precioUnitario) || 0;
+    const st = qty * pu;
+    return `
+      <tr>
+        <td style="padding:10px; text-align:center; border-bottom:1px solid #dcfce7;">${qty}</td>
+        <td style="padding:10px; border-bottom:1px solid #dcfce7;">
+          <div style="font-weight:600;">${it.codigo}</div>
+          <div style="font-size:11px; color:#4b5563;">${it.nombre}</div>
+        </td>
+        <td style="padding:10px; text-align:right; border-bottom:1px solid #dcfce7;">${symbol} ${fmt(pu, 4)}</td>
+        <td style="padding:10px; text-align:right; font-weight:600; border-bottom:1px solid #dcfce7;">${symbol} ${fmt(st, 2)}</td>
+        <td style="padding:10px; text-align:center; border-bottom:1px solid #dcfce7; background:${bgColor}; font-weight:bold; color:${accentColor};">
+          ${fmt(it.existenciaActual)}
+        </td>
+        <td style="padding:10px; border-bottom:1px solid #dcfce7;">${it.observacion || ''}</td>
+      </tr>
+    `;
+  }).join('');
+
+  const cont = document.createElement('div');
+  cont.style.cssText = `
+    padding: 24px;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: white;
+    color: ${textColor};
+    max-width: 850px;
+    margin: 0 auto;
+    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.15);
+    border-radius: 8px;
+    border: 1px solid ${borderColor};
+  `;
+
+  cont.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 3px solid ${accentColor};">
+      <div>
+        <img src="assets/logo.png" alt="Logo Absolute" style="height: 50px; margin-bottom: 8px;">
+        <h1 style="margin: 0; color: ${textColor}; font-size: 24px; font-weight: 800;">Ingreso de Materiales</h1>
+        <p style="margin: 4px 0 0 0; color: #4b5563; font-size: 13px;">Documentación Interna – Absolute</p>
+      </div>
+      <div style="text-align: right; background: ${bgColor}; padding: 12px; border-radius: 8px; border: 2px solid ${borderColor};">
+        <div style="font-size: 11px; color: ${textColor}; text-transform: uppercase; letter-spacing: 0.5px;">ORDEN</div>
+        <div style="font-size: 20px; font-weight: 800; color: ${accentColor}; letter-spacing: 1px;">${numeroOrden}</div>
+      </div>
+    </div>
+
+    <div style="background: ${bgColor}; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #dcfce7;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; font-size: 13px;">
+        <div>
+          <div style="color: #4b5563; margin-bottom: 4px; font-weight: 600;">Encargado</div>
+          <div style="color: ${textColor}; font-weight: 600;">${encargado}</div>
+        </div>
+        <div>
+          <div style="color: #4b5563; margin-bottom: 4px; font-weight: 600;">Fecha</div>
+          <div style="color: ${textColor}; font-weight: 600;">${fecha}</div>
+        </div>
+        <div>
+          <div style="color: #4b5563; margin-bottom: 4px; font-weight: 600;">Proveedor</div>
+          <div style="color: ${textColor}; font-weight: 600;">${proveedor}</div>
+        </div>
+        <div>
+          <div style="color: #4b5563; margin-bottom: 4px; font-weight: 600;">Factura</div>
+          <div style="color: ${textColor}; font-weight: 600;">${numeroFactura}</div>
+        </div>
+        <div>
+          <div style="color: #4b5563; margin-bottom: 4px; font-weight: 600;">Moneda OC</div>
+          <div style="color: ${textColor}; font-weight: 600;">${ordenMoneda}</div>
+        </div>
+      </div>
+    </div>
+
+    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+      <thead>
+        <tr style="background: ${accentColor}; color: white;">
+          <th style="padding: 10px; text-align: center;">Cant.</th>
+          <th style="padding: 10px; text-align: left;">Material</th>
+          <th style="padding: 10px; text-align: right;">P. Unit.</th>
+          <th style="padding: 10px; text-align: right;">Subtotal</th>
+          <th style="padding: 10px; text-align: center;">Existencia</th>
+          <th style="padding: 10px; text-align: left;">Observación</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows}
+      </tbody>
+    </table>
+
+    <div style="margin-top: 32px; display: flex; justify-content: space-between; font-size: 12px; color: #64748b; padding-top: 16px; border-top: 1px dashed #dcfce7;">
+      <div>
+        <div style="font-weight: 600; color: ${accentColor};">Aprobado por Contabilidad</div>
+        <div style="margin-top: 30px; border-top: 1px solid #94a3b8; padding-top: 4px;">Firma</div>
+      </div>
+      <div>
+        <div style="font-weight: 600; color: ${accentColor};">Recibido por Bodega</div>
+        <div style="margin-top: 30px; border-top: 1px solid #94a3b8; padding-top: 4px;">Firma</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px; text-align: center; font-size: 11px; color: #64748b; padding: 8px; background: ${bgColor}; border-radius: 6px;">
+      ✅ INGRESO REGISTRADO – INVENTARIO ACTUALIZADO EN TIEMPO REAL
+    </div>
+  `;
+
+  window.html2pdf()
+    .set({
+      margin: [15, 15, 15, 15],
+      filename: `Ingreso_${numeroOrden || 'OC'}.pdf`,
+      html2canvas: { 
+        scale: 2, 
+        useCORS: true,
+        backgroundColor: "#ffffff"
+      },
+      jsPDF: { 
+        unit: 'mm', 
+        format: 'a4', 
+        orientation: 'portrait' 
+      }
+    })
+    .from(cont)
+    .save();
+}
+      // =============================================================================
+      // 🔹 EVENTOS
+      // =============================================================================
+      function initEventos() {
+        // Cargar orden al seleccionar
+        document.getElementById('numero-orden').addEventListener('change', (e) => {
+          if (e.target.value) {
+            cargarOrden(e.target.value);
+          } else {
+            itemsOrdenSeleccionada = [];
+            renderTablaIngreso();
+            document.getElementById('proveedor-orden').value = '';
+            document.getElementById('moneda-orden').value = '';
+          }
+        });
+        
+        // Guardar
+        document.getElementById('btn-guardar-ingreso').addEventListener('click', guardarIngreso);
+        
+        // Limpiar
+        document.getElementById('btn-limpiar-ingreso').addEventListener('click', () => {
+          itemsOrdenSeleccionada = [];
+          renderTablaIngreso();
+          document.getElementById('numero-orden').value = '';
+          document.getElementById('proveedor-orden').value = '';
+          document.getElementById('moneda-orden').value = '';
+          document.getElementById('numero-factura').value = '';
+          document.getElementById('btn-imprimir-ingreso').style.display = 'none';
+          document.getElementById('btn-guardar-ingreso').style.display = 'inline-block';
+        });
+
+        document.getElementById('btn-imprimir-ingreso').addEventListener('click', async () => {
+          await generarPDFIngreso();
+        });
+        
+        // Tipo de cambio
+        document.getElementById('btn-aplicar-cambio').addEventListener('click', () => {
+          const nuevoCambio = parseFloat(document.getElementById('input-tipo-cambio').value);
+          if (nuevoCambio > 0) {
+            tipoCambio = nuevoCambio;
+            document.getElementById('modal-tipo-cambio').style.display = 'none';
+            // Recargar precios con nuevo tipo de cambio
+            if (ordenMoneda === 'NIO') {
+              cargarOrden(document.getElementById('numero-orden').value);
+            }
+          } else {
+            alert('⚠️ Ingrese un valor válido para el tipo de cambio.');
+          }
+        });
+        
+        document.getElementById('btn-cerrar-cambio').addEventListener('click', () => {
+          document.getElementById('modal-tipo-cambio').style.display = 'none';
+        });
+      }
+      
+      // Iniciar
+      cargarDatos();
+      initEventos();
+    }, 50);
+  </script>
+</body>
+</html>

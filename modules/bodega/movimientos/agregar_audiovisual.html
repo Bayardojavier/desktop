@@ -1,0 +1,1855 @@
+﻿<!-- desktop/modules/bodega/universal/agregar_audiovisual.html -->
+<div style="display:flex; gap:16px; height:100%;">
+
+  <div style="width: 320px; background: rgba(20, 30, 60, 0.45); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; padding: 12px; overflow:auto;">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px;">
+      <div style="font-weight:800; color:#cbd5e1;">Bodegas</div>
+      <div style="color:#94a3b8; font-size:12px;">Modo: Audiovisual</div>
+    </div>
+    <div style="margin-bottom:10px; color:#94a3b8; font-size:12px; line-height:1.35;">Flujo: 1) Principal  2) Secundaria  3) Contenedor  4) Material.</div>
+    <div style="border-top:1px solid rgba(148,163,184,0.15); padding-top:10px;">
+      <div style="font-weight:700; color:#cbd5e1;">Principal</div>
+      <div style="color:#94a3b8; font-size:14px;">Audiovisual (fijo)</div>
+    </div>
+    <div style="border-top:1px solid rgba(148,163,184,0.15); padding-top:10px; margin-top:10px;">
+      <div style="font-weight:700; color:#cbd5e1;">Secundaria</div>
+      <div id="secundarias-container" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;"></div>
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <input id="nueva-secundaria-nombre" class="audiovisual-input" placeholder="Nueva secundaria" style="flex:1;" />
+        <button type="button" id="btn-agregar-secundaria" class="audiovisual-boton">+ Agregar</button>
+      </div>
+    </div>
+    <div style="border-top:1px solid rgba(148,163,184,0.15); padding-top:10px; margin-top:10px;">
+      <div style="font-weight:700; color:#cbd5e1;">Contenedor (de esta secundaria)</div>
+      <input id="contenedor-nombre" class="audiovisual-input" placeholder="Seleccione un contenedor" readonly />
+      <div id="contenedor-tipos-container" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;"></div>
+    </div>
+  </div>
+
+  <div style="flex:1; min-width: 420px; overflow:auto;">
+    <div class="bodega-encabezado" style="margin-bottom: 12px; display:flex; align-items:center; justify-content:space-between; gap:12px;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <h1 id="ua-titulo" class="bodega-titulo" style="margin:0;">+ Agregar Material (Audiovisual)</h1>
+        <button type="button" id="btn-config-orden" class="bodega-export-pdf-btn" style="padding:6px 10px;">Config</button>
+      </div>
+      <p id="ua-subtitulo" class="bodega-subtitulo" style="margin:6px 0 0 0;">Selecciona Secundaria + Contenedor y llena el material.</p>
+    </div>
+
+    <div id="estado-seleccion" style="margin-bottom: 12px; color:#cbd5e1; display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
+      <div style="padding-top:2px;"><strong>Seleccion:</strong> <span id="sel-resumen">(pendiente)</span></div>
+      <div id="sel-codigo-host" style="display:none;"></div>
+    </div>
+
+    <form id="form-universal" style="display:flex; flex-direction:column; gap:14px; max-width: 860px;">
+      <div style="background: rgba(15,23,42,0.22); border: 1px solid rgba(148,163,184,0.15); border-radius: 10px; padding: 10px;">
+        <div style="font-weight:800; color:#cbd5e1; margin-bottom:6px;">Alta</div>
+        <div style="display:flex; gap:18px; align-items:center; color:#cbd5e1; flex-wrap:wrap;">
+          <div id="ua-alta-mode-badge" style="padding:6px 10px; border:1px solid rgba(148,163,184,0.18); border-radius:10px; background: rgba(2,6,23,0.22); font-weight:700;">(pendiente)</div>
+          <div style="display:flex; gap:8px; align-items:center; padding:6px 10px; border:1px solid rgba(148,163,184,0.18); border-radius:10px; background: rgba(2,6,23,0.22);">
+            <span style="font-weight:700;">Tipo</span>
+            <button type="button" id="ua-tipo-equipo" class="audiovisual-boton" style="padding:6px 10px;">Equipo electrónico</button>
+            <button type="button" id="ua-tipo-accesorio" class="audiovisual-boton" style="padding:6px 10px;">Accesorio</button>
+          </div>
+          <label style="display:inline-flex; gap:10px; align-items:center; padding:6px 10px; border:1px solid rgba(148,163,184,0.18); border-radius:10px; background: rgba(2,6,23,0.22);">
+            <span style="font-weight:700;">Activo</span>
+            <input id="ua-es-activo" type="checkbox" checked />
+            <span style="color:#94a3b8; font-size:12px;">(si está OFF = ficticio, no crea movimiento)</span>
+          </label>
+        </div>
+      </div>
+
+      <div id="ua-grupo-nombre-numero-contenedor" style="display:none;">
+        <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Identificacion del contenedor</label>
+        <div style="display:flex; gap:10px;">
+          <select id="cont-tipo" class="audiovisual-input" style="width: 180px;">
+            <option value="Rack">Rack</option>
+            <option value="Case">Case</option>
+            <option value="Caja">Caja</option>
+            <option value="Estante">Estante</option>
+            <option value="Otro">Otro</option>
+          </select>
+          <input id="cont-nombre-base" class="audiovisual-input" placeholder="Nombre (Rack / Case / Caja)" style="flex:1;" />
+          <input id="cont-numero" class="audiovisual-input" placeholder="Numero (01, 02)" style="width: 120px;" />
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px;">
+        <div id="div-nombre-producto" style="flex:1;">
+          <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Nombre del Producto</label>
+          <input id="nombre-producto" class="audiovisual-input" placeholder="Ej: Consola / Cable HDMI / Microfono" />
+        </div>
+        <div id="div-nombre-abrev" style="width: 220px;">
+          <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Abreviacion (codigo)</label>
+          <input id="nombre-abrev" class="audiovisual-input" placeholder="Ej: HDMI" maxlength="8" />
+          <div style="margin-top:6px; color:#94a3b8; font-size:12px;">Si queda vacio, se genera automatica.</div>
+        </div>
+        <div id="ua-codigo-host" style="width: 220px;">
+          <div id="ua-codigo-group">
+            <label style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; font-weight:700; color:#cbd5e1;">
+              <span>Codigo</span>
+              <div>
+                <button type="button" id="btn-config-codigo" class="bodega-export-pdf-btn" style="padding:6px 10px;">Refrescar</button>
+                <!-- Config moved to header -->
+              </div>
+            </label>
+            <input id="codigo-material" class="audiovisual-input" value="Se genera al guardar" readonly style="background:#11182755; color:#94a3b8;" />
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Foto (opcional)</label>
+        <div style="display:flex; align-items:flex-start; gap:12px;">
+          <div id="photo-preview" style="width: 110px; height: 110px; border: 2px dashed rgba(148,163,184,0.35); border-radius: 10px; display:flex; align-items:center; justify-content:center; color:#94a3b8; font-size: 14px; background: rgba(15, 23, 42, 0.35);">Sin foto</div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <button type="button" id="select-photo-btn" class="audiovisual-boton audiovisual-new" style="padding: 8px 14px;">Seleccionar Foto</button>
+            <input type="file" id="photo-input" accept="image/*" style="display:none;" />
+            <small style="color:#94a3b8;">Se sube a Supabase Storage si esta configurado.</small>
+          </div>
+        </div>
+      </div>
+
+      <div id="ua-grupo-tipo" style="display:flex; gap:10px;">
+        <div style="flex:1;">
+          <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Tipo de Uso</label>
+          <input id="tipo-uso" class="audiovisual-input" placeholder="Ej: Produccion / Concierto" />
+        </div>
+        <div style="flex:1;">
+          <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Tipo de Material</label>
+          <input id="tipo-material" class="audiovisual-input" placeholder="Ej: Audio / Video / Iluminacion" />
+        </div>
+      </div>
+
+      <div>
+        <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Color</label>
+        <div id="paleta-colores" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+        <input type="hidden" id="color-seleccionado" />
+      </div>
+
+      <div id="ua-grupo-unidad">
+        <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Unidad de medida</label>
+        <div style="display:flex; gap:12px; align-items:center; color:#cbd5e1;">
+          <label style="display:inline-flex; gap:6px; align-items:center;"><input type="radio" name="unidad" value="PUL" /> Pulgadas</label>
+          <label style="display:inline-flex; gap:6px; align-items:center;"><input type="radio" name="unidad" value="CMT" checked /> Centimetros</label>
+          <label style="display:inline-flex; gap:6px; align-items:center;"><input type="radio" name="unidad" value="SIN" /> Sin medida</label>
+        </div>
+      </div>
+
+      <div id="grupo-dimensiones">
+        <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Dimensiones (Ancho x Largo x Grosor)</label>
+        <div style="display:flex; gap:10px;">
+          <input type="number" id="ancho" class="audiovisual-input" placeholder="Ancho" step="0.01" />
+          <input type="number" id="largo" class="audiovisual-input" placeholder="Largo" step="0.01" />
+          <input type="number" id="grosor" class="audiovisual-input" placeholder="Grosor" step="0.01" />
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px;">
+        <div style="flex:1;">
+          <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Peso (kg)</label>
+          <input type="number" id="peso" class="audiovisual-input" step="0.01" />
+        </div>
+        <div style="flex:1;">
+          <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Precio unitario</label>
+          <input type="number" id="precio" class="audiovisual-input" step="0.01" />
+        </div>
+      </div>
+
+      <div id="ua-grupo-hechizo">
+        <label style="display:inline-flex; gap:8px; align-items:center; color:#cbd5e1;"><input type="checkbox" id="producto-hechizo" /> Producto Hechizo</label>
+      </div>
+
+      <div id="grupo-marca-modelo" style="display:flex; gap:10px;">
+        <input id="marca" class="audiovisual-input" placeholder="Marca" />
+        <input id="modelo" class="audiovisual-input" placeholder="Modelo" />
+      </div>
+
+      <div id="ua-grupo-campos" style="border-top: 1px solid rgba(148,163,184,0.15); padding-top: 10px;">
+        <div style="font-weight:800; color:#cbd5e1; margin-bottom:6px;">Campos extra</div>
+        <div id="campos-template" style="display:flex; flex-direction:column; gap:8px; margin-bottom:8px;"></div>
+        <div style="display:flex; gap:8px;">
+          <select id="nuevo-campo-tipo">
+            <option value="text">Texto</option>
+            <option value="number">Numero</option>
+            <option value="textarea">Area de texto</option>
+            <option value="date">Fecha</option>
+          </select>
+          <input id="nuevo-campo-nombre" placeholder="Nombre del campo" style="flex:1;" />
+          <button type="button" id="btn-agregar-campo" class="audiovisual-boton audiovisual-new">+ Campo</button>
+        </div>
+      </div>
+
+      <div>
+        <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Notas</label>
+        <textarea id="notas" rows="3" class="audiovisual-input" placeholder="Notas u observaciones"></textarea>
+      </div>
+
+      <div id="ua-grupo-cantidad" style="display:flex; gap:10px; align-items:flex-end;">
+        <div style="width: 220px;">
+          <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Cantidad</label>
+          <select id="ua-cantidad" class="audiovisual-input" style="width:100%;">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+            <option value="13">13</option>
+            <option value="14">14</option>
+            <option value="15">15</option>
+            <option value="16">16</option>
+            <option value="17">17</option>
+            <option value="18">18</option>
+            <option value="19">19</option>
+            <option value="20">20</option>
+            <option value="21">21</option>
+            <option value="22">22</option>
+            <option value="23">23</option>
+            <option value="24">24</option>
+            <option value="25">25</option>
+            <option value="26">26</option>
+            <option value="27">27</option>
+            <option value="28">28</option>
+            <option value="29">29</option>
+            <option value="30">30</option>
+          </select>
+          <div style="margin-top:6px; color:#94a3b8; font-size:12px;">Equipo: crea hijos (01..N). Accesorio: 1 código + movimiento con cantidad.</div>
+        </div>
+        <div id="ua-accesorio-largo-wrap" style="width: 220px; display:none;">
+          <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Largo del accesorio (código)</label>
+          <input id="ua-accesorio-largo" class="audiovisual-input" placeholder="Ej: 10M / 15M / 150CM" maxlength="8" />
+          <div style="margin-top:6px; color:#94a3b8; font-size:12px;">Se agrega al final del código solo en Accesorio.</div>
+        </div>
+        <label id="ua-cerrar-contenedor-wrap" style="display:inline-flex; gap:10px; align-items:center; padding:8px 10px; border:1px solid rgba(148,163,184,0.18); border-radius:10px; background: rgba(2,6,23,0.22);">
+          <input id="ua-cerrar-contenedor" type="checkbox" />
+          <span style="font-weight:700; color:#cbd5e1;">Cerrar contenedor</span>
+          <span style="color:#94a3b8; font-size:12px;">(bloquea agregar más materiales a este contenedor)</span>
+        </label>
+      </div>
+
+      <button id="ua-btn-submit" type="submit" class="audiovisual-boton audiovisual-save" style="align-self:flex-start; padding: 12px 18px;">Guardar en catalogo</button>
+    </form>
+  </div>
+</div>
+
+<!-- Modal de configuración de orden de código -->
+<div id="modal-config-orden" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+  <div style="background:#1e293b; border:1px solid #334155; border-radius:10px; padding:20px; max-width:400px; width:90%;">
+    <h3 style="color:#cbd5e1; margin:0 0 15px 0;">Configurar Orden del Código</h3>
+    <p style="color:#94a3b8; font-size:14px; margin:0 0 15px 0;">Arrastra o usa los botones para reordenar los componentes.</p>
+    <ul id="orden-lista" style="list-style:none; padding:0; margin:0 0 20px 0;">
+      <!-- Items se agregan dinámicamente -->
+    </ul>
+    <div style="display:flex; gap:10px; justify-content:flex-end;">
+      <button type="button" id="btn-guardar-orden" class="audiovisual-boton audiovisual-save" style="padding:8px 16px;">Guardar</button>
+      <button type="button" id="btn-cerrar-modal" class="bodega-export-pdf-btn" style="padding:8px 16px;">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const palette = ['#ef4444','#fb7185','#f97316','#fb923c','#f59e0b','#eab308','#84cc16','#22c55e','#16a34a','#06b6d4','#0ea5e9','#0284c7','#6366f1','#8b5cf6','#a78bfa','#94a3b8','#475569','#0f172a'];
+
+  // Esperar a que Supabase esté disponible
+  const checkSupa = () => {
+    const supa = window.supabaseClient;
+    if (supa) {
+      console.log('Supabase encontrado, inicializando formulario');
+      initForm();
+    } else {
+      console.log('Esperando Supabase...');
+      setTimeout(checkSupa, 100);
+    }
+  };
+  checkSupa();
+
+  function initForm() {
+    const formEl = document.getElementById('form-universal');
+    if (!formEl || formEl.dataset.init === '1') return;
+    formEl.dataset.init = '1';
+
+    const titulo = document.getElementById('ua-titulo');
+    if (titulo) titulo.textContent = '+ Agregar Material (Audiovisual)';
+
+    const supa = window.supabaseClient;
+    if (!supa) {
+      const resumen = document.getElementById('sel-resumen');
+      if (resumen) resumen.textContent = 'Supabase no inicializado';
+      return;
+    }
+
+  const STORAGE_BUCKET = 'materiales-fotos';
+  const UA_CTX = window.__UA_CONTEXT || null;
+  const TABLE_CATALOGO = (UA_CTX && UA_CTX.tableOverrides && UA_CTX.tableOverrides.catalogo) ? UA_CTX.tableOverrides.catalogo : 'catalogo_audiovisual';
+  const TABLE_MOVIMIENTOS = (UA_CTX && UA_CTX.tableOverrides && UA_CTX.tableOverrides.movimientos) ? UA_CTX.tableOverrides.movimientos : 'movimientos_bodega_audiovisual';
+
+  const state = {
+    altaTipo: 'MATERIAL',
+    esActivo: true,
+    itemTipo: 'EQUIPO',
+    cantidad: 1,
+    accesorioLargo: '',
+    cerrarContenedor: false,
+    contenedorCerrado: false,
+    camposExtra: [],
+    color: null,
+    fotoFile: null,
+    principalId: null,
+    secundariaId: null,
+    secundariaNombre: null,
+    contenedorTipo: null,
+    contenedorCodigo: null,
+    contenedorId: null,
+    codigoOrden: ['principal', 'secundaria', 'tipo', 'abre'],
+    // MATERIAL: 2 partes extra (además del código heredado del contenedor)
+    codigoOrdenMaterial: ['tipo_material', 'abre']
+  };
+
+  // Cargar configuración guardada
+  const savedOrden = localStorage.getItem('codigoOrdenAudiovisual');
+  if (savedOrden) {
+    try {
+      state.codigoOrden = JSON.parse(savedOrden);
+    } catch (e) {
+      console.warn('Error parsing saved orden', e);
+    }
+  }
+
+  const savedOrdenMat = localStorage.getItem('codigoOrdenAudiovisualMaterial');
+  if (savedOrdenMat) {
+    try {
+      state.codigoOrdenMaterial = JSON.parse(savedOrdenMat);
+    } catch (e) {
+      console.warn('Error parsing saved orden material', e);
+    }
+  }
+
+  // Definir funciones primero
+  function renderPaleta() {
+    const host = document.getElementById('paleta-colores');
+    if (!host) return;
+    host.innerHTML = '';
+    palette.forEach(hex => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.style.width = '28px';
+      btn.style.height = '28px';
+      btn.style.borderRadius = '6px';
+      btn.style.border = '2px solid rgba(255,255,255,0.1)';
+      btn.style.background = hex;
+      btn.style.cursor = 'pointer';
+      btn.dataset.color = hex;
+      btn.setAttribute('aria-label', 'Color ' + hex);
+      btn.addEventListener('click', () => {
+        state.color = hex;
+        const hidden = document.getElementById('color-seleccionado');
+        if (hidden) hidden.value = hex;
+        updatePaletaSelection();
+      });
+      // mark selected if matches
+      if (state.color && state.color.toLowerCase() === hex.toLowerCase()) {
+        btn.style.borderColor = '#ffffff';
+        btn.style.boxShadow = '0 0 0 3px rgba(255,255,255,0.06)';
+      }
+      host.appendChild(btn);
+    });
+  }
+
+  function updatePaletaSelection() {
+    const host = document.getElementById('paleta-colores');
+    if (!host) return;
+    host.querySelectorAll('button').forEach(b => {
+      const c = b.dataset.color;
+      if (state.color && c && c.toLowerCase() === state.color.toLowerCase()) {
+        b.style.borderColor = '#ffffff';
+        b.style.boxShadow = '0 0 0 3px rgba(255,255,255,0.06)';
+        b.setAttribute('aria-pressed','true');
+      } else {
+        b.style.borderColor = 'rgba(255,255,255,0.12)';
+        b.style.boxShadow = 'none';
+        b.setAttribute('aria-pressed','false');
+      }
+    });
+  }
+
+  function applyAccesorioUI() {
+    const largoWrap = document.getElementById('ua-accesorio-largo-wrap');
+    const largoEl = document.getElementById('ua-accesorio-largo');
+    if (largoWrap) largoWrap.style.display = (state.itemTipo === 'ACCESORIO') ? '' : 'none';
+    if (state.itemTipo !== 'ACCESORIO') {
+      state.accesorioLargo = '';
+      if (largoEl) largoEl.value = '';
+    }
+  }
+
+  function bindInputs() {
+    const activoEl = document.getElementById('ua-es-activo');
+    if (activoEl) {
+      state.esActivo = !!activoEl.checked;
+      activoEl.addEventListener('change', () => {
+        state.esActivo = !!activoEl.checked;
+        updateResumen();
+      });
+    }
+
+    const btnEquipo = document.getElementById('ua-tipo-equipo');
+    const btnAcc = document.getElementById('ua-tipo-accesorio');
+    const largoEl = document.getElementById('ua-accesorio-largo');
+    function paintTipoButtons() {
+      const selectedStyle = '2px solid rgba(255,255,255,0.85)';
+      const normalStyle = '2px solid rgba(255,255,255,0.12)';
+      if (btnEquipo) btnEquipo.style.border = (state.itemTipo === 'EQUIPO') ? selectedStyle : normalStyle;
+      if (btnAcc) btnAcc.style.border = (state.itemTipo === 'ACCESORIO') ? selectedStyle : normalStyle;
+    }
+    if (btnEquipo) {
+      btnEquipo.addEventListener('click', () => {
+        state.itemTipo = 'EQUIPO';
+        paintTipoButtons();
+        applyAccesorioUI();
+        updateResumen();
+        updateCodigoPreview();
+      });
+    }
+    if (btnAcc) {
+      btnAcc.addEventListener('click', () => {
+        state.itemTipo = 'ACCESORIO';
+        paintTipoButtons();
+        applyAccesorioUI();
+        updateResumen();
+        updateCodigoPreview();
+      });
+    }
+
+    if (largoEl) {
+      state.accesorioLargo = normalizeAccesorioLargo(largoEl.value);
+      largoEl.addEventListener('input', () => {
+        state.accesorioLargo = normalizeAccesorioLargo(largoEl.value);
+        updateResumen();
+        updateCodigoPreview();
+      });
+    }
+
+    const cantidadEl = document.getElementById('ua-cantidad');
+    if (cantidadEl) {
+      const n = parseInt(cantidadEl.value, 10);
+      state.cantidad = Number.isFinite(n) && n > 0 ? n : 1;
+      cantidadEl.addEventListener('change', () => {
+        const v = parseInt(cantidadEl.value, 10);
+        state.cantidad = Number.isFinite(v) && v > 0 ? v : 1;
+        updateResumen();
+        updateCodigoPreview();
+      });
+    }
+
+    const cerrarEl = document.getElementById('ua-cerrar-contenedor');
+    if (cerrarEl) {
+      state.cerrarContenedor = !!cerrarEl.checked;
+      cerrarEl.addEventListener('change', () => {
+        state.cerrarContenedor = !!cerrarEl.checked;
+        updateResumen();
+      });
+    }
+
+    paintTipoButtons();
+    applyAccesorioUI();
+
+    ['contenedor-nombre','nombre-producto','nombre-abrev','cont-nombre-base','cont-numero','cont-tipo','tipo-uso','tipo-material','marca','modelo'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', () => { updateResumen(); updateCodigoPreview(); });
+    });
+
+    document.querySelectorAll('.contenedor-btn').forEach(btn => {
+      btn.addEventListener('click', () => selectContenedor(btn.dataset.contenedor, btn));
+    });
+
+    const cfg = document.getElementById('btn-config-codigo');
+    if (cfg) cfg.addEventListener('click', updateCodigoPreview);
+
+    const configOrden = document.getElementById('btn-config-orden');
+    if (configOrden) {
+      configOrden.addEventListener('click', openConfigModal);
+      console.log('Botón Config atado');
+    } else {
+      console.log('Botón Config no encontrado');
+    }
+
+    const addCampo = document.getElementById('btn-agregar-campo');
+    if (addCampo) addCampo.addEventListener('click', addCampoExtra);
+
+    const addSecundaria = document.getElementById('btn-agregar-secundaria');
+    if (addSecundaria) addSecundaria.addEventListener('click', addNuevaSecundaria);
+
+    const photoBtn = document.getElementById('select-photo-btn');
+    const photoInput = document.getElementById('photo-input');
+    if (photoBtn && photoInput) {
+      photoBtn.addEventListener('click', () => photoInput.click());
+      photoInput.addEventListener('change', () => {
+        const f = (photoInput.files && photoInput.files[0]) ? photoInput.files[0] : null;
+        state.fotoFile = f;
+        const preview = document.getElementById('photo-preview');
+        if (!preview) return;
+        if (!f) { preview.textContent = 'Sin foto'; return; }
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          const src = String(ev && ev.target && ev.target.result ? ev.target.result : '');
+          preview.innerHTML = '';
+          const img = document.createElement('img');
+          img.src = src;
+          img.style.width = '100%';
+          img.style.height = '100%';
+          img.style.objectFit = 'cover';
+          img.style.borderRadius = '8px';
+          preview.appendChild(img);
+        };
+        reader.readAsDataURL(f);
+      });
+    }
+
+    formEl.addEventListener('submit', onSubmit);
+  }
+
+  function normalizeCode(input, maxlen = 8) {
+    let v = input.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    v = v.substring(0, maxlen);
+    if (!v) {
+      v = Math.random().toString(36).substring(2, maxlen + 2).toUpperCase().substring(0, maxlen);
+    }
+    return v;
+  }
+
+  async function addNuevaSecundaria() {
+    const nombre = document.getElementById('nueva-secundaria-nombre').value.trim();
+    if (!nombre) {
+      alert('Ingresa un nombre para la nueva secundaria');
+      return;
+    }
+    if (!state.principalId) {
+      alert('No se encontró la bodega principal');
+      return;
+    }
+    const codigo = normalizeCode(nombre, 8);
+    try {
+      const { error } = await supa
+        .from('inv2_bodegas_secundarias')
+        .insert([{ nombre, principal_id: state.principalId, codigo, activa: true }]);
+      if (error) throw error;
+      document.getElementById('nueva-secundaria-nombre').value = '';
+      loadBodegas(); // Recargar la lista
+    } catch (e) {
+      console.warn('Error agregando secundaria', e);
+      alert('Error al agregar secundaria: ' + e.message);
+    }
+  }
+
+  function setAltaTipo(newTipo) {
+    state.altaTipo = String(newTipo || 'MATERIAL').toUpperCase();
+    applyAltaTipoUI();
+    updateCodigoPreview();
+  }
+
+  function applyAltaTipoUI() {
+    const tipo = String(state.altaTipo || 'MATERIAL').toUpperCase();
+    const grupoCont = document.getElementById('ua-grupo-nombre-numero-contenedor');
+    const grupoUnidad = document.getElementById('ua-grupo-unidad');
+    const grupoDim = document.getElementById('grupo-dimensiones');
+    const grupoTipo = document.getElementById('ua-grupo-tipo');
+    const divNombreProd = document.getElementById('div-nombre-producto');
+    const divNombreAbrev = document.getElementById('div-nombre-abrev');
+    const fotoGroup = (document.getElementById('photo-preview') || {}).parentElement?.parentElement || null;
+    const cerrarWrap = document.getElementById('ua-cerrar-contenedor-wrap');
+    const accWrap = document.getElementById('ua-accesorio-largo-wrap');
+    const btnSubmit = document.getElementById('ua-btn-submit');
+    const badge = document.getElementById('ua-alta-mode-badge');
+    const titulo = document.getElementById('ua-titulo');
+    const subtitulo = document.getElementById('ua-subtitulo');
+
+    const activoEl = document.getElementById('ua-es-activo');
+    const cantidadEl = document.getElementById('ua-cantidad');
+    const btnEquipo = document.getElementById('ua-tipo-equipo');
+    const btnAcc = document.getElementById('ua-tipo-accesorio');
+    const largoEl = document.getElementById('ua-accesorio-largo');
+    const cerrarEl = document.getElementById('ua-cerrar-contenedor');
+
+    if (tipo === 'CONTENEDOR') {
+      if (badge) badge.textContent = 'Contenedor';
+      if (titulo) titulo.textContent = '+ Agregar Contenedor (Audiovisual)';
+      if (subtitulo) subtitulo.textContent = 'Selecciona Secundaria y llena la identificación del contenedor.';
+      if (btnSubmit) btnSubmit.textContent = 'Guardar contenedor';
+
+      if (grupoCont) grupoCont.style.display = '';
+      if (divNombreProd) divNombreProd.style.display = 'none';
+      if (divNombreAbrev) divNombreAbrev.style.display = 'none';
+      if (grupoTipo) grupoTipo.style.display = 'none';
+      if (grupoUnidad) grupoUnidad.style.display = 'none';
+      if (grupoDim) grupoDim.style.display = 'none';
+      if (fotoGroup) fotoGroup.style.display = 'none';
+      if (cerrarWrap) cerrarWrap.style.display = 'none';
+      if (accWrap) accWrap.style.display = 'none';
+
+      if (activoEl) activoEl.disabled = true;
+      if (cantidadEl) cantidadEl.disabled = true;
+      if (btnEquipo) btnEquipo.disabled = true;
+      if (btnAcc) btnAcc.disabled = true;
+      if (largoEl) largoEl.disabled = true;
+      if (cerrarEl) cerrarEl.disabled = true;
+    } else {
+      if (badge) badge.textContent = 'Material';
+      if (titulo) titulo.textContent = '+ Agregar Material (Audiovisual)';
+      if (subtitulo) subtitulo.textContent = 'Selecciona Secundaria + Contenedor y llena el material.';
+      if (btnSubmit) btnSubmit.textContent = 'Guardar en catálogo';
+
+      if (grupoCont) grupoCont.style.display = 'none';
+      if (divNombreProd) divNombreProd.style.display = '';
+      if (divNombreAbrev) divNombreAbrev.style.display = '';
+      if (grupoTipo) grupoTipo.style.display = '';
+      if (grupoUnidad) grupoUnidad.style.display = '';
+      if (grupoDim) grupoDim.style.display = '';
+      if (fotoGroup) fotoGroup.style.display = '';
+      if (cerrarWrap) cerrarWrap.style.display = '';
+
+      if (activoEl) activoEl.disabled = false;
+      if (cantidadEl) cantidadEl.disabled = false;
+      if (btnEquipo) btnEquipo.disabled = false;
+      if (btnAcc) btnAcc.disabled = false;
+      if (largoEl) largoEl.disabled = false;
+      if (cerrarEl) cerrarEl.disabled = false;
+
+      applyAccesorioUI();
+    }
+
+    updateResumen();
+  }
+
+  function updateResumen() {
+    const p = 'Audiovisual';
+    const s = state.secundariaNombre || '(secundaria)';
+    const c = document.getElementById('contenedor-nombre').value.trim();
+    const tipo = state.altaTipo;
+    const span = document.getElementById('sel-resumen');
+    const cont = c ? ` > Cont: ${c}` : '';
+    const act = state.esActivo ? 'ACTIVO' : 'FICTICIO';
+    const t = state.itemTipo === 'ACCESORIO' ? 'ACCESORIO' : 'EQUIPO';
+    const q = state.cantidad && state.cantidad > 1 ? ` x${state.cantidad}` : '';
+    const l = (state.itemTipo === 'ACCESORIO' && state.accesorioLargo) ? ` L=${state.accesorioLargo}` : '';
+    const closed = state.contenedorCerrado ? ' [CONTENEDOR CERRADO]' : '';
+    const closeMark = state.cerrarContenedor ? ' [SE CERRARÁ]' : '';
+    if (span) span.textContent = `P: ${p} > S: ${s}${cont} [${tipo}] [${t}${q}${l}] [${act}]${closed}${closeMark}`;
+  }
+
+  function isContenedorCerrado(campos) {
+    if (!campos) return false;
+    if (typeof campos === 'string') {
+      try { campos = JSON.parse(campos); } catch (_) { return false; }
+    }
+    if (typeof campos !== 'object') return false;
+    return campos.contenedor_cerrado === true || campos.cerrado === true || campos.bloqueado === true;
+  }
+
+  async function cerrarContenedorActual() {
+    try {
+      if (!state.contenedorCodigo && !state.contenedorId) return { ok: false, error: 'No hay contenedor seleccionado' };
+
+      let contId = state.contenedorId ? String(state.contenedorId) : '';
+      if (!contId) {
+        const { data: found, error: errFound } = await supa
+          .from(TABLE_CATALOGO)
+          .select('id')
+          .eq('codigo', state.contenedorCodigo)
+          .maybeSingle();
+        if (errFound) throw errFound;
+        contId = found && found.id !== undefined && found.id !== null ? String(found.id) : '';
+      }
+      if (!contId) return { ok: false, error: 'No se pudo identificar el contenedor (id)' };
+
+      // Leer campos actuales y mergear para no perder datos.
+      const { data: row, error: errSel } = await supa
+        .from(TABLE_CATALOGO)
+        .select('campos_personalizados')
+        .eq('id', contId)
+        .maybeSingle();
+      if (errSel) throw errSel;
+
+      let campos = (row && row.campos_personalizados) ? row.campos_personalizados : {};
+      if (typeof campos === 'string') {
+        try { campos = JSON.parse(campos); } catch (_) { campos = {}; }
+      }
+      if (!campos || typeof campos !== 'object') campos = {};
+      campos.contenedor_cerrado = true;
+      campos.contenedor_cerrado_at = new Date().toISOString();
+
+      const { error: errUpd } = await supa
+        .from(TABLE_CATALOGO)
+        .update({ campos_personalizados: campos })
+        .eq('id', contId);
+      if (errUpd) throw errUpd;
+
+      state.contenedorCerrado = true;
+      return { ok: true };
+    } catch (e) {
+      console.warn('No se pudo cerrar el contenedor', e);
+      return { ok: false, error: e.message || String(e) };
+    }
+  }
+
+  function normalizeAccesorioLargo(txt) {
+    return (txt || '')
+      .toString()
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '')
+      .slice(0, 8);
+  }
+
+  function abrev(txt) {
+    const v = (txt || '').toString().trim().toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,4);
+    return v || '';
+  }
+
+  // Referencia de 4 caracteres (pensada para cosas como "Luces LED" -> "LED" y
+  // "Luces Roboticas" -> "ROBO").
+  function ref4(txt) {
+    const raw = (txt || '').toString().trim().toUpperCase();
+    if (!raw) return '';
+
+    const tokens = raw
+      .split(/\s+/)
+      .map(t => t.trim())
+      .filter(Boolean);
+
+    // 1) Preferir un token corto (<=4) que tenga al menos una letra.
+    //    Ej: LED, DMX, ROBO (si ya viene abreviado), HDMI
+    for (let i = tokens.length - 1; i >= 0; i--) {
+      const cleaned = tokens[i].replace(/[^A-Z0-9]/g, '');
+      if (!cleaned) continue;
+      if (cleaned.length <= 4 && /[A-Z]/.test(cleaned)) return cleaned;
+    }
+
+    // 2) Si no hay token corto, usar el último token “fuerte”.
+    for (let i = tokens.length - 1; i >= 0; i--) {
+      const cleaned = tokens[i].replace(/[^A-Z0-9]/g, '');
+      if (!cleaned) continue;
+      if (/[A-Z]/.test(cleaned)) return cleaned.slice(0, 4);
+    }
+
+    // 3) Fallback: limpiar todo.
+    return raw.replace(/[^A-Z0-9]/g, '').slice(0, 4);
+  }
+
+  function getCodigoSinConsecutivo(codigoCompleto) {
+    const v = (codigoCompleto || '').toString().trim();
+    if (!v) return '';
+    const parts = v.split('-');
+    if (parts.length <= 1) return v;
+    if (/^\d+$/.test(parts[0])) return parts.slice(1).join('-');
+    return v;
+  }
+
+  async function updateCodigoPreview() {
+    console.log('Actualizando código con orden:', state.codigoOrden);
+    const principal = 'Audiovisual';
+    const secundaria = state.secundariaNombre || '';
+    const tipo = state.altaTipo;
+    const abrevInput = document.getElementById('nombre-abrev');
+    const contenedorNombreEl = document.getElementById('contenedor-nombre');
+    const contTipoEl = document.getElementById('cont-tipo');
+    const contBaseEl = document.getElementById('cont-nombre-base');
+    const contNumeroEl = document.getElementById('cont-numero');
+    const contNombreVal = contenedorNombreEl ? contenedorNombreEl.value.trim() : '';
+    const contTipoVal = contTipoEl ? contTipoEl.value.trim() : '';
+    const contBaseVal = contBaseEl ? contBaseEl.value.trim() : '';
+    const contNumeroVal = contNumeroEl ? contNumeroEl.value.trim() : '';
+    const abre = (abrevInput && abrevInput.value.trim()) || abrev((contNombreVal) || secundaria);
+
+    // CONTENEDOR: no requiere contenedor seleccionado; usa cont-tipo/base/numero
+    if (String(tipo || '').toUpperCase() === 'CONTENEDOR') {
+      const input = document.getElementById('codigo-material');
+      if (!secundaria) {
+        if (input) input.value = 'Seleccione secundaria';
+        return null;
+      }
+      const numeroNorm = contNumeroVal ? contNumeroVal.padStart(2, '0') : '';
+      if (!contBaseVal || !numeroNorm) {
+        if (input) input.value = 'Falta base/número';
+        return null;
+      }
+      const suffix = [abrev(secundaria), 'CON', abrev(contTipoVal || 'CONT'), abrev(contBaseVal), numeroNorm].filter(Boolean).join('-');
+      const next = await obtenerSiguienteConsecutivo(suffix);
+      const code = `${next}-${suffix}`;
+      if (input) input.value = code;
+      return code;
+    }
+
+    const components = {
+      principal: abrev(principal),
+      secundaria: abrev(secundaria),
+      // Prefer explicit container name, else build from base+numero
+      contenedor: abrev(contNombreVal || (contBaseVal ? (contBaseVal + (contNumeroVal ? (' ' + contNumeroVal) : '')) : '')),
+      cont_tipo: abrev(contTipoVal),
+      cont_nombre_base: abrev(contBaseVal || contNombreVal),
+      cont_numero: contNumeroVal ? contNumeroVal.padStart(2, '0') : '',
+      tipo_uso: ref4((document.getElementById('tipo-uso') || {}).value || ''),
+      tipo_material: ref4((document.getElementById('tipo-material') || {}).value || ''),
+      marca: abrev((document.getElementById('marca') || {}).value || ''),
+      modelo: abrev((document.getElementById('modelo') || {}).value || ''),
+      tipo: tipo === 'CONTENEDOR' ? 'CON' : 'MAT',
+      abre
+    };
+
+    // MATERIAL hereda el código del contenedor (sin consecutivo) + 2 partes configurables
+    if (!state.contenedorCodigo) {
+      const input = document.getElementById('codigo-material');
+      if (input) input.value = 'Seleccione un contenedor';
+      return null;
+    }
+    if (state.contenedorCerrado) {
+      const input = document.getElementById('codigo-material');
+      if (input) input.value = 'Contenedor cerrado';
+      return null;
+    }
+    const base = getCodigoSinConsecutivo(state.contenedorCodigo || '');
+    const extras = (state.codigoOrdenMaterial || [])
+      .map(k => components[k])
+      .filter(p => p && p.length)
+      .slice(0, 2);
+    const largoAcc = (state.itemTipo === 'ACCESORIO')
+      ? normalizeAccesorioLargo((document.getElementById('ua-accesorio-largo') || {}).value || '')
+      : '';
+    if (state.itemTipo === 'ACCESORIO' && !largoAcc) {
+      const input = document.getElementById('codigo-material');
+      if (input) input.value = 'Falta largo accesorio';
+      return null;
+    }
+    const idxHijo = (state.itemTipo === 'EQUIPO') ? await obtenerSiguienteIndiceHijo(base, extras) : null;
+    const suffix = (state.itemTipo === 'EQUIPO')
+      ? [base, ...extras, idxHijo].filter(Boolean).join('-')
+      : [base, ...extras, largoAcc].filter(Boolean).join('-');
+
+    const next = await obtenerSiguienteConsecutivo(suffix);
+    const code = suffix ? `${next}-${suffix}` : `${next}`;
+    console.log('Código final:', code);
+    const input = document.getElementById('codigo-material');
+    if (input) input.value = code;
+    return code;
+  }
+
+  async function obtenerSiguienteConsecutivoNumero() {
+    try {
+      const { data, error } = await supa
+        .from(TABLE_CATALOGO)
+        .select('codigo')
+        .order('codigo', { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      if (!data || !data.length) return 1;
+
+      let maxNum = 0;
+      for (const row of data) {
+        const last = (row && row.codigo) ? String(row.codigo) : '';
+        const numStr = last.split('-')[0];
+        if (!numStr) continue;
+        if (!/^\d{1,6}$/.test(numStr)) continue;
+        const n = parseInt(numStr, 10);
+        if (Number.isFinite(n) && n > maxNum) maxNum = n;
+      }
+      return maxNum > 0 ? (maxNum + 1) : 1;
+    } catch (e) {
+      console.warn('No pude calcular consecutivo (num), uso 1', e);
+      return 1;
+    }
+  }
+
+  async function obtenerSiguienteConsecutivo(_suffix) {
+    const n = await obtenerSiguienteConsecutivoNumero();
+    return String(n).padStart(5, '0');
+  }
+
+  async function obtenerSiguienteIndiceHijo(baseSuffix, extrasParts) {
+    try {
+      const base = (baseSuffix || '').toString().trim();
+      if (!base) return '01';
+
+      const extras = Array.isArray(extrasParts) ? extrasParts.filter(Boolean) : [];
+      const prefix = extras.length ? `${base}-${extras.join('-')}-` : `${base}-`;
+
+      const pattern = `%-${base}-%`;
+      const { data, error } = await supa
+        .from(TABLE_CATALOGO)
+        .select('codigo')
+        .ilike('codigo', pattern)
+        .order('codigo', { ascending: false })
+        .limit(500);
+      if (error) throw error;
+
+      let maxIdx = 0;
+      (data || []).forEach(r => {
+        const full = r && r.codigo ? String(r.codigo) : '';
+        const withoutConsec = getCodigoSinConsecutivo(full);
+        if (!withoutConsec.startsWith(prefix)) return;
+        const lastSeg = withoutConsec.split('-').pop() || '';
+        if (!/^\d{1,3}$/.test(lastSeg)) return;
+        const n = parseInt(lastSeg, 10);
+        if (Number.isFinite(n) && n > maxIdx) maxIdx = n;
+      });
+
+      const next = maxIdx + 1;
+      if (next <= 0) return '01';
+      if (next > 999) return String(next);
+      return String(next).padStart(2, '0');
+    } catch (e) {
+      console.warn('No pude calcular índice hijo, uso 01', e);
+      return '01';
+    }
+  }
+
+  async function uploadFotoIfNeeded() {
+    if (!state.fotoFile) return null;
+    try {
+      async function compressImageFile(file, opts = {}) {
+        const maxW = Number(opts.maxWidth || 1600);
+        const maxH = Number(opts.maxHeight || 1600);
+        const quality = Math.min(0.95, Math.max(0.4, Number(opts.quality || 0.75)));
+
+        if (!file || !file.type || !file.type.startsWith('image/')) return file;
+
+        function loadImageViaObjectUrl(f) {
+          return new Promise((resolve, reject) => {
+            const url = URL.createObjectURL(f);
+            const img = new Image();
+            img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+            img.onerror = (e) => { URL.revokeObjectURL(url); reject(e); };
+            img.src = url;
+          });
+        }
+
+        let width = 0;
+        let height = 0;
+        let drawSource = null;
+
+        try {
+          if (window.createImageBitmap) {
+            const bmp = await createImageBitmap(file);
+            width = bmp.width;
+            height = bmp.height;
+            drawSource = bmp;
+          } else {
+            const img = await loadImageViaObjectUrl(file);
+            width = img.naturalWidth || img.width;
+            height = img.naturalHeight || img.height;
+            drawSource = img;
+          }
+        } catch (e) {
+          console.warn('No se pudo decodificar la imagen para compresión, se sube original.', e);
+          return file;
+        }
+
+        if (!width || !height) return file;
+
+        const scale = Math.min(1, maxW / width, maxH / height);
+        const outW = Math.max(1, Math.round(width * scale));
+        const outH = Math.max(1, Math.round(height * scale));
+
+        const canvas = document.createElement('canvas');
+        canvas.width = outW;
+        canvas.height = outH;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return file;
+        ctx.drawImage(drawSource, 0, 0, outW, outH);
+
+        // Si fue createImageBitmap, liberar memoria
+        if (drawSource && typeof drawSource.close === 'function') {
+          try { drawSource.close(); } catch (_) {}
+        }
+
+        const blob = await new Promise((resolve) => {
+          canvas.toBlob(
+            (b) => resolve(b),
+            'image/jpeg',
+            quality
+          );
+        });
+
+        if (!blob) return file;
+
+        // Si por alguna razón la "compresión" salió más grande, mantener original
+        if (typeof file.size === 'number' && typeof blob.size === 'number' && blob.size >= file.size) {
+          return file;
+        }
+
+        const safeName = (file.name || 'foto').replace(/\.[^.]+$/, '') + '.jpg';
+        return new File([blob], safeName, { type: 'image/jpeg', lastModified: Date.now() });
+      }
+
+      const original = state.fotoFile;
+      const file = await compressImageFile(original, { maxWidth: 1600, maxHeight: 1600, quality: 0.75 });
+      const ext = (file.type === 'image/jpeg') ? 'jpg' : ((file.name.split('.').pop() || 'bin'));
+      const path = `audiovisual/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error } = await supa.storage.from(STORAGE_BUCKET).upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data } = supa.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+      return data && data.publicUrl ? data.publicUrl : null;
+    } catch (e) {
+      console.warn('No se pudo subir la foto, continuo sin foto', e);
+      return null;
+    }
+  }
+
+  function numVal(id) {
+    const v = document.getElementById(id).value;
+    const n = parseFloat(v);
+    return isNaN(n) ? null : n;
+  }
+
+  function bigintOrNull(v) {
+    if (v === null || v === undefined) return null;
+    if (typeof v === 'number') return Number.isFinite(v) ? Math.trunc(v) : null;
+    const s = String(v).trim();
+    if (!s) return null;
+    if (!/^-?\d+$/.test(s)) return null;
+    const n = parseInt(s, 10);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function collectCamposExtra() {
+    const values = [];
+    document.querySelectorAll('#campos-template [data-campo-idx]').forEach(el => {
+      const idx = parseInt(el.dataset.campoIdx, 10);
+      const cfg = state.camposExtra[idx];
+      if (cfg) values.push({ nombre: cfg.nombre, tipo: cfg.tipo, valor: el.value });
+    });
+    return values.length ? values : null;
+  }
+
+  async function insertConFallback(table, payload, selectColumns = null) {
+    let attempt = { ...payload };
+    let guard = 0;
+    while (true) {
+      guard++;
+      if (guard > 30) {
+        return { ok: false, error: 'Demasiados reintentos al insertar (posible schema mismatch).' };
+      }
+      let query = supa.from(table).insert([attempt]);
+      if (selectColumns) query = query.select(selectColumns);
+
+      const { data, error } = await query;
+      if (!error) {
+        const row = Array.isArray(data) ? (data[0] || null) : (data || null);
+        return { ok: true, data: row };
+      }
+
+      // PostgREST can return 400 with PGRST* codes for unknown columns.
+      const msg = String((error.message || '') + ' ' + (error.details || '') + ' ' + (error.hint || '')).trim();
+      let colName = null;
+
+      // Examples:
+      // - Could not find the 'foo' column of 'catalogo_audiovisual' in the schema cache
+      // - column "foo" does not exist
+      let m = msg.match(/Could not find the '([^']+)' column/i);
+      if (m) colName = m[1];
+      if (!colName) {
+        m = msg.match(/column\s+"?([a-zA-Z0-9_]+)"?/i);
+        if (m) colName = m[1];
+      }
+
+      if (colName && colName in attempt) {
+        delete attempt[colName];
+        continue;
+      }
+
+      const pretty = [
+        error.code ? `code=${error.code}` : null,
+        error.message ? `message=${error.message}` : null,
+        error.details ? `details=${error.details}` : null,
+        error.hint ? `hint=${error.hint}` : null
+      ].filter(Boolean).join(' | ');
+
+      return { ok: false, error: pretty || JSON.stringify(error) };
+    }
+  }
+
+  async function onSubmit(ev) {
+    ev.preventDefault();
+
+    // Obligatorio: seleccionar bodega secundaria
+    if (!state.secundariaId || !state.secundariaNombre) {
+      alert('Debes seleccionar una Bodega Secundaria antes de guardar.');
+      return;
+    }
+
+    const altaTipo = String(state.altaTipo || 'MATERIAL').toUpperCase();
+
+    if (altaTipo === 'MATERIAL') {
+      if (!state.contenedorCodigo) {
+        alert('Para agregar material debes seleccionar un Contenedor creado.');
+        return;
+      }
+      if (state.contenedorCerrado) {
+        alert('Este contenedor está CERRADO. No se puede agregar más material aquí.');
+        return;
+      }
+    }
+
+    // Cantidad (1..30)
+    const cantidadEl = document.getElementById('ua-cantidad');
+    const cantidad = Math.min(30, Math.max(1, parseInt((cantidadEl && cantidadEl.value) ? cantidadEl.value : String(state.cantidad || 1), 10) || 1));
+
+    const largoAccesorio = normalizeAccesorioLargo((document.getElementById('ua-accesorio-largo') || {}).value || '');
+    if (altaTipo === 'MATERIAL' && state.itemTipo === 'ACCESORIO' && !largoAccesorio) {
+      alert('Para Accesorio debes llenar el Largo del accesorio (ej: 10M, 15M, 150CM) para que quede en el código.');
+      return;
+    }
+
+    const codigoPreview = await updateCodigoPreview();
+    if (!codigoPreview) {
+      if (altaTipo === 'CONTENEDOR') {
+        alert('Completa la identificación del contenedor (base y número) para generar el código.');
+      } else {
+        alert('Selecciona un contenedor para generar el código.');
+      }
+      return;
+    }
+
+    const contenedorNombreInput = document.getElementById('contenedor-nombre');
+    const contTipoEl = document.getElementById('cont-tipo');
+    const contBaseEl = document.getElementById('cont-nombre-base');
+    const contNumeroEl = document.getElementById('cont-numero');
+
+    const contenedorNombre = contenedorNombreInput ? contenedorNombreInput.value.trim() : '';
+    const contTipoVal = contTipoEl ? contTipoEl.value.trim() : '';
+    const contBaseVal = contBaseEl ? contBaseEl.value.trim() : '';
+    const contNumeroVal = contNumeroEl ? contNumeroEl.value.trim() : '';
+
+    // Identidad del contenedor (para evitar duplicados): secundaria + base + numero
+    if (altaTipo === 'CONTENEDOR') {
+      if (!contBaseVal) {
+        alert('Para guardar un contenedor debes llenar el Nombre Base.');
+        return;
+      }
+      if (!contNumeroVal) {
+        alert('Para guardar un contenedor debes llenar el Número.');
+        return;
+      }
+    }
+
+    // Reglas nuevas:
+    // - nombre: cont-tipo
+    // - apodo: cont-nombre-base + cont-numero
+    // - contenedor: apodo (para listados/ubicación)
+    let numeroNorm = contNumeroVal ? contNumeroVal.padStart(2, '0') : '';
+    let apodo = [contBaseVal, numeroNorm].filter(Boolean).join(' ').trim();
+    let nombreFinal = (contTipoVal || 'Contenedor').trim();
+    let contenedorFinal = (contenedorNombre || apodo || '').trim();
+
+    if (altaTipo === 'MATERIAL') {
+      const nombreProd = (document.getElementById('nombre-producto').value || '').trim();
+      if (!nombreProd) {
+        alert('Para agregar material debes llenar el Nombre del Producto.');
+        return;
+      }
+      nombreFinal = nombreProd;
+      apodo = null;
+      numeroNorm = null;
+      contenedorFinal = (contenedorNombre || '').trim();
+      if (!contenedorFinal) {
+        alert('Selecciona un contenedor válido.');
+        return;
+      }
+    }
+
+    // Precalcular base + extras para poder generar lote si es EQUIPO
+    const base = (altaTipo === 'MATERIAL') ? getCodigoSinConsecutivo(state.contenedorCodigo || '') : '';
+    const secundaria = state.secundariaNombre || '';
+    const contenedorNombreEl = document.getElementById('contenedor-nombre');
+    const abrevInput = document.getElementById('nombre-abrev');
+    const contenedorNombreVal = contenedorNombreEl ? contenedorNombreEl.value.trim() : '';
+    const abre = (abrevInput && abrevInput.value.trim()) || abrev((contenedorNombreVal) || secundaria);
+    const components = {
+      tipo_uso: ref4((document.getElementById('tipo-uso') || {}).value || ''),
+      tipo_material: ref4((document.getElementById('tipo-material') || {}).value || ''),
+      marca: abrev((document.getElementById('marca') || {}).value || ''),
+      modelo: abrev((document.getElementById('modelo') || {}).value || ''),
+      abre
+    };
+    const extras = (state.codigoOrdenMaterial || [])
+      .map(k => components[k])
+      .filter(p => p && p.length)
+      .slice(0, 2);
+
+    // Foto: subir una vez y reutilizar
+    const fotoUrl = await uploadFotoIfNeeded();
+
+    // Helper payload base (sin codigo)
+    const payloadBase = {
+      nombre: nombreFinal,
+      apodo: apodo || null,
+      nombre_base: (altaTipo === 'CONTENEDOR') ? (contBaseVal || null) : null,
+      nombre_numero: (altaTipo === 'CONTENEDOR') ? (numeroNorm || null) : null,
+      bodega_principal: 'Audiovisual',
+      bodega_secundaria: state.secundariaNombre || null,
+      contenedor: contenedorFinal || null,
+      contenedor_tipo: (state.contenedorTipo || contTipoVal || null),
+      tipo_alta: altaTipo,
+      abreviacion: document.getElementById('nombre-abrev').value.trim() || null,
+      tipo_uso: document.getElementById('tipo-uso').value.trim() || null,
+      tipo_material: document.getElementById('tipo-material').value.trim() || null,
+      unidad_medida: (altaTipo === 'CONTENEDOR')
+        ? 'CMT'
+        : ((document.querySelector('input[name="unidad"]:checked') || {}).value || null),
+      dimensiones: {
+        ancho: numVal('ancho'),
+        largo: numVal('largo'),
+        grosor: numVal('grosor')
+      },
+      peso: numVal('peso'),
+      precio_unitario: numVal('precio'),
+      color: state.color,
+      es_hechizo: document.getElementById('producto-hechizo').checked,
+      marca: document.getElementById('marca').value.trim() || null,
+      modelo: document.getElementById('modelo').value.trim() || null,
+      notas: document.getElementById('notas').value.trim() || null,
+      campos_personalizados: collectCamposExtra(),
+      // Algunas instalaciones usan BIGINT, otras UUID; evitamos 400 por cast inválido
+      bodega_principal_id: bigintOrNull(state.principalId),
+      bodega_secundaria_id: bigintOrNull(state.secundariaId),
+      es_contenedor: altaTipo === 'CONTENEDOR'
+    };
+
+    if (fotoUrl) payloadBase.foto_url = fotoUrl;
+
+    async function getCatalogoIdByCodigo(codigo) {
+      try {
+        const { data: found } = await supa
+          .from(TABLE_CATALOGO)
+          .select('id')
+          .eq('codigo', codigo)
+          .maybeSingle();
+        return found && found.id !== undefined && found.id !== null ? found.id : null;
+      } catch (e) {
+        console.warn('No se pudo obtener catalogo.id para vincular movimiento', e);
+        return null;
+      }
+    }
+
+    async function crearMovimientoIngreso({ codigo, nombre, catalogoId, cantidadMov }) {
+      const hoy = new Date();
+      const fecha = hoy.toISOString().slice(0, 10);
+      const movimiento = {
+        catalogo_id: catalogoId,
+        material_codigo: codigo,
+        material_nombre: (nombre || codigo),
+        bodega_principal: 'Audiovisual',
+        bodega_secundaria: state.secundariaNombre || null,
+        tipo_movimiento: 'ingreso',
+        cantidad: cantidadMov,
+        signo: 1,
+        referencia_documento: null,
+        referencia_tipo: 'alta_material_activo',
+        responsable: null,
+        fecha_movimiento: fecha,
+        observaciones: 'Alta automática (activo)',
+        estado: 'completado'
+      };
+      return await insertConFallback(TABLE_MOVIMIENTOS, movimiento);
+    }
+
+    if (altaTipo === 'CONTENEDOR') {
+      // Guardar contenedor (sin movimiento). El código ya viene del preview.
+      const codigo = codigoPreview;
+      const payload = { ...payloadBase, codigo };
+      const res = await insertConFallback(TABLE_CATALOGO, payload, 'id');
+      if (!res.ok) { alert('Error al guardar contenedor: ' + res.error); return; }
+
+      // Refrescar contenedores y auto-seleccionar el creado
+      state.contenedorCodigo = codigo;
+      state.contenedorTipo = contTipoVal || state.contenedorTipo || null;
+      state.contenedorId = res.data && (res.data.id !== undefined && res.data.id !== null) ? String(res.data.id) : null;
+      state.contenedorCerrado = false;
+      const contInput = document.getElementById('contenedor-nombre');
+      if (contInput) contInput.value = (apodo || contenedorFinal || '').trim();
+
+      await loadContenedores();
+      // Resaltar el botón del nuevo contenedor (si existe)
+      try {
+        const btn = document.querySelector(`.contenedor-btn[data-codigo="${CSS.escape(String(codigo))}"]`);
+        document.querySelectorAll('.contenedor-btn').forEach(b => b.classList.remove('contenedor-selected'));
+        if (btn) btn.classList.add('contenedor-selected');
+      } catch (_) {}
+
+      // Cambiar a modo MATERIAL automáticamente
+      setAltaTipo('MATERIAL');
+      // Limpiar inputs de material
+      try {
+        document.getElementById('nombre-producto').value = '';
+        document.getElementById('nombre-abrev').value = '';
+        document.getElementById('tipo-uso').value = '';
+        document.getElementById('tipo-material').value = '';
+        document.getElementById('marca').value = '';
+        document.getElementById('modelo').value = '';
+        document.getElementById('notas').value = '';
+        const pv = document.getElementById('photo-preview');
+        if (pv) pv.textContent = 'Sin foto';
+      } catch (_) {}
+
+      alert(`Contenedor guardado: ${codigo}`);
+      updateResumen();
+      return;
+    }
+
+    if (state.itemTipo === 'ACCESORIO') {
+      // 1 código, movimiento con cantidad
+      const suffix = [base, ...extras, largoAccesorio].filter(Boolean).join('-');
+      const consec = await obtenerSiguienteConsecutivo(suffix);
+      const codigo = suffix ? `${consec}-${suffix}` : `${consec}`;
+
+      const payload = { ...payloadBase, codigo };
+      const res = await insertConFallback(TABLE_CATALOGO, payload, 'id');
+      if (!res.ok) { alert('Error al guardar: ' + res.error); return; }
+
+      let catalogoId = res.data && (res.data.id !== undefined && res.data.id !== null) ? res.data.id : null;
+      if (!catalogoId) catalogoId = await getCatalogoIdByCodigo(codigo);
+
+      if (state.esActivo) {
+        const resMov = await crearMovimientoIngreso({ codigo, nombre: nombreFinal, catalogoId, cantidadMov: cantidad });
+        if (!resMov.ok) {
+          alert('Se guardó el catálogo pero NO se pudo crear el movimiento de ingreso.\n' + resMov.error);
+          return;
+        }
+      }
+
+      alert(`Guardado en catalogo: ${codigo}`);
+
+      if (state.cerrarContenedor) {
+        const cierre = await cerrarContenedorActual();
+        if (!cierre.ok) {
+          alert('Se guardó el material, pero NO se pudo cerrar el contenedor.\n' + cierre.error);
+          return;
+        }
+        await loadContenedores();
+      }
+    } else {
+      // EQUIPO: crea N hijos con sufijo -01..-NN (continuando desde el último índice hijo)
+      const idxStartStr = await obtenerSiguienteIndiceHijo(base, extras);
+      const idxStart = parseInt(idxStartStr, 10);
+      const idx0 = Number.isFinite(idxStart) && idxStart > 0 ? idxStart : 1;
+
+      const consecStart = await obtenerSiguienteConsecutivoNumero();
+
+      const created = [];
+      for (let i = 0; i < cantidad; i++) {
+        const idx = String(idx0 + i).padStart(2, '0');
+        const suffix = [base, ...extras, idx].filter(Boolean).join('-');
+        const consec = String(consecStart + i).padStart(5, '0');
+        const codigo = suffix ? `${consec}-${suffix}` : `${consec}`;
+
+        const payload = { ...payloadBase, codigo };
+        const res = await insertConFallback(TABLE_CATALOGO, payload, 'id');
+        if (!res.ok) {
+          alert(`Error al guardar hijo ${i + 1}/${cantidad}: ${res.error}`);
+          return;
+        }
+
+        let catalogoId = res.data && (res.data.id !== undefined && res.data.id !== null) ? res.data.id : null;
+        if (!catalogoId) catalogoId = await getCatalogoIdByCodigo(codigo);
+
+        if (state.esActivo) {
+          const resMov = await crearMovimientoIngreso({ codigo, nombre: nombreFinal, catalogoId, cantidadMov: 1 });
+          if (!resMov.ok) {
+            alert(`Se guardó el catálogo (${codigo}) pero NO se pudo crear el movimiento.\n${resMov.error}`);
+            return;
+          }
+        }
+        created.push(codigo);
+      }
+
+      const primero = created[0] || '';
+      const ultimo = created[created.length - 1] || '';
+      alert(`Guardados ${created.length} equipos.\nPrimero: ${primero}\nÚltimo: ${ultimo}`);
+
+      if (state.cerrarContenedor) {
+        const cierre = await cerrarContenedorActual();
+        if (!cierre.ok) {
+          alert('Se guardó el lote, pero NO se pudo cerrar el contenedor.\n' + cierre.error);
+          return;
+        }
+        await loadContenedores();
+      }
+    }
+
+      formEl.reset();
+      state.camposExtra = [];
+      state.color = null;
+      state.fotoFile = null;
+      state.secundariaId = null;
+      state.secundariaNombre = null;
+      state.contenedorTipo = null;
+      state.contenedorCodigo = null;
+      state.contenedorId = null;
+      state.esActivo = true;
+      state.cantidad = 1;
+      state.accesorioLargo = '';
+      state.cerrarContenedor = false;
+      state.contenedorCerrado = false;
+      const activoEl = document.getElementById('ua-es-activo');
+      if (activoEl) activoEl.checked = true;
+      const cantidadEl2 = document.getElementById('ua-cantidad');
+      if (cantidadEl2) cantidadEl2.value = '1';
+      const largoEl2 = document.getElementById('ua-accesorio-largo');
+      if (largoEl2) largoEl2.value = '';
+      const cerrarEl2 = document.getElementById('ua-cerrar-contenedor');
+      if (cerrarEl2) cerrarEl2.checked = false;
+      document.querySelectorAll('.secundaria-btn').forEach(b => b.classList.remove('secundaria-selected'));
+      document.querySelectorAll('.contenedor-btn').forEach(b => b.classList.remove('contenedor-selected'));
+      renderCamposExtra();
+      updateResumen();
+      const preview = document.getElementById('photo-preview');
+      if (preview) preview.textContent = 'Sin foto';
+      const codeEl = document.getElementById('codigo-material');
+      if (codeEl) codeEl.value = 'Se genera al guardar';
+  }
+
+  function addCampoExtra() {
+    const nombre = document.getElementById('nuevo-campo-nombre').value.trim();
+    const tipo = document.getElementById('nuevo-campo-tipo').value;
+    if (!nombre) { alert('Define el nombre del campo extra'); return; }
+    state.camposExtra.push({ nombre, tipo });
+    document.getElementById('nuevo-campo-nombre').value = '';
+    renderCamposExtra();
+  }
+
+  function renderCamposExtra() {
+    const host = document.getElementById('campos-template');
+    host.innerHTML = '';
+    state.camposExtra.forEach((c, idx) => {
+      const row = document.createElement('div');
+      row.style.display = 'flex';
+      row.style.gap = '6px';
+      const input = document.createElement(c.tipo === 'textarea' ? 'textarea' : 'input');
+      input.dataset.campoIdx = String(idx);
+      input.placeholder = c.nombre;
+      input.className = 'audiovisual-input';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = 'Quitar';
+      btn.className = 'bodega-export-pdf-btn';
+      btn.style.padding = '6px 10px';
+      btn.addEventListener('click', () => { state.camposExtra.splice(idx, 1); renderCamposExtra(); });
+      row.appendChild(input);
+      row.appendChild(btn);
+      host.appendChild(row);
+    });
+  }
+
+  async function loadBodegas() {
+    try {
+      // Buscar la bodega principal "Audiovisual"
+      const { data: principales, error: errPrin } = await supa
+        .from('inv2_bodegas_principales')
+        .select('id, nombre')
+        .eq('nombre', 'Audiovisual')
+        .single();
+      if (errPrin || !principales) {
+        console.warn('No se encontró la bodega principal "Audiovisual"', errPrin);
+        return;
+      }
+      state.principalId = principales.id;
+
+      // Cargar secundarias
+      const { data: secundarias, error: errSec } = await supa
+        .from('inv2_bodegas_secundarias')
+        .select('id, nombre')
+        .eq('principal_id', state.principalId)
+        .eq('activa', true);
+      if (errSec) {
+        console.warn('Error cargando secundarias', errSec);
+        return;
+      }
+
+      const container = document.getElementById('secundarias-container');
+      if (container) {
+        container.innerHTML = '';
+        secundarias.forEach(s => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.textContent = s.nombre;
+          btn.className = 'audiovisual-boton secundaria-btn';
+          btn.dataset.secId = String(s.id);
+          btn.addEventListener('click', () => selectSecundaria(s.id, s.nombre, btn));
+          container.appendChild(btn);
+        });
+      }
+    } catch (e) {
+      console.warn('Error en loadBodegas', e);
+    }
+  }
+
+  function selectSecundaria(id, nombre, btn) {
+    // Al cambiar secundaria: limpiar todo rastro del contenedor/material anterior
+    state.contenedorTipo = null;
+    state.contenedorCodigo = null;
+    state.contenedorId = null;
+    const contInput = document.getElementById('contenedor-nombre');
+    if (contInput) contInput.value = '';
+    document.querySelectorAll('.contenedor-btn').forEach(b => b.classList.remove('contenedor-selected'));
+
+    state.secundariaId = id;
+    state.secundariaNombre = nombre;
+    // Resaltar el botón seleccionado
+    document.querySelectorAll('.secundaria-btn').forEach(b => b.classList.remove('secundaria-selected'));
+    btn.classList.add('secundaria-selected');
+
+    // Reset del formulario de material
+    try {
+      const formEl = document.getElementById('form-universal');
+      if (formEl) formEl.reset();
+    } catch (_) {}
+    state.camposExtra = [];
+    state.color = null;
+    state.fotoFile = null;
+    state.esActivo = true;
+    state.accesorioLargo = '';
+    state.cerrarContenedor = false;
+    state.contenedorCerrado = false;
+    const activoEl = document.getElementById('ua-es-activo');
+    if (activoEl) activoEl.checked = true;
+    const largoEl = document.getElementById('ua-accesorio-largo');
+    if (largoEl) largoEl.value = '';
+    const cerrarEl = document.getElementById('ua-cerrar-contenedor');
+    if (cerrarEl) cerrarEl.checked = false;
+    const preview = document.getElementById('photo-preview');
+    if (preview) preview.textContent = 'Sin foto';
+    const codeEl = document.getElementById('codigo-material');
+    if (codeEl) codeEl.value = 'Falta base/número';
+
+    // Metodología: secundaria seleccionada pero SIN contenedor => modo CONTENEDOR
+    setAltaTipo('CONTENEDOR');
+
+    renderCamposExtra();
+    updateResumen();
+    loadContenedores();
+  }
+
+  async function loadContenedores() {
+    try {
+      const { data: contenedores, error } = await supa
+        .from(TABLE_CATALOGO)
+        .select('id, codigo, contenedor, contenedor_tipo, bodega_secundaria, es_contenedor, tipo_alta, campos_personalizados')
+        .not('contenedor', 'is', null)
+        .neq('contenedor', '')
+        .order('contenedor');
+      if (error) {
+        console.warn('Error cargando contenedores', error);
+        return;
+      }
+
+      const container = document.getElementById('contenedor-tipos-container');
+      if (container) {
+        container.innerHTML = '';
+        const filtered = (contenedores || []).filter(c => {
+          if (!c || !c.contenedor) return false;
+          // compatibilidad con datos antiguos
+          const esCont = (c.es_contenedor === true) || (String(c.tipo_alta || '').toUpperCase() === 'CONTENEDOR');
+          if (!esCont) return false;
+          if (!state.secundariaNombre) return true;
+          return String(c.bodega_secundaria || '') === String(state.secundariaNombre);
+        });
+
+        filtered.forEach(c => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          const cerrado = isContenedorCerrado(c.campos_personalizados);
+          btn.textContent = cerrado ? `${c.contenedor} (CERRADO)` : c.contenedor;
+          btn.className = 'audiovisual-boton contenedor-btn';
+          btn.dataset.contenedor = c.contenedor;
+          btn.dataset.tipo = (c.contenedor_tipo || '').toString().trim();
+          btn.dataset.codigo = c.codigo || '';
+          btn.dataset.contId = (c.id !== undefined && c.id !== null) ? String(c.id) : '';
+          btn.dataset.cerrado = cerrado ? '1' : '0';
+          if (cerrado) {
+            btn.disabled = true;
+            btn.style.opacity = '0.55';
+            btn.style.cursor = 'not-allowed';
+          } else {
+            btn.addEventListener('click', () => selectContenedor(c.contenedor, btn));
+          }
+          container.appendChild(btn);
+        });
+      }
+    } catch (e) {
+      console.warn('Error en loadContenedores', e);
+    }
+  }
+
+  function selectContenedor(contenedor, btn) {
+    const contenedorNombreEl = document.getElementById('contenedor-nombre');
+    if (contenedorNombreEl) contenedorNombreEl.value = contenedor;
+
+    // Este campo corresponde a contenedor_tipo en DB (si existe en los datos)
+    state.contenedorTipo = (btn && btn.dataset && btn.dataset.tipo) ? btn.dataset.tipo : null;
+    state.contenedorCodigo = (btn && btn.dataset && btn.dataset.codigo) ? btn.dataset.codigo : null;
+    state.contenedorId = (btn && btn.dataset && btn.dataset.contId) ? btn.dataset.contId : null;
+    state.contenedorCerrado = (btn && btn.dataset && btn.dataset.cerrado) ? (btn.dataset.cerrado === '1') : false;
+
+    // Resaltar el botón seleccionado
+    document.querySelectorAll('.contenedor-btn').forEach(b => b.classList.remove('contenedor-selected'));
+    btn.classList.add('contenedor-selected');
+
+    // Metodología: secundaria + contenedor => modo MATERIAL
+    setAltaTipo('MATERIAL');
+    updateResumen();
+    updateCodigoPreview();
+  }
+
+  function openConfigModal() {
+    console.log('Abriendo modal de configuración');
+    renderOrdenLista();
+    document.getElementById('modal-config-orden').style.display = 'flex';
+  }
+
+  function renderOrdenLista() {
+    const lista = document.getElementById('orden-lista');
+    lista.innerHTML = '';
+    const labels = {
+      principal: 'Bodega Principal',
+      secundaria: 'Bodega Secundaria',
+      contenedor: 'Contenedor (nombre)',
+      cont_tipo: 'Contenedor Tipo',
+      cont_nombre_base: 'Contenedor Base',
+      cont_numero: 'Contenedor Número',
+      tipo_uso: 'Tipo de Uso',
+      tipo_material: 'Tipo de Material',
+      marca: 'Marca',
+      modelo: 'Modelo',
+      abre: 'Abreviación'
+    };
+
+    // MATERIAL: código base viene del contenedor (sin consecutivo) + 2 campos extra
+    if (state.altaTipo === 'MATERIAL') {
+      const fijo = document.createElement('li');
+      fijo.style.padding = '8px';
+      fijo.style.background = '#071233';
+      fijo.style.borderRadius = '6px';
+      fijo.style.marginBottom = '6px';
+      fijo.style.color = '#cbd5e1';
+      fijo.textContent = 'Código del Contenedor (sin consecutivo) (fijo)';
+      lista.appendChild(fijo);
+
+      const selected = (state.codigoOrdenMaterial || []).slice(0, 2);
+      selected.forEach((key, index) => {
+        const li = document.createElement('li');
+        li.style.display = 'flex';
+        li.style.alignItems = 'center';
+        li.style.justifyContent = 'space-between';
+        li.style.padding = '8px';
+        li.style.background = '#0f172a';
+        li.style.borderRadius = '6px';
+        li.style.marginBottom = '6px';
+        li.innerHTML = `
+          <span style="color:#cbd5e1;">${labels[key] || key}</span>
+          <div>
+            <button type="button" class="orden-btn-mat" data-action="up" data-index="${index}" ${index === 0 ? 'disabled' : ''}>↑</button>
+            <button type="button" class="orden-btn-mat" data-action="down" data-index="${index}" ${index === selected.length - 1 ? 'disabled' : ''}>↓</button>
+            <button type="button" class="orden-remove-mat" data-index="${index}">✖</button>
+          </div>
+        `;
+        lista.appendChild(li);
+      });
+
+      const allKeys = Object.keys(labels).filter(k => k !== 'principal' && k !== 'secundaria');
+      const available = allKeys.filter(k => !selected.includes(k));
+      const availHeader = document.createElement('div');
+      availHeader.style.marginTop = '8px';
+      availHeader.style.marginBottom = '6px';
+      availHeader.style.color = '#94a3b8';
+      availHeader.textContent = 'Campos disponibles (elige hasta 2)';
+      lista.appendChild(availHeader);
+
+      available.forEach(k => {
+        const li = document.createElement('li');
+        li.style.display = 'flex';
+        li.style.alignItems = 'center';
+        li.style.justifyContent = 'space-between';
+        li.style.padding = '6px 8px';
+        li.style.background = '#071233';
+        li.style.borderRadius = '6px';
+        li.style.marginBottom = '6px';
+        li.innerHTML = `
+          <span style="color:#cbd5e1;">${labels[k] || k}</span>
+          <div>
+            <button type="button" class="orden-add-mat" data-key="${k}" ${selected.length >= 2 ? 'disabled' : ''}>Agregar</button>
+          </div>
+        `;
+        lista.appendChild(li);
+      });
+
+      document.querySelectorAll('.orden-btn-mat').forEach(btn => {
+        btn.addEventListener('click', () => moveItemMaterial(parseInt(btn.dataset.index,10), btn.dataset.action));
+      });
+      document.querySelectorAll('.orden-remove-mat').forEach(btn => {
+        btn.addEventListener('click', () => removeSelectedMaterial(parseInt(btn.dataset.index,10)));
+      });
+      document.querySelectorAll('.orden-add-mat').forEach(btn => {
+        btn.addEventListener('click', () => addFieldToOrderMaterial(btn.dataset.key));
+      });
+      return;
+    }
+
+    // Fixed first two slots
+    const fixed = ['principal', 'secundaria'];
+    fixed.forEach(k => {
+      const li = document.createElement('li');
+      li.style.padding = '8px';
+      li.style.background = '#071233';
+      li.style.borderRadius = '6px';
+      li.style.marginBottom = '6px';
+      li.style.color = '#cbd5e1';
+      li.textContent = labels[k] || k;
+      lista.appendChild(li);
+    });
+
+    // Selected (remaining) slots (max 3)
+    const selected = state.codigoOrden.slice(2);
+    selected.forEach((key, index) => {
+      const li = document.createElement('li');
+      li.style.display = 'flex';
+      li.style.alignItems = 'center';
+      li.style.justifyContent = 'space-between';
+      li.style.padding = '8px';
+      li.style.background = '#0f172a';
+      li.style.borderRadius = '6px';
+      li.style.marginBottom = '6px';
+      li.innerHTML = `
+        <span style="color:#cbd5e1;">${labels[key] || key}</span>
+        <div>
+          <button type="button" class="orden-btn" data-action="up" data-index="${index}" ${index === 0 ? 'disabled' : ''}>↑</button>
+          <button type="button" class="orden-btn" data-action="down" data-index="${index}" ${index === selected.length - 1 ? 'disabled' : ''}>↓</button>
+          <button type="button" class="orden-remove" data-index="${index}">✖</button>
+        </div>
+      `;
+      lista.appendChild(li);
+    });
+
+    // Available fields to add
+    const allKeys = Object.keys(labels);
+    const available = allKeys.filter(k => !fixed.includes(k) && !selected.includes(k));
+    const availHeader = document.createElement('div');
+    availHeader.style.marginTop = '8px';
+    availHeader.style.marginBottom = '6px';
+    availHeader.style.color = '#94a3b8';
+    availHeader.textContent = 'Campos disponibles (elige hasta 3)';
+    lista.appendChild(availHeader);
+
+    available.forEach(k => {
+      const li = document.createElement('li');
+      li.style.display = 'flex';
+      li.style.alignItems = 'center';
+      li.style.justifyContent = 'space-between';
+      li.style.padding = '6px 8px';
+      li.style.background = '#071233';
+      li.style.borderRadius = '6px';
+      li.style.marginBottom = '6px';
+      li.innerHTML = `
+        <span style="color:#cbd5e1;">${labels[k] || k}</span>
+        <div>
+          <button type="button" class="orden-add" data-key="${k}" ${selected.length >= 3 ? 'disabled' : ''}>Agregar</button>
+        </div>
+      `;
+      lista.appendChild(li);
+    });
+
+    // Bind buttons
+    document.querySelectorAll('.orden-btn').forEach(btn => {
+      btn.addEventListener('click', () => moveItem(parseInt(btn.dataset.index,10), btn.dataset.action));
+    });
+    document.querySelectorAll('.orden-remove').forEach(btn => {
+      btn.addEventListener('click', () => removeSelected(parseInt(btn.dataset.index,10)));
+    });
+    document.querySelectorAll('.orden-add').forEach(btn => {
+      btn.addEventListener('click', () => addFieldToOrder(btn.dataset.key));
+    });
+  }
+
+  function moveItem(index, action) {
+    // index refers to selected[] index (post-fixed)
+    const sel = state.codigoOrden.slice(2);
+    if (action === 'up' && index > 0) {
+      [sel[index], sel[index - 1]] = [sel[index - 1], sel[index]];
+    } else if (action === 'down' && index < sel.length - 1) {
+      [sel[index], sel[index + 1]] = [sel[index + 1], sel[index]];
+    }
+    state.codigoOrden = ['principal','secundaria', ...sel];
+    renderOrdenLista();
+  }
+
+  function moveItemMaterial(index, action) {
+    const sel = (state.codigoOrdenMaterial || []).slice(0, 2);
+    if (action === 'up' && index > 0) {
+      [sel[index], sel[index - 1]] = [sel[index - 1], sel[index]];
+    } else if (action === 'down' && index < sel.length - 1) {
+      [sel[index], sel[index + 1]] = [sel[index + 1], sel[index]];
+    }
+    state.codigoOrdenMaterial = sel;
+    renderOrdenLista();
+  }
+
+  function addFieldToOrderMaterial(key) {
+    const sel = (state.codigoOrdenMaterial || []).slice(0, 2);
+    if (sel.length >= 2) return;
+    sel.push(key);
+    state.codigoOrdenMaterial = sel;
+    renderOrdenLista();
+  }
+
+  function removeSelectedMaterial(index) {
+    const sel = (state.codigoOrdenMaterial || []).slice(0, 2);
+    sel.splice(index, 1);
+    state.codigoOrdenMaterial = sel;
+    renderOrdenLista();
+  }
+
+  function addFieldToOrder(key) {
+    const sel = state.codigoOrden.slice(2);
+    if (sel.length >= 3) return;
+    sel.push(key);
+    state.codigoOrden = ['principal','secundaria', ...sel];
+    renderOrdenLista();
+  }
+
+  function removeSelected(index) {
+    const sel = state.codigoOrden.slice(2);
+    sel.splice(index,1);
+    state.codigoOrden = ['principal','secundaria', ...sel];
+    renderOrdenLista();
+  }
+
+  // Bind modal buttons
+  document.getElementById('btn-guardar-orden').addEventListener('click', () => {
+    console.log('Guardando orden:', state.codigoOrden);
+    if (state.altaTipo === 'MATERIAL') {
+      localStorage.setItem('codigoOrdenAudiovisualMaterial', JSON.stringify((state.codigoOrdenMaterial || []).slice(0, 2)));
+    } else {
+      localStorage.setItem('codigoOrdenAudiovisual', JSON.stringify(state.codigoOrden));
+    }
+    document.getElementById('modal-config-orden').style.display = 'none';
+    updateCodigoPreview();
+  });
+  document.getElementById('btn-cerrar-modal').addEventListener('click', () => {
+    document.getElementById('modal-config-orden').style.display = 'none';
+  });
+
+  // Llamadas
+  renderPaleta();
+  bindInputs();
+  applyAltaTipoUI();
+  updateResumen();
+  loadBodegas();
+  loadContenedores();
+  }
+
+})();
+</script>

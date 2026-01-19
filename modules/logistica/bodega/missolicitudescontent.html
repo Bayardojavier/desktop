@@ -1,0 +1,789 @@
+<div class="logistica-container" style="display: flex; flex-direction: column; height: calc(85vh - 60px);">
+  <div style="background: rgba(0, 0, 0, 0.767); padding: 20px; border-radius: 8px; height: 100%; overflow-y: auto; border: 1px solid #e2e8f0;">
+    <h2 style="font-size: 16pt; margin: 0 0 20px 0; color: #f5f6f7;">📋 Mis Solicitudes</h2>
+    <div id="lista-solicitudes"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+    // =============================================================================
+    // 🔹 UTILIDADES
+    // =============================================================================
+    function isCaseBaseCodigo(codigo) {
+      return (codigo || '').toString().startsWith('CASEBASE|');
+    }
+    function getCaseBaseFromCodigo(codigo) {
+      const s = (codigo || '').toString();
+      if (!s.startsWith('CASEBASE|')) return '';
+      return s.substring('CASEBASE|'.length).trim();
+    }
+    function renderMaterialCell(item) {
+      const codigo = item?.codigo_material || '';
+      if (isCaseBaseCodigo(codigo)) {
+        const base = getCaseBaseFromCodigo(codigo) || 'Case';
+        return `<strong>CASE ${base}</strong><br><small>Pendiente de selección en despacho</small>`;
+      }
+      return `<strong>${codigo}</strong><br><small>${item?.nombre_material || ''} (${item?.medidas || ''}) – ${item?.color || ''}</small>`;
+    }
+
+    function mostrarNotificacion(mensaje, tipo = 'info') {
+      // Crear elemento de notificación
+      const notif = document.createElement('div');
+      notif.style = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${tipo === 'error' ? '#dc3545' : tipo === 'success' ? '#28a745' : '#007bff'};
+        color: white;
+        padding: 12px 16px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 10000;
+        font-size: 14px;
+        max-width: 400px;
+        word-wrap: break-word;
+      `;
+      notif.textContent = mensaje;
+      document.body.appendChild(notif);
+
+      // Auto-remover después de 3 segundos
+      setTimeout(() => {
+        if (notif.parentNode) {
+          notif.parentNode.removeChild(notif);
+        }
+      }, 3000);
+    }
+    async function cargarSolicitudes() {
+      try {
+        const { data: solicitudes, error } = await window.supabaseClient
+          .from('solicitudes_logistica')
+          .select(`
+            id,
+            tipo,
+            estado,
+            evento,
+            encargado_evento,
+            prioridad,
+            modo_ingreso,
+            fecha_solicitud,
+            observaciones,
+            items_solicitud_logistica (
+              id,
+              codigo_material,
+              nombre_material,
+              cantidad_solicitada,
+              cantidad_despachada,
+              estado,
+              observacion,
+              medidas,
+              color
+            )
+          `)
+          .order('fecha_solicitud', { ascending: false });
+
+        if (error) {
+          console.error('Error al cargar solicitudes:', error);
+          document.getElementById('lista-solicitudes').innerHTML = `
+            <p style="color: #ef4445; text-align: center; font-size: 13px; padding: 20px;">
+              ❌ Error al cargar las solicitudes.
+            </p>
+          `;
+          mostrarNotificacion('❌ Error al cargar las solicitudes.', 'error');
+          return;
+        }
+
+        const contenedor = document.getElementById('lista-solicitudes');
+
+        if (!solicitudes || solicitudes.length === 0) {
+          contenedor.innerHTML = `
+            <p style="color: #bebcbc; text-align: center; font-size: 13px; padding: 20px;">
+              No tienes solicitudes registradas.
+            </p>
+          `;
+          return;
+        }
+
+        contenedor.innerHTML = solicitudes.map(s => {
+          const puedeModificar = s.estado === 'pendiente_bodega';
+          const estadoColor = {
+            'pendiente_bodega': '#f59e0b',
+            'en_proceso': '#3b82f6',
+            'completada': '#10b981',
+            'rechazada': '#ef4445'
+          }[s.estado] || '#6b7280';
+
+          const estadoTexto = {
+            'pendiente_bodega': 'Pendiente',
+            'en_proceso': 'En Proceso',
+            'completada': 'Completada',
+            'rechazada': 'Rechazada'
+          }[s.estado] || s.estado;
+
+          return `
+            <div style="background: #1e293b; padding: 16px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                <div>
+                  <h3 style="margin: 0; color: #93c5fd; font-size: 14pt;">${s.id}</h3>
+                  <p style="color: #cbd5e1; margin: 6px 0 0 0; font-size: 12px;">
+                    Evento: ${s.evento} | ${new Date(s.fecha_solicitud).toLocaleDateString()}
+                  </p>
+                  <p style="color: ${estadoColor}; margin: 4px 0 0 0; font-size: 11px; font-weight: bold;">
+                    Estado: ${estadoTexto}
+                  </p>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  ${puedeModificar ? `
+                    <button class="btn-editar" data-id="${s.id}"
+                            style="font-size: 12px; padding: 6px 10px; background: #3b82f6; color: white; border: none; border-radius: 4px;">
+                      ✏️ Editar
+                    </button>
+                    <button class="btn-eliminar" data-id="${s.id}"
+                            style="font-size: 12px; padding: 6px 10px; background: #ef4445; color: white; border: none; border-radius: 4px;">
+                      🗑️ Eliminar
+                    </button>
+                  ` : `
+                    <span style="font-size: 12px; padding: 6px 10px; background: #374151; color: #9ca3af; border-radius: 4px;">
+                      ${s.estado === 'completada' ? '✅ Despachada' : '🔒 No editable'}
+                    </span>
+                  `}
+                </div>
+              </div>
+              <div style="font-size: 12px; color: #94a3b8;">
+                <strong>Materiales:</strong> ${s.items_solicitud_logistica?.length || 0} ítems
+                ${s.encargado_evento ? ` | <strong>Encargado:</strong> ${s.encargado_evento}` : ''}
+                ${s.prioridad ? ` | <strong>Prioridad:</strong> ${s.prioridad}` : ''}
+              </div>
+              ${s.observaciones ? `
+                <div style="font-size: 11px; color: #64748b; margin-top: 8px; padding: 8px; background: #0f172a; border-radius: 4px;">
+                  <strong>Observaciones:</strong> ${s.observaciones}
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('');
+
+      } catch (err) {
+        console.error('Error al cargar solicitudes:', err);
+        document.getElementById('lista-solicitudes').innerHTML = `
+          <p style="color: #ef4445; text-align: center; font-size: 13px; padding: 20px;">
+            ❌ Error al cargar las solicitudes.
+          </p>
+        `;
+        mostrarNotificacion('❌ Error al cargar las solicitudes.', 'error');
+      }
+    }
+
+    // =============================================================================
+    // 🔹 EVENTOS DELEGADOS (se añaden solo una vez)
+    // =============================================================================
+    const contenedorSolicitudes = document.getElementById('lista-solicitudes');
+    if (!contenedorSolicitudes.hasAttribute('data-event-listener-added')) {
+      contenedorSolicitudes.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.btn-eliminar, .btn-editar');
+        if (!btn) return;
+
+        const id = btn.dataset.id;
+
+        if (btn.classList.contains('btn-eliminar')) {
+          // Eliminar solicitud
+          if (confirm("⚠️ ¿Eliminar esta solicitud? Esta acción no se puede deshacer.")) {
+            try {
+              console.log(`Eliminando solicitud ${id}...`);
+
+              // Primero verificar que la solicitud existe
+              const { data: solicitudExiste, error: errorVerificar } = await window.supabaseClient
+                .from('solicitudes_logistica')
+                .select('id, estado')
+                .eq('id', id)
+                .single();
+
+              if (errorVerificar) {
+                console.error('Error al verificar solicitud:', errorVerificar);
+                if (errorVerificar.code === 'PGRST116') {
+                  alert('⚠️ La solicitud no existe en la base de datos.');
+                  cargarSolicitudes();
+                  return;
+                }
+              }
+
+              if (!solicitudExiste) {
+                console.warn(`⚠️ La solicitud ${id} no existe`);
+                alert('⚠️ La solicitud no fue encontrada.');
+                cargarSolicitudes();
+                return;
+              }
+
+              console.log(`Solicitud encontrada: ${JSON.stringify(solicitudExiste)}`);
+
+              // Primero verificar si existen items relacionados
+              const { data: itemsExistentes, error: errorCheck } = await window.supabaseClient
+                .from('items_solicitud_logistica')
+                .select('id', { count: 'exact' })
+                .eq('solicitud_id', id);
+
+              if (errorCheck) {
+                console.error('Error al verificar items existentes:', errorCheck);
+              } else {
+                console.log(`La solicitud ${id} tiene ${itemsExistentes?.length || 0} items relacionados`);
+              }
+
+              // Intentar eliminar los items relacionados
+              if (itemsExistentes && itemsExistentes.length > 0) {
+                console.log(`Intentando eliminar ${itemsExistentes.length} items relacionados...`);
+                console.log(`IDs de items a eliminar: ${itemsExistentes.map(item => item.id).join(', ')}`);
+
+                // Intentar eliminar usando los IDs específicos
+                const itemIds = itemsExistentes.map(item => item.id);
+                const { error: errorItems } = await window.supabaseClient
+                  .from('items_solicitud_logistica')
+                  .delete()
+                  .in('id', itemIds);
+
+                if (errorItems) {
+                  console.error('❌ Error al eliminar items por IDs:', errorItems);
+                  console.log('Intentando eliminación alternativa por solicitud_id...');
+
+                  // Intentar método alternativo
+                  const { error: errorItemsAlt } = await window.supabaseClient
+                    .from('items_solicitud_logistica')
+                    .delete()
+                    .eq('solicitud_id', id);
+
+                  if (errorItemsAlt) {
+                    console.error('❌ Error también en método alternativo:', errorItemsAlt);
+                    alert(`❌ Error al eliminar los items relacionados: ${errorItemsAlt.message}`);
+                mostrarNotificacion(`❌ Error al eliminar los items relacionados.`, 'error');
+                    return;
+                  }
+                }
+
+                console.log(`✅ Items relacionados eliminados correctamente`);
+
+                // Verificar que realmente se eliminaron
+                const { data: itemsDespues, error: errorVerificarDespues } = await window.supabaseClient
+                  .from('items_solicitud_logistica')
+                  .select('id')
+                  .in('id', itemIds);
+
+                if (errorVerificarDespues) {
+                  console.warn('No se pudo verificar eliminación de items:', errorVerificarDespues);
+                } else {
+                  console.log(`Verificación: ${itemsDespues?.length || 0} items aún existen de los ${itemIds.length} originales`);
+                  if (itemsDespues && itemsDespues.length > 0) {
+                    console.error(`❌ Aún quedan ${itemsDespues.length} items sin eliminar: ${itemsDespues.map(item => item.id).join(', ')}`);
+                  alert('❌ Error: Algunos items no pudieron ser eliminados.');
+                  mostrarNotificacion('❌ Error: Algunos items no pudieron ser eliminados.', 'error');
+                    return;
+                  }
+                }
+              } else {
+                console.log('ℹ️ No hay items relacionados que eliminar');
+              }
+
+              // Eliminar la solicitud principal
+              console.log('Eliminando solicitud principal...');
+              const { error: errorSolicitud } = await window.supabaseClient
+                .from('solicitudes_logistica')
+                .delete()
+                .eq('id', id);
+
+              if (errorSolicitud) {
+                console.error('❌ Error al eliminar solicitud:', errorSolicitud);
+                alert(`❌ Error al eliminar la solicitud: ${errorSolicitud.message}`);
+                mostrarNotificacion(`❌ Error al eliminar la solicitud.`, 'error');
+                return;
+              }
+
+              console.log(`✅ Solicitud ${id} eliminada correctamente`);
+              mostrarNotificacion(`✅ Solicitud ${id} eliminada correctamente.`, 'success');
+              cargarSolicitudes();
+            } catch (err) {
+              console.error('Error al eliminar:', err);
+              alert(`❌ Error inesperado al eliminar: ${err.message}`);
+            }
+          }
+        } else if (btn.classList.contains('btn-editar')) {
+          // Editar solicitud
+          abrirModalEdicion(id);
+        }
+      });
+      contenedorSolicitudes.setAttribute('data-event-listener-added', 'true');
+    }
+
+    // Iniciar
+    cargarSolicitudes();
+
+    // =============================================================================
+    // 🔹 MODAL DE EDICIÓN CON SUPABASE
+    // =============================================================================
+    async function abrirModalEdicion(idSolicitud) {
+      try {
+        // Cargar solicitud desde Supabase
+        const { data: solicitud, error } = await window.supabaseClient
+          .from('solicitudes_logistica')
+          .select(`
+            id,
+            tipo,
+            estado,
+            evento,
+            encargado_evento,
+            prioridad,
+            modo_ingreso,
+            fecha_solicitud,
+            observaciones,
+            items_solicitud_logistica (
+              id,
+              codigo_material,
+              nombre_material,
+              cantidad_solicitada,
+              cantidad_despachada,
+              estado,
+              observacion,
+              medidas,
+              color
+            )
+          `)
+          .eq('id', idSolicitud)
+          .single();
+
+        if (error || !solicitud) {
+          alert('❌ Error al cargar la solicitud para edición.');
+          mostrarNotificacion('❌ Error al cargar la solicitud para edición.', 'error');
+          return;
+        }
+
+        // Verificar que aún se puede editar
+        if (solicitud.estado !== 'pendiente_bodega') {
+          alert('❌ Esta solicitud ya no se puede editar porque ha sido procesada.');
+          mostrarNotificacion('❌ Esta solicitud ya no se puede editar porque ha sido procesada.', 'error');
+          return;
+        }
+
+        const modal = document.createElement('div');
+        modal.id = 'modal-edicion';
+        modal.style = `
+          position: fixed;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(0,0,0,0.6);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 3000;
+          padding: 20px;
+        `;
+        modal.innerHTML = `
+          <div style="background: white; width: 90%; max-width: 850px; max-height: 90vh; border-radius: 12px; display: flex; flex-direction: column;">
+            <div style="padding: 16px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+              <h3 style="margin: 0; font-size: 16px; color: #1a365d;">✏️ Editar Solicitud: ${solicitud.id}</h3>
+              <button id="btn-cerrar-modal" style="background: none; border: none; font-size: 20px; cursor: pointer;">✕</button>
+            </div>
+            <div style="overflow-y: auto; padding: 20px; flex: 1;">
+              <p style="color: #059669; font-size: 12px; margin-bottom: 16px; background: #d1fae5; padding: 10px; border-radius: 6px;">
+                <strong>✅ Modo edición:</strong> Puedes modificar las cantidades y eliminar ítems. Los cambios se guardarán automáticamente.
+              </p>
+
+              <div style="margin-bottom: 20px; background: #f8fafc; padding: 12px; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                  <strong>Evento:</strong>
+                  <span>${solicitud.evento}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+                  <strong>Encargado:</strong>
+                  <input type="text" id="modal-encargado" value="${solicitud.encargado_evento || ''}"
+                         style="width: 200px; padding: 4px; font-size: 13px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+                  <strong>Prioridad:</strong>
+                  <select id="modal-prioridad" style="width: 200px; padding: 4px; font-size: 13px; border: 1px solid #ccc; border-radius: 4px;">
+                    <option value="Baja" ${solicitud.prioridad === 'Baja' ? 'selected' : ''}>Baja</option>
+                    <option value="Normal" ${solicitud.prioridad === 'Normal' || !solicitud.prioridad ? 'selected' : ''}>Normal</option>
+                    <option value="Alta" ${solicitud.prioridad === 'Alta' ? 'selected' : ''}>Alta</option>
+                    <option value="Urgente" ${solicitud.prioridad === 'Urgente' ? 'selected' : ''}>Urgente</option>
+                  </select>
+                </div>
+              </div>
+
+              <div id="modal-contenido-items"></div>
+            </div>
+            <div style="padding: 16px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between;">
+              <button id="btn-cancelar" style="padding: 8px 16px; font-size: 13px; background: #64748b; color: white; border: none; border-radius: 6px;">
+                ❌ Cancelar
+              </button>
+              <button id="btn-guardar-edicion" style="padding: 8px 16px; font-size: 13px; background: #059669; color: white; border: none; border-radius: 6px;">
+                💾 Guardar Cambios
+              </button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+
+        // Cargar materiales del catálogo para referencias
+        let materialesCatalogo = [];
+        try {
+          const { data: catalogo } = await window.supabaseClient
+            .from('catalogo')
+            .select('codigo, nombre, dimensiones, color, bodega_principal')
+            .eq('es_contenedor', false)
+            .order('codigo');
+          materialesCatalogo = catalogo || [];
+        } catch (err) {
+          console.error('Error al cargar catálogo:', err);
+        }
+
+        function getMaterial(codigo) {
+          return materialesCatalogo.find(m => m.codigo === codigo);
+        }
+
+        // Renderizar contenido según modo
+        const contenidoItems = modal.querySelector('#modal-contenido-items');
+
+        if (solicitud.modo_ingreso === 'receta') {
+          // === Modo Receta ===
+          // Separar items de receta y adicionales
+          const adicionales = solicitud.items_solicitud_logistica.filter(item =>
+            item.observacion?.includes("Material adicional")
+          );
+          const itemsReceta = solicitud.items_solicitud_logistica.filter(item =>
+            !item.observacion?.includes("Material adicional")
+          );
+
+          // Cargar recetas disponibles
+          let recetas = [];
+          try {
+            const { data: recetasData } = await window.supabaseClient
+              .from('recetas')
+              .select(`
+                id,
+                nombre,
+                recetas_materiales (
+                  material_codigo,
+                  cantidad
+                )
+              `);
+            recetas = recetasData || [];
+          } catch (err) {
+            console.error('Error al cargar recetas:', err);
+          }
+
+          // Reconstruir recetas agrupadas
+          const recetasAgrupadas = [];
+          let itemsRestantes = [...itemsReceta];
+          recetas.forEach(receta => {
+            const itemsDeEsta = itemsRestantes.filter(item =>
+              receta.recetas_materiales.some(ri => ri.material_codigo === item.codigo_material)
+            );
+            if (itemsDeEsta.length > 0) {
+              const itemRef = itemsDeEsta[0];
+              const itemRecetaRef = receta.recetas_materiales.find(ri => ri.material_codigo === itemRef.codigo_material);
+              const cantidadRecetas = itemRecetaRef ? Math.floor(itemRef.cantidad_solicitada / itemRecetaRef.cantidad) : 1;
+              recetasAgrupadas.push({ receta, cantidadRecetas });
+              itemsRestantes = itemsRestantes.filter(item =>
+                !receta.recetas_materiales.some(ri => ri.material_codigo === item.codigo_material)
+              );
+            }
+          });
+
+          // Renderizar recetas
+          recetasAgrupadas.forEach((grupo, idx) => {
+            const div = document.createElement('div');
+            div.innerHTML = `
+              <h4 style="margin: 16px 0 8px 0; color: #1a365d; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">
+                📋 ${grupo.receta.nombre}
+                <input type="number" min="1" value="${grupo.cantidadRecetas}" data-receta-idx="${idx}"
+                       style="width: 80px; margin-left: 10px; padding: 4px; font-size: 13px; border: 1px solid #ccc; border-radius: 4px;">
+              </h4>
+              <table class="log-table" style="width: 100%; font-size: 12px; margin-bottom: 16px;">
+                <thead><tr style="background: #f1f5f9;"><th>Material</th><th>Cantidad (calculada)</th></tr></thead>
+                <tbody data-receta-table="${idx}">
+                  ${grupo.receta.recetas_materiales.map(itemReceta => {
+                    const mat = getMaterial(itemReceta.material_codigo);
+                    const total = itemReceta.cantidad * grupo.cantidadRecetas;
+                    if (isCaseBaseCodigo(itemReceta.material_codigo)) {
+                      const base = getCaseBaseFromCodigo(itemReceta.material_codigo) || 'Case';
+                      return `<tr><td><strong>CASE ${base}</strong><br><small>Pendiente de selección en despacho</small></td><td class="cantidad-calculada">${total}</td></tr>`;
+                    }
+                    return `<tr><td><strong>${itemReceta.material_codigo}</strong><br><small>${mat?.nombre || ''} (${mat?.dimensiones || ''}) – ${mat?.color || ''}</small></td><td class="cantidad-calculada">${total}</td></tr>`;
+                  }).join('')}
+                </tbody>
+              </table>
+            `;
+            contenidoItems.appendChild(div);
+          });
+
+          // Guardar recetas en dataset para actualizar
+          modal.dataset.recetas = JSON.stringify(recetasAgrupadas.map(r => ({
+            id: r.receta.id,
+            nombre: r.receta.nombre,
+            cantidadRecetas: r.cantidadRecetas,
+            receta: r.receta
+          })));
+
+          // Agregar event listeners para actualizar cantidades calculadas
+          modal.querySelectorAll('[data-receta-idx]').forEach(input => {
+            input.addEventListener('input', (e) => {
+              const idx = parseInt(e.target.dataset.recetaIdx);
+              const nuevaCantidad = parseInt(e.target.value) || 1;
+              const recetasData = JSON.parse(modal.dataset.recetas || '[]');
+              if (recetasData[idx]) {
+                recetasData[idx].cantidadRecetas = nuevaCantidad;
+                modal.dataset.recetas = JSON.stringify(recetasData);
+
+                // Actualizar cantidades calculadas en la tabla
+                const tbody = modal.querySelector(`[data-receta-table="${idx}"]`);
+                if (tbody) {
+                  const filas = tbody.querySelectorAll('tr');
+                  filas.forEach((fila, filaIdx) => {
+                    const cantidadCalculada = fila.querySelector('.cantidad-calculada');
+                    if (cantidadCalculada && recetasData[idx].receta.recetas_materiales[filaIdx]) {
+                      const itemReceta = recetasData[idx].receta.recetas_materiales[filaIdx];
+                      cantidadCalculada.textContent = itemReceta.cantidad * nuevaCantidad;
+                    }
+                  });
+                }
+              }
+            });
+          });
+
+          // Renderizar materiales adicionales
+          if (adicionales.length > 0) {
+            const divAdd = document.createElement('div');
+            divAdd.innerHTML = `
+              <h4 style="margin: 16px 0 8px 0; color: #1a365d; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">➕ Materiales Adicionales</h4>
+              <table class="log-table" style="width: 100%; font-size: 12px;">
+                <thead><tr style="background: #f1f5f9;"><th>Material</th><th>Cantidad</th><th style="text-align: center;">Acción</th></tr></thead>
+                <tbody id="modal-add-body">
+                  ${adicionales.map((item, idx) => `
+                    <tr data-add-idx="${idx}">
+                      <td>${renderMaterialCell(item)}</td>
+                      <td><input type="number" min="1" value="${item.cantidad_solicitada}" data-add-idx="${idx}" style="width: 70px; padding: 4px; font-size: 13px; border: 1px solid #ccc; border-radius: 4px;"></td>
+                      <td style="text-align: center;">
+                        <button class="btn-remove-add" data-add-idx="${idx}" data-item-id="${item.id}" style="width: 24px; height: 24px; padding: 0; font-size: 14px; background: #ef4445; color: white; border: none; border-radius: 4px;">🗑️</button>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            `;
+            contenidoItems.appendChild(divAdd);
+          }
+
+        } else {
+          // === Modo "Por Ítem" ===
+          contenidoItems.innerHTML = `
+            <h4 style="margin: 0 0 12px 0; color: #1a365d;">📋 Ítems Individuales</h4>
+            <table class="log-table" style="width: 100%; font-size: 12px;">
+              <thead>
+                <tr style="background: #f1f5f9;">
+                  <th>Material</th><th>Estado</th><th>Observación</th><th>Cantidad</th><th style="text-align: center;">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="modal-items-body">
+                ${solicitud.items_solicitud_logistica.map((item, idx) => `
+                  <tr data-item-idx="${idx}">
+                    <td>${renderMaterialCell(item)}</td>
+                    <td>${item.estado || 'pendiente'}</td>
+                    <td>${item.observacion || ''}</td>
+                    <td><input type="number" min="1" value="${item.cantidad_solicitada}" data-item-idx="${idx}" style="width: 70px; padding: 4px; font-size: 13px; border: 1px solid #ccc; border-radius: 4px;"></td>
+                    <td style="text-align: center;">
+                      <button class="btn-remove-item" data-item-idx="${idx}" data-item-id="${item.id}" style="width: 24px; height: 24px; padding: 0; font-size: 14px; background: #ef4445; color: white; border: none; border-radius: 4px;">🗑️</button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          `;
+        }
+
+        // Cerrar modal
+        const cerrar = () => { if (modal.parentNode) modal.parentNode.removeChild(modal); };
+        modal.querySelector('#btn-cerrar-modal').onclick = cerrar;
+        modal.querySelector('#btn-cancelar').onclick = cerrar;
+        modal.onclick = (e) => { if (e.target === modal) cerrar(); };
+
+        // Manejo de eliminaciones
+        const itemsAEliminar = new Set();
+        modal.querySelectorAll('.btn-remove-add, .btn-remove-item').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            if (confirm("¿Eliminar este ítem?")) {
+              const itemId = e.currentTarget.dataset.itemId;
+              itemsAEliminar.add(itemId);
+              e.currentTarget.closest('tr').style.opacity = "0.5";
+              e.currentTarget.closest('tr').style.textDecoration = "line-through";
+              e.currentTarget.disabled = true;
+            }
+          });
+        });
+
+        // Guardar cambios
+        modal.querySelector('#btn-guardar-edicion').addEventListener('click', async () => {
+          if (!confirm("¿Guardar los cambios realizados en la solicitud?")) {
+            return;
+          }
+
+          try {
+            const encargado = document.getElementById('modal-encargado').value;
+            const prioridad = document.getElementById('modal-prioridad').value;
+
+            // Actualizar solicitud principal
+            const { error: errorSolicitud } = await window.supabaseClient
+              .from('solicitudes_logistica')
+              .update({
+                encargado_evento: encargado,
+                prioridad: prioridad,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', idSolicitud);
+
+            if (errorSolicitud) {
+              console.error('Error al actualizar solicitud:', errorSolicitud);
+              alert('❌ Error al actualizar la solicitud.');
+              mostrarNotificacion('❌ Error al actualizar la solicitud.', 'error');
+              return;
+            }
+
+            if (solicitud.modo_ingreso === 'receta') {
+              // Actualizar recetas
+              const recetasActuales = JSON.parse(modal.dataset.recetas || '[]');
+              const inputsReceta = modal.querySelectorAll('[data-receta-idx]');
+              inputsReceta.forEach(input => {
+                const idx = parseInt(input.dataset.recetaIdx);
+                if (recetasActuales[idx]) {
+                  recetasActuales[idx].cantidadRecetas = parseInt(input.value) || 1;
+                }
+              });
+
+              // Reconstruir items desde recetas
+              let nuevosItems = [];
+              recetasActuales.forEach(r => {
+                const receta = r.receta;
+                if (receta) {
+                  receta.recetas_materiales.forEach(itemReceta => {
+                    const codigo = itemReceta.material_codigo;
+                    if (isCaseBaseCodigo(codigo)) {
+                      const base = getCaseBaseFromCodigo(codigo) || 'Case';
+                      nuevosItems.push({
+                        solicitud_id: idSolicitud,
+                        codigo_material: codigo,
+                        nombre_material: base,
+                        cantidad_solicitada: itemReceta.cantidad * r.cantidadRecetas,
+                        estado: 'pendiente',
+                        observacion: '',
+                        medidas: '',
+                        color: ''
+                      });
+                      return;
+                    }
+
+                    nuevosItems.push({
+                      solicitud_id: idSolicitud,
+                      codigo_material: codigo,
+                      nombre_material: getMaterial(codigo)?.nombre || 'Desconocido',
+                      cantidad_solicitada: itemReceta.cantidad * r.cantidadRecetas,
+                      estado: 'pendiente',
+                      observacion: '',
+                      medidas: getMaterial(codigo)?.dimensiones || '',
+                      color: getMaterial(codigo)?.color || ''
+                    });
+                  });
+                }
+              });
+
+              // Agregar materiales adicionales no eliminados
+              const adicionalesOriginales = solicitud.items_solicitud_logistica.filter(item =>
+                item.observacion?.includes("Material adicional") && !itemsAEliminar.has(item.id.toString())
+              );
+              adicionalesOriginales.forEach(item => {
+                const input = modal.querySelector(`[data-add-idx="${adicionalesOriginales.indexOf(item)}"]`);
+                const nuevaCantidad = input ? parseInt(input.value) || 1 : item.cantidad_solicitada;
+                nuevosItems.push({
+                  solicitud_id: idSolicitud,
+                  codigo_material: item.codigo_material,
+                  nombre_material: item.nombre_material,
+                  cantidad_solicitada: nuevaCantidad,
+                  estado: 'pendiente',
+                  observacion: item.observacion,
+                  medidas: item.medidas,
+                  color: item.color
+                });
+              });
+
+              // Eliminar items marcados para eliminación
+              if (itemsAEliminar.size > 0) {
+                const { error: errorDelete } = await window.supabaseClient
+                  .from('items_solicitud_logistica')
+                  .delete()
+                  .in('id', Array.from(itemsAEliminar));
+                if (errorDelete) {
+                  console.error('Error al eliminar items:', errorDelete);
+                }
+              }
+
+              // Insertar nuevos items
+              if (nuevosItems.length > 0) {
+                const { error: errorInsert } = await window.supabaseClient
+                  .from('items_solicitud_logistica')
+                  .insert(nuevosItems);
+                if (errorInsert) {
+                  console.error('Error al insertar items:', errorInsert);
+                  alert('❌ Error al actualizar los items de la solicitud.');
+                  mostrarNotificacion('❌ Error al actualizar los items de la solicitud.', 'error');
+                  return;
+                }
+              }
+
+            } else {
+              // Modo por ítem - actualizar cantidades y eliminar items marcados
+              const itemsActuales = solicitud.items_solicitud_logistica.filter(item =>
+                !itemsAEliminar.has(item.id.toString())
+              );
+
+              for (const item of itemsActuales) {
+                const input = modal.querySelector(`[data-item-idx="${itemsActuales.indexOf(item)}"]`);
+                if (input) {
+                  const nuevaCantidad = parseInt(input.value) || 1;
+                  if (nuevaCantidad !== item.cantidad_solicitada) {
+                    const { error } = await window.supabaseClient
+                      .from('items_solicitud_logistica')
+                      .update({ cantidad_solicitada: nuevaCantidad })
+                      .eq('id', item.id);
+                    if (error) {
+                      console.error('Error al actualizar item:', error);
+                    }
+                  }
+                }
+              }
+
+              // Eliminar items marcados
+              if (itemsAEliminar.size > 0) {
+                const { error: errorDelete } = await window.supabaseClient
+                  .from('items_solicitud_logistica')
+                  .delete()
+                  .in('id', Array.from(itemsAEliminar));
+                if (errorDelete) {
+                  console.error('Error al eliminar items:', errorDelete);
+                }
+              }
+            }
+
+            mostrarNotificacion(`✅ Solicitud ${idSolicitud} actualizada correctamente.`, 'success');
+            cerrar();
+            cargarSolicitudes();
+          } catch (err) {
+            console.error('Error al guardar cambios:', err);
+            alert('❌ Error al guardar los cambios.');
+            mostrarNotificacion('❌ Error al guardar los cambios.', 'error');
+          }
+        });
+
+      } catch (err) {
+        console.error('Error al abrir modal de edición:', err);
+        alert('❌ Error al cargar la solicitud para edición.');
+        mostrarNotificacion('❌ Error al cargar la solicitud para edición.', 'error');
+      }
+    }
+
+    // Iniciar
+    cargarSolicitudes();
+  })();
+</script>

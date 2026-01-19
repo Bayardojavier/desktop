@@ -1,0 +1,911 @@
+<!-- desktop/modules/bodega/universal/modificar_hierro.html -->
+<link rel="stylesheet" href="./catalogo.css">
+<style>
+  .secundaria-selected { border-color: rgba(99,102,241,0.9) !important; background: rgba(99,102,241,0.22) !important; outline: 2px solid rgba(255,255,255,0.85); }
+  .contenedor-selected { border-color: rgba(34,197,94,0.9) !important; background: rgba(34,197,94,0.18) !important; outline: 2px solid rgba(255,255,255,0.85); }
+  .material-selected { border-color: rgba(236,72,153,0.9) !important; background: rgba(236,72,153,0.18) !important; outline: 2px solid rgba(255,255,255,0.85); }
+  .mini-btn { padding: 6px 10px; font-size: 12px; }
+</style>
+
+<div style="display:flex; gap:16px; height:100%;">
+
+  <div style="width: 340px; background: rgba(20, 30, 60, 0.45); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; padding: 12px; overflow:auto;">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px;">
+      <div style="font-weight:800; color:#cbd5e1;">Modificar</div>
+      <div style="color:#94a3b8; font-size:12px;">Hierros</div>
+    </div>
+
+    <div style="border-top:1px solid rgba(148,163,184,0.15); padding-top:10px;">
+      <div style="font-weight:700; color:#cbd5e1;">Secundaria</div>
+      <div id="secundarias-container" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;"></div>
+    </div>
+
+    <div style="border-top:1px solid rgba(148,163,184,0.15); padding-top:10px; margin-top:10px;">
+      <div style="font-weight:700; color:#cbd5e1;">Contenedor</div>
+      <div style="color:#94a3b8; font-size:12px; line-height:1.3; margin-top:6px;">Selecciona un contenedor para editar su identificación (Nombre Base + Número), su tipo y su estado (cerrado). También puedes mover/sacar materiales.</div>
+      <div id="contenedores-container" style="display:flex; flex-direction:column; gap:8px; margin-top:10px;"></div>
+    </div>
+  </div>
+
+  <div style="flex:1; min-width: 520px; overflow:auto;">
+    <div class="bodega-encabezado" style="margin-bottom: 12px; display:flex; align-items:center; justify-content:space-between; gap:12px;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <h1 class="bodega-titulo" style="margin:0;">Modificar (Hierros)</h1>
+      </div>
+      <div style="color:#94a3b8; font-size:12px;">No altera movimientos históricos</div>
+    </div>
+
+    <div id="sel-resumen" style="margin-bottom:12px; color:#cbd5e1;">Selecciona Secundaria + Contenedor</div>
+
+    <div style="display:flex; flex-direction:column; gap:14px; max-width: 980px;">
+
+      <div style="background: rgba(15,23,42,0.22); border: 1px solid rgba(148,163,184,0.15); border-radius: 10px; padding: 10px;">
+        <div style="font-weight:800; color:#cbd5e1; margin-bottom:10px;">Editar contenedor</div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+          <div style="width: 180px;">
+            <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Tipo</label>
+            <select id="cont-tipo" class="audiovisual-input">
+              <option value="Lote">Lote</option>
+              <option value="Burra">Burra</option>
+              <option value="Andamio">Andamio</option>
+              <option value="Cuarto">Cuarto</option>
+              <option value="Patio">Patio</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
+
+          <div style="flex:1; min-width:260px;">
+            <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Nombre Base</label>
+            <input id="cont-nombre-base" class="audiovisual-input" placeholder="Ej: Lote / Burra / Cuarto" />
+          </div>
+
+          <div style="width: 140px;">
+            <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Número</label>
+            <input id="cont-numero" class="audiovisual-input" placeholder="01" />
+          </div>
+
+          <div style="width: 260px;">
+            <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Contenedor (texto visible)</label>
+            <input id="cont-apodo" class="audiovisual-input" readonly style="background:#11182755; color:#94a3b8;" />
+          </div>
+
+          <label style="display:inline-flex; gap:10px; align-items:center; padding:8px 10px; border:1px solid rgba(148,163,184,0.18); border-radius:10px; background: rgba(2,6,23,0.22);">
+            <input id="cont-cerrado" type="checkbox" />
+            <span style="font-weight:700; color:#cbd5e1;">Contenedor cerrado</span>
+            <span style="color:#94a3b8; font-size:12px;">(bloquea altas)</span>
+          </label>
+
+          <button type="button" id="btn-guardar-contenedor" class="audiovisual-boton audiovisual-save" style="padding:10px 14px;">Guardar cambios</button>
+        </div>
+        <div style="margin-top:8px; color:#94a3b8; font-size:12px;">Nota: si cambias el nombre visible del contenedor, también se actualizarán los materiales que estén dentro (campo "contenedor").</div>
+      </div>
+
+      <div style="background: rgba(15,23,42,0.22); border: 1px solid rgba(148,163,184,0.15); border-radius: 10px; padding: 10px;">
+        <div style="display:flex; justify-content:space-between; gap:10px; align-items:center; margin-bottom:10px;">
+          <div style="font-weight:800; color:#cbd5e1;">Materiales dentro del contenedor</div>
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <select id="mover-destino" class="audiovisual-input" style="width:240px;"></select>
+            <button type="button" id="btn-mover" class="audiovisual-boton" style="padding:10px 14px;">Mover a...</button>
+            <button type="button" id="btn-sacar" class="bodega-export-pdf-btn" style="padding:10px 14px;">Sacar del contenedor</button>
+          </div>
+        </div>
+
+        <div style="color:#94a3b8; font-size:12px; line-height:1.35; margin-bottom:10px;">Mover/Sacar solo actualiza el catálogo (campo "contenedor"). Los movimientos quedan intactos (histórico).</div>
+
+        <div id="materiales-list" style="display:flex; flex-direction:column; gap:6px;"></div>
+      </div>
+
+      <div style="background: rgba(15,23,42,0.22); border: 1px solid rgba(148,163,184,0.15); border-radius: 10px; padding: 10px;">
+        <div style="font-weight:800; color:#cbd5e1; margin-bottom:10px;">Editar material seleccionado</div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+          <div style="width: 240px;">
+            <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Código (solo lectura)</label>
+            <input id="mat-codigo" class="audiovisual-input" readonly style="background:#11182755; color:#94a3b8;" />
+          </div>
+
+          <div style="flex:1; min-width:260px;">
+            <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Nombre</label>
+            <input id="mat-nombre" class="audiovisual-input" placeholder="Ej: Perfil C" />
+          </div>
+
+          <div style="width: 220px;">
+            <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Abreviación</label>
+            <input id="mat-abrev" class="audiovisual-input" placeholder="Ej: PRFC" maxlength="8" />
+          </div>
+
+          <div style="flex:1; min-width:240px;">
+            <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Tipo de Uso</label>
+            <input id="mat-tipo-uso" class="audiovisual-input" placeholder="Ej: Estructura" />
+          </div>
+
+          <div style="flex:1; min-width:240px;">
+            <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Tipo de Material</label>
+            <input id="mat-tipo-material" class="audiovisual-input" placeholder="Ej: Acero" />
+          </div>
+
+          <div style="width: 220px;">
+            <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Marca</label>
+            <input id="mat-marca" class="audiovisual-input" />
+          </div>
+
+          <div style="width: 220px;">
+            <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Modelo</label>
+            <input id="mat-modelo" class="audiovisual-input" />
+          </div>
+        </div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+          <div style="width: 180px;">
+            <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Unidad</label>
+            <input id="mat-unidad" class="audiovisual-input" value="CMT" readonly style="background:#11182755; color:#94a3b8;" />
+          </div>
+          <div style="width: 160px;">
+            <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Ancho</label>
+            <input id="mat-ancho" class="audiovisual-input" type="number" step="any" />
+          </div>
+          <div style="width: 160px;">
+            <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Largo</label>
+            <input id="mat-largo" class="audiovisual-input" type="number" step="any" />
+          </div>
+          <div style="width: 160px;">
+            <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Grosor</label>
+            <input id="mat-grosor" class="audiovisual-input" type="number" step="any" />
+          </div>
+          <div style="width: 160px;">
+            <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Peso</label>
+            <input id="mat-peso" class="audiovisual-input" type="number" step="any" />
+          </div>
+          <div style="width: 180px;">
+            <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Precio Unitario</label>
+            <input id="mat-precio" class="audiovisual-input" type="number" step="any" />
+          </div>
+        </div>
+
+        <div style="margin-top:12px;">
+          <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Color</label>
+          <div id="paleta-colores" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+        </div>
+
+        <div style="margin-top:12px;">
+          <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Foto (opcional)</label>
+          <div style="display:flex; align-items:flex-start; gap:12px;">
+            <div id="photo-preview" style="width: 110px; height: 110px; border: 2px dashed rgba(148,163,184,0.35); border-radius: 10px; display:flex; align-items:center; justify-content:center; color:#94a3b8; font-size: 14px; background: rgba(15, 23, 42, 0.35);">Sin foto</div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <button type="button" id="select-photo-btn" class="audiovisual-boton audiovisual-new" style="padding: 8px 14px;">Seleccionar Foto</button>
+              <input type="file" id="photo-input" accept="image/*" style="display:none;" />
+              <small style="color:#94a3b8;">Se sube a Supabase Storage si está configurado.</small>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:12px;">
+          <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Notas</label>
+          <textarea id="mat-notas" class="audiovisual-input" style="min-height:80px;"></textarea>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:12px;">
+          <button type="button" id="btn-guardar-material" class="audiovisual-boton audiovisual-save" style="padding:10px 14px;">Guardar material</button>
+          <div id="mat-status" style="color:#94a3b8; font-size:12px; padding-top:10px;"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const checkSupa = () => {
+    const supa = window.supabaseClient;
+    if (supa) init();
+    else setTimeout(checkSupa, 100);
+  };
+  checkSupa();
+
+  function init() {
+    const supa = window.supabaseClient;
+
+    const UA_CTX = window.__UA_CONTEXT || null;
+    const STORAGE_BUCKET = 'materiales-fotos';
+    const TABLE_CATALOGO = (UA_CTX && UA_CTX.tableOverrides && UA_CTX.tableOverrides.catalogo) ? UA_CTX.tableOverrides.catalogo : 'catalogo_hierros';
+
+    const PRINCIPAL_FIJO = 'Hierros';
+    const principalCandidates = (UA_CTX && Array.isArray(UA_CTX.principalCandidates) && UA_CTX.principalCandidates.length)
+      ? UA_CTX.principalCandidates
+      : [PRINCIPAL_FIJO, 'Bodega Hierros', 'Estructuras', 'Hierro'];
+
+    const palette = ['#f97316','#0ea5e9','#8b5cf6','#22c55e','#eab308','#ef4444','#94a3b8','#0f172a','#06b6d4','#ec4899','#92400e','#000000','#ffffff','#65a30d','#6366f1','#14b8a6','#f59e0b','#64748b'];
+    const colorNames = {
+      '#f97316': 'Naranja',
+      '#0ea5e9': 'Azul',
+      '#8b5cf6': 'Morado',
+      '#22c55e': 'Verde',
+      '#eab308': 'Amarillo',
+      '#ef4444': 'Rojo',
+      '#94a3b8': 'Gris',
+      '#0f172a': 'Gris Oscuro',
+      '#06b6d4': 'Azul Claro',
+      '#ec4899': 'Rosa',
+      '#92400e': 'Marrón',
+      '#000000': 'Negro',
+      '#ffffff': 'Blanco',
+      '#65a30d': 'Lima',
+      '#6366f1': 'Índigo',
+      '#14b8a6': 'Verde Azulado',
+      '#f59e0b': 'Ámbar',
+      '#64748b': 'Pizarra'
+    };
+
+    const state = {
+      principalId: null,
+      secundariaId: null,
+      secundariaNombre: null,
+
+      contenedorCodigo: null,
+      contenedorNombre: null,
+      contenedorTipo: null,
+      contenedorCerrado: false,
+      contenedorCampos: null,
+      contenedorRow: null,
+      contenedoresCache: [],
+
+      materialesCache: [],
+      materialCodigo: null,
+      materialRow: null,
+      materialColorHex: null,
+      materialFotoFile: null,
+      materialFotoUrlCurrent: null
+    };
+
+    function safeJsonParse(v) {
+      if (!v) return null;
+      if (typeof v === 'object') return v;
+      if (typeof v !== 'string') return null;
+      try { return JSON.parse(v); } catch (_) { return null; }
+    }
+
+    function isCerrado(campos) {
+      const c = safeJsonParse(campos);
+      if (!c || typeof c !== 'object') return false;
+      return c.contenedor_cerrado === true || c.cerrado === true || c.bloqueado === true;
+    }
+
+    function numValFromInput(id) {
+      const v = String(document.getElementById(id)?.value || '').trim();
+      if (!v) return null;
+      const n = parseFloat(v);
+      return Number.isFinite(n) ? n : null;
+    }
+
+    function setResumen() {
+      const el = document.getElementById('sel-resumen');
+      const s = state.secundariaNombre || '(secundaria)';
+      const c = state.contenedorNombre || '(contenedor)';
+      const lock = state.contenedorCerrado ? ' [CERRADO]' : '';
+      const mat = state.materialRow ? ` | Material: ${state.materialRow.codigo || ''}` : '';
+      if (el) el.textContent = `S: ${s} > Cont: ${c}${lock}${mat}`;
+    }
+
+    async function loadPrincipalId() {
+      let principal = null;
+      for (const name of principalCandidates) {
+        const { data } = await supa
+          .from('inv2_bodegas_principales')
+          .select('id, nombre')
+          .eq('nombre', name)
+          .maybeSingle();
+        if (data && data.id) { principal = data; break; }
+      }
+      if (!principal) {
+        const { data } = await supa
+          .from('inv2_bodegas_principales')
+          .select('id, nombre')
+          .ilike('nombre', '%Hierro%')
+          .limit(1);
+        if (data && data.length) principal = data[0];
+      }
+      if (!principal || !principal.id) throw new Error('No se encontró bodega principal para Hierros');
+      state.principalId = principal.id;
+    }
+
+    async function loadSecundarias() {
+      await loadPrincipalId();
+      const { data: secundarias, error: errSec } = await supa
+        .from('inv2_bodegas_secundarias')
+        .select('id, nombre')
+        .eq('principal_id', state.principalId)
+        .eq('activa', true);
+      if (errSec) {
+        alert('Error cargando secundarias: ' + errSec.message);
+        return;
+      }
+
+      const host = document.getElementById('secundarias-container');
+      host.innerHTML = '';
+      (secundarias || []).forEach(s => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = s.nombre;
+        btn.className = 'audiovisual-boton secundaria-btn';
+        btn.addEventListener('click', () => selectSecundaria(s.id, s.nombre, btn));
+        host.appendChild(btn);
+      });
+    }
+
+    async function loadContenedores() {
+      if (!state.secundariaNombre) return;
+
+      const { data, error } = await supa
+        .from(TABLE_CATALOGO)
+        .select('*')
+        .not('contenedor', 'is', null)
+        .order('contenedor');
+      if (error) {
+        alert('Error cargando contenedores: ' + error.message);
+        return;
+      }
+
+      const filtered = (data || []).filter(r => {
+        if (!r || !r.contenedor || !String(r.contenedor).trim()) return false;
+        const esCont = (r.es_contenedor === true) || (String(r.tipo_alta || '').toUpperCase() === 'CONTENEDOR');
+        if (!esCont) return false;
+        return String(r.bodega_secundaria || '') === String(state.secundariaNombre);
+      });
+
+      state.contenedoresCache = filtered;
+
+      const host = document.getElementById('contenedores-container');
+      host.innerHTML = '';
+      filtered.forEach(r => {
+        const cerrado = isCerrado(r.campos_personalizados);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'audiovisual-boton contenedor-btn';
+        btn.style.textAlign = 'left';
+        btn.textContent = cerrado ? `${r.contenedor} (CERRADO)` : r.contenedor;
+        btn.addEventListener('click', () => selectContenedor(r, btn));
+        host.appendChild(btn);
+      });
+
+      // poblar destino mover
+      const sel = document.getElementById('mover-destino');
+      sel.innerHTML = '';
+      const opt0 = document.createElement('option');
+      opt0.value = '';
+      opt0.textContent = 'Destino...';
+      sel.appendChild(opt0);
+      filtered.forEach(r => {
+        if (!r.codigo) return;
+        if (state.contenedorCodigo && String(r.codigo) === String(state.contenedorCodigo)) return;
+        const opt = document.createElement('option');
+        opt.value = String(r.codigo || '');
+        opt.textContent = r.contenedor;
+        sel.appendChild(opt);
+      });
+    }
+
+    function clearMaterialForm() {
+      state.materialCodigo = null;
+      state.materialRow = null;
+      state.materialColorHex = null;
+      state.materialFotoFile = null;
+      state.materialFotoUrlCurrent = null;
+
+      document.getElementById('mat-codigo').value = '';
+      document.getElementById('mat-nombre').value = '';
+      document.getElementById('mat-abrev').value = '';
+      document.getElementById('mat-tipo-uso').value = '';
+      document.getElementById('mat-tipo-material').value = '';
+      document.getElementById('mat-marca').value = '';
+      document.getElementById('mat-modelo').value = '';
+      document.getElementById('mat-ancho').value = '';
+      document.getElementById('mat-largo').value = '';
+      document.getElementById('mat-grosor').value = '';
+      document.getElementById('mat-peso').value = '';
+      document.getElementById('mat-precio').value = '';
+      document.getElementById('mat-notas').value = '';
+      updatePaletaSelection();
+      updatePhotoPreview(null);
+      setMaterialStatus('');
+      setResumen();
+    }
+
+    function selectSecundaria(id, nombre, btn) {
+      state.secundariaId = id;
+      state.secundariaNombre = nombre;
+      document.querySelectorAll('.secundaria-btn').forEach(b => b.classList.remove('secundaria-selected'));
+      btn.classList.add('secundaria-selected');
+
+      // limpiar contenedor y material
+      state.contenedorCodigo = null;
+      state.contenedorNombre = null;
+      state.contenedorTipo = null;
+      state.contenedorCerrado = false;
+      state.contenedorCampos = null;
+      state.contenedorRow = null;
+      document.getElementById('cont-tipo').value = 'Lote';
+      document.getElementById('cont-nombre-base').value = '';
+      document.getElementById('cont-numero').value = '';
+      document.getElementById('cont-apodo').value = '';
+      document.getElementById('cont-cerrado').checked = false;
+      document.getElementById('materiales-list').innerHTML = '';
+      clearMaterialForm();
+      setResumen();
+
+      loadContenedores();
+    }
+
+    function computeApodo(base, numero) {
+      const b = String(base || '').trim();
+      const n = String(numero || '').trim();
+      const n2 = n ? n.padStart(2, '0') : '';
+      return [b, n2].filter(Boolean).join(' ').trim();
+    }
+
+    async function selectContenedor(row, btn) {
+      state.contenedorRow = row;
+      state.contenedorCodigo = row.codigo;
+      state.contenedorNombre = row.contenedor;
+      state.contenedorTipo = row.contenedor_tipo || '';
+      state.contenedorCampos = row.campos_personalizados;
+      state.contenedorCerrado = isCerrado(row.campos_personalizados);
+
+      document.querySelectorAll('.contenedor-btn').forEach(b => b.classList.remove('contenedor-selected'));
+      btn.classList.add('contenedor-selected');
+
+      document.getElementById('cont-tipo').value = state.contenedorTipo || 'Lote';
+      document.getElementById('cont-nombre-base').value = row.nombre_base || '';
+      document.getElementById('cont-numero').value = row.nombre_numero || '';
+      document.getElementById('cont-apodo').value = computeApodo(row.nombre_base, row.nombre_numero) || (state.contenedorNombre || '');
+      document.getElementById('cont-cerrado').checked = !!state.contenedorCerrado;
+
+      clearMaterialForm();
+      setResumen();
+      await loadContenedores();
+      await loadMateriales();
+    }
+
+    async function loadMateriales() {
+      const host = document.getElementById('materiales-list');
+      host.innerHTML = '';
+      state.materialesCache = [];
+      if (!state.contenedorNombre || !state.secundariaNombre) return;
+
+      const { data, error } = await supa
+        .from(TABLE_CATALOGO)
+        .select('codigo, nombre, abreviacion, tipo_uso, tipo_material, unidad_medida, dimensiones, peso, precio_unitario, color, foto_url, marca, modelo, notas, tipo_alta, contenedor_tipo, campos_personalizados')
+        .eq('bodega_secundaria', state.secundariaNombre)
+        .eq('contenedor', state.contenedorNombre)
+        .order('codigo');
+      if (error) {
+        host.textContent = 'Error cargando materiales: ' + error.message;
+        return;
+      }
+
+      const mats = (data || []).filter(r => String(r.tipo_alta || '').toUpperCase() === 'MATERIAL');
+      state.materialesCache = mats;
+      if (!mats.length) {
+        host.textContent = '(Sin materiales)';
+        return;
+      }
+
+      mats.forEach(r => {
+        const rowEl = document.createElement('div');
+        rowEl.style.display = 'flex';
+        rowEl.style.gap = '10px';
+        rowEl.style.alignItems = 'center';
+        rowEl.style.padding = '8px';
+        rowEl.style.border = '1px solid rgba(148,163,184,0.12)';
+        rowEl.style.borderRadius = '10px';
+        rowEl.style.background = 'rgba(2,6,23,0.18)';
+
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.dataset.codigo = String(r.codigo || '');
+
+        const txt = document.createElement('div');
+        txt.style.color = '#cbd5e1';
+        txt.style.flex = '1';
+        txt.textContent = `${r.codigo} — ${r.nombre || ''}`;
+
+        const btnEdit = document.createElement('button');
+        btnEdit.type = 'button';
+        btnEdit.className = 'audiovisual-boton mini-btn';
+        btnEdit.textContent = 'Editar';
+        btnEdit.addEventListener('click', () => selectMaterial(r, rowEl));
+
+        rowEl.appendChild(cb);
+        rowEl.appendChild(txt);
+        rowEl.appendChild(btnEdit);
+        host.appendChild(rowEl);
+      });
+    }
+
+    function setMaterialStatus(msg) {
+      const el = document.getElementById('mat-status');
+      if (el) el.textContent = msg || '';
+    }
+
+    function selectMaterial(row, rowEl) {
+      state.materialRow = row;
+      state.materialCodigo = row.codigo;
+
+      document.querySelectorAll('#materiales-list > div').forEach(d => d.classList.remove('material-selected'));
+      if (rowEl) rowEl.classList.add('material-selected');
+
+      document.getElementById('mat-codigo').value = row.codigo || '';
+      document.getElementById('mat-nombre').value = row.nombre || '';
+      document.getElementById('mat-abrev').value = row.abreviacion || '';
+      document.getElementById('mat-tipo-uso').value = row.tipo_uso || '';
+      document.getElementById('mat-tipo-material').value = row.tipo_material || '';
+      document.getElementById('mat-marca').value = row.marca || '';
+      document.getElementById('mat-modelo').value = row.modelo || '';
+
+      const dim = safeJsonParse(row.dimensiones) || row.dimensiones || {};
+      document.getElementById('mat-ancho').value = (dim && dim.ancho != null) ? String(dim.ancho) : '';
+      document.getElementById('mat-largo').value = (dim && dim.largo != null) ? String(dim.largo) : '';
+      document.getElementById('mat-grosor').value = (dim && dim.grosor != null) ? String(dim.grosor) : '';
+      document.getElementById('mat-peso').value = (row.peso != null) ? String(row.peso) : '';
+      document.getElementById('mat-precio').value = (row.precio_unitario != null) ? String(row.precio_unitario) : '';
+      document.getElementById('mat-notas').value = row.notas || '';
+
+      // color: puede estar guardado como nombre o hex
+      const colorVal = (row.color || '').toString().trim();
+      const foundHex = Object.keys(colorNames).find(hex => String(colorNames[hex]).toLowerCase() === colorVal.toLowerCase());
+      state.materialColorHex = foundHex || (colorVal.startsWith('#') ? colorVal : null);
+      updatePaletaSelection();
+
+      state.materialFotoUrlCurrent = row.foto_url || null;
+      updatePhotoPreview(state.materialFotoUrlCurrent);
+      state.materialFotoFile = null;
+
+      setMaterialStatus('');
+      setResumen();
+    }
+
+    function renderPaleta() {
+      const host = document.getElementById('paleta-colores');
+      if (!host) return;
+      host.innerHTML = '';
+      palette.forEach(hex => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.style.width = '28px';
+        btn.style.height = '28px';
+        btn.style.borderRadius = '6px';
+        btn.style.border = '2px solid rgba(255,255,255,0.12)';
+        btn.style.background = hex;
+        btn.style.cursor = 'pointer';
+        btn.dataset.color = hex;
+        btn.addEventListener('click', () => {
+          state.materialColorHex = hex;
+          updatePaletaSelection();
+        });
+        host.appendChild(btn);
+      });
+      updatePaletaSelection();
+    }
+
+    function updatePaletaSelection() {
+      const host = document.getElementById('paleta-colores');
+      if (!host) return;
+      host.querySelectorAll('button').forEach(b => {
+        const c = b.dataset.color;
+        if (state.materialColorHex && c && c.toLowerCase() === String(state.materialColorHex).toLowerCase()) {
+          b.style.borderColor = '#ffffff';
+          b.style.boxShadow = '0 0 0 3px rgba(255,255,255,0.06)';
+        } else {
+          b.style.borderColor = 'rgba(255,255,255,0.12)';
+          b.style.boxShadow = 'none';
+        }
+      });
+    }
+
+    function updatePhotoPreview(urlOrNull) {
+      const preview = document.getElementById('photo-preview');
+      if (!preview) return;
+      if (!urlOrNull) { preview.textContent = 'Sin foto'; return; }
+      preview.innerHTML = '';
+      const img = document.createElement('img');
+      img.src = urlOrNull;
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.style.objectFit = 'cover';
+      img.style.borderRadius = '8px';
+      preview.appendChild(img);
+    }
+
+    async function uploadFotoIfNeeded() {
+      if (!state.materialFotoFile) return state.materialFotoUrlCurrent || null;
+      try {
+        const file = state.materialFotoFile;
+        const ext = String(file.name || 'bin').split('.').pop() || 'bin';
+        const p = `hierros/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+        const { error } = await supa.storage.from(STORAGE_BUCKET).upload(p, file, { upsert: true });
+        if (error) throw error;
+        const { data } = supa.storage.from(STORAGE_BUCKET).getPublicUrl(p);
+        return data?.publicUrl || null;
+      } catch (e) {
+        console.warn('No se pudo subir la foto, continuo sin foto', e);
+        return state.materialFotoUrlCurrent || null;
+      }
+    }
+
+    async function updateWithFallback(table, matchCol, matchVal, payload) {
+      let attempt = { ...payload };
+      let guard = 0;
+      while (true) {
+        guard++;
+        if (guard > 30) return { ok: false, error: 'Demasiados reintentos al actualizar (posible schema mismatch).' };
+        const { error } = await supa.from(table).update(attempt).eq(matchCol, matchVal);
+        if (!error) return { ok: true };
+        const msg = String((error.message || '') + ' ' + (error.details || '') + ' ' + (error.hint || '')).trim();
+        let colName = null;
+        let m = msg.match(/Could not find the '([^']+)' column/i);
+        if (m) colName = m[1];
+        if (!colName) {
+          m = msg.match(/column\s+\"?([a-zA-Z0-9_]+)\"?/i);
+          if (m) colName = m[1];
+        }
+        if (colName && colName in attempt) { delete attempt[colName]; continue; }
+        const pretty = [
+          error.code ? `code=${error.code}` : null,
+          error.message ? `message=${error.message}` : null,
+          error.details ? `details=${error.details}` : null,
+          error.hint ? `hint=${error.hint}` : null
+        ].filter(Boolean).join(' | ');
+        return { ok: false, error: pretty || JSON.stringify(error) };
+      }
+    }
+
+    async function guardarContenedor() {
+      if (!state.contenedorCodigo || !state.contenedorNombre) { alert('Selecciona un contenedor'); return; }
+
+      const tipo = (document.getElementById('cont-tipo').value || '').trim();
+      const base = (document.getElementById('cont-nombre-base').value || '').trim();
+      const numeroRaw = (document.getElementById('cont-numero').value || '').trim();
+      const cerrar = !!document.getElementById('cont-cerrado').checked;
+
+      if (!base) { alert('Nombre Base no puede ir vacío'); return; }
+      if (!numeroRaw) { alert('Número no puede ir vacío'); return; }
+
+      const numero = numeroRaw.padStart(2, '0');
+      const apodo = computeApodo(base, numero);
+
+      // merge campos_personalizados
+      let campos = safeJsonParse(state.contenedorCampos) || {};
+      if (typeof campos !== 'object' || !campos) campos = {};
+      campos.contenedor_cerrado = cerrar;
+      campos.contenedor_cerrado_at = cerrar ? new Date().toISOString() : (campos.contenedor_cerrado_at || null);
+
+      const oldNombre = state.contenedorNombre;
+      const oldTipo = state.contenedorTipo || '';
+
+      // 1) actualizar registro contenedor (sin tocar codigo)
+      const res = await updateWithFallback(TABLE_CATALOGO, 'codigo', state.contenedorCodigo, {
+        contenedor: apodo,
+        apodo: apodo,
+        nombre_base: base,
+        nombre_numero: numero,
+        contenedor_tipo: tipo || null,
+        campos_personalizados: campos
+      });
+      if (!res.ok) { alert('Error guardando contenedor: ' + res.error); return; }
+
+      // 2) si cambió nombre/tipo, actualizar materiales que apuntan al contenedor viejo
+      if (state.secundariaNombre && (apodo !== oldNombre || String(tipo || '') !== String(oldTipo || ''))) {
+        const massPayload = { contenedor: apodo, contenedor_tipo: tipo || null };
+        // NOTA: usamos update directo (sin fallback) pero con fallback manual por si schema difiere
+        const res2 = await (async () => {
+          let attempt = { ...massPayload };
+          let guard = 0;
+          while (true) {
+            guard++;
+            if (guard > 30) return { ok: false, error: 'Demasiados reintentos al actualizar materiales.' };
+            const { error } = await supa
+              .from(TABLE_CATALOGO)
+              .update(attempt)
+              .eq('bodega_secundaria', state.secundariaNombre)
+              .eq('contenedor', oldNombre)
+              .neq('codigo', state.contenedorCodigo);
+            if (!error) return { ok: true };
+            const msg = String((error.message || '') + ' ' + (error.details || '') + ' ' + (error.hint || '')).trim();
+            let colName = null;
+            let m = msg.match(/Could not find the '([^']+)' column/i);
+            if (m) colName = m[1];
+            if (!colName) {
+              m = msg.match(/column\s+\"?([a-zA-Z0-9_]+)\"?/i);
+              if (m) colName = m[1];
+            }
+            if (colName && colName in attempt) { delete attempt[colName]; continue; }
+            return { ok: false, error: error.message || String(error) };
+          }
+        })();
+        if (!res2.ok) {
+          alert('Se actualizó el contenedor, pero falló actualizar materiales dentro: ' + res2.error);
+        }
+      }
+
+      state.contenedorNombre = apodo;
+      state.contenedorTipo = tipo;
+      state.contenedorCampos = campos;
+      state.contenedorCerrado = cerrar;
+      document.getElementById('cont-apodo').value = apodo;
+      setResumen();
+
+      await loadContenedores();
+      await loadMateriales();
+      alert('Cambios guardados');
+    }
+
+    function getSelectedMaterialIds() {
+      return Array.from(document.querySelectorAll('#materiales-list input[type="checkbox"]'))
+        .filter(cb => cb.checked)
+        .map(cb => cb.dataset.codigo)
+        .filter(Boolean);
+    }
+
+    async function moverSeleccionados() {
+      const ids = getSelectedMaterialIds();
+      if (!ids.length) { alert('Selecciona al menos 1 material'); return; }
+      const destId = (document.getElementById('mover-destino').value || '').trim();
+      if (!destId) { alert('Selecciona un destino'); return; }
+      if (state.contenedorCodigo && String(destId) === String(state.contenedorCodigo)) { alert('El destino no puede ser el mismo contenedor'); return; }
+
+      const dest = state.contenedoresCache.find(c => String(c.codigo || '') === String(destId));
+      if (!dest) { alert('Destino inválido'); return; }
+
+      const res = await (async () => {
+        let attempt = { contenedor: dest.contenedor, contenedor_tipo: dest.contenedor_tipo || null, bodega_secundaria: state.secundariaNombre };
+        let guard = 0;
+        while (true) {
+          guard++;
+          if (guard > 30) return { ok: false, error: 'Demasiados reintentos al mover.' };
+          const { error } = await supa.from(TABLE_CATALOGO).update(attempt).in('codigo', ids);
+          if (!error) return { ok: true };
+          const msg = String((error.message || '') + ' ' + (error.details || '') + ' ' + (error.hint || '')).trim();
+          let colName = null;
+          let m = msg.match(/Could not find the '([^']+)' column/i);
+          if (m) colName = m[1];
+          if (!colName) {
+            m = msg.match(/column\s+\"?([a-zA-Z0-9_]+)\"?/i);
+            if (m) colName = m[1];
+          }
+          if (colName && colName in attempt) { delete attempt[colName]; continue; }
+          return { ok: false, error: error.message || String(error) };
+        }
+      })();
+
+      if (!res.ok) {
+        alert('Error moviendo: ' + res.error);
+        return;
+      }
+
+      clearMaterialForm();
+      await loadMateriales();
+      alert('Materiales movidos');
+    }
+
+    async function sacarSeleccionados() {
+      const ids = getSelectedMaterialIds();
+      if (!ids.length) { alert('Selecciona al menos 1 material'); return; }
+
+      const res = await (async () => {
+        let attempt = { contenedor: null, contenedor_tipo: null };
+        let guard = 0;
+        while (true) {
+          guard++;
+          if (guard > 30) return { ok: false, error: 'Demasiados reintentos al sacar.' };
+          const { error } = await supa.from(TABLE_CATALOGO).update(attempt).in('codigo', ids);
+          if (!error) return { ok: true };
+          const msg = String((error.message || '') + ' ' + (error.details || '') + ' ' + (error.hint || '')).trim();
+          let colName = null;
+          let m = msg.match(/Could not find the '([^']+)' column/i);
+          if (m) colName = m[1];
+          if (!colName) {
+            m = msg.match(/column\s+\"?([a-zA-Z0-9_]+)\"?/i);
+            if (m) colName = m[1];
+          }
+          if (colName && colName in attempt) { delete attempt[colName]; continue; }
+          return { ok: false, error: error.message || String(error) };
+        }
+      })();
+
+      if (!res.ok) {
+        alert('Error sacando: ' + res.error);
+        return;
+      }
+
+      clearMaterialForm();
+      await loadMateriales();
+      alert('Materiales sacados del contenedor');
+    }
+
+    async function guardarMaterial() {
+      if (!state.materialCodigo || !state.materialRow) { alert('Selecciona un material (botón Editar)'); return; }
+      if (!state.secundariaNombre || !state.contenedorNombre) { alert('Selecciona Secundaria + Contenedor'); return; }
+
+      setMaterialStatus('Guardando...');
+
+      const fotoUrl = await uploadFotoIfNeeded();
+      const colorToSave = state.materialColorHex ? (colorNames[state.materialColorHex] || state.materialColorHex) : null;
+
+      const payload = {
+        // NO cambiar codigo
+        nombre: (document.getElementById('mat-nombre').value || '').trim() || null,
+        abreviacion: (document.getElementById('mat-abrev').value || '').trim() || null,
+        tipo_uso: (document.getElementById('mat-tipo-uso').value || '').trim() || null,
+        tipo_material: (document.getElementById('mat-tipo-material').value || '').trim() || null,
+        unidad_medida: 'CMT',
+        dimensiones: {
+          ancho: numValFromInput('mat-ancho'),
+          largo: numValFromInput('mat-largo'),
+          grosor: numValFromInput('mat-grosor')
+        },
+        peso: numValFromInput('mat-peso'),
+        precio_unitario: numValFromInput('mat-precio'),
+        marca: (document.getElementById('mat-marca').value || '').trim() || null,
+        modelo: (document.getElementById('mat-modelo').value || '').trim() || null,
+        notas: (document.getElementById('mat-notas').value || '').trim() || null,
+        color: colorToSave,
+        foto_url: fotoUrl,
+
+        // mantener consistencia de ubicación
+        bodega_principal: PRINCIPAL_FIJO,
+        bodega_secundaria: state.secundariaNombre,
+        contenedor: state.contenedorNombre,
+        contenedor_tipo: state.contenedorTipo || null
+      };
+
+      const res = await updateWithFallback(TABLE_CATALOGO, 'codigo', state.materialCodigo, payload);
+      if (!res.ok) {
+        setMaterialStatus('Error: ' + res.error);
+        alert('Error guardando material: ' + res.error);
+        return;
+      }
+
+      setMaterialStatus('Guardado.');
+      await loadMateriales();
+      alert('Material guardado');
+    }
+
+    // binds
+    document.getElementById('btn-guardar-contenedor').addEventListener('click', guardarContenedor);
+    document.getElementById('btn-mover').addEventListener('click', moverSeleccionados);
+    document.getElementById('btn-sacar').addEventListener('click', sacarSeleccionados);
+    document.getElementById('btn-guardar-material').addEventListener('click', guardarMaterial);
+
+    // live apodo preview
+    document.getElementById('cont-nombre-base').addEventListener('input', () => {
+      document.getElementById('cont-apodo').value = computeApodo(document.getElementById('cont-nombre-base').value, document.getElementById('cont-numero').value);
+    });
+    document.getElementById('cont-numero').addEventListener('input', () => {
+      document.getElementById('cont-apodo').value = computeApodo(document.getElementById('cont-nombre-base').value, document.getElementById('cont-numero').value);
+    });
+
+    // foto
+    const photoBtn = document.getElementById('select-photo-btn');
+    const photoInput = document.getElementById('photo-input');
+    if (photoBtn && photoInput) {
+      photoBtn.addEventListener('click', () => photoInput.click());
+      photoInput.addEventListener('change', () => {
+        const f = (photoInput.files && photoInput.files[0]) ? photoInput.files[0] : null;
+        state.materialFotoFile = f;
+        if (!f) { updatePhotoPreview(state.materialFotoUrlCurrent); return; }
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          const src = String(ev && ev.target && ev.target.result ? ev.target.result : '');
+          updatePhotoPreview(src);
+        };
+        reader.readAsDataURL(f);
+      });
+    }
+
+    renderPaleta();
+    loadSecundarias();
+    setResumen();
+  }
+})();
+</script>

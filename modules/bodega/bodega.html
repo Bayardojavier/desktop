@@ -1,0 +1,134 @@
+<!-- desktop/modules/bodega/bodega.html -->
+<link rel="stylesheet" href="./modules/bodega/bodega.css">
+<script src="./modules/bodega/bodega.js"></script>
+<div class="bodega-container">
+  <!-- Menú lateral (misma estructura que otros módulos) -->
+  <div class="bodega-menu-lateral">
+    <h3>🧩 Audiovisual</h3>
+    <button class="bodega-submenu-btn" data-vista="universal-agregar-electronicos">➕ Agregar – Materiales Electrónicos</button>
+    <button class="bodega-submenu-btn" data-vista="audiovisual-modificar">✏️ Modificar – Contenedores / Módulos</button>
+
+    <h3>🧱 Hierros</h3>
+    <button class="bodega-submenu-btn" data-vista="hierro-agregar">➕ Agregar – Hierros</button>
+    <button class="bodega-submenu-btn" data-vista="hierro-modificar">✏️ Modificar – Contenedores / Materiales</button>
+
+    <h3>🧩 Universal</h3>
+
+    <button class="bodega-submenu-btn" data-vista="universal-agregar-consumibles">➕ Agregar – Consumibles</button>
+    <button class="bodega-submenu-btn" data-vista="universal-modificar-consumibles">✏️ Modificar – Consumibles</button>
+    <button class="bodega-submenu-btn" data-vista="universal-ficha-etiqueta">🪪 Ficha y Etiqueta</button>
+
+    <h3>🚚 Movimientos</h3>
+    <button class="bodega-submenu-btn" data-vista="movimientos-ingreso">📥 Ingreso</button>
+    <button class="bodega-submenu-btn" data-vista="movimientos-fabricacion">🛠️ Fabricación</button>
+    <button class="bodega-submenu-btn" data-vista="movimientos-devolucion">🔄 Devolución</button>
+    <button class="bodega-submenu-btn" data-vista="movimientos-despachobodega">📤 Despacho</button>
+    <button class="bodega-submenu-btn" data-vista="movimientos-ventasmateriales">💸 Ventas</button>
+    <button class="bodega-submenu-btn" data-vista="movimientos-bajasmateriales">📉 Bajas</button>
+
+    <h3>📊 Exportar Datos</h3>
+    <button class="bodega-submenu-btn" onclick="exportarBodegaAExcel()">📊 Exportar Bodega a Excel</button>
+  </div>
+
+  <!-- Área dinámica -->
+  <div class="bodega-area-dinamica">
+    <!-- Wrapper para compatibilidad con bodega.js (aquí se inyectan vistas no-dashboard) -->
+    <div class="bodega-area-contenido">
+      <div class="bodega-encabezado">
+        <h1 class="bodega-titulo">📦 Módulo de Bodega</h1>
+        <p class="bodega-subtitulo">Sala de Control – Gestión de inventario, movimientos y trazabilidad</p>
+      </div>
+
+      <div class="bodega-dashboard-top">
+        <div class="bodega-kpis">
+          <div class="bodega-kpi-card">
+            <div class="bodega-kpi-label">Ítems en catálogo</div>
+            <div class="bodega-kpi-value">—</div>
+            <div class="bodega-kpi-hint">Se actualiza al abrir reportes</div>
+          </div>
+          <div class="bodega-kpi-card">
+            <div class="bodega-kpi-label">Stock bajo</div>
+            <div class="bodega-kpi-value">—</div>
+            <div class="bodega-kpi-hint">Revisa “Por Ítem”</div>
+          </div>
+          <div class="bodega-kpi-card">
+            <div class="bodega-kpi-label">Movimientos</div>
+            <div class="bodega-kpi-value">—</div>
+            <div class="bodega-kpi-hint">Hoy / semana</div>
+          </div>
+          <div class="bodega-kpi-card">
+            <div class="bodega-kpi-label">Vista activa</div>
+            <div class="bodega-kpi-value">Dashboard</div>
+            <div class="bodega-kpi-hint">Cambia con las pestañas</div>
+          </div>
+        </div>
+
+        <div class="bodega-atajos">
+          <div class="bodega-atajos-titulo">Accesos rápidos</div>
+          <div class="bodega-atajos-grid">
+            <button class="bodega-atajo-btn" data-vista="movimientos-ingreso">📥 Nuevo Ingreso</button>
+            <button class="bodega-atajo-btn" data-vista="movimientos-despachobodega">📤 Nuevo Despacho</button>
+            <button class="bodega-atajo-btn" data-vista="universal-agregar-electronicos">➕ Agregar (Electrónicos)</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="bodega-dashboard">
+        <div class="bodega-tabs">
+          <button class="bodega-tab-btn active" data-vista="dashboard-xbodega">📦 Por Bodega</button>
+          <button class="bodega-tab-btn" data-vista="dashboard-xitem">📊 Por Ítem</button>
+          <button class="bodega-tab-btn" data-vista="dashboard-xevento">🎪 Por Evento</button>
+          <button class="bodega-tab-btn" data-vista="dashboard-xproveedor">🏢 Por Proveedor</button>
+        </div>
+
+        <div class="bodega-tab-content" id="bodega-tab-panel">
+          <p style="color: #ccc;">Cargando vista de inventario por bodega...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCRIPT DIRECTO (NO SE CARGA CON SAFELOAD) -->
+<script>
+// === LÓGICA DIRECTA DEL DASHBOARD (EJECUTA INMEDIATAMENTE) ===
+document.addEventListener('DOMContentLoaded', () => {
+  // Cargar vista inicial: xbodega
+  cargarVistaDashboard('dashboard-xbodega');
+
+  // Eventos de pestañas del dashboard
+  document.querySelectorAll('.bodega-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      // Actualizar clase 'active'
+      document.querySelectorAll('.bodega-tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      // Cargar vista
+      cargarVistaDashboard(btn.dataset.vista);
+    });
+  });
+
+  // Los botones del menú lateral ya están manejados por la delegación de eventos en bodega.js
+});
+
+// === FUNCIONES DE CARGA ===
+function cargarVistaDashboard(vista) {
+  // Simulación: por ahora solo muestra el nombre
+  const panel = document.getElementById('bodega-tab-panel');
+  panel.innerHTML = `<p style="color: #aaa;">Cargando vista: ${vista}...</p>`;
+
+  // Enviar evento FALSO al sistema de bodega.js
+  const eventoFake = {
+    target: {
+      dataset: { vista }
+    }
+  };
+
+  // Reusar la lógica de bodega.js → PERO DEBES TENER ESTA FUNCIÓN GLOBAL
+  if (typeof manejarClicVista === 'function') {
+    manejarClicVista(eventoFake);
+  } else {
+    // Fallback: mensaje claro
+    panel.innerHTML = `<p style="color: red;">Error: sistema de carga no disponible.</p>`;
+  }
+}
+</script>

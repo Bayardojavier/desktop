@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Fabricación de Materiales</title>
+</head>
+<body>
+  <div class="movimientos-view">
+  <div class="fabricacion-layout" style="display: grid; grid-template-columns: 340px 1fr; gap: 16px; align-items: start; padding: 10px;">
+
+    <!-- Lista lateral de solicitudes -->
+    <aside class="lista-solicitudes" style="background: rgba(15, 23, 42, 0.72); border: 1px solid #0f172a; border-radius: 12px; padding: 16px; box-shadow: 0 6px 14px rgba(0,0,0,0.18);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div>
+          <h3 style="margin: 0; color: #e2e8f0; font-size: 16px;">Solicitudes</h3>
+          <p style="margin: 2px 0 0 0; color: #cbd5e1; font-size: 12px;">Editar o eliminar mientras estén pendientes</p>
+        </div>
+        <button id="fab-refresh-list" class="mov-btn mov-btn-secondary" style="padding: 6px 10px; font-size: 12px;">↻</button>
+      </div>
+      <div id="fabricacion-side-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 78vh; overflow-y: auto; background: rgba(255,255,255,0.04); border: 1px solid rgba(226,232,240,0.2); border-radius: 10px; padding: 10px;font-size: 13px; color: #df6e18;"></div>
+    </aside>
+
+    <div class="mov-form-container" style="margin: 0;">
+    <div class="mov-form-card">
+      <h1 class="mov-form-title">🏭 Fabricación de Materiales</h1>
+      <p class="mov-form-subtitle">Registre la fabricación de nuevos materiales y los materiales consumidos en el proceso</p>
+      
+      <div class="mov-form-section">
+        <div class="mov-form-row">
+          <div class="mov-form-col">
+            <label class="mov-form-label">Responsable de Manufactura</label>
+            <select id="responsable-manufactura" class="mov-form-select" required>
+              <option value="">Seleccione un empleado...</option>
+            </select>
+          </div>
+          <div class="mov-form-col">
+            <label class="mov-form-label">Fecha</label>
+            <input type="date" id="fecha-manufactura" class="mov-form-input" required />
+          </div>
+        </div>
+      </div>
+      
+      <!-- MATERIALES CONSUMIDOS -->
+      <div class="mov-form-section">
+        <h2 class="mov-form-section-title">Materiales Consumidos</h2>
+        <p style="color: #64748b; margin-bottom: 12px; font-size: 14px;">
+          Materiales del inventario que se utilizarán en la fabricación (serán dados de baja)
+        </p>
+        <div id="tabla-consumidos"></div>
+        <button id="btn-abrir-modal-consumidos" class="mov-btn mov-btn-primary" style="margin-top: 12px; width: auto;">
+          + Seleccionar del Catálogo
+        </button>
+      </div>
+      
+      <!-- MATERIALES PRODUCIDOS -->
+      <div class="mov-form-section">
+        <h2 class="mov-form-section-title">Materiales Producidos</h2>
+        <p style="color: #64748b; margin-bottom: 12px; font-size: 14px;">
+          Nuevos materiales fabricados que se agregarán al inventario cuando se aprueben
+        </p>
+        <div id="tabla-producidos"></div>
+        <button id="btn-abrir-modal-producidos" class="mov-btn mov-btn-primary" style="margin-top: 12px; width: auto;">
+          + Seleccionar del Catálogo
+        </button>
+      </div>
+      
+      <div class="mov-form-actions">
+        <button id="btn-guardar-fabricacion" class="mov-btn mov-btn-primary">Enviar Solicitud</button>
+        <button id="btn-limpiar-fabricacion" class="mov-btn mov-btn-secondary">Limpiar</button>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <!-- Modal de éxito -->
+  <div id="modal-fabricacion" class="mov-modal-overlay" style="display: none;">
+    <div class="mov-modal-content">
+      <h2 class="mov-modal-title">✅ Solicitud de Fabricación Enviada</h2>
+      <p class="mov-modal-text">
+        Su solicitud ha sido enviada a contabilidad para revisión y aprobación.
+      </p>
+      <div class="mov-modal-buttons">
+        <button id="btn-imprimir-fabricacion" class="mov-btn mov-btn-primary">Imprimir Solicitud</button>
+        <button id="btn-cerrar-fabricacion" class="mov-btn mov-btn-secondary">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    setTimeout(() => {
+      // =============================================================================
+      // 🔹 CARGA SEGURA DE LIBRERÍAS
+      // =============================================================================
+      function loadScriptOnce(src, globalCheck) {
+        return new Promise((resolve, reject) => {
+          if (globalCheck && typeof globalCheck === 'function' && globalCheck()) return resolve();
+          if (document.querySelector(`script[data-dynamic-src="${src}"]`)) {
+            const existing = document.querySelector(`script[data-dynamic-src="${src}"]`);
+            if (existing.getAttribute('data-loaded') === 'true') return resolve();
+            existing.addEventListener('load', () => resolve());
+            existing.addEventListener('error', (e) => reject(e));
+            return;
+          }
+          const s = document.createElement('script');
+          s.src = src;
+          s.async = true;
+          s.setAttribute('data-dynamic-src', src);
+          s.addEventListener('load', () => { s.setAttribute('data-loaded', 'true'); resolve(); });
+          s.addEventListener('error', (e) => reject(e));
+          document.head.appendChild(s);
+        });
+      }
+
+      // =============================================================================
+      // 🔹 VARIABLES GLOBALES
+      // =============================================================================
+      let estado = {
+        itemsConsumidos: [],
+        itemsProducidos: [],
+        datosFormulario: {},
+        pdfData: null
+      };
+
+      let editingSolicitudId = null;
+      let editingSolicitudEstado = null;
+      let editingNumeroSolicitud = null;
+      function formatearPrecio(valor) {
+        if (valor === null || valor === undefined || isNaN(valor)) return '—';
+        return `$${Number(valor).toFixed(2)}`;
+      }
+
+      // =============================================================================
+      // 🔹 CARGAR DATOS DE SUPABASE
+      // =============================================================================
+      async function cargarDatos() {
+        try {
+          // Empleados
+          const { data: empleados, error: errEmp } = await window.supabaseClient
+            .from('empleados')
+            .select('nombres, apellidos')
+            .order('nombres', { ascending: true });
+          if (errEmp) throw errEmp;
+          const selectEmpleados = document.getElementById('responsable-manufactura');
+          empleados.forEach(emp => {
+            const nombre = `${emp.nombres} ${emp.apellidos}`;
+            const opt = document.createElement('option');
+            opt.value = nombre;
+            opt.textContent = nombre;
+            selectEmpleados.appendChild(opt);
+          });
+
+          // Fecha actual
+          document.getElementById('fecha-manufactura').value = new Date().toISOString().split('T')[0];
+
+        } catch (err) {
+          console.error('Error al cargar datos:', err);
+          alert('❌ Error al cargar empleados: ' + err.message);
+        }
+      }
+
+      // =============================================================================
+      // 🔹 DETERMINAR BODEGAS
+      // =============================================================================
+      function determinarBodegas(material) {
+        if (!material) return { principal: 'Desconocida', secundaria: 'Sin clasificar' };
+        let bodegaPrincipal = 'Desconocida';
+        const prefijo = material.codigo?.split('-')[1] || '';
+        if (prefijo === 'HIE') bodegaPrincipal = 'Hierro Cuploc';
+        else if (prefijo === 'AUD') bodegaPrincipal = 'Audio Profesional';
+        else if (['PER', 'MOB', 'SIL', 'HER'].includes(prefijo)) bodegaPrincipal = 'Perfilería y Mobiliario';
+        else bodegaPrincipal = material.bodega || 'Sin clasificar';
+        const bodegaSecundaria = material.bodega || 'Sin clasificar';
+        return { principal: bodegaPrincipal, secundaria: bodegaSecundaria };
+      }
+
+      // =============================================================================
+      // 🔹 MODAL DE SELECCIÓN DE MATERIALES
+      // =============================================================================
+      async function abrirModalManufacturado(tipo) {
+        window.modalTipoActual = tipo;
+        let modal = document.getElementById('modal-seleccion-fabricacion');
+        if (!modal) {
+          modal = document.createElement('div');
+          modal.id = 'modal-seleccion-fabricacion';
+          modal.className = 'fab-catalog-overlay';
+          modal.innerHTML = `
+            <div class="fab-catalog-modal" role="dialog" aria-modal="true">
+              <div class="fab-catalog-header">
+                <h2 class="fab-catalog-title">🔍 Seleccionar Material del Catálogo</h2>
+                <button id="btn-cerrar-modal-seleccion" class="fab-catalog-close" aria-label="Cerrar">×</button>
+              </div>
+
+              <div class="fab-catalog-filters">
+                <div class="fab-catalog-filters-grid">
+                  <div class="fab-catalog-filter">
+                    <label class="fab-catalog-label">Buscar por nombre:</label>
+                    <input type="text" id="buscador-nombre-fabricacion" class="mov-form-input" placeholder="Escriba para buscar..." />
+                  </div>
+
+                  <div class="fab-catalog-filter">
+                    <label class="fab-catalog-label">Filtrar por Bodega:</label>
+                    <select id="filtro-bodega-fabricacion" class="mov-form-select">
+                      <option value="todas">Todas las Bodegas</option>
+                      <option value="Hierro Cuploc">Hierro Cuploc</option>
+                      <option value="Audio Profesional">Audio Profesional</option>
+                      <option value="Iluminación Escénica">Iluminación Escénica</option>
+                      <option value="Perfilería y Mobiliario">Perfilería y Mobiliario</option>
+                      <option value="Bodega Sillas">Bodega Sillas</option>
+                      <option value="Bodega Herramientas">Bodega Herramientas</option>
+                    </select>
+                  </div>
+
+                  <div class="fab-catalog-filter fab-catalog-filter--actions">
+                    <button id="btn-restablecer-filtros" class="mov-btn mov-btn-secondary">Restablecer</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="fab-catalog-results-wrap">
+                <div id="resultados-busqueda-fabricacion" class="fab-catalog-results"></div>
+              </div>
+
+              <div class="fab-catalog-footer">
+                <button id="btn-cerrar-modal-bottom" class="mov-btn mov-btn-secondary">Cancelar</button>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(modal);
+
+          // Eventos del modal
+          document.getElementById('btn-cerrar-modal-seleccion').addEventListener('click', () => modal.style.display = 'none');
+          document.getElementById('btn-cerrar-modal-bottom').addEventListener('click', () => modal.style.display = 'none');
+          
+          let debounceTimer;
+          document.getElementById('buscador-nombre-fabricacion').addEventListener('input', (e) => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(renderResultadosBusqueda, 300);
+          });
+          
+          document.getElementById('filtro-bodega-fabricacion').addEventListener('change', renderResultadosBusqueda);
+          document.getElementById('btn-restablecer-filtros').addEventListener('click', () => {
+            document.getElementById('buscador-nombre-fabricacion').value = '';
+            document.getElementById('filtro-bodega-fabricacion').value = 'todas';
+            renderResultadosBusqueda();
+          });
+        }
+
+        renderResultadosBusqueda();
+        modal.style.display = 'flex';
+      }
+
+      // =============================================================================
+      // 🔹 RENDERIZAR RESULTADOS DE BÚSQUEDA
+      // =============================================================================
+      async function renderResultadosBusqueda() {
+        const contenedor = document.getElementById('resultados-busqueda-fabricacion');
+        const terminoBusqueda = document.getElementById('buscador-nombre-fabricacion').value.toLowerCase();
+        const bodegaFiltro = document.getElementById('filtro-bodega-fabricacion').value;
+        const tipo = window.modalTipoActual; // 'consumido' o 'producido'
+
+        try {
+            let materiales = [];
+            if (tipo === 'consumido') {
+                // Para consumidos: usar stock_actual_con_precio (necesita existencia y precio)
+                const { data, error } = await window.supabaseClient
+                  .from('stock_actual_con_precio')
+                  .select('material_codigo, material_nombre, bodega_principal, existencia, precio_promedio');
+                if (error) throw error;
+                materiales = data || [];
+            } else {
+                // Para producidos: usar catalogo (no necesita existencia/precio)
+                const { data, error } = await window.supabaseClient
+                  .from('catalogo')
+                  .select('codigo, nombre, bodega_principal, bodega_secundaria')
+                  .eq('es_contenedor', false);
+                if (error) throw error;
+                materiales = (data || []).map(m => ({
+                  material_codigo: m.codigo,
+                  material_nombre: m.nombre,
+                  bodega_principal: m.bodega_principal,
+                  bodega: m.bodega_secundaria,
+                  existencia: 0,
+                  precio_promedio: 0
+                }));
+            }
+
+          // Filtrar por bodega
+          if (bodegaFiltro !== 'todas') {
+            materiales = materiales.filter(m => 
+              m.bodega === bodegaFiltro || m.bodega_principal === bodegaFiltro
+            );
+          }
+
+          // Filtrar por nombre
+          if (terminoBusqueda) {
+            materiales = materiales.filter(m => {
+              const nombre = (m.material_nombre || m.nombre || '').toLowerCase();
+              const codigo = (m.material_codigo || m.codigo || '').toLowerCase();
+              return nombre.includes(terminoBusqueda) || codigo.includes(terminoBusqueda);
+            });
+          }
+
+          if (!materiales || materiales.length === 0) {
+            contenedor.innerHTML = '<p class="fab-catalog-empty">No se encontraron materiales.</p>';
+            return;
+          }
+
+          contenedor.innerHTML = materiales.map(material => {
+            const nombre = material.material_nombre || material.nombre || 'Sin nombre';
+            const codigo = material.material_codigo || material.codigo || 'Sin código';
+            const bodegas = determinarBodegas({ codigo, bodega: material.bodega, bodega_principal: material.bodega_principal });
+            return `
+              <div class="fab-catalog-card">
+                <div class="fab-catalog-card-top">
+                  <div class="fab-catalog-card-title">
+                    <div class="fab-catalog-name">${nombre}</div>
+                    <div class="fab-catalog-code">${codigo}</div>
+                  </div>
+                  <div class="fab-catalog-existencia" title="Existencia">
+                    ${material.existencia || 0}
+                  </div>
+                </div>
+                <div class="fab-catalog-tags">
+                  <span class="fab-catalog-tag fab-catalog-tag--primary">${bodegas.principal}</span>
+                  <span class="fab-catalog-tag fab-catalog-tag--secondary">${bodegas.secundaria}</span>
+                </div>
+                <button class="mov-btn mov-btn-primary fab-catalog-select-btn" data-material='${JSON.stringify({
+                  codigo,
+                  nombre,
+                  bodega: material.bodega,
+                  bodega_principal: material.bodega_principal,
+                  existencia: material.existencia,
+                  precio_promedio: material.precio_promedio
+                })}'>
+                  Seleccionar Material
+                </button>
+              </div>
+            `;
+          }).join('');
+
+          contenedor.querySelectorAll('button[data-material]').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+              const material = JSON.parse(e.currentTarget.dataset.material);
+              if (window.modalTipoActual === 'consumido') {
+                await agregarMaterialAConsumidos(material);
+              } else {
+                agregarMaterialAProducidos(material);
+              }
+              document.getElementById('modal-seleccion-fabricacion').style.display = 'none';
+            });
+          });
+
+        } catch (err) {
+          console.error('Error al buscar materiales:', err);
+          contenedor.innerHTML = '<p class="fab-catalog-error">Error al cargar materiales.</p>';
+        }
+      }
+
+      // =============================================================================
+      // 🔹 LISTA LATERAL DE SOLICITUDES
+      // =============================================================================
+      async function cargarSolicitudesList() {
+        const container = document.getElementById('fabricacion-side-list');
+        if (!container) return;
+
+        container.innerHTML = '<div style="color:#e2e8f0; font-size: 13px;">Cargando...</div>';
+        try {
+          const { data, error } = await window.supabaseClient
+            .from('solicitudes_fabricacion')
+            .select('id, numero_solicitud, responsable, fecha, estado')
+            .order('fecha', { ascending: false });
+
+          if (error) throw error;
+          if (!data || data.length === 0) {
+            container.innerHTML = '<div style="color:#e2e8f0; font-size: 13px;">No hay solicitudes registradas.</div>';
+            return;
+          }
+
+          const html = data.map(s => {
+            const estadoRaw = (s.estado || 'pendiente_aprobacion').toLowerCase();
+            const bloqueado = estadoRaw === 'aprobado' || estadoRaw === 'aprobada';
+            const estadoText = estadoRaw === 'aprobado' || estadoRaw === 'aprobada' ? 'Aprobada' : 'Pendiente';
+            const estadoColor = bloqueado ? '#22c55e' : '#ca8a04';
+
+            return `
+              <div style="border:1px solid #0f172a; border-radius:10px; padding:10px; display:flex; justify-content:space-between; align-items:center; gap:8px; background: rgba(15,23,42,0.14); color:#e2e8f0;">
+                <div style="flex:1;">
+                  <div style="font-weight:700; color:#f8fafc; font-size:13px;">${s.numero_solicitud}</div>
+                  <div style="color:#e2e8f0; font-size:12px;">${s.responsable || 'Sin responsable'}</div>
+                  <div style="color:#cbd5e1; font-size:11px;">${s.fecha || ''}</div>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-end;">
+                  <span style="background:${estadoColor}22; color:${estadoColor}; padding:3px 8px; border-radius:12px; font-size:11px; font-weight:700;">${estadoText}</span>
+                  <div style="display:flex; gap:6px;">
+                    ${bloqueado ? '' : `<button class="fab-list-btn" data-id="${s.id}" data-numero="${s.numero_solicitud}" data-estado="${s.estado || ''}" data-action="edit" style="padding:5px 8px; font-size:11px; background:#1d4ed8; color:white; border:none; border-radius:6px; cursor:pointer;">Editar</button>`}
+                    ${bloqueado ? '' : `<button class="fab-list-btn" data-id="${s.id}" data-numero="${s.numero_solicitud}" data-action="delete" style="padding:5px 8px; font-size:11px; background:#dc2626; color:white; border:none; border-radius:6px; cursor:pointer;">Eliminar</button>`}
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          container.innerHTML = html;
+
+          container.querySelectorAll('.fab-list-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+              const id = e.currentTarget.dataset.id; // keep UUID as string
+              const numero = e.currentTarget.dataset.numero;
+              const action = e.currentTarget.dataset.action;
+              const est = e.currentTarget.dataset.estado || '';
+              if (action === 'edit') {
+                await cargarSolicitudParaEdicion(id, numero, est);
+              } else if (action === 'delete') {
+                await eliminarSolicitud(id, numero, est);
+              }
+            });
+          });
+
+        } catch (err) {
+          console.error('Error al cargar solicitudes:', err);
+          container.innerHTML = '<div style="color:#ef4444; font-size:13px;">Error al cargar la lista.</div>';
+        }
+      }
+
+      // =============================================================================
+      // 🔹 AGREGAR MATERIALES A LAS LISTAS
+      // =============================================================================
+      async function agregarMaterialAConsumidos(material) {
+        if ((material.existencia || 0) <= 0) {
+          alert('⚠️ No se puede consumir un material con existencia 0 o negativa.');
+          return;
+        }
+        if (estado.itemsConsumidos.some(item => item.codigo === material.codigo)) {
+          alert('⚠️ Este material ya está en la lista de consumidos.');
+          return;
+        }
+        estado.itemsConsumidos.push({
+          codigo: material.codigo,
+          nombre: material.nombre,
+          existencia: material.existencia || 0,
+          precio_promedio: material.precio_promedio || 0,
+          cantidad: 1,
+          observacion: ''
+        });
+        renderTablaConsumidos();
+      }
+
+      function agregarMaterialAProducidos(material) {
+        if (estado.itemsProducidos.some(item => item.codigo === material.codigo)) {
+          alert('⚠️ Este material ya está en la lista de producidos.');
+          return;
+        }
+        estado.itemsProducidos.push({
+          codigo: material.codigo,
+          nombre: material.nombre,
+          bodega: material.bodega || material.bodega_principal || determinarBodegas(material).principal,
+          cantidad: 1,
+          observacion: ''
+        });
+        renderTablaProducidos();
+      }
+
+      // =============================================================================
+      // 🔹 RENDERIZADO DE TABLAS
+      // =============================================================================
+      function renderTablaConsumidos() {
+        const contenedor = document.getElementById('tabla-consumidos');
+        contenedor.innerHTML = estado.itemsConsumidos.length > 0
+          ? '<div id="filas-consumidos"></div>'
+          : '<p style="text-align: center; color: #999; margin: 20px 0;">Agregue materiales consumidos.</p>';
+
+        if (estado.itemsConsumidos.length === 0) return;
+
+        const tbody = document.getElementById('filas-consumidos');
+        estado.itemsConsumidos.forEach((item, index) => {
+          const row = document.createElement('div');
+          row.className = 'mov-table-row';
+          row.innerHTML = `
+            <div class="mov-table-col" style="flex: 1.2;">
+              <label class="mov-form-label" style="margin-bottom: 4px;">Código</label>
+              <input type="text" class="mov-form-input" value="${item.codigo}" readonly />
+            </div>
+            <div class="mov-table-col" style="flex: 2.5;">
+              <label class="mov-form-label" style="margin-bottom: 4px;">Nombre</label>
+              <input type="text" class="mov-form-input" value="${item.nombre}" readonly />
+            </div>
+            <div class="mov-table-col" style="flex: 0.8; text-align: center;">
+              <label class="mov-form-label" style="margin-bottom: 4px;">Existencia</label>
+              <input type="number" class="mov-form-input" value="${item.existencia}" readonly style="background: #f0fdf4; color: #047857;" />
+            </div>
+            <div class="mov-table-col" style="flex: 1; text-align: center;">
+              <label class="mov-form-label" style="margin-bottom: 4px;">Precio prom. ingreso</label>
+              <input type="text" class="mov-form-input" value="${formatearPrecio(item.precio_promedio)}" readonly style="background: #fff7ed; color: #b45309; text-align: center;" />
+            </div>
+            <div class="mov-table-col" style="flex: 0.8; text-align: center;">
+              <label class="mov-form-label" style="margin-bottom: 4px;">Cantidad</label>
+              <input type="number" class="mov-form-input" value="${item.cantidad}" min="1" data-index="${index}" data-tipo="consumido" />
+            </div>
+            <div class="mov-table-col" style="flex: 1.5;">
+              <label class="mov-form-label" style="margin-bottom: 4px;">Observación</label>
+              <input type="text" class="mov-form-input" value="${item.observacion}" data-index="${index}" data-tipo="consumido" />
+            </div>
+            <div class="mov-table-col" style="flex: 0.2; text-align: center;">
+              <label class="mov-form-label" style="margin-bottom: 4px;">&nbsp;</label>
+              <button class="mov-btn mov-btn-danger" style="padding: 4px 8px; font-size: 12px;" data-index="${index}" data-tipo="consumido">✕</button>
+            </div>
+          `;
+
+          row.querySelectorAll('input[data-tipo="consumido"]').forEach(input => {
+            input.addEventListener('input', (e) => {
+              const idx = parseInt(e.target.dataset.index);
+              if (e.target.type === 'number') {
+                estado.itemsConsumidos[idx].cantidad = parseInt(e.target.value) || 0;
+              } else {
+                estado.itemsConsumidos[idx].observacion = e.target.value;
+              }
+            });
+          });
+
+          row.querySelector('button').addEventListener('click', (e) => {
+            const idx = parseInt(e.target.dataset.index);
+            estado.itemsConsumidos.splice(idx, 1);
+            renderTablaConsumidos();
+          });
+
+          tbody.appendChild(row);
+        });
+      }
+
+      function renderTablaProducidos() {
+        const contenedor = document.getElementById('tabla-producidos');
+        contenedor.innerHTML = estado.itemsProducidos.length > 0
+          ? '<div id="filas-producidos"></div>'
+          : '<p style="text-align: center; color: #999; margin: 20px 0;">Agregue materiales producidos.</p>';
+
+        if (estado.itemsProducidos.length === 0) return;
+
+        const tbody = document.getElementById('filas-producidos');
+        estado.itemsProducidos.forEach((item, index) => {
+          const row = document.createElement('div');
+          row.className = 'mov-table-row';
+          row.innerHTML = `
+            <div class="mov-table-col" style="flex: 1.2;">
+              <label class="mov-form-label" style="margin-bottom: 4px;">Código</label>
+              <input type="text" class="mov-form-input" value="${item.codigo}" readonly />
+            </div>
+            <div class="mov-table-col" style="flex: 2.5;">
+              <label class="mov-form-label" style="margin-bottom: 4px;">Nombre</label>
+              <input type="text" class="mov-form-input" value="${item.nombre}" readonly />
+            </div>
+            <div class="mov-table-col" style="flex: 1.2;">
+              <label class="mov-form-label" style="margin-bottom: 4px;">Bodega (catálogo)</label>
+              <input type="text" class="mov-form-input" value="${item.bodega || 'Sin bodega'}" readonly />
+            </div>
+            <div class="mov-table-col" style="flex: 0.8; text-align: center;">
+              <label class="mov-form-label" style="margin-bottom: 4px;">Cantidad</label>
+              <input type="number" class="mov-form-input" value="${item.cantidad}" min="1" data-index="${index}" data-tipo="producido" />
+            </div>
+            <div class="mov-table-col" style="flex: 1.5;">
+              <label class="mov-form-label" style="margin-bottom: 4px;">Observación</label>
+              <input type="text" class="mov-form-input" value="${item.observacion}" data-index="${index}" data-tipo="producido" />
+            </div>
+            <div class="mov-table-col" style="flex: 0.2; text-align: center;">
+              <label class="mov-form-label" style="margin-bottom: 4px;">&nbsp;</label>
+              <button class="mov-btn mov-btn-danger" style="padding: 4px 8px; font-size: 12px;" data-index="${index}" data-tipo="producido">✕</button>
+            </div>
+          `;
+
+          row.querySelectorAll('input[data-tipo="producido"]').forEach(input => {
+            input.addEventListener('input', (e) => {
+              const idx = parseInt(e.target.dataset.index);
+              if (e.target.type === 'number') {
+                estado.itemsProducidos[idx].cantidad = parseInt(e.target.value) || 0;
+              } else {
+                estado.itemsProducidos[idx].observacion = e.target.value;
+              }
+            });
+          });
+
+          row.querySelector('button').addEventListener('click', (e) => {
+            const idx = parseInt(e.target.dataset.index);
+            estado.itemsProducidos.splice(idx, 1);
+            renderTablaProducidos();
+          });
+
+          tbody.appendChild(row);
+        });
+      }
+
+      // =============================================================================
+      // 🔹 GENERAR NÚMERO DE SOLICITUD
+      // =============================================================================
+      async function generarNumeroSolicitud() {
+        try {
+          const { data, error } = await window.supabaseClient
+            .from('solicitudes_fabricacion')
+            .select('numero_solicitud', { count: 'exact' })
+            .order('numero_solicitud', { ascending: false })
+            .limit(1);
+
+          if (error) throw error;
+          const ultimo = data?.[0]?.numero_solicitud || 'MAN-00000';
+          const match = ultimo.match(/MAN-(\d+)$/);
+          const nuevoNumero = match ? parseInt(match[1], 10) + 1 : 1;
+          return `MAN-${String(nuevoNumero).padStart(5, '0')}`;
+        } catch (err) {
+          console.warn('Error al generar número de solicitud:', err);
+          return `MAN-${Date.now().toString().slice(-5)}`;
+        }
+      }
+
+      // =============================================================================
+      // 🔹 CARGAR SOLICITUD PARA EDICIÓN
+      // =============================================================================
+      async function cargarSolicitudParaEdicion(id, numero, estadoActual) {
+        try {
+          const { data: solicitud, error: errSol } = await window.supabaseClient
+            .from('solicitudes_fabricacion')
+            .select('*')
+            .eq('id', id)
+            .single();
+          if (errSol) throw errSol;
+
+          const { data: consumidos, error: errCons } = await window.supabaseClient
+            .from('materiales_consumidos_fabricacion')
+            .select('material_codigo, cantidad, observacion')
+            .eq('solicitud_id', id);
+          if (errCons) throw errCons;
+
+          const { data: producidos, error: errProd } = await window.supabaseClient
+            .from('materiales_producidos_fabricacion')
+            .select('material_codigo, nombre, bodega, cantidad, observacion')
+            .eq('solicitud_id', id);
+          if (errProd) throw errProd;
+
+          const codigosCatalogo = Array.from(new Set([
+            ...(consumidos || []).map(c => c.material_codigo),
+            ...(producidos || []).map(p => p.material_codigo)
+          ].filter(Boolean)));
+
+          let stockMap = new Map();
+          if (codigosCatalogo.length > 0) {
+            let query = window.supabaseClient
+              .from('stock_actual_con_precio')
+              .select('material_codigo, material_nombre, bodega_principal, existencia, precio_promedio');
+            if (codigosCatalogo.length === 1) {
+              query = query.eq('material_codigo', codigosCatalogo[0]);
+            } else {
+              query = query.in('material_codigo', codigosCatalogo);
+            }
+            const { data: stockData } = await query;
+            (stockData || []).forEach(s => stockMap.set(s.material_codigo, {
+              nombre: s.material_nombre,
+              bodega_principal: s.bodega_principal,
+              existencia: s.existencia || 0,
+              precio_promedio: s.precio_promedio || 0
+            }));
+          }
+
+          estado.itemsConsumidos = (consumidos || []).map(c => ({
+            codigo: c.material_codigo,
+            nombre: stockMap.get(c.material_codigo)?.nombre || 'Sin nombre',
+            existencia: stockMap.get(c.material_codigo)?.existencia ?? 0,
+            precio_promedio: stockMap.get(c.material_codigo)?.precio_promedio ?? 0,
+            cantidad: c.cantidad,
+            observacion: c.observacion || ''
+          }));
+
+          estado.itemsProducidos = (producidos || []).map(p => ({
+            codigo: p.material_codigo,
+            nombre: p.nombre || stockMap.get(p.material_codigo)?.nombre || 'Sin nombre',
+            bodega: p.bodega || stockMap.get(p.material_codigo)?.bodega_principal || 'Sin bodega',
+            cantidad: p.cantidad,
+            observacion: p.observacion || ''
+          }));
+
+          editingSolicitudId = id;
+          editingNumeroSolicitud = numero;
+          editingSolicitudEstado = estadoActual || solicitud.estado || 'pendiente_aprobacion';
+
+          document.getElementById('responsable-manufactura').value = solicitud.responsable || '';
+          document.getElementById('fecha-manufactura').value = solicitud.fecha || new Date().toISOString().split('T')[0];
+
+          renderTablaConsumidos();
+          renderTablaProducidos();
+          alert(`Editando solicitud ${numero}`);
+        } catch (err) {
+          console.error('Error al cargar solicitud:', err);
+          alert('No se pudo cargar la solicitud para edición: ' + err.message);
+        }
+      }
+
+      // =============================================================================
+      // 🔹 ELIMINAR SOLICITUD (SI NO ESTÁ APROBADA)
+      // =============================================================================
+      async function eliminarSolicitud(id, numero, estadoActual) {
+        const estadoLower = (estadoActual || '').toLowerCase();
+        if (estadoLower.startsWith('aprob')) {
+          alert('No puede eliminar una solicitud aprobada.');
+          return;
+        }
+        if (!confirm(`¿Eliminar la solicitud ${numero}?`)) return;
+        try {
+          await window.supabaseClient
+            .from('materiales_consumidos_fabricacion')
+            .delete()
+            .eq('solicitud_id', id);
+
+          await window.supabaseClient
+            .from('materiales_producidos_fabricacion')
+            .delete()
+            .eq('solicitud_id', id);
+
+          await window.supabaseClient
+            .from('solicitudes_fabricacion')
+            .delete()
+            .eq('id', id);
+
+          if (editingSolicitudId === id) {
+            estado = { itemsConsumidos: [], itemsProducidos: [], datosFormulario: {}, pdfData: null };
+            editingSolicitudId = null;
+            editingNumeroSolicitud = null;
+            editingSolicitudEstado = null;
+            renderTablaConsumidos();
+            renderTablaProducidos();
+          }
+
+          await cargarSolicitudesList();
+          alert(`Solicitud ${numero} eliminada`);
+        } catch (err) {
+          console.error('Error al eliminar solicitud:', err);
+          alert('No se pudo eliminar la solicitud: ' + err.message);
+        }
+      }
+      // 🔹 GUARDAR SOLICITUD EN SUPABASE
+      // =============================================================================
+      async function guardarFabricacion() {
+        const btnGuardar = document.getElementById('btn-guardar-fabricacion');
+        btnGuardar.disabled = true;
+        btnGuardar.textContent = 'Enviando...';
+
+        const responsable = document.getElementById('responsable-manufactura').value;
+        const fecha = document.getElementById('fecha-manufactura').value;
+
+        const estadoSolicitud = editingSolicitudEstado || 'pendiente_aprobacion';
+
+        if (!responsable || !fecha) {
+          alert('⚠️ Complete todos los campos obligatorios.');
+          btnGuardar.disabled = false;
+          btnGuardar.textContent = 'Enviar Solicitud';
+          return;
+        }
+
+        const itemsConsumidosValidos = estado.itemsConsumidos
+          .filter(item => item.codigo && (item.cantidad || 0) > 0)
+          .map(item => ({
+            ...item,
+            precio_promedio: item.precio_promedio ?? 0
+          }));
+        const itemsProducidosValidos = estado.itemsProducidos.filter(item => item.codigo && item.nombre && (item.cantidad || 0) > 0);
+
+        if (itemsConsumidosValidos.length === 0 && itemsProducidosValidos.length === 0) {
+          alert('⚠️ Agregue al menos un material consumido o producido.');
+          return;
+        }
+
+        try {
+          const esEdicion = Boolean(editingSolicitudId);
+
+          if (esEdicion && estadoSolicitud.toLowerCase().startsWith('aprob')) {
+            alert('No puede editar una solicitud aprobada.');
+            return;
+          }
+
+          // Validar stock suficiente en una sola consulta (evita múltiples fetch y reduce errores de conexión)
+          if (itemsConsumidosValidos.length > 0) {
+            const codigosConsumidos = itemsConsumidosValidos.map(i => i.codigo).filter(Boolean);
+            let query = window.supabaseClient
+              .from('stock_actual_con_precio')
+              .select('material_codigo, existencia');
+            if (codigosConsumidos.length === 1) {
+              query = query.eq('material_codigo', codigosConsumidos[0]);
+            } else {
+              query = query.in('material_codigo', codigosConsumidos);
+            }
+            const { data: stockRows, error: errValStock } = await query;
+
+            if (errValStock) {
+              const msg = errValStock?.message || '';
+              if (msg.includes('Failed to fetch') || msg.includes('Connection')) {
+                alert('⚠️ No se pudo validar stock por una falla de conexión con Supabase. Verifique su red e intente de nuevo.');
+                return;
+              }
+              throw errValStock;
+            }
+
+            const stockMap = new Map();
+            (stockRows || []).forEach(row => {
+              stockMap.set(row.material_codigo, row.existencia || 0);
+            });
+
+            for (const item of itemsConsumidosValidos) {
+              const existencia = stockMap.get(item.codigo) ?? 0;
+              if (existencia < item.cantidad) {
+                alert(`⚠️ No puede consumir más de lo disponible para ${item.nombre}.`);
+                return;
+              }
+            }
+          }
+
+          let numeroSolicitud = editingNumeroSolicitud;
+          let solicitudId = editingSolicitudId;
+
+          if (!esEdicion) {
+            numeroSolicitud = await generarNumeroSolicitud();
+            const { data: solicitud, error: errSolicitud } = await window.supabaseClient
+              .from('solicitudes_fabricacion')
+              .insert([{
+                numero_solicitud: numeroSolicitud,
+                responsable: responsable,
+                fecha: fecha,
+                estado: 'pendiente_aprobacion',
+                observaciones: 'Solicitud de fabricación con materiales consumidos y producidos'
+              }])
+              .select('id');
+
+            if (errSolicitud) throw errSolicitud;
+            solicitudId = solicitud?.[0]?.id;
+          } else {
+            const { error: errUpdate } = await window.supabaseClient
+              .from('solicitudes_fabricacion')
+              .update({
+                responsable,
+                fecha,
+                estado: estadoSolicitud
+              })
+              .eq('id', editingSolicitudId);
+            if (errUpdate) throw errUpdate;
+
+            // Limpiar ítems previos antes de reinsertar
+            await window.supabaseClient
+              .from('materiales_consumidos_fabricacion')
+              .delete()
+              .eq('solicitud_id', editingSolicitudId);
+            await window.supabaseClient
+              .from('materiales_producidos_fabricacion')
+              .delete()
+              .eq('solicitud_id', editingSolicitudId);
+          }
+
+          if (!solicitudId) {
+            throw new Error('No se pudo obtener el ID de la solicitud.');
+          }
+
+          // Guardar materiales consumidos
+          if (itemsConsumidosValidos.length > 0) {
+            const itemsConsumidos = itemsConsumidosValidos.map(item => ({
+              solicitud_id: solicitudId,
+              material_codigo: item.codigo,
+              cantidad: item.cantidad,
+              observacion: item.observacion
+            }));
+
+            const { error: errConsumidos } = await window.supabaseClient
+              .from('materiales_consumidos_fabricacion')
+              .insert(itemsConsumidos);
+
+            if (errConsumidos) throw errConsumidos;
+          }
+
+          // Guardar materiales producidos
+          if (itemsProducidosValidos.length > 0) {
+            const itemsProducidos = itemsProducidosValidos.map(item => ({
+              solicitud_id: solicitudId,
+              material_codigo: item.codigo,
+              nombre: item.nombre,
+              bodega: item.bodega,
+              cantidad: item.cantidad,
+              observacion: item.observacion
+            }));
+
+            const { error: errProducidos } = await window.supabaseClient
+              .from('materiales_producidos_fabricacion')
+              .insert(itemsProducidos);
+
+            if (errProducidos) throw errProducidos;
+          }
+
+          // Guardar datos para PDF (snapshot de lo enviado)
+          estado.datosFormulario = {
+            responsable,
+            fecha: new Date(fecha).toLocaleDateString('es-NI'),
+            numeroRegistro: numeroSolicitud
+          };
+          estado.pdfData = {
+            datosFormulario: { ...estado.datosFormulario },
+            itemsConsumidos: itemsConsumidosValidos.map(i => ({ ...i })),
+            itemsProducidos: itemsProducidosValidos.map(i => ({ ...i }))
+          };
+
+          document.getElementById('modal-fabricacion').style.display = 'flex';
+          alert(esEdicion ? `✅ Solicitud ${numeroSolicitud} actualizada.` : `✅ Solicitud ${numeroSolicitud} enviada exitosamente.`);
+          editingSolicitudId = solicitudId;
+          editingNumeroSolicitud = numeroSolicitud;
+          editingSolicitudEstado = estadoSolicitud;
+          await cargarSolicitudesList();
+
+        } catch (err) {
+          console.error('Error al guardar fabricación:', err);
+          alert('❌ Error al guardar: ' + err.message);
+          btnGuardar.disabled = false;
+          btnGuardar.textContent = 'Enviar Solicitud';
+        }
+      }
+
+      // =============================================================================
+      // 🔹 GENERAR PDF
+      // =============================================================================
+      async function asegurarDatosPDF() {
+        // Si ya tenemos snapshot completo, no hacer nada
+        const df = estado.pdfData?.datosFormulario;
+        if (df?.responsable && df?.numeroRegistro && df?.fecha) return true;
+
+        // Si no hay solicitud activa, no podemos rehidratar
+        if (!editingSolicitudId) return false;
+
+        try {
+          // Traer cabecera de la solicitud
+          const { data: sol, error: errSol } = await window.supabaseClient
+            .from('solicitudes_fabricacion')
+            .select('numero_solicitud, responsable, fecha')
+            .eq('id', editingSolicitudId)
+            .single();
+          if (errSol || !sol) return false;
+
+          // Traer ítems
+          const { data: cons } = await window.supabaseClient
+            .from('materiales_consumidos_fabricacion')
+            .select('material_codigo, cantidad, observacion')
+            .eq('solicitud_id', editingSolicitudId);
+
+          const { data: prod } = await window.supabaseClient
+            .from('materiales_producidos_fabricacion')
+            .select('material_codigo, nombre, bodega, cantidad, observacion')
+            .eq('solicitud_id', editingSolicitudId);
+
+          // Obtener nombres/bodegas de stock para los consumidos
+          const cods = Array.from(new Set((cons || []).map(c => c.material_codigo).filter(Boolean)));
+          let stockData = [];
+          if (cods.length > 0) {
+            let query = window.supabaseClient.from('stock_actual_con_precio').select('material_codigo, material_nombre, bodega_principal, precio_promedio');
+            if (cods.length === 1) {
+              query = query.eq('material_codigo', cods[0]);
+            } else {
+              query = query.in('material_codigo', cods);
+            }
+            const { data } = await query;
+            stockData = data || [];
+          }
+          const stockMap = new Map();
+          stockData.forEach(s => stockMap.set(s.material_codigo, {
+            nombre: s.material_nombre,
+            bodega_principal: s.bodega_principal,
+            precio_promedio: s.precio_promedio || 0
+          }));
+
+          const itemsConsumidos = (cons || []).map(c => ({
+            codigo: c.material_codigo,
+            nombre: stockMap.get(c.material_codigo)?.nombre || 'Sin nombre',
+            precio_promedio: stockMap.get(c.material_codigo)?.precio_promedio ?? 0,
+            cantidad: c.cantidad,
+            observacion: c.observacion || ''
+          }));
+
+          const itemsProducidos = (prod || []).map(p => ({
+            codigo: p.material_codigo,
+            nombre: p.nombre || 'Sin nombre',
+            bodega: p.bodega || stockMap.get(p.material_codigo)?.bodega_principal || 'Sin bodega',
+            cantidad: p.cantidad,
+            observacion: p.observacion || ''
+          }));
+
+          estado.datosFormulario = {
+            responsable: sol.responsable,
+            fecha: new Date(sol.fecha || Date.now()).toLocaleDateString('es-NI'),
+            numeroRegistro: sol.numero_solicitud
+          };
+
+          estado.pdfData = {
+            datosFormulario: { ...estado.datosFormulario },
+            itemsConsumidos,
+            itemsProducidos
+          };
+
+          return true;
+        } catch (e) {
+          console.error('Error rehidratando datos para PDF:', e);
+          return false;
+        }
+      }
+
+      async function generarPDFFabricacion() {
+        await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js', () => typeof window.html2pdf !== 'undefined');
+
+        const ok = await asegurarDatosPDF();
+        const pdfState = estado.pdfData || {
+          datosFormulario: estado.datosFormulario,
+          itemsConsumidos: estado.itemsConsumidos,
+          itemsProducidos: estado.itemsProducidos
+        };
+
+        const datos = pdfState.datosFormulario || {};
+        const itemsConsumidos = pdfState.itemsConsumidos || [];
+        const itemsProducidos = pdfState.itemsProducidos || [];
+
+        if (!datos.responsable || !datos.numeroRegistro || !datos.fecha || !ok) {
+          alert('⚠️ No hay datos de solicitud para el PDF. Guarde la solicitud antes de imprimir.');
+          return;
+        }
+
+        const tablaConsumidos = itemsConsumidos.map(item => `
+          <tr style="font-size: 9pt;">
+            <td style="padding: 6pt; border: 1px solid #ddd;">${item.codigo}</td>
+            <td style="padding: 6pt; border: 1px solid #ddd;">${item.nombre}</td>
+            <td style="padding: 6pt; border: 1px solid #ddd; text-align: center;">${formatearPrecio(item.precio_promedio)}</td>
+            <td style="padding: 6pt; border: 1px solid #ddd; text-align: center;">${item.cantidad}</td>
+            <td style="padding: 6pt; border: 1px solid #ddd;">${item.observacion || ''}</td>
+          </tr>
+        `).join('');
+
+        const tablaProducidos = itemsProducidos.map(item => `
+          <tr style="font-size: 9pt;">
+            <td style="padding: 6pt; border: 1px solid #ddd;">${item.codigo}</td>
+            <td style="padding: 6pt; border: 1px solid #ddd;">${item.nombre}</td>
+            <td style="padding: 6pt; border: 1px solid #ddd;">${item.bodega}</td>
+            <td style="padding: 6pt; border: 1px solid #ddd; text-align: center;">${item.cantidad}</td>
+            <td style="padding: 6pt; border: 1px solid #ddd;">${item.observacion || ''}</td>
+          </tr>
+        `).join('');
+
+        const contenido = `
+          <div style="width: 185mm; font-family: Arial, sans-serif; color: #333; font-size: 10pt;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10pt; border-bottom: 2px solid #c2410c; padding-bottom: 6pt;">
+              <img src="assets/logo.png" alt="Logo" style="height: 20mm; margin-right: 8mm;">
+              <div style="text-align: center; flex: 1;">
+                <h1 style="color: #c2410c; margin: 0; font-size: 16pt;">SOLICITUD DE FABRICACIÓN</h1>
+                <p style="margin: 3pt 0 0 0; color: #555; font-size: 9pt;">Pendiente de Aprobación de Contabilidad</p>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 24pt; font-weight: bold; color: #c2410c; letter-spacing: 1px;">${datos.numeroRegistro || 'MAN-00001'}</div>
+                <div style="font-size: 9pt; color: #777;">Fecha: ${datos.fecha}</div>
+              </div>
+            </div>
+            
+            <div style="background: #fff3cd; padding: 8pt; border-radius: 4pt; margin-bottom: 12pt; font-size: 9pt; border: 1px solid #fde047;">
+              <p><strong>Responsable de Manufactura:</strong> ${datos.responsable}</p>
+              <p><strong>Estado:</strong> Pendiente de Aprobación</p>
+            </div>
+            
+            ${itemsConsumidos.length > 0 ? `
+            <h3 style="color: #dc2626; margin: 12pt 0 6pt 0; font-size: 12pt; border-bottom: 1px solid #ccc; padding-bottom: 3pt;">Materiales a Consumir (Dar de Baja)</h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
+              <thead>
+                <tr style="background: #dc2626; color: white;">
+                  <th style="padding: 6pt; border: 1px solid #ddd; text-align: left;">Código</th>
+                  <th style="padding: 6pt; border: 1px solid #ddd; text-align: left;">Nombre</th>
+                  <th style="padding: 6pt; border: 1px solid #ddd; text-align: center;">Precio prom.</th>
+                  <th style="padding: 6pt; border: 1px solid #ddd; text-align: center;">Cantidad</th>
+                  <th style="padding: 6pt; border: 1px solid #ddd; text-align: left;">Observación</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${tablaConsumidos}
+              </tbody>
+            </table>
+            ` : ''}
+            
+            ${itemsProducidos.length > 0 ? `
+            <h3 style="color: #059669; margin: 12pt 0 6pt 0; font-size: 12pt; border-bottom: 1px solid #ccc; padding-bottom: 3pt; margin-top: 20pt;">Materiales a Producir (Nuevo Inventario)</h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
+              <thead>
+                <tr style="background: #059669; color: white;">
+                  <th style="padding: 6pt; border: 1px solid #ddd; text-align: left;">Código</th>
+                  <th style="padding: 6pt; border: 1px solid #ddd; text-align: left;">Nombre</th>
+                  <th style="padding: 6pt; border: 1px solid #ddd; text-align: left;">Bodega</th>
+                  <th style="padding: 6pt; border: 1px solid #ddd; text-align: center;">Cantidad</th>
+                  <th style="padding: 6pt; border: 1px solid #ddd; text-align: left;">Observación</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${tablaProducidos}
+              </tbody>
+            </table>
+            ` : ''}
+            
+            <div style="margin-top: 20mm; display: flex; justify-content: space-around;">
+              <div style="text-align: center; width: 45%;">
+                <div style="border-top: 1px solid black; padding-top: 5pt; font-weight: bold;">${datos.responsable}</div>
+                <p style="margin: 5pt 0 0 0; font-size: 8pt;">Responsable de Manufactura</p>
+              </div>
+              <div style="text-align: center; width: 45%;">
+                <div style="border-top: 1px solid black; padding-top: 5pt; font-weight: bold;">Contabilidad</div>
+                <p style="margin: 5pt 0 0 0; font-size: 8pt;">Aprueba</p>
+              </div>
+            </div>
+            
+            <div style="margin-top: 10mm; text-align: center; font-size: 9pt; color: #666; border-top: 1px solid #eee; padding-top: 4pt;">
+              Original – Contabilidad
+            </div>
+            <div style="background: #fff3cd; color: #856404; padding: 4pt; font-size: 9pt; text-align: center; border: 1px dashed #ffeaa7; margin-top: 8pt;">
+              ⚠️ PENDIENTE DE APROBACIÓN – NO AFECTA INVENTARIO
+            </div>
+          </div>
+        `;
+
+        window.html2pdf()
+          .set({
+            margin: [15, 15, 15, 15],
+            filename: `Solicitud_Fabricacion_${datos.numeroRegistro}.pdf`,
+            html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+            jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
+          })
+          .from(contenido)
+          .save();
+      }
+
+      // =============================================================================
+      // 🔹 INICIALIZACIÓN
+      // =============================================================================
+      function initFabricacion() {
+        document.getElementById('fab-refresh-list').addEventListener('click', cargarSolicitudesList);
+        document.getElementById('btn-abrir-modal-consumidos').addEventListener('click', () => abrirModalManufacturado('consumido'));
+        document.getElementById('btn-abrir-modal-producidos').addEventListener('click', () => abrirModalManufacturado('producido'));
+        document.getElementById('btn-guardar-fabricacion').addEventListener('click', guardarFabricacion);
+        document.getElementById('btn-limpiar-fabricacion').addEventListener('click', () => {
+          estado = { itemsConsumidos: [], itemsProducidos: [], datosFormulario: {}, pdfData: null };
+          editingSolicitudId = null;
+          editingSolicitudEstado = null;
+          editingNumeroSolicitud = null;
+          renderTablaConsumidos();
+          renderTablaProducidos();
+          const btnGuardar = document.getElementById('btn-guardar-fabricacion');
+          btnGuardar.disabled = false;
+          btnGuardar.textContent = 'Enviar Solicitud';
+        });
+        document.getElementById('btn-imprimir-fabricacion').addEventListener('click', async () => {
+          await generarPDFFabricacion();
+          document.getElementById('modal-fabricacion').style.display = 'none';
+          estado = { itemsConsumidos: [], itemsProducidos: [], datosFormulario: {}, pdfData: null };
+          editingSolicitudId = null;
+          editingSolicitudEstado = null;
+          editingNumeroSolicitud = null;
+          document.getElementById('responsable-manufactura').value = '';
+          document.getElementById('fecha-manufactura').value = '';
+          renderTablaConsumidos();
+          renderTablaProducidos();
+          const btnGuardar = document.getElementById('btn-guardar-fabricacion');
+          btnGuardar.disabled = false;
+          btnGuardar.textContent = 'Enviar Solicitud';
+        });
+        document.getElementById('btn-cerrar-fabricacion').addEventListener('click', () => {
+          document.getElementById('modal-fabricacion').style.display = 'none';
+          estado = { itemsConsumidos: [], itemsProducidos: [], datosFormulario: {}, pdfData: null };
+          editingSolicitudId = null;
+          editingSolicitudEstado = null;
+          editingNumeroSolicitud = null;
+          document.getElementById('responsable-manufactura').value = '';
+          document.getElementById('fecha-manufactura').value = '';
+          renderTablaConsumidos();
+          renderTablaProducidos();
+        });
+
+        cargarDatos();
+        cargarSolicitudesList();
+      }
+
+      initFabricacion();
+    }, 50);
+  </script>
+  </div>
+</body>
+</html>

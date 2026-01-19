@@ -1,0 +1,33 @@
+<!-- desktop/modules/ventas/ventas.html -->
+<div class="ventas-container">
+  <!-- Menú lateral -->
+  <div class="ventas-menu-lateral">
+    <h3 style="color: white; margin-bottom: 20px; font-size: 18px;">📋 Clientes</h3>
+    <button class="ventas-submenu-btn" data-vista="clientes-crear">✅ Crear Nuevo</button>
+    <button class="ventas-submenu-btn" data-vista="clientes-base">📄 Base de clientes</button>
+    
+
+    <h3 style="color: white; margin: 25px 0 15px; font-size: 18px;">💼 Cotizaciones</h3>
+    <button class="ventas-submenu-btn" data-vista="cotizaciones-cotizacion">📝 Crear Cotización</button>
+    <button class="ventas-submenu-btn" data-vista="cotizaciones-modificar">✏️ Modificar Cotización</button>
+
+    <h3 style="color: white; margin: 25px 0 15px; font-size: 18px;">🔧 Servicios</h3>
+    <button class="ventas-submenu-btn" data-vista="servicios-crear">🛠️ Crear Servicio</button>
+    <button class="ventas-submenu-btn" data-vista="servicios-modificar">✏️ Modificar Servicio</button>
+
+    <h3 style="color: white; margin: 25px 0 15px; font-size: 18px;">🔧 Activos</h3>
+    <button class="ventas-submenu-btn" data-vista="ventasactivo-ventasactivo">💰 Registro de Venta de Activos</button>
+
+    <h3 style="color: white; margin: 25px 0 15px; font-size: 18px;"> 🏟️ Eventos</h3>
+    <button class="ventas-submenu-btn" data-vista="eventos-creareventos"> 🏗️ Registro de Eventos</button>
+    <button class="ventas-submenu-btn" data-vista="eventos-listareventos">📅 Lista de Eventos</button>
+
+    <h3 style="color: white; margin: 25px 0 15px; font-size: 18px;">📊 Exportar Datos</h3>
+    <button class="ventas-submenu-btn" onclick="exportarVentasAExcel()">📊 Exportar Ventas a Excel</button>
+  </div>
+
+  <!-- Área dinámica -->
+  <div class="ventas-area-dinamica">
+    <p style="color: #666; font-size: 18px;">Selecciona una opción del menú para comenzar.</p>
+  </div>
+</div>

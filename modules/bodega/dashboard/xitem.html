@@ -1,0 +1,385 @@
+<!-- desktop/modules/bodega/dashboard/xitem.html -->
+<div style="display: flex; gap: 20px; height: 100%;">
+
+  <!-- ÁREA PRINCIPAL (todo ocupa el ancho) -->
+  <div style="flex: 1; display: flex; flex-direction: column; gap: 20px;">
+
+    <!-- INFORMER GENERAL (KPIs) -->
+    <div style="display: flex; gap: 20px; justify-content: flex-start;">
+      <div class="bodega-resumen-card">
+        <div>Existencia Actual</div>
+        <div class="valor" id="kpi-existencia">–</div>
+      </div>
+      <div class="bodega-resumen-card">
+        <div>Ingresos Totales</div>
+        <div class="valor" id="kpi-ingresos">–</div>
+      </div>
+      <div class="bodega-resumen-card">
+        <div>Despachos Totales</div>
+        <div class="valor" id="kpi-despachos">–</div>
+      </div>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="bodega-filtros">
+      <div class="bodega-filtro-grupo">
+        <label for="filtro-item">Ítem</label>
+        <select id="filtro-item" class="dashboard-select">
+          <option value="">Seleccione un ítem...</option>
+        </select>
+      </div>
+      <button id="btn-exportar-xitem" class="bodega-export-pdf-btn">📄 Exportar Historial</button>
+    </div>
+
+    <!-- TABLA DE MOVIMIENTOS -->
+    <div id="tabla-historial-item" style="flex: 1; overflow: auto;">
+      <p style="color: #cbd5e1; text-align: center; margin-top: 40px;">
+        Seleccione un ítem para ver su historial de movimientos.
+      </p>
+    </div>
+
+  </div>
+</div>
+
+<style>
+.bodega-resumen-card {
+  background: rgba(20, 30, 60, 0.6);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  color: #cbd5e1;
+  min-width: 160px;
+}
+
+.bodega-resumen-card .valor {
+  font-size: 24px;
+  font-weight: bold;
+  color: #64b5f6;
+  margin: 4px 0 0 0;
+}
+</style>
+
+<script>
+(function() {
+  const supa = window.supabaseClient;
+  if (!supa) {
+    console.error('❌ Supabase no está inicializado (window.supabaseClient).');
+  }
+
+  const estado = {
+    catalogo: [],
+    historialActual: [],
+    itemActual: null
+  };
+
+  function fmtFechaHora(iso) {
+    if (!iso) return { fecha: '–', hora: '' };
+    const d = new Date(iso);
+    const fecha = isNaN(d.getTime()) ? String(iso) : d.toLocaleDateString('es-NI');
+    const hora = isNaN(d.getTime()) ? '' : d.toLocaleTimeString('es-NI', { hour: '2-digit', minute: '2-digit' });
+    return { fecha, hora };
+  }
+
+  function capitalizar(txt) {
+    const s = (txt || '').toString();
+    return s ? s.charAt(0).toUpperCase() + s.slice(1) : '–';
+  }
+
+  function formatearOrigenDestino(m) {
+    // m = fila de movimientos_bodega
+    if (m.tipo_movimiento === 'ingreso') {
+      const prov = (m.proveedor || '').toString().trim();
+      const fac = (m.numero_factura || '').toString().trim();
+      if (prov && fac) return `Compra ${prov} (${fac})`;
+      if (prov) return `Compra ${prov}`;
+      return 'Ingreso';
+    }
+    if (m.tipo_movimiento === 'venta') {
+      return `Venta ${m.referencia_documento || ''}`.trim();
+    }
+    if (m.tipo_movimiento === 'despacho') {
+      return (m.observaciones || `Despacho ${m.referencia_documento || ''}`).toString();
+    }
+    return (m.referencia_tipo || m.observaciones || '–').toString();
+  }
+
+  async function cargarCatalogoParaSelect() {
+    if (!supa) return;
+    const sel = document.getElementById('filtro-item');
+    if (!sel) return;
+
+    sel.innerHTML = '<option value="">Cargando ítems…</option>';
+
+    const { data, error } = await supa
+      .from('catalogo')
+      .select('codigo, nombre, bodega_principal, bodega_secundaria')
+      .eq('es_contenedor', false)
+      .order('codigo', { ascending: true });
+
+    if (error) {
+      console.error('Error cargando catalogo:', error);
+      sel.innerHTML = '<option value="">Error cargando ítems</option>';
+      return;
+    }
+
+    estado.catalogo = (data || []).map(it => {
+      const principal = (it.bodega_principal || '').toString().trim();
+      const secundaria = (it.bodega_secundaria || '').toString().trim();
+      return {
+        ...it,
+        bodega: secundaria || principal
+      };
+    });
+
+    const opts = ['<option value="">Seleccione un ítem...</option>'];
+    (estado.catalogo || []).forEach(it => {
+      const codigo = String(it.codigo || '').trim();
+      if (!codigo) return;
+      opts.push(`<option value="${codigo}">${codigo}</option>`);
+    });
+    sel.innerHTML = opts.join('');
+  }
+
+  async function obtenerExistenciaActual(codigo) {
+    if (!supa || !codigo) return 0;
+    try {
+      const { data, error } = await supa
+        .rpc('stock_actual_codigo', { material_codigo_input: codigo });
+      if (error) throw error;
+      if (Array.isArray(data)) return Number(data[0]?.existencia) || 0;
+      if (data && typeof data === 'object') return Number(data.existencia) || 0;
+      return 0;
+    } catch (e) {
+      console.warn('No se pudo obtener stock_actual_codigo:', e);
+      return 0;
+    }
+  }
+
+  async function cargarMovimientosPorItem(codigo) {
+    if (!supa || !codigo) return [];
+
+    const { data, error } = await supa
+      .from('movimientos_bodega')
+      .select('fecha_movimiento, tipo_movimiento, referencia_documento, referencia_tipo, responsable, proveedor, numero_factura, cantidad, signo, observaciones')
+      .eq('material_codigo', codigo)
+      .order('fecha_movimiento', { ascending: false });
+
+    if (error) {
+      console.error('Error cargando movimientos_bodega:', error);
+      throw error;
+    }
+
+    return data || [];
+  }
+
+  async function renderizarHistorial(codigo) {
+    const contenedor = document.getElementById('tabla-historial-item');
+    if (!codigo) {
+      contenedor.innerHTML = '<p style="color: #cbd5e1; text-align: center; margin-top: 40px;">Seleccione un ítem para ver su historial de movimientos.</p>';
+      document.getElementById('kpi-existencia').textContent = '–';
+      document.getElementById('kpi-ingresos').textContent = '–';
+      document.getElementById('kpi-despachos').textContent = '–';
+      estado.historialActual = [];
+      estado.itemActual = null;
+      return;
+    }
+
+    contenedor.innerHTML = '<p style="color:#cbd5e1; text-align:center; margin-top: 40px;">Cargando historial…</p>';
+
+    const item = (estado.catalogo || []).find(i => String(i.codigo || '').trim() === String(codigo || '').trim()) || null;
+    estado.itemActual = item;
+
+    let movimientos = [];
+    try {
+      movimientos = await cargarMovimientosPorItem(codigo);
+    } catch (e) {
+      contenedor.innerHTML = `<p style="color:#ef4444; text-align:center; margin-top: 40px;">Error al cargar movimientos: ${e.message || e}</p>`;
+      return;
+    }
+
+    const existencia = await obtenerExistenciaActual(codigo);
+    const ingresos = movimientos
+      .filter(m => Number(m.signo) === 1)
+      .reduce((sum, m) => sum + (Number(m.cantidad) || 0), 0);
+    const despachos = movimientos
+      .filter(m => Number(m.signo) === -1)
+      .reduce((sum, m) => sum + (Number(m.cantidad) || 0), 0);
+
+    document.getElementById('kpi-existencia').textContent = existencia;
+    document.getElementById('kpi-ingresos').textContent = ingresos;
+    document.getElementById('kpi-despachos').textContent = despachos;
+
+    const historial = movimientos.map(m => {
+      const { fecha, hora } = fmtFechaHora(m.fecha_movimiento);
+      const qty = Number(m.cantidad) || 0;
+      const signo = Number(m.signo);
+      return {
+        fecha,
+        hora,
+        tipo: capitalizar(m.tipo_movimiento),
+        documento: m.referencia_documento || '–',
+        quienEntrega: m.responsable || '–',
+        quienRecibe: '–',
+        cantidadIngreso: signo === 1 ? qty : 0,
+        cantidadSalida: signo === -1 ? qty : 0,
+        cantidadFaltante: 0,
+        origenDestino: formatearOrigenDestino(m)
+      };
+    });
+
+    estado.historialActual = historial;
+
+    if (!historial.length) {
+      contenedor.innerHTML = '<p style="color: #666; text-align: center; margin-top: 40px;">No hay movimientos registrados para este ítem.</p>';
+      return;
+    }
+
+    let filas = '';
+    historial.forEach(m => {
+      filas += `<tr>
+        <td>${m.fecha} ${m.hora}</td>
+        <td>${m.tipo}</td>
+        <td>${m.documento}</td>
+        <td>${m.quienEntrega}</td>
+        <td>${m.quienRecibe}</td>
+        <td>${m.cantidadIngreso}</td>
+        <td>${m.cantidadSalida}</td>
+        <td>${m.cantidadFaltante}</td>
+        <td>${m.origenDestino}</td>
+      </tr>`;
+    });
+
+    contenedor.innerHTML = `
+      <div style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid rgba(156,163,175,0.2);">
+        <strong>Ítem:</strong> ${item ? `${item.codigo} – ${item.nombre}` : codigo}<br>
+        <strong>Bodega:</strong> ${item ? item.bodega : '–'}
+      </div>
+      <table class="bodega-table">
+        <thead>
+          <tr>
+            <th>Fecha y Hora</th>
+            <th>Tipo</th>
+            <th>Documento</th>
+            <th>Quién Entrega</th>
+            <th>Quién Recibe</th>
+            <th>Ingreso</th>
+            <th>Salida</th>
+            <th>Faltante</th>
+            <th>Origen/Destino</th>
+          </tr>
+        </thead>
+        <tbody>${filas}</tbody>
+      </table>`;
+  }
+
+  document.getElementById('filtro-item').addEventListener('change', e => {
+    renderizarHistorial(e.target.value);
+  });
+    // === FUNCIÓN DE EXPORTACIÓN A PDF COMPLETA ===
+  document.getElementById('btn-exportar-xitem').addEventListener('click', () => {
+    if (typeof html2pdf === 'undefined') {
+      alert('html2pdf no está cargado.');
+      return;
+    }
+
+    const codigoItem = document.getElementById('filtro-item').value;
+    if (!codigoItem) {
+      alert('Por favor, seleccione un ítem primero.');
+      return;
+    }
+
+    const item = estado.itemActual;
+    if (!item || item.codigo !== codigoItem) {
+      alert('Seleccione el ítem y espere a que cargue el historial.');
+      return;
+    }
+
+    const historial = estado.historialActual || [];
+    if (!historial.length) {
+      alert('No hay movimientos para exportar.');
+      return;
+    }
+
+    // === CONSTRUIR EL CONTENIDO DE LA TABLA PARA EL PDF ===
+    let filasPDF = '';
+    historial.forEach(m => {
+      filasPDF += `
+        <tr>
+          <td>${m.fecha} ${m.hora}</td>
+          <td>${m.tipo}</td>
+          <td>${m.documento}</td>
+          <td>${m.quienEntrega}</td>
+          <td>${m.quienRecibe}</td>
+          <td>${m.cantidadIngreso}</td>
+          <td>${m.cantidadSalida}</td>
+          <td>${m.cantidadFaltante}</td>
+          <td>${m.origenDestino}</td>
+        </tr>
+      `;
+    });
+
+    // === CONSTRUIR EL HTML PARA EL PDF (DISEÑO DE IMPRESIÓN) ===
+    const htmlPDF = `
+      <div style="font-family: Arial, sans-serif; padding: 20px; color: #000; width: 100%;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <img src="assets/logo.png" style="height: 60px; margin-bottom: 16px;">
+          <h2 style="color: #1e40af; margin: 0; font-size: 22px;">Historial de Movimientos por Ítem</h2>
+          <p style="margin: 8px 0 0 0; color: #333; font-size: 14px;">
+            <strong>Ítem:</strong> ${item.codigo} – ${item.nombre}<br>
+            <strong>Bodega:</strong> ${item.bodega}
+          </p>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 11px;">
+          <thead>
+            <tr style="background-color: #f1f5f9; border-bottom: 2px solid #cbd5e1;">
+              <th style="padding: 8px; text-align: left; border-right: 1px solid #e2e8f0;">Fecha y Hora</th>
+              <th style="padding: 8px; text-align: left; border-right: 1px solid #e2e8f0;">Tipo</th>
+              <th style="padding: 8px; text-align: left; border-right: 1px solid #e2e8f0;">Documento</th>
+              <th style="padding: 8px; text-align: left; border-right: 1px solid #e2e8f0;">Quién Entrega</th>
+              <th style="padding: 8px; text-align: left; border-right: 1px solid #e2e8f0;">Quién Recibe</th>
+              <th style="padding: 8px; text-align: left; border-right: 1px solid #e2e8f0;">Ingreso</th>
+              <th style="padding: 8px; text-align: left; border-right: 1px solid #e2e8f0;">Salida</th>
+              <th style="padding: 8px; text-align: left; border-right: 1px solid #e2e8f0;">Faltante</th>
+              <th style="padding: 8px; text-align: left;">Origen/Destino</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filasPDF}
+          </tbody>
+        </table>
+
+        <div style="margin-top: 40px; text-align: center; font-size: 11px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 16px;">
+          <p>Documento generado por Absolute de Nicaragua</p>
+          <p>Original Bodega • Copia Caceta y Seguridad • Copia Encargado</p>
+        </div>
+      </div>
+    `;
+
+    // === GENERAR EL PDF ===
+    html2pdf().from(htmlPDF).set({
+      margin: 15, // 15mm en todos los lados
+      filename: `Historial_Item_${item.codigo.replace(/ /g, '_')}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { 
+        scale: 2, 
+        useCORS: true,
+        backgroundColor: '#ffffff' // Fondo blanco obligatorio para impresión
+      },
+      jsPDF: { 
+        unit: 'mm', 
+        format: 'letter', 
+        orientation: 'landscape' 
+      }
+    }).save();
+  });
+
+  // === INICIALIZACIÓN ===
+  (async function init() {
+    await cargarCatalogoParaSelect();
+  })();
+})();
+
+
+</script>

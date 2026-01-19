@@ -1,0 +1,74 @@
+<link rel="stylesheet" href="./modules/contabilidad/contabilidad.css">
+
+<div class="con-container">
+    <div class="con-menu-lateral">
+        <div class="con-brand-section">
+            <h2 class="con-module-title">💰 Contabilidad</h2>
+            <p class="con-module-subtitle">Módulo Administrativo</p>
+        </div>
+
+        <h3 class="con-menu-section-title">📊 Finanzas</h3>
+        <button class="con-submenu-btn" data-vista="con-dashboard">📈 Dashboard Financiero</button>
+        <button class="con-submenu-btn" data-vista="con-facturacion">📑 Facturación</button>
+        <button class="con-submenu-btn" data-vista="con-pagos">💳 Control de Pagos</button>
+
+        <h3 class="con-menu-section-title">🛒 Compras</h3>
+        <button class="con-submenu-btn" data-vista="com-solicitudes">📩 Solicitudes Recibidas</button>
+        <button class="con-submenu-btn" data-vista="com-ordenes">📝 Órdenes de Compra</button>
+        <button class="con-submenu-btn" data-vista="com-proveedores">🤝 Proveedores</button>
+        <button class="con-submenu-btn" data-vista="com-bajas">🗑️ Bajas de Inventario</button>
+        <button class="con-submenu-btn" data-vista="com-manufacturados">🔧 Manufacturados</button>
+
+        <h3 class="con-menu-section-title">📋 Reportes</h3>
+        <button class="con-submenu-btn" data-vista="con-tab-reporte">📅 Reporte Mensual</button>
+
+        <h3 class="con-menu-section-title">📊 Exportar Datos</h3>
+        <button class="con-submenu-btn" onclick="exportarContabilidadAExcel()">📊 Exportar Contabilidad a Excel</button>
+    </div>
+
+    <div class="con-area-dinamica">
+        <div class="con-encabezado">
+            <h1 class="con-titulo">Sistema Contable y Compras</h1>
+            <p class="con-subtitulo">Gestión de recursos, egresos y adquisiciones de la empresa.</p>
+        </div>
+
+        <div class="con-dashboard-tabs">
+            <button class="con-tab-btn active" data-vista="con-dashboard">Resumen Contable</button>
+            <button class="con-tab-btn" data-vista="com-presupuestos">Presupuestos Compras</button>
+        </div>
+
+        <div id="con-tab-panel">
+            <div class="con-placeholder">
+                <p>Seleccione una opción del menú para comenzar...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Usamos el timeout de 100ms solicitado para asegurar carga de datos
+    setTimeout(() => {
+        document.querySelectorAll('.con-tab-btn, .con-submenu-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const vista = e.currentTarget.dataset.vista;
+                
+                // Manejo de clase Active en Tabs
+                if (e.currentTarget.classList.contains('con-tab-btn')) {
+                    document.querySelectorAll('.con-tab-btn').forEach(b => b.classList.remove('active'));
+                    e.currentTarget.classList.add('active');
+                }
+                
+                // Manejo de selección en Menú Lateral
+                if (e.currentTarget.classList.contains('con-submenu-btn')) {
+                    document.querySelectorAll('.con-submenu-btn').forEach(b => {
+                        b.classList.remove('active-item');
+                    });
+                    e.currentTarget.classList.add('active-item');
+                }
+                
+                console.log("Cargando vista:", vista);
+                // Aquí llamarías a tu función loadVista(vista)
+            });
+        });
+    }, 100);
+</script>

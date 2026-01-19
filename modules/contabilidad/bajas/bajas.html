@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestión de Solicitudes de Baja</title>
+  <link rel="stylesheet" href="../contabilidad.css">
+  <link rel="stylesheet" href="../../../styles/app.css">
+  <script src="../../../src/config/supabaseClient.js"></script>
+  <style>
+    /* =============================================================================
+       ESTILOS PROPIOS PARA EL MÓDULO DE BAJAS
+       ============================================================================= */
+   
+    .bajas-textarea {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 100px;
+      transition: border-color 0.3s ease;
+    }
+    
+    .bajas-textarea:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .bajas-modal-btn-cancelar {
+      background: #6b7280;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .bajas-modal-btn-cancelar:hover {
+      background: #4b5563;
+      transform: translateY(-1px);
+    }
+    
+    /* Estilos para estados */
+    .bajas-status-pendiente {
+      background: #fef3c7;
+      color: #92400e;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    
+    .bajas-status-aprobado {
+      background: #d1fae5;
+      color: #065f46;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    
+    .bajas-status-rechazado {
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+   
+  </style>
+</head>
+<body>
+  <div class="bajas-container">
+    <div class="bajas-card">
+      <h1 class="bajas-title">📋 Gestión de Solicitudes de Baja</h1>
+
+      <!-- Filtros -->
+      <div class="bajas-filters">
+        <div class="bajas-filter-col">
+          <label class="bajas-label">Estado</label>
+          <select id="bajas-filtro-estado" class="bajas-select">
+            <option value="todos">Todos los estados</option>
+            <option value="pendiente">Pendiente de Aprobación</option>
+            <option value="completado">Aprobada</option>
+            <option value="rechazado">Rechazada</option>
+          </select>
+        </div>
+        <div class="bajas-filter-col">
+          <label class="bajas-label">Personal que Solicita</label>
+          <input type="text" id="bajas-filtro-personal" class="bajas-input" placeholder="Buscar por nombre...">
+        </div>
+        <div class="bajas-filter-col">
+          <label class="bajas-label">Fecha Desde</label>
+          <input type="date" id="bajas-filtro-desde" class="bajas-input">
+        </div>
+        <div class="bajas-filter-col">
+          <label class="bajas-label">Fecha Hasta</label>
+          <input type="date" id="bajas-filtro-hasta" class="bajas-input">
+        </div>
+      </div>
+
+      <!-- Tabla de solicitudes -->
+      <div class="bajas-table-container">
+        <table class="bajas-table">
+          <thead>
+            <tr>
+              <th>ID Solicitud</th>
+              <th>Personal que Solicita</th>
+              <th>Fecha</th>
+              <th>Motivo</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="bajas-tbody">
+            <!-- Se llenará dinámicamente -->
+          </tbody>
+        </table>
+      </div>
+
+      <div id="bajas-empty" class="bajas-empty" style="display: none;">
+        No hay solicitudes de baja registradas.
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de detalles -->
+  <div id="bajas-modal" class="bajas-modal">
+    <div class="bajas-modal-content">
+      <div class="bajas-modal-header">
+        <h2 class="bajas-modal-title">Detalles de la Solicitud de Baja</h2>
+        <button class="bajas-modal-close">&times;</button>
+      </div>
+      <div class="bajas-modal-body">
+        <div class="bajas-modal-section">
+          <h3 class="bajas-modal-section-title">Información General</h3>
+          <div class="bajas-modal-grid">
+            <div>
+              <div class="bajas-modal-info"><strong>ID Solicitud:</strong> <span id="bajas-modal-id"></span></div>
+              <div class="bajas-modal-info"><strong>Personal que Solicita:</strong> <span id="bajas-modal-personal"></span></div>
+              <div class="bajas-modal-info"><strong>Fecha de Solicitud:</strong> <span id="bajas-modal-fecha"></span></div>
+            </div>
+            <div>
+              <div class="bajas-modal-info"><strong>Motivo General:</strong> <span id="bajas-modal-motivo"></span></div>
+              <div class="bajas-modal-info"><strong>Observación General:</strong> <span id="bajas-modal-obs"></span></div>
+              <div class="bajas-modal-info"><strong>Estado Actual:</strong> <span id="bajas-modal-estado"></span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bajas-modal-section">
+          <h3 class="bajas-modal-section-title">Materiales Solicitados para Baja</h3>
+          <table class="bajas-modal-table">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Cantidad</th>
+                <th>Observación</th>
+              </tr>
+            </thead>
+            <tbody id="bajas-modal-materiales">
+              <!-- Se llenará dinámicamente -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="bajas-modal-actions">
+        <button id="bajas-modal-btn-rechazar" class="bajas-modal-btn bajas-modal-btn-rechazar">Rechazar Solicitud</button>
+        <button id="bajas-modal-btn-aprobar" class="bajas-modal-btn bajas-modal-btn-aprobar">Aprobar Solicitud</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de motivo de rechazo -->
+  <div id="bajas-rechazo-modal" class="bajas-modal">
+    <div class="bajas-modal-content">
+      <div class="bajas-modal-header">
+        <h2 class="bajas-modal-title">Motivo del Rechazo</h2>
+        <button class="bajas-modal-close">&times;</button>
+      </div>
+      <div class="bajas-modal-body">
+        <div class="bajas-modal-section">
+          <label class="bajas-label" for="bajas-rechazo-motivo">Ingrese el motivo del rechazo:</label>
+          <textarea 
+            id="bajas-rechazo-motivo" 
+            class="bajas-textarea" 
+            placeholder="Describa el motivo por el cual se rechaza esta solicitud de baja..."
+            rows="4"
+          ></textarea>
+        </div>
+      </div>
+      <div class="bajas-modal-actions">
+        <button id="bajas-rechazo-btn-cancelar" class="bajas-modal-btn bajas-modal-btn-cancelar">Cancelar</button>
+        <button id="bajas-rechazo-btn-confirmar" class="bajas-modal-btn bajas-modal-btn-rechazar">Confirmar Rechazo</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =============================================================================
+    // 🔹 CARGAR SOLICITUDES DE BAJA DESDE SUPABASE
+    // =============================================================================
+    async function cargarSolicitudes() {
+      try {
+        const { data: solicitudes, error } = await window.supabaseClient
+          .from('bajas_logistica')
+          .select(`
+            id,
+            numero_baja,
+            fecha_baja,
+            estado,
+            observaciones,
+            procesado_por,
+            aprobado_por,
+            fecha_aprobacion,
+            creado_en
+          `)
+          .in('estado', ['pendiente', 'completado', 'rechazado'])
+          .order('creado_en', { ascending: false });
+
+        if (error) {
+          console.error('Error al cargar solicitudes:', error);
+          alert('❌ Error al cargar las solicitudes.');
+          return [];
+        }
+
+        // Para cada solicitud, cargar sus items
+        const solicitudesConItems = await Promise.all(
+          solicitudes.map(async (solicitud) => {
+            const { data: items, error: errorItems } = await window.supabaseClient
+              .from('items_baja_logistica')
+              .select('*')
+              .eq('baja_id', solicitud.id);
+
+            return {
+              ...solicitud,
+              materiales: items || []
+            };
+          })
+        );
+
+        return solicitudesConItems;
+      } catch (e) {
+        console.error('Error al cargar solicitudes:', e);
+        return [];
+      }
+    }
+
+    // =============================================================================
+    // 🔹 CARGAR CATÁLOGO DE MATERIALES
+    // =============================================================================
+    async function cargarMateriales() {
+      try {
+        const { data: materiales, error } = await window.supabaseClient
+          .from('stock_actual_con_precio')
+          .select('material_codigo, material_nombre, existencia');
+
+        if (error) {
+          console.error('Error al cargar materiales:', error);
+          return [];
+        }
+
+        return materiales || [];
+      } catch (e) {
+        console.error('Error al cargar materiales:', e);
+        return [];
+      }
+    }
+
+    // =============================================================================
+    // 🔹 RENDERIZAR TABLA
+    // =============================================================================
+    function renderTabla(solicitudesFiltradas) {
+      const tbody = document.getElementById('bajas-tbody');
+      const empty = document.getElementById('bajas-empty');
+      
+      if (solicitudesFiltradas.length === 0) {
+        tbody.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+      
+      empty.style.display = 'none';
+      tbody.innerHTML = solicitudesFiltradas.map(solicitud => {
+        let estadoHtml = '';
+        const estadoActual = solicitud.estado;
+        if (estadoActual === 'pendiente') {
+          estadoHtml = '<span class="bajas-status-pendiente">Pendiente</span>';
+        } else if (estadoActual === 'completado') {
+          estadoHtml = '<span class="bajas-status-aprobado">Aprobada</span>';
+        } else if (estadoActual === 'rechazado') {
+          estadoHtml = '<span class="bajas-status-rechazado">Rechazada</span>';
+        }
+        
+        const fecha = new Date(solicitud.fecha_baja || solicitud.creado_en).toLocaleDateString('es-ES');
+        const solicitante = solicitud.procesado_por || 'No especificado';
+        
+        return `
+          <tr>
+            <td>${solicitud.numero_baja || solicitud.id}</td>
+            <td>${solicitante}</td>
+            <td>${fecha}</td>
+            <td>${solicitud.observaciones || 'Sin motivo especificado'}</td>
+            <td>${estadoHtml}</td>
+            <td class="bajas-actions">
+              <button class="bajas-btn bajas-btn-ver" data-id="${solicitud.id}">Ver</button>
+              ${(estadoActual === 'pendiente') ? 
+                `<button class="bajas-btn bajas-btn-aprobar" data-id="${solicitud.id}">Aprobar</button>
+                 <button class="bajas-btn bajas-btn-rechazar" data-id="${solicitud.id}">Rechazar</button>` : 
+                ''}
+            </td>
+          </tr>
+        `;
+      }).join('');
+      
+      // Los botones se manejan por delegación desde initBajas para evitar múltiples listeners
+    }
+
+    // =============================================================================
+    // 🔹 FILTRAR SOLICITUDES
+    // =============================================================================
+    function filtrarSolicitudes() {
+      const solicitudes = window.solicitudesGlobal || [];
+      const estado = document.getElementById('bajas-filtro-estado').value;
+      const personal = document.getElementById('bajas-filtro-personal').value.toLowerCase();
+      const desde = document.getElementById('bajas-filtro-desde').value;
+      const hasta = document.getElementById('bajas-filtro-hasta').value;
+      
+      let filtradas = solicitudes;
+      
+      if (estado !== 'todos') {
+        filtradas = filtradas.filter(s => s.estado === estado);
+      }
+      
+      if (personal) {
+        filtradas = filtradas.filter(s => 
+          (s.procesado_por || '').toLowerCase().includes(personal)
+        );
+      }
+      
+      if (desde) {
+        filtradas = filtradas.filter(s => {
+          const fechaSolicitud = new Date(s.fecha_baja || s.creado_en);
+          return fechaSolicitud >= new Date(desde);
+        });
+      }
+      
+      if (hasta) {
+        filtradas = filtradas.filter(s => {
+          const fechaSolicitud = new Date(s.fecha_baja || s.creado_en);
+          return fechaSolicitud <= new Date(hasta);
+        });
+      }
+      
+      renderTabla(filtradas);
+    }
+
+    // =============================================================================
+    // 🔹 VER DETALLES
+    // =============================================================================
+    function verDetalles(idSolicitud) {
+      const solicitudes = window.solicitudesGlobal || [];
+      const solicitud = solicitudes.find(s => String(s.id) === String(idSolicitud));
+      const materiales = window.materialesGlobal || [];
+
+      function isCaseBaseCodigo(codigo) {
+        return (codigo || '').toString().startsWith('CASEBASE|');
+      }
+      function getCaseBaseFromCodigo(codigo) {
+        const s = (codigo || '').toString();
+        if (!s.startsWith('CASEBASE|')) return '';
+        return s.substring('CASEBASE|'.length).trim();
+      }
+      
+      if (!solicitud) {
+        alert('❌ Solicitud no encontrada.');
+        return;
+      }
+      
+      // Información general
+      document.getElementById('bajas-modal-id').textContent = solicitud.numero_baja || solicitud.id;
+      document.getElementById('bajas-modal-personal').textContent = solicitud.procesado_por || 'No especificado';
+      document.getElementById('bajas-modal-fecha').textContent = 
+        new Date(solicitud.fecha_baja || solicitud.creado_en).toLocaleDateString('es-ES');
+      document.getElementById('bajas-modal-motivo').textContent = solicitud.observaciones || 'Sin motivo especificado';
+      document.getElementById('bajas-modal-obs').textContent = '—';
+      
+      // Estado
+      let estadoHtml = '';
+      const estadoActual = solicitud.estado;
+      if (estadoActual === 'pendiente' || estadoActual === 'pendiente_aprobacion') {
+        estadoHtml = '<span class="bajas-status-pendiente">Pendiente de Aprobación</span>';
+      } else if (estadoActual === 'completado') {
+        estadoHtml = '<span class="bajas-status-aprobado">Aprobada</span>';
+      }
+      document.getElementById('bajas-modal-estado').innerHTML = estadoHtml;
+      
+      // Materiales
+      const materialesBody = document.getElementById('bajas-modal-materiales');
+      materialesBody.innerHTML = solicitud.materiales.map(item => {
+        const material = materiales.find(m => String(m.material_codigo) === String(item.codigo_material));
+        const codigoRender = isCaseBaseCodigo(item.codigo_material)
+          ? `CASE ${getCaseBaseFromCodigo(item.codigo_material) || item.nombre_material || 'Case'}`
+          : item.codigo_material;
+        return `
+          <tr>
+            <td>${codigoRender}</td>
+            <td>${item.nombre_material}</td>
+            <td>${item.cantidad_solicitada}</td>
+            <td>${item.observacion || '—'}</td>
+          </tr>
+        `;
+      }).join('');
+      
+      // Mostrar/ocultar botones según estado
+      const btnAprobar = document.getElementById('bajas-modal-btn-aprobar');
+      const btnRechazar = document.getElementById('bajas-modal-btn-rechazar');
+      
+      if (estadoActual === 'pendiente' || estadoActual === 'pendiente_aprobacion') {
+        btnAprobar.style.display = 'inline-block';
+        btnRechazar.style.display = 'inline-block';
+      } else {
+        btnAprobar.style.display = 'none';
+        btnRechazar.style.display = 'none';
+      }
+      
+      // Guardar ID en el modal
+      document.getElementById('bajas-modal').dataset.id = idSolicitud;
+      
+      // Mostrar modal
+      document.getElementById('bajas-modal').style.display = 'flex';
+    }
+
+    // =============================================================================
+    // 🔹 APROBAR SOLICITUD
+    // =============================================================================
+    async function aprobarSolicitud(idSolicitud) {
+      if (!confirm('¿Está seguro de aprobar esta solicitud de baja? Esto reducirá el inventario.')) return;
+      
+      try {
+        // Actualizar estado de la solicitud
+        const { error: errorUpdate } = await window.supabaseClient
+          .from('bajas_logistica')
+          .update({
+            estado: 'completado',
+            aprobado_por: 'Usuario Contabilidad', // TODO: Obtener usuario actual
+            fecha_aprobacion: new Date().toISOString()
+          })
+          .eq('id', idSolicitud);
+
+        if (errorUpdate) {
+          console.error('Error al aprobar solicitud:', errorUpdate);
+          alert('❌ Error al aprobar la solicitud.');
+          return;
+        }
+
+        // Actualizar items a aprobados
+        const { error: errorItems } = await window.supabaseClient
+          .from('items_baja_logistica')
+          .update({
+            estado: 'aprobada',
+            cantidad_bajada: window.supabaseClient.raw('cantidad_solicitada')
+          })
+          .eq('baja_id', idSolicitud);
+
+        if (errorItems) {
+          console.error('Error al actualizar items:', errorItems);
+          alert('❌ Error al actualizar los items de la solicitud.');
+          return;
+        }
+
+        // ✅ AFECTAR EL INVENTARIO
+        const solicitudes = window.solicitudesGlobal || [];
+        const solicitud = solicitudes.find(s => String(s.id) === String(idSolicitud));
+        
+        if (solicitud && solicitud.materiales) {
+          for (const item of solicitud.materiales) {
+            const cantidad = parseFloat(item.cantidad_solicitada) || 0;
+            if (cantidad <= 0) continue;
+
+            // Registrar movimiento (egreso por baja)
+            const movimiento = {
+              material_codigo: String(item.codigo_material || '').trim(),
+              material_nombre: item.nombre_material || String(item.codigo_material || '').trim(),
+              bodega_principal: 'Principal',
+              bodega_secundaria: 'General',
+              tipo_movimiento: 'baja',
+              cantidad,
+              signo: -1,
+              referencia_documento: idSolicitud,
+              referencia_tipo: 'baja_logistica',
+              responsable: 'Usuario Contabilidad', // TODO: Obtener usuario actual
+              fecha_movimiento: new Date().toISOString(),
+              observaciones: solicitud.observaciones || `Baja aprobada ${solicitud.numero_baja || idSolicitud}`,
+              precio_unitario: 0
+            };
+
+            const { error: errorMov } = await window.supabaseClient
+              .from('movimientos_bodega')
+              .insert(movimiento);
+
+            if (errorMov) {
+              console.error('Error registrando movimiento de baja:', errorMov);
+              // No detenemos el proceso, pero registramos el error
+            }
+          }
+        }
+
+        alert('✅ Solicitud aprobada y inventario actualizado.');
+        
+        // Recargar datos
+        await cargarDatosIniciales();
+        
+      } catch (error) {
+        console.error('Error general al aprobar:', error);
+        alert('❌ Error inesperado al aprobar la solicitud.');
+      }
+      
+      // Cerrar modal si está abierto
+      document.getElementById('bajas-modal').style.display = 'none';
+    }
+
+    // =============================================================================
+    // 🔹 RECHAZAR SOLICITUD
+    // =============================================================================
+    function rechazarSolicitud(idSolicitud) {
+      // Guardar el ID de la solicitud que se va a rechazar
+      document.getElementById('bajas-rechazo-modal').dataset.id = idSolicitud;
+      
+      // Limpiar el textarea
+      document.getElementById('bajas-rechazo-motivo').value = '';
+      
+      // Mostrar modal de rechazo
+      document.getElementById('bajas-rechazo-modal').style.display = 'flex';
+      
+      // Enfocar el textarea
+      setTimeout(() => {
+        document.getElementById('bajas-rechazo-motivo').focus();
+      }, 100);
+    }
+
+    // =============================================================================
+    // 🔹 CONFIRMAR RECHAZO
+    // =============================================================================
+    async function confirmarRechazo() {
+      const idSolicitud = document.getElementById('bajas-rechazo-modal').dataset.id;
+      const motivo = document.getElementById('bajas-rechazo-motivo').value.trim();
+      
+      if (!motivo) {
+        alert('⚠️ El motivo del rechazo no puede estar vacío.');
+        document.getElementById('bajas-rechazo-motivo').focus();
+        return;
+      }
+      
+      try {
+        // Para rechazar, eliminamos la solicitud de baja y sus items
+        // Primero eliminar los items relacionados
+        const { error: errorItems } = await window.supabaseClient
+          .from('items_baja_logistica')
+          .delete()
+          .eq('baja_id', idSolicitud);
+
+        if (errorItems) {
+          console.error('Error al eliminar items:', errorItems);
+          alert('❌ Error al eliminar los items de la solicitud.');
+          return;
+        }
+
+        // Luego eliminar la solicitud principal
+        const { error: errorDelete } = await window.supabaseClient
+          .from('bajas_logistica')
+          .delete()
+          .eq('id', idSolicitud);
+
+        if (errorDelete) {
+          console.error('Error al eliminar solicitud:', errorDelete);
+          alert('❌ Error al rechazar la solicitud.');
+          return;
+        }
+
+        alert('✅ Solicitud rechazada y eliminada del sistema.');
+        
+        // Recargar datos
+        await cargarDatosIniciales();
+        
+      } catch (error) {
+        console.error('Error general al rechazar:', error);
+        alert('❌ Error inesperado al rechazar la solicitud.');
+      }
+      
+      // Cerrar ambos modales
+      document.getElementById('bajas-rechazo-modal').style.display = 'none';
+      document.getElementById('bajas-modal').style.display = 'none';
+    }
+
+    // =============================================================================
+    // 🔹 CARGAR DATOS INICIALES
+    // =============================================================================
+    async function cargarDatosIniciales() {
+      try {
+        // Cargar solicitudes y materiales en paralelo
+        const [solicitudes, materiales] = await Promise.all([
+          cargarSolicitudes(),
+          cargarMateriales()
+        ]);
+
+        // Guardar en variables globales para acceso rápido
+        window.solicitudesGlobal = solicitudes;
+        window.materialesGlobal = materiales;
+
+        // Renderizar tabla
+        filtrarSolicitudes();
+        
+      } catch (error) {
+        console.error('Error al cargar datos iniciales:', error);
+        alert('❌ Error al cargar los datos del sistema.');
+      }
+    }
+
+    // =============================================================================
+    // 🔹 INICIALIZACIÓN
+    // =============================================================================
+    async function initBajas() {
+      try {
+        // Cargar datos iniciales
+        await cargarDatosIniciales();
+        
+        // Eventos de filtros
+        document.getElementById('bajas-filtro-estado').addEventListener('change', filtrarSolicitudes);
+        document.getElementById('bajas-filtro-personal').addEventListener('input', filtrarSolicitudes);
+        document.getElementById('bajas-filtro-desde').addEventListener('change', filtrarSolicitudes);
+        document.getElementById('bajas-filtro-hasta').addEventListener('change', filtrarSolicitudes);
+        
+        // Evento de cierre del modal
+        const modalCloseBtn = document.querySelector('.bajas-modal-close');
+        if (modalCloseBtn) modalCloseBtn.addEventListener('click', () => { 
+          const m = document.getElementById('bajas-modal'); 
+          if (m) m.style.display = 'none'; 
+        });
+        
+        // Eventos del modal
+        document.getElementById('bajas-modal-btn-aprobar').addEventListener('click', () => {
+          const id = document.getElementById('bajas-modal').dataset.id;
+          aprobarSolicitud(id);
+        });
+        
+        document.getElementById('bajas-modal-btn-rechazar').addEventListener('click', () => {
+          const id = document.getElementById('bajas-modal').dataset.id;
+          rechazarSolicitud(id);
+        });
+        
+        // Eventos del modal de rechazo
+        document.getElementById('bajas-rechazo-btn-cancelar').addEventListener('click', () => {
+          document.getElementById('bajas-rechazo-modal').style.display = 'none';
+        });
+        
+        document.getElementById('bajas-rechazo-btn-confirmar').addEventListener('click', confirmarRechazo);
+        
+        // Evento de cierre del modal de rechazo
+        const rechazoModalCloseBtn = document.querySelector('#bajas-rechazo-modal .bajas-modal-close');
+        if (rechazoModalCloseBtn) {
+          rechazoModalCloseBtn.addEventListener('click', () => {
+            document.getElementById('bajas-rechazo-modal').style.display = 'none';
+          });
+        }
+        
+        // Cerrar modal de rechazo al hacer click fuera
+        document.getElementById('bajas-rechazo-modal').addEventListener('click', (e) => {
+          if (e.target === document.getElementById('bajas-rechazo-modal')) {
+            document.getElementById('bajas-rechazo-modal').style.display = 'none';
+          }
+        });
+        
+        // Delegación de eventos en la tabla de solicitudes (maneja Ver/Aprobar/Rechazar)
+        const tbody = document.getElementById('bajas-tbody');
+        if (tbody && !tbody._delegationAttached) {
+          tbody.addEventListener('click', (ev) => {
+            const btn = ev.target.closest('button');
+            if (!btn) return;
+            const id = btn.getAttribute('data-id');
+            if (btn.classList.contains('bajas-btn-ver')) return verDetalles(id);
+            if (btn.classList.contains('bajas-btn-aprobar')) return aprobarSolicitud(id);
+            if (btn.classList.contains('bajas-btn-rechazar')) return rechazarSolicitud(id);
+          });
+          tbody._delegationAttached = true;
+        }
+        
+      } catch (error) {
+        console.error('Error en inicialización:', error);
+        alert('❌ Error al inicializar el módulo de bajas.');
+      }
+    }
+
+    // Iniciar cuando el DOM esté listo
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initBajas);
+    } else {
+      initBajas();
+    }
+  </script>
+</body>
+</html>

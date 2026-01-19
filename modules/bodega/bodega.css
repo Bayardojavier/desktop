@@ -1,0 +1,2518 @@
+﻿/* =============================================================================
+   BODEGA.CSS (limpio) - Estilos del módulo Bodega
+   - Archivo reiniciado para empezar de 0.
+   - Solo se definen clases usadas en bodega.html.
+   - Los demás contenidos cargados dentro del área dinámica heredan estilos base.
+   ============================================================================= */
+
+/* Layout principal */
+.bodega-container {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  gap: 24px;
+  box-sizing: border-box;
+  padding: 0;
+
+  /* Fondo tipo escenario azul */
+  background:
+    radial-gradient(1200px 600px at 18% 10%, rgba(55, 148, 255, 0.22), rgba(0, 0, 0, 0) 55%),
+    radial-gradient(900px 500px at 85% 18%, rgba(43, 108, 176, 0.18), rgba(0, 0, 0, 0) 60%),
+    linear-gradient(180deg, rgba(13, 29, 53, 0.94), rgba(10, 18, 30, 0.94));
+  border-radius: 10px;
+}
+
+/* Menú lateral */
+.bodega-menu-lateral {
+  width: 240px;
+  padding: 16px;
+  border-radius: 8px;
+  box-sizing: border-box;
+  color: #ffffff;
+
+  max-height: 800px;
+  overflow-y: auto;
+
+  background: linear-gradient(180deg, rgba(22, 40, 70, 0.92), rgba(13, 29, 53, 0.92));
+  border: 1px solid rgba(55, 148, 255, 0.22);
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(55, 148, 255, 0.10) inset;
+}
+
+.bodega-menu-lateral h3 {
+  margin: 18px 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(224, 224, 255, 0.86);
+  border-bottom: 1px solid rgba(55, 148, 255, 0.18);
+  padding-bottom: 8px;
+}
+
+.bodega-submenu-btn {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin: 6px 0;
+
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(55, 148, 255, 0.18);
+  border-radius: 8px;
+
+  color: rgba(224, 224, 255, 0.92);
+  text-align: left;
+  cursor: pointer;
+
+  transition:
+    transform 140ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12) inset;
+}
+
+.bodega-submenu-btn:hover {
+  background: rgba(55, 148, 255, 0.14);
+  border-color: rgba(55, 148, 255, 0.55);
+  color: #ffffff;
+  transform: translateX(2px);
+  box-shadow:
+    0 0 14px rgba(55, 148, 255, 0.25),
+    0 0 0 1px rgba(55, 148, 255, 0.18) inset;
+}
+
+.bodega-submenu-btn:active { transform: translateX(1px); }
+
+.bodega-submenu-btn:focus-visible {
+  outline: none;
+  border-color: rgba(55, 148, 255, 0.85);
+  box-shadow:
+    0 0 0 2px rgba(55, 148, 255, 0.35),
+    0 0 18px rgba(55, 148, 255, 0.25);
+}
+
+/* Área dinámica */
+.bodega-area-dinamica {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: 20px;
+  border-radius: 8px;
+  overflow-y: auto;
+  position: relative;
+  box-sizing: border-box;
+
+  background:
+    radial-gradient(800px 400px at 30% 20%, rgba(55, 148, 255, 0.14), rgba(0, 0, 0, 0) 60%),
+    linear-gradient(180deg, rgba(17, 32, 56, 0.72), rgba(10, 18, 30, 0.72));
+  border: 1px solid rgba(55, 148, 255, 0.18);
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.30),
+    0 0 0 1px rgba(55, 148, 255, 0.10) inset;
+}
+
+.bodega-area-contenido { min-height: 100%; }
+
+/* Encabezado */
+.bodega-encabezado {
+  padding: 2px 2px 16px;
+}
+
+.bodega-titulo {
+  margin: 0;
+  font-size: 26px;
+  letter-spacing: 0.2px;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 0 18px rgba(55, 148, 255, 0.22);
+}
+
+.bodega-subtitulo {
+  margin: 8px 0 0;
+  color: rgba(224, 224, 255, 0.78);
+}
+
+/* Dashboard: KPIs + atajos */
+.bodega-dashboard-top {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.bodega-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.bodega-kpi-card {
+  padding: 12px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
+  border: 1px solid rgba(55, 148, 255, 0.16);
+  box-shadow:
+    0 10px 22px rgba(0, 0, 0, 0.20),
+    0 0 0 1px rgba(55, 148, 255, 0.08) inset;
+  transition: transform 140ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.bodega-kpi-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(55, 148, 255, 0.35);
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.28),
+    0 0 16px rgba(55, 148, 255, 0.16);
+}
+
+.bodega-kpi-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.9px;
+  color: rgba(224, 224, 255, 0.72);
+}
+
+.bodega-kpi-value {
+  margin-top: 6px;
+  font-size: 20px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.bodega-kpi-hint {
+  margin-top: 6px;
+  font-size: 12px;
+  color: rgba(224, 224, 255, 0.65);
+}
+
+.bodega-atajos {
+  padding: 12px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(17, 32, 56, 0.55), rgba(10, 18, 30, 0.55));
+  border: 1px solid rgba(55, 148, 255, 0.14);
+}
+
+.bodega-atajos-titulo {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.9px;
+  color: rgba(224, 224, 255, 0.78);
+  margin-bottom: 10px;
+}
+
+.bodega-atajos-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.bodega-atajo-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  cursor: pointer;
+
+  border: 1px solid rgba(55, 148, 255, 0.22);
+  background: rgba(55, 148, 255, 0.10);
+  color: rgba(255, 255, 255, 0.95);
+  text-align: left;
+
+  transition: transform 140ms ease, box-shadow 180ms ease, background-color 180ms ease, border-color 180ms ease;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.14) inset;
+}
+
+.bodega-atajo-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(55, 148, 255, 0.16);
+  border-color: rgba(55, 148, 255, 0.55);
+  box-shadow:
+    0 0 16px rgba(55, 148, 255, 0.18),
+    0 0 0 1px rgba(55, 148, 255, 0.16) inset;
+}
+
+/* Dashboard: botón Exportar PDF (reutilizable) */
+.bodega-export-pdf-btn {
+  border: 1px solid rgba(55, 148, 255, 0.35);
+  background: linear-gradient(135deg, rgba(55, 148, 255, 0.55), rgba(99, 102, 241, 0.45));
+  color: rgba(255, 255, 255, 0.95);
+  padding: 10px 20px;
+  font-weight: 700;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.25);
+  transition: transform 140ms ease, box-shadow 180ms ease, border-color 180ms ease, background-color 180ms ease;
+}
+
+.bodega-export-pdf-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(55, 148, 255, 0.6);
+  background: linear-gradient(135deg, rgba(55, 148, 255, 0.7), rgba(99, 102, 241, 0.55));
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.32), 0 0 18px rgba(55, 148, 255, 0.18);
+}
+
+.bodega-export-pdf-btn:active {
+  transform: translateY(0px);
+}
+
+/* Dashboard: tabs */
+.bodega-dashboard {
+  border-radius: 12px;
+  border: 1px solid rgba(55, 148, 255, 0.14);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
+  overflow: hidden;
+}
+
+.bodega-tabs {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  border-bottom: 1px solid rgba(55, 148, 255, 0.14);
+  background: rgba(0, 0, 0, 0.10);
+  overflow-x: auto;
+}
+
+.bodega-tab-btn {
+  border: 1px solid rgba(55, 148, 255, 0.18);
+  background: rgba(255, 255, 255, 0.02);
+  color: rgba(224, 224, 255, 0.88);
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+
+  transition: background-color 180ms ease, box-shadow 180ms ease, border-color 180ms ease, color 180ms ease;
+}
+
+.bodega-tab-btn:hover {
+  background: rgba(55, 148, 255, 0.12);
+  border-color: rgba(55, 148, 255, 0.50);
+  color: #ffffff;
+  box-shadow: 0 0 14px rgba(55, 148, 255, 0.18);
+}
+
+.bodega-tab-btn.active {
+  background: rgba(55, 148, 255, 0.18);
+  border-color: rgba(55, 148, 255, 0.70);
+  color: #ffffff;
+  box-shadow:
+    0 0 18px rgba(55, 148, 255, 0.22),
+    0 0 0 1px rgba(55, 148, 255, 0.14) inset;
+}
+
+.bodega-tab-content { padding: 14px; }
+
+/* Estilos base para contenido inyectado dentro del área dinámica */
+.bodega-area-dinamica {
+  color: rgba(224, 224, 255, 0.92);
+}
+
+.bodega-area-dinamica h1,
+.bodega-area-dinamica h2,
+.bodega-area-dinamica h3,
+.bodega-area-dinamica h4 {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.bodega-area-dinamica a { color: rgba(110, 190, 255, 0.95); }
+
+.bodega-area-dinamica input,
+.bodega-area-dinamica select,
+.bodega-area-dinamica textarea {
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(0, 0, 0, 0.14);
+  border: 1px solid rgba(55, 148, 255, 0.18);
+  border-radius: 10px;
+  padding: 10px 12px;
+  outline: none;
+}
+
+.bodega-area-dinamica input::placeholder,
+.bodega-area-dinamica textarea::placeholder {
+  color: rgba(224, 224, 255, 0.55);
+}
+
+.bodega-area-dinamica input:focus,
+.bodega-area-dinamica select:focus,
+.bodega-area-dinamica textarea:focus {
+  border-color: rgba(55, 148, 255, 0.70);
+  box-shadow: 0 0 0 2px rgba(55, 148, 255, 0.18);
+}
+
+/* Dropdowns en Windows suelen ser claros; fuerza texto legible */
+.bodega-area-dinamica select option {
+  color: #0f172a;
+  background: #ffffff;
+}
+
+.bodega-area-dinamica table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.bodega-area-dinamica th,
+.bodega-area-dinamica td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+  padding: 10px;
+}
+
+.bodega-area-dinamica th {
+  color: rgba(224, 224, 255, 0.90);
+  background: rgba(0, 0, 0, 0.12);
+}
+
+/* Preferencias */
+@media (prefers-reduced-motion: reduce) {
+  .bodega-submenu-btn,
+  .bodega-kpi-card,
+  .bodega-atajo-btn,
+  .bodega-tab-btn {
+    transition: none;
+  }
+  .bodega-submenu-btn:hover,
+  .bodega-kpi-card:hover,
+  .bodega-atajo-btn:hover {
+    transform: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .bodega-container {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .bodega-menu-lateral {
+    width: 100%;
+    max-height: none;
+  }
+
+  .bodega-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bodega-atajos-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =============================================================================
+   AUDIOVISUAL (Bodega) - Estilos en el mismo tema
+   Nota: estas vistas se inyectan dentro de .bodega-area-dinamica
+   ============================================================================= */
+
+@keyframes bodegaFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.bodega-area-dinamica .audiovisual-view {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+  animation: bodegaFadeIn 220ms ease;
+  color: rgba(224, 224, 255, 0.92);
+}
+
+.bodega-area-dinamica .audiovisual-view h2 {
+  margin: 0 0 10px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.96);
+  text-shadow: 0 0 18px rgba(55, 148, 255, 0.18);
+}
+
+.bodega-area-dinamica .audiovisual-view p {
+  margin: 0 0 18px;
+  color: rgba(224, 224, 255, 0.72);
+}
+
+.bodega-area-dinamica .audiovisual-view label {
+  color: rgba(224, 224, 255, 0.86) !important;
+  font-weight: 700 !important;
+}
+
+/* Normaliza los "cards" blancos creados con inline styles */
+.bodega-area-dinamica .audiovisual-view [style*="background: #ffffff"],
+.bodega-area-dinamica .audiovisual-view [style*="background:#ffffff"],
+.bodega-area-dinamica .audiovisual-view [style*="background: white"],
+.bodega-area-dinamica .audiovisual-view [style*="background:white"],
+.bodega-area-dinamica .audiovisual-view [style*="background: #fff"],
+.bodega-area-dinamica .audiovisual-view [style*="background:#fff"],
+.bodega-area-dinamica .audiovisual-view [style*="background-color: #f9f9f9"],
+.bodega-area-dinamica .audiovisual-view [style*="background-color:#f9f9f9"] {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03)) !important;
+  border: 1px solid rgba(55, 148, 255, 0.14) !important;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18) !important;
+}
+
+/* Inputs / selects */
+.bodega-area-dinamica .audiovisual-input,
+.bodega-area-dinamica .audiovisual-select {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(55, 148, 255, 0.22);
+  background: rgba(255, 255, 255, 0.96);
+  color: #0f172a;
+  box-sizing: border-box;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 140ms ease;
+}
+
+.bodega-area-dinamica .audiovisual-input:focus,
+.bodega-area-dinamica .audiovisual-select:focus {
+  outline: none;
+  border-color: rgba(55, 148, 255, 0.55);
+  box-shadow: 0 0 0 3px rgba(55, 148, 255, 0.20);
+}
+
+.bodega-area-dinamica .audiovisual-input::placeholder {
+  color: #64748b;
+}
+
+.bodega-area-dinamica .audiovisual-select {
+  cursor: pointer;
+}
+
+.bodega-area-dinamica .audiovisual-select option,
+.bodega-area-dinamica .audiovisual-input option {
+  color: #0f172a;
+  background: #ffffff;
+}
+
+/* Botones */
+.bodega-area-dinamica .audiovisual-boton {
+  border: 1px solid rgba(55, 148, 255, 0.22);
+  background: rgba(55, 148, 255, 0.10);
+  color: rgba(255, 255, 255, 0.95);
+  border-radius: 10px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 180ms ease, background-color 180ms ease, border-color 180ms ease;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.14) inset;
+}
+
+.bodega-area-dinamica .audiovisual-boton:hover {
+  transform: translateY(-1px);
+  background: rgba(55, 148, 255, 0.16);
+  border-color: rgba(55, 148, 255, 0.55);
+  box-shadow:
+    0 0 16px rgba(55, 148, 255, 0.18),
+    0 0 0 1px rgba(55, 148, 255, 0.16) inset;
+}
+
+.bodega-area-dinamica .audiovisual-boton:active {
+  transform: translateY(0);
+}
+
+.bodega-area-dinamica .audiovisual-save {
+  background: rgba(55, 148, 255, 0.22);
+  border-color: rgba(55, 148, 255, 0.65);
+}
+
+.bodega-area-dinamica .audiovisual-new {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(55, 148, 255, 0.22);
+}
+
+/* Foto / preview */
+.bodega-area-dinamica .audiovisual-view #photo-preview {
+  border: 2px dashed rgba(55, 148, 255, 0.35) !important;
+  background: rgba(0, 0, 0, 0.10) !important;
+  color: rgba(224, 224, 255, 0.60) !important;
+}
+
+/* Paleta de colores */
+.bodega-area-dinamica .audiovisual-view #paleta-colores {
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(55, 148, 255, 0.14);
+  background: rgba(0, 0, 0, 0.10);
+}
+
+.bodega-area-dinamica .audiovisual-view #paleta-colores div {
+  border-radius: 6px !important;
+}
+
+/* =============================================================================
+   HIERRO (Bodega) - Estilos en el mismo tema
+   ============================================================================= */
+
+.bodega-area-dinamica .hierro-view {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+  animation: bodegaFadeIn 220ms ease;
+  color: rgba(224, 224, 255, 0.92);
+}
+
+.bodega-area-dinamica .hierro-view h2 {
+  margin: 0 0 10px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.96);
+  text-shadow: 0 0 18px rgba(55, 148, 255, 0.18);
+}
+
+.bodega-area-dinamica .hierro-view p {
+  margin: 0 0 18px;
+  color: rgba(224, 224, 255, 0.72);
+}
+
+.bodega-area-dinamica .hierro-view label {
+  color: rgba(224, 224, 255, 0.86) !important;
+  font-weight: 700 !important;
+}
+
+.bodega-area-dinamica .hierro-view [style*="background: #ffffff"],
+.bodega-area-dinamica .hierro-view [style*="background:#ffffff"],
+.bodega-area-dinamica .hierro-view [style*="background: white"],
+.bodega-area-dinamica .hierro-view [style*="background:white"],
+.bodega-area-dinamica .hierro-view [style*="background: #fff"],
+.bodega-area-dinamica .hierro-view [style*="background:#fff"],
+.bodega-area-dinamica .hierro-view [style*="background-color: #f9f9f9"],
+.bodega-area-dinamica .hierro-view [style*="background-color:#f9f9f9"] {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03)) !important;
+  border: 1px solid rgba(55, 148, 255, 0.14) !important;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18) !important;
+}
+
+.bodega-area-dinamica .hierro-input,
+.bodega-area-dinamica .hierro-select {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(55, 148, 255, 0.22);
+  background: rgba(255, 255, 255, 0.96);
+  color: #0f172a;
+  box-sizing: border-box;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 140ms ease;
+}
+
+.bodega-area-dinamica .hierro-input:focus,
+.bodega-area-dinamica .hierro-select:focus {
+  outline: none;
+  border-color: rgba(55, 148, 255, 0.55);
+  box-shadow: 0 0 0 3px rgba(55, 148, 255, 0.20);
+}
+
+.bodega-area-dinamica .hierro-input::placeholder {
+  color: #64748b;
+}
+
+.bodega-area-dinamica .hierro-select {
+  cursor: pointer;
+}
+
+.bodega-area-dinamica .hierro-select option,
+.bodega-area-dinamica .hierro-input option {
+  color: #0f172a;
+  background: #ffffff;
+}
+
+.bodega-area-dinamica .hierro-boton {
+  border: 1px solid rgba(55, 148, 255, 0.22);
+  background: rgba(55, 148, 255, 0.10);
+  color: rgba(255, 255, 255, 0.95);
+  border-radius: 10px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 180ms ease, background-color 180ms ease, border-color 180ms ease;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.14) inset;
+}
+
+.bodega-area-dinamica .hierro-boton:hover {
+  transform: translateY(-1px);
+  background: rgba(55, 148, 255, 0.16);
+  border-color: rgba(55, 148, 255, 0.55);
+  box-shadow:
+    0 0 16px rgba(55, 148, 255, 0.18),
+    0 0 0 1px rgba(55, 148, 255, 0.16) inset;
+}
+
+.bodega-area-dinamica .hierro-boton:active {
+  transform: translateY(0);
+}
+
+.bodega-area-dinamica .hierro-save {
+  background: rgba(55, 148, 255, 0.22);
+  border-color: rgba(55, 148, 255, 0.65);
+}
+
+.bodega-area-dinamica .hierro-new {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(55, 148, 255, 0.22);
+}
+
+.bodega-area-dinamica .hierro-view #photo-preview {
+  border: 2px dashed rgba(55, 148, 255, 0.35) !important;
+  background: rgba(0, 0, 0, 0.10) !important;
+  color: rgba(224, 224, 255, 0.60) !important;
+}
+
+.bodega-area-dinamica .hierro-view #paleta-colores {
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(55, 148, 255, 0.14);
+  background: rgba(0, 0, 0, 0.10);
+}
+
+.bodega-area-dinamica .hierro-view #paleta-colores div {
+  border-radius: 6px !important;
+}
+
+/* =============================================================================
+   MOBILIARIO (Bodega) - Estilos en el mismo tema
+   ============================================================================= */
+
+.bodega-area-dinamica .mobiliario-view {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+  animation: bodegaFadeIn 220ms ease;
+  color: rgba(224, 224, 255, 0.92);
+}
+
+.bodega-area-dinamica .mobiliario-view h2 {
+  margin: 0 0 10px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.96);
+  text-shadow: 0 0 18px rgba(55, 148, 255, 0.18);
+}
+
+.bodega-area-dinamica .mobiliario-view p {
+  margin: 0 0 18px;
+  color: rgba(224, 224, 255, 0.72);
+}
+
+.bodega-area-dinamica .mobiliario-view label {
+  color: rgba(224, 224, 255, 0.86) !important;
+  font-weight: 700 !important;
+}
+
+.bodega-area-dinamica .mobiliario-view [style*="background: #ffffff"],
+.bodega-area-dinamica .mobiliario-view [style*="background:#ffffff"],
+.bodega-area-dinamica .mobiliario-view [style*="background: white"],
+.bodega-area-dinamica .mobiliario-view [style*="background:white"],
+.bodega-area-dinamica .mobiliario-view [style*="background: #fff"],
+.bodega-area-dinamica .mobiliario-view [style*="background:#fff"],
+.bodega-area-dinamica .mobiliario-view [style*="background-color: #f9f9f9"],
+.bodega-area-dinamica .mobiliario-view [style*="background-color:#f9f9f9"] {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03)) !important;
+  border: 1px solid rgba(55, 148, 255, 0.14) !important;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18) !important;
+}
+
+.bodega-area-dinamica .mobiliario-input,
+.bodega-area-dinamica .mobiliario-select {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(55, 148, 255, 0.22);
+  background: rgba(255, 255, 255, 0.96);
+  color: #0f172a;
+  box-sizing: border-box;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 140ms ease;
+}
+
+.bodega-area-dinamica .mobiliario-input:focus,
+.bodega-area-dinamica .mobiliario-select:focus {
+  outline: none;
+  border-color: rgba(55, 148, 255, 0.55);
+  box-shadow: 0 0 0 3px rgba(55, 148, 255, 0.20);
+}
+
+.bodega-area-dinamica .mobiliario-input::placeholder {
+  color: #64748b;
+}
+
+.bodega-area-dinamica .mobiliario-select {
+  cursor: pointer;
+}
+
+.bodega-area-dinamica .mobiliario-select option,
+.bodega-area-dinamica .mobiliario-input option {
+  color: #0f172a;
+  background: #ffffff;
+}
+
+.bodega-area-dinamica .mobiliario-boton {
+  border: 1px solid rgba(55, 148, 255, 0.22);
+  background: rgba(55, 148, 255, 0.10);
+  color: rgba(255, 255, 255, 0.95);
+  border-radius: 10px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 180ms ease, background-color 180ms ease, border-color 180ms ease;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.14) inset;
+}
+
+.bodega-area-dinamica .mobiliario-boton:hover {
+  transform: translateY(-1px);
+  background: rgba(55, 148, 255, 0.16);
+  border-color: rgba(55, 148, 255, 0.55);
+  box-shadow:
+    0 0 16px rgba(55, 148, 255, 0.18),
+    0 0 0 1px rgba(55, 148, 255, 0.16) inset;
+}
+
+.bodega-area-dinamica .mobiliario-boton:active {
+  transform: translateY(0);
+}
+
+.bodega-area-dinamica .mobiliario-save {
+  background: rgba(55, 148, 255, 0.22);
+  border-color: rgba(55, 148, 255, 0.65);
+}
+
+.bodega-area-dinamica .mobiliario-new {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(55, 148, 255, 0.22);
+}
+
+.bodega-area-dinamica .mobiliario-view #photo-preview {
+  border: 2px dashed rgba(55, 148, 255, 0.35) !important;
+  background: rgba(0, 0, 0, 0.10) !important;
+  color: rgba(224, 224, 255, 0.60) !important;
+}
+
+.bodega-area-dinamica .mobiliario-view #paleta-colores {
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(55, 148, 255, 0.14);
+  background: rgba(0, 0, 0, 0.10);
+}
+
+.bodega-area-dinamica .mobiliario-view #paleta-colores div {
+  border-radius: 6px !important;
+}
+
+/* =============================================================================
+   MOVIMIENTOS (Bodega) - Laterales con el mismo tema
+   Nota: estas vistas traen CSS propio; aquí se aplican overrides scoped.
+   ============================================================================= */
+
+.bodega-area-dinamica .movimientos-view {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  animation: bodegaFadeIn 220ms ease;
+  color: rgba(224, 224, 255, 0.92);
+  position: relative;
+}
+
+/* Movimientos: base UI (form/table/modal) para reemplazar app.css */
+.bodega-area-dinamica .movimientos-view .mov-form-container {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.bodega-area-dinamica .movimientos-view .mov-form-card {
+  background: linear-gradient(180deg, rgba(17, 32, 56, 0.70), rgba(10, 18, 30, 0.70));
+  border: 1px solid rgba(55, 148, 255, 0.18);
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.30);
+}
+
+.bodega-area-dinamica .movimientos-view .mov-form-title {
+  margin: 0 0 6px 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.96);
+  text-shadow: 0 0 18px rgba(55, 148, 255, 0.16);
+}
+
+.bodega-area-dinamica .movimientos-view .mov-form-subtitle {
+  margin: 0 0 16px 0;
+  color: rgba(224, 224, 255, 0.72);
+  font-size: 13px;
+}
+
+.bodega-area-dinamica .movimientos-view .mov-form-section {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(55, 148, 255, 0.12);
+}
+
+.bodega-area-dinamica .movimientos-view .mov-form-section:first-of-type {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.bodega-area-dinamica .movimientos-view .mov-form-section-title {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.bodega-area-dinamica .movimientos-view .mov-form-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 1100px) {
+  .bodega-area-dinamica .movimientos-view .mov-form-row {
+    grid-template-columns: repeat(2, minmax(160px, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .bodega-area-dinamica .movimientos-view .mov-form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.bodega-area-dinamica .movimientos-view .mov-form-col {
+  min-width: 0;
+}
+
+.bodega-area-dinamica .movimientos-view .mov-form-label {
+  display: block;
+  margin: 0 0 6px 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(224, 224, 255, 0.84);
+}
+
+.bodega-area-dinamica .movimientos-view .mov-form-input,
+.bodega-area-dinamica .movimientos-view .mov-form-select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(55, 148, 255, 0.18);
+  background: rgba(0, 0, 0, 0.14);
+  color: rgba(255, 255, 255, 0.92);
+  outline: none;
+}
+
+/*
+  Ingreso: algunos inputs readonly vienen con background claro inline (ej: #f8fafc)
+  Si dejamos el color base (blanco) se pierde el texto.
+  Ajuste: solo cuando el background inline es claro, usa texto oscuro.
+  (No usamos !important para no pisar inputs que traen color inline, ej: precio verde)
+*/
+.bodega-area-dinamica .movimientos-view .mov-form-input[readonly][style*="background:#f8fafc"],
+.bodega-area-dinamica .movimientos-view .mov-form-input[readonly][style*="background: #f8fafc"],
+.bodega-area-dinamica .movimientos-view .mov-form-input[readonly][style*="background:#f0fdf4"],
+.bodega-area-dinamica .movimientos-view .mov-form-input[readonly][style*="background: #f0fdf4"],
+.bodega-area-dinamica .movimientos-view .mov-form-input[readonly][style*="background:white"],
+.bodega-area-dinamica .movimientos-view .mov-form-input[readonly][style*="background: white"],
+.bodega-area-dinamica .movimientos-view .mov-form-input[readonly][style*="background:#fff"],
+.bodega-area-dinamica .movimientos-view .mov-form-input[readonly][style*="background: #fff"] {
+  color: #0f172a;
+}
+
+.bodega-area-dinamica .movimientos-view .mov-form-input::placeholder {
+  color: rgba(224, 224, 255, 0.50);
+}
+
+.bodega-area-dinamica .movimientos-view .mov-form-input:focus,
+.bodega-area-dinamica .movimientos-view .mov-form-select:focus {
+  border-color: rgba(55, 148, 255, 0.70);
+  box-shadow: 0 0 0 2px rgba(55, 148, 255, 0.18);
+}
+
+.bodega-area-dinamica .movimientos-view .mov-form-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.bodega-area-dinamica .movimientos-view .mov-btn {
+  border-radius: 10px;
+  padding: 10px 14px;
+  border: 1px solid rgba(55, 148, 255, 0.22);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 180ms ease, background-color 180ms ease, border-color 180ms ease;
+}
+
+.bodega-area-dinamica .movimientos-view .mov-btn:hover {
+  background: rgba(55, 148, 255, 0.14);
+  border-color: rgba(55, 148, 255, 0.60);
+  box-shadow: 0 0 14px rgba(55, 148, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+.bodega-area-dinamica .movimientos-view .mov-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.bodega-area-dinamica .movimientos-view .mov-btn-primary {
+  background: linear-gradient(135deg, rgba(55, 148, 255, 0.28), rgba(124, 92, 246, 0.20));
+  border-color: rgba(55, 148, 255, 0.55);
+}
+
+.bodega-area-dinamica .movimientos-view .mov-btn-secondary {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.bodega-area-dinamica .movimientos-view .mov-btn-danger {
+  border-color: rgba(255, 80, 110, 0.40);
+  background: rgba(255, 80, 110, 0.10);
+}
+
+.bodega-area-dinamica .movimientos-view .mov-empty {
+  margin: 12px 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px dashed rgba(55, 148, 255, 0.22);
+  color: rgba(224, 224, 255, 0.72);
+  background: rgba(0, 0, 0, 0.10);
+}
+
+/* Tablas (table) */
+.bodega-area-dinamica .movimientos-view .mov-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid rgba(55, 148, 255, 0.14);
+  background: rgba(0, 0, 0, 0.10);
+}
+
+.bodega-area-dinamica .movimientos-view .mov-table th {
+  text-align: left;
+  font-size: 12px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  padding: 10px 12px;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(55, 148, 255, 0.10);
+  border-bottom: 1px solid rgba(55, 148, 255, 0.14);
+}
+
+.bodega-area-dinamica .movimientos-view .mov-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(55, 148, 255, 0.10);
+  color: rgba(224, 224, 255, 0.88);
+}
+
+/* Tablas (div rows) */
+.bodega-area-dinamica .movimientos-view .mov-table-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(55, 148, 255, 0.14);
+  background: rgba(0, 0, 0, 0.10);
+  margin-bottom: 10px;
+}
+
+.bodega-area-dinamica .movimientos-view .mov-table-col {
+  min-width: 0;
+}
+
+/* Modales */
+.bodega-area-dinamica .movimientos-view .mov-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  z-index: 2000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 18px;
+}
+
+.bodega-area-dinamica .movimientos-view .mov-modal-content {
+  width: min(860px, 96vw);
+  max-height: min(80vh, 860px);
+  overflow: auto;
+  background: linear-gradient(180deg, rgba(17, 32, 56, 0.96), rgba(10, 18, 30, 0.96));
+  border: 1px solid rgba(55, 148, 255, 0.22);
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
+}
+
+/* Evita textos oscuros heredados/inline dentro del modal */
+.bodega-area-dinamica .movimientos-view .mov-modal-content h1,
+.bodega-area-dinamica .movimientos-view .mov-modal-content h2,
+.bodega-area-dinamica .movimientos-view .mov-modal-content h3,
+.bodega-area-dinamica .movimientos-view .mov-modal-content h4 {
+  color: rgba(255, 255, 255, 0.96) !important;
+}
+
+.bodega-area-dinamica .movimientos-view .mov-modal-content p,
+.bodega-area-dinamica .movimientos-view .mov-modal-content label,
+.bodega-area-dinamica .movimientos-view .mov-modal-content small {
+  color: rgba(224, 224, 255, 0.75) !important;
+}
+
+.bodega-area-dinamica .movimientos-view .mov-modal-content [style*="color: #1f2937"],
+.bodega-area-dinamica .movimientos-view .mov-modal-content [style*="color:#1f2937"],
+.bodega-area-dinamica .movimientos-view .mov-modal-content [style*="color: #111827"],
+.bodega-area-dinamica .movimientos-view .mov-modal-content [style*="color:#111827"] {
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+.bodega-area-dinamica .movimientos-view .mov-modal-title {
+  margin: 0 0 8px 0;
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.bodega-area-dinamica .movimientos-view .mov-modal-text {
+  margin: 0 0 14px 0;
+  color: rgba(224, 224, 255, 0.72);
+}
+
+.bodega-area-dinamica .movimientos-view .mov-modal-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+/* =============================================================================
+   FABRICACIÓN - Modal catálogo (selección de materiales)
+   Se inserta en document.body, por eso se scopea por #modal-seleccion-fabricacion
+   ============================================================================= */
+
+@keyframes fabCatalogIn {
+  from { opacity: 0; transform: translateY(6px) scale(0.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+#modal-seleccion-fabricacion.fab-catalog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 22px;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(6px);
+}
+
+#modal-seleccion-fabricacion .fab-catalog-modal {
+  width: min(1120px, 96vw);
+  max-height: min(90vh, 980px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #0f172a;
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.45);
+  animation: fabCatalogIn 170ms ease;
+}
+
+#modal-seleccion-fabricacion .fab-catalog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 18px;
+  border-bottom: 1px solid #e2e8f0;
+  background: linear-gradient(180deg, rgba(219, 234, 254, 0.70), rgba(248, 250, 252, 0.90));
+}
+
+#modal-seleccion-fabricacion .fab-catalog-title {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 900;
+  color: #1e3a8a;
+  letter-spacing: 0.2px;
+  text-shadow: none;
+}
+
+#modal-seleccion-fabricacion .fab-catalog-close {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 180ms ease, border-color 180ms ease, background-color 180ms ease;
+}
+
+#modal-seleccion-fabricacion .fab-catalog-close:hover {
+  transform: translateY(-1px);
+  border-color: #93c5fd;
+  background: #eff6ff;
+  box-shadow: 0 10px 22px rgba(2, 6, 23, 0.12);
+}
+
+#modal-seleccion-fabricacion .fab-catalog-filters {
+  padding: 16px 18px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f1f5f9;
+}
+
+#modal-seleccion-fabricacion .fab-catalog-filters-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr auto;
+  gap: 14px;
+  align-items: end;
+}
+
+@media (max-width: 860px) {
+  #modal-seleccion-fabricacion .fab-catalog-filters-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+#modal-seleccion-fabricacion .fab-catalog-label {
+  display: block;
+  margin: 0 0 6px 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: #334155;
+}
+
+/* Buscador (input/select) dentro del modal */
+#modal-seleccion-fabricacion .mov-form-input,
+#modal-seleccion-fabricacion .mov-form-select {
+  background: #ffffff;
+  color: #0f172a;
+  border-color: #cbd5e1;
+  box-shadow: 0 0 0 1px rgba(2, 6, 23, 0.06) inset;
+  font-size: 14px;
+  padding: 10px 12px;
+  min-height: 42px;
+  transition: box-shadow 180ms ease, border-color 180ms ease, transform 140ms ease, background-color 180ms ease;
+}
+
+#modal-seleccion-fabricacion .mov-form-input::placeholder {
+  color: #94a3b8;
+}
+
+#modal-seleccion-fabricacion .mov-form-input:focus,
+#modal-seleccion-fabricacion .mov-form-select:focus {
+  border-color: #1d4ed8;
+  box-shadow:
+    0 0 0 2px rgba(29, 78, 216, 0.18);
+}
+
+/* Botones del modal */
+#modal-seleccion-fabricacion .mov-btn {
+  border-radius: 12px;
+  font-weight: 900;
+  letter-spacing: 0.2px;
+  font-size: 14px;
+  padding: 10px 14px;
+  min-height: 42px;
+  transition: transform 140ms ease, box-shadow 180ms ease, background-color 180ms ease, border-color 180ms ease, color 180ms ease;
+}
+
+#modal-seleccion-fabricacion .mov-btn:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px rgba(29, 78, 216, 0.22);
+}
+
+#modal-seleccion-fabricacion .mov-btn:hover {
+  transform: translateY(-1px);
+}
+
+#modal-seleccion-fabricacion .mov-btn:active {
+  transform: translateY(0px);
+}
+
+#modal-seleccion-fabricacion .mov-btn-primary {
+  border-color: #1d4ed8;
+  background: #1d4ed8;
+  color: #ffffff;
+  box-shadow: 0 12px 26px rgba(2, 6, 23, 0.18);
+}
+
+#modal-seleccion-fabricacion .mov-btn-primary:hover {
+  border-color: #1e40af;
+  background: #1e40af;
+  box-shadow: 0 16px 34px rgba(2, 6, 23, 0.22);
+}
+
+#modal-seleccion-fabricacion .mov-btn-secondary {
+  background: #e2e8f0;
+  color: #0f172a;
+  border-color: #cbd5e1;
+  box-shadow: 0 0 0 1px rgba(2, 6, 23, 0.06) inset;
+}
+
+#modal-seleccion-fabricacion .mov-btn-secondary:hover {
+  background: #cbd5e1;
+  border-color: #94a3b8;
+  box-shadow: 0 10px 22px rgba(2, 6, 23, 0.12);
+}
+
+#modal-seleccion-fabricacion .fab-catalog-results-wrap {
+  flex: 1;
+  overflow: auto;
+  padding: 16px 18px;
+}
+
+#modal-seleccion-fabricacion .fab-catalog-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+#modal-seleccion-fabricacion .fab-catalog-card {
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  padding: 16px;
+  box-shadow: 0 10px 22px rgba(2, 6, 23, 0.08);
+  transition: transform 140ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+#modal-seleccion-fabricacion .fab-catalog-card:hover {
+  transform: translateY(-2px);
+  border-color: #93c5fd;
+  box-shadow: 0 16px 34px rgba(2, 6, 23, 0.12);
+}
+
+#modal-seleccion-fabricacion .fab-catalog-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+#modal-seleccion-fabricacion .fab-catalog-name {
+  font-weight: 900;
+  font-size: 15px;
+  color: #0f172a;
+}
+
+#modal-seleccion-fabricacion .fab-catalog-code {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #475569;
+}
+
+#modal-seleccion-fabricacion .fab-catalog-existencia {
+  min-width: 46px;
+  text-align: center;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 900;
+  color: #047857;
+  background: rgba(34, 197, 94, 0.14);
+  border: 1px solid rgba(34, 197, 94, 0.28);
+  box-shadow: none;
+}
+
+#modal-seleccion-fabricacion .fab-catalog-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+#modal-seleccion-fabricacion .fab-catalog-tag {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  border: 1px solid #bfdbfe;
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+#modal-seleccion-fabricacion .fab-catalog-tag--secondary {
+  background: #f3e8ff;
+  border-color: #e9d5ff;
+  color: #7e22ce;
+}
+
+#modal-seleccion-fabricacion .fab-catalog-select-btn {
+  width: 100%;
+  margin-top: 12px;
+  min-height: 44px;
+}
+
+#modal-seleccion-fabricacion .fab-catalog-footer {
+  padding: 16px 18px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+  background: #f1f5f9;
+}
+
+#modal-seleccion-fabricacion .fab-catalog-empty,
+#modal-seleccion-fabricacion .fab-catalog-error {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px 10px;
+  margin: 0;
+}
+
+#modal-seleccion-fabricacion .fab-catalog-empty {
+  color: #475569;
+}
+
+#modal-seleccion-fabricacion .fab-catalog-error {
+  color: #dc2626;
+}
+
+/* Bajas: grid y tarjetas del selector */
+.bodega-area-dinamica .movimientos-view #listaMateriales {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 14px;
+  max-height: 500px;
+  overflow-y: auto;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(55, 148, 255, 0.14);
+  background: rgba(0, 0, 0, 0.10);
+}
+
+.bodega-area-dinamica .movimientos-view .tarjeta-material-baja {
+  border: 1px solid rgba(55, 148, 255, 0.18);
+  border-radius: 12px;
+  padding: 16px;
+  background: linear-gradient(180deg, rgba(17, 32, 56, 0.70), rgba(10, 18, 30, 0.70));
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+  position: relative;
+  overflow: hidden;
+}
+
+.bodega-area-dinamica .movimientos-view .tarjeta-material-baja::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, rgba(55, 148, 255, 0.95), rgba(124, 92, 246, 0.85));
+  opacity: 0.75;
+}
+
+.bodega-area-dinamica .movimientos-view .tarjeta-material-baja:hover:not(.seleccionado) {
+  transform: translateY(-1px);
+  border-color: rgba(55, 148, 255, 0.55);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.32);
+}
+
+.bodega-area-dinamica .movimientos-view .tarjeta-material-baja.seleccionado {
+  opacity: 0.60;
+  pointer-events: none;
+}
+
+/* Bajas: panel lateral derecho (base layout; colores se overridean arriba) */
+.bodega-area-dinamica .movimientos-view .panel-lateral {
+  position: absolute;
+  top: 0;
+  right: -400px;
+  width: 380px;
+  height: 100%;
+  max-height: 100%;
+  transition: right 0.3s ease;
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+
+  border-top-left-radius: 14px;
+  border-bottom-left-radius: 14px;
+  overflow: hidden;
+
+  background: linear-gradient(180deg, rgba(17, 32, 56, 0.96), rgba(10, 18, 30, 0.96)) !important;
+  border-left: 1px solid rgba(55, 148, 255, 0.22) !important;
+  box-shadow: -10px 0 28px rgba(0, 0, 0, 0.45), 0 0 24px rgba(55, 148, 255, 0.10) !important;
+}
+
+.bodega-area-dinamica .movimientos-view .panel-lateral.open {
+  right: 0;
+}
+
+.bodega-area-dinamica .movimientos-view .panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+
+  background: linear-gradient(135deg, rgba(55, 148, 255, 0.30), rgba(124, 92, 246, 0.22)) !important;
+  border-bottom: 1px solid rgba(55, 148, 255, 0.18) !important;
+}
+
+.bodega-area-dinamica .movimientos-view .panel-title {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.96) !important;
+  text-shadow: 0 0 16px rgba(55, 148, 255, 0.16);
+}
+
+.bodega-area-dinamica .movimientos-view .panel-close-btn {
+  border-radius: 10px;
+  border: 1px solid rgba(55, 148, 255, 0.22);
+  background: rgba(0, 0, 0, 0.12);
+  color: rgba(255, 255, 255, 0.92);
+  padding: 6px 10px;
+  cursor: pointer;
+  font-weight: 900;
+  transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.bodega-area-dinamica .movimientos-view .panel-close-btn:hover {
+  background: rgba(55, 148, 255, 0.12);
+  border-color: rgba(55, 148, 255, 0.55);
+  box-shadow: 0 0 14px rgba(55, 148, 255, 0.18);
+}
+
+.bodega-area-dinamica .movimientos-view .panel-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+/* En pantallas bajas, evita que el panel se “salga” del área visible */
+@media (max-height: 720px) {
+  .bodega-area-dinamica .movimientos-view .panel-lateral {
+    max-height: 100%;
+  }
+}
+
+.bodega-area-dinamica .movimientos-view .solicitud-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.bodega-area-dinamica .movimientos-view .solicitud-acciones {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.bodega-area-dinamica .movimientos-view .solicitud-btn {
+  border-radius: 8px;
+  padding: 6px 10px;
+  border: 1px solid rgba(55, 148, 255, 0.22);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.90);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.bodega-area-dinamica .movimientos-view .solicitud-empty {
+  text-align: center;
+  color: rgba(224, 224, 255, 0.72);
+  padding: 28px 18px;
+}
+
+/* Devolución: layout mínimo (sin devolucion.css) */
+.bodega-area-dinamica .movimientos-view .devolucion-layout-tres-columnas {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.bodega-area-dinamica .movimientos-view .devolucion-panel-izquierdo {
+  width: 320px;
+  flex: 0 0 auto;
+}
+
+.bodega-area-dinamica .movimientos-view .devolucion-contenedor-principal {
+  flex: 1;
+  min-width: 0;
+}
+
+.bodega-area-dinamica .movimientos-view .devolucion-card {
+  background: linear-gradient(180deg, rgba(17, 32, 56, 0.70), rgba(10, 18, 30, 0.70));
+  border: 1px solid rgba(55, 148, 255, 0.18);
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.30);
+}
+
+.bodega-area-dinamica .movimientos-view .devolucion-section {
+  margin-top: 14px;
+}
+
+.bodega-area-dinamica .movimientos-view .devolucion-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.bodega-area-dinamica .movimientos-view .devolucion-label {
+  display: block;
+  margin: 0 0 6px 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(224, 224, 255, 0.84);
+}
+
+.bodega-area-dinamica .movimientos-view .devolucion-input,
+.bodega-area-dinamica .movimientos-view .devolucion-select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(55, 148, 255, 0.18);
+  background: rgba(0, 0, 0, 0.14);
+  color: rgba(255, 255, 255, 0.92);
+  outline: none;
+}
+
+.bodega-area-dinamica .movimientos-view .devolucion-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+/* Devolución: tabla/grilla de items (mejor legibilidad) */
+.bodega-area-dinamica .movimientos-view .devolucion-table {
+  margin-top: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(55, 148, 255, 0.14);
+  background: rgba(0, 0, 0, 0.10);
+  overflow: hidden;
+}
+
+.bodega-area-dinamica .movimientos-view .devolucion-table-header,
+.bodega-area-dinamica .movimientos-view .devolucion-table-row {
+  display: grid;
+  grid-template-columns: 2.4fr 0.9fr 0.9fr 1.1fr 1.3fr;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+}
+
+.bodega-area-dinamica .movimientos-view .devolucion-table-header {
+  background: rgba(55, 148, 255, 0.10);
+  border-bottom: 1px solid rgba(55, 148, 255, 0.14);
+  color: rgba(224, 224, 255, 0.90);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.bodega-area-dinamica .movimientos-view .devolucion-table-row {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.bodega-area-dinamica .movimientos-view .devolucion-table-row:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.bodega-area-dinamica .movimientos-view .devolucion-table-col {
+  min-width: 0;
+}
+
+.bodega-area-dinamica .movimientos-view .devolucion-table-material {
+  display: grid;
+  gap: 4px;
+}
+
+.bodega-area-dinamica .movimientos-view .devolucion-table-material-main {
+  font-weight: 900;
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.94);
+  line-height: 1.25;
+}
+
+.bodega-area-dinamica .movimientos-view .devolucion-table-meta {
+  font-size: 11px;
+  color: rgba(224, 224, 255, 0.70);
+}
+
+/* Si algún input readonly llega con fondo claro inline, forzar texto oscuro */
+.bodega-area-dinamica .movimientos-view .devolucion-input[readonly][style*="background: #f8fafc"],
+.bodega-area-dinamica .movimientos-view .devolucion-input[readonly][style*="background:#f8fafc"] {
+  color: #0f172a;
+}
+
+.bodega-area-dinamica .movimientos-view .devolucion-boton-primario,
+.bodega-area-dinamica .movimientos-view .devolucion-boton-secundario {
+  border-radius: 10px;
+  padding: 10px 14px;
+  border: 1px solid rgba(55, 148, 255, 0.22);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.bodega-area-dinamica .movimientos-view .devolucion-boton-primario {
+  background: linear-gradient(135deg, rgba(55, 148, 255, 0.28), rgba(124, 92, 246, 0.20));
+  border-color: rgba(55, 148, 255, 0.55);
+}
+
+.bodega-area-dinamica .movimientos-view .devolucion-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  z-index: 2000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 18px;
+}
+
+.bodega-area-dinamica .movimientos-view .devolucion-modal-content {
+  width: min(760px, 96vw);
+  background: linear-gradient(180deg, rgba(17, 32, 56, 0.96), rgba(10, 18, 30, 0.96));
+  border: 1px solid rgba(55, 148, 255, 0.22);
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
+}
+
+/* Devolución: panel lateral izquierdo + tabs */
+.bodega-area-dinamica .movimientos-view .devolucion-panel-izquierdo,
+.bodega-area-dinamica .movimientos-view .devolucion-pendientes-contenedor {
+  background: linear-gradient(180deg, rgba(17, 32, 56, 0.70), rgba(10, 18, 30, 0.70)) !important;
+  border: 1px solid rgba(55, 148, 255, 0.18) !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.30) !important;
+  border-radius: 12px !important;
+}
+
+.bodega-area-dinamica .movimientos-view .devolucion-pendientes-titulo,
+.bodega-area-dinamica .movimientos-view .devolucion-title {
+  color: rgba(255, 255, 255, 0.96) !important;
+  text-shadow: 0 0 18px rgba(55, 148, 255, 0.18);
+}
+
+.bodega-area-dinamica .movimientos-view .devolucion-pendientes-subtitulo,
+.bodega-area-dinamica .movimientos-view .devolucion-subtitle {
+  color: rgba(224, 224, 255, 0.72) !important;
+}
+
+.bodega-area-dinamica .movimientos-view .devolucion-panel-lateral-pestanas {
+  background: rgba(0, 0, 0, 0.10) !important;
+  border: 1px solid rgba(55, 148, 255, 0.14) !important;
+  border-radius: 12px !important;
+  padding: 8px !important;
+}
+
+.bodega-area-dinamica .movimientos-view .devolucion-panel-lateral-pestana {
+  border: 1px solid rgba(55, 148, 255, 0.18) !important;
+  background: rgba(255, 255, 255, 0.02) !important;
+  color: rgba(224, 224, 255, 0.88) !important;
+  border-radius: 10px !important;
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 180ms ease, background-color 180ms ease, border-color 180ms ease;
+}
+
+.bodega-area-dinamica .movimientos-view .devolucion-panel-lateral-pestana:hover {
+  background: rgba(55, 148, 255, 0.12) !important;
+  border-color: rgba(55, 148, 255, 0.50) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 14px rgba(55, 148, 255, 0.18) !important;
+}
+
+.bodega-area-dinamica .movimientos-view .devolucion-panel-lateral-pestana-activa,
+.bodega-area-dinamica .movimientos-view .panel-lateral-pestana-activa {
+  background: rgba(55, 148, 255, 0.18) !important;
+  border-color: rgba(55, 148, 255, 0.70) !important;
+  color: #ffffff !important;
+  box-shadow:
+    0 0 18px rgba(55, 148, 255, 0.22),
+    0 0 0 1px rgba(55, 148, 255, 0.14) inset !important;
+}
+
+.bodega-area-dinamica .movimientos-view .devolucion-pendientes-lista,
+.bodega-area-dinamica .movimientos-view .devolucion-panel-lateral-contenido {
+  background: rgba(0, 0, 0, 0.10) !important;
+  border: 1px solid rgba(55, 148, 255, 0.14) !important;
+  border-radius: 12px !important;
+}
+
+/* Devolución: lista lateral (separación entre solicitudes) */
+.bodega-area-dinamica .movimientos-view .devolucion-pendientes-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  max-height: 72vh;
+  overflow-y: auto;
+}
+
+.bodega-area-dinamica .movimientos-view .devolucion-pendiente-item {
+  border-radius: 12px;
+  padding: 12px 12px;
+  border: 1px solid rgba(55, 148, 255, 0.18);
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 180ms ease, border-color 180ms ease, background-color 180ms ease;
+}
+
+.bodega-area-dinamica .movimientos-view .devolucion-pendiente-item:hover {
+  transform: translateY(-1px);
+  border-color: rgba(55, 148, 255, 0.55);
+  background: rgba(55, 148, 255, 0.10);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.24);
+}
+
+.bodega-area-dinamica .movimientos-view .devolucion-pendiente-titulo {
+  font-weight: 900;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.94);
+  margin-bottom: 8px;
+}
+
+.bodega-area-dinamica .movimientos-view .devolucion-pendiente-detalles {
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+  color: rgba(224, 224, 255, 0.78);
+}
+
+.bodega-area-dinamica .movimientos-view .devolucion-estado-vacio,
+.bodega-area-dinamica .movimientos-view .devolucion-estado-vacio p {
+  color: rgba(224, 224, 255, 0.70) !important;
+}
+
+/* =============================================================================
+   Movimientos > Despacho de Materiales (despachobodega.html)
+   - Estilos en pantalla (no toca el template de PDF, que mantiene inline)
+   ============================================================================= */
+
+.bodega-area-dinamica .movimientos-view .despacho-wrapper-custom {
+  animation: bodegaFadeIn 220ms ease both;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-header-title {
+  margin: 0;
+  font-size: 22px;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-txt-muted {
+  margin: 6px 0 0;
+  color: rgba(224, 224, 255, 0.70);
+  font-size: 13px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-badge {
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(55, 148, 255, 0.12);
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(55, 148, 255, 0.22);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18) inset;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-grid {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 18px;
+  align-items: start;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-panel-left {
+  min-height: 600px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-panel-right {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
+  border-radius: 12px;
+  border: 1px solid rgba(55, 148, 255, 0.12);
+  padding: 16px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-panel-right-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-panel-title {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 14px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-hint {
+  background: rgba(55, 148, 255, 0.10);
+  padding: 16px;
+  border-radius: 12px;
+  border-left: 4px solid rgba(55, 148, 255, 0.85);
+  border: 1px solid rgba(55, 148, 255, 0.18);
+  margin-bottom: 16px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-hint-title {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 14px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-hint-text {
+  margin: 6px 0 0;
+  color: rgba(224, 224, 255, 0.65);
+  font-size: 13px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-empty {
+  text-align: center;
+  padding: 34px 12px;
+  opacity: 0.85;
+  color: rgba(224, 224, 255, 0.70);
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-empty-icon {
+  font-size: 36px;
+  margin-bottom: 8px;
+  opacity: 0.9;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(55, 148, 255, 0.12);
+  padding: 14px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-card.is-completada {
+  border-color: rgba(34, 197, 94, 0.26);
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-card-id {
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 14px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-card.is-pendiente .despacho-card-status {
+  color: rgba(55, 148, 255, 0.95);
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-card.is-completada .despacho-card-status {
+  color: rgba(34, 197, 94, 0.95);
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-card-status {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-card-meta {
+  margin-top: 4px;
+  font-size: 13px;
+  color: rgba(224, 224, 255, 0.62);
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.bodega-area-dinamica .movimientos-view .btn-despacho-outline,
+.bodega-area-dinamica .movimientos-view .btn-despacho-solido {
+  border-radius: 10px;
+  cursor: pointer;
+  padding: 10px 12px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  border: 1px solid rgba(55, 148, 255, 0.24);
+  transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 140ms ease;
+}
+
+.bodega-area-dinamica .movimientos-view .btn-despacho-outline {
+  background: rgba(0, 0, 0, 0.10);
+  color: rgba(224, 224, 255, 0.90);
+}
+
+.bodega-area-dinamica .movimientos-view .btn-despacho-outline:hover {
+  background: rgba(55, 148, 255, 0.12);
+  border-color: rgba(55, 148, 255, 0.55);
+  box-shadow: 0 0 14px rgba(55, 148, 255, 0.16);
+  transform: translateY(-1px);
+}
+
+.bodega-area-dinamica .movimientos-view .btn-despacho-solido {
+  background: rgba(55, 148, 255, 0.14);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.bodega-area-dinamica .movimientos-view .btn-despacho-solido:hover {
+  background: rgba(55, 148, 255, 0.20);
+  border-color: rgba(55, 148, 255, 0.65);
+  box-shadow: 0 0 18px rgba(55, 148, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-btn-xs {
+  padding: 7px 10px;
+  font-size: 12px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-btn-xxs {
+  padding: 6px 8px;
+  font-size: 11px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-actions-center {
+  margin-top: 14px;
+  text-align: center;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 10px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-action-main { flex: 2; }
+.bodega-area-dinamica .movimientos-view .despacho-action-secondary { flex: 1; }
+.bodega-area-dinamica .movimientos-view .despacho-action-full { flex: 1; }
+
+.bodega-area-dinamica .movimientos-view .despacho-section-header {
+  background: rgba(55, 148, 255, 0.10);
+  padding: 12px 14px;
+  border-radius: 10px;
+  margin-bottom: 14px;
+  border-left: 4px solid rgba(55, 148, 255, 0.85);
+  border: 1px solid rgba(55, 148, 255, 0.18);
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-section-title {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 14px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-evento-panel {
+  display: block;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  border: 1px solid rgba(55, 148, 255, 0.12);
+  padding: 14px;
+  margin-top: 14px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-evento-title {
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 14px;
+  margin: 0 0 12px;
+  border-bottom: 1px solid rgba(55, 148, 255, 0.18);
+  padding-bottom: 8px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-evento-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-evento-label {
+  display: block;
+  font-size: 11px;
+  color: rgba(224, 224, 255, 0.55);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-evento-value {
+  color: rgba(224, 224, 255, 0.80);
+  margin-top: 2px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-evento-value-strong {
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.92);
+  margin-top: 2px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-evento-block { margin-top: 12px; }
+
+.bodega-area-dinamica .movimientos-view .despacho-evento-time {
+  font-size: 13px;
+  color: rgba(55, 148, 255, 0.95);
+  margin-top: 2px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-evento-time-danger {
+  font-size: 13px;
+  color: rgba(239, 68, 68, 0.95);
+  margin-top: 2px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-evento-desc {
+  font-size: 12px;
+  color: rgba(224, 224, 255, 0.62);
+  line-height: 1.4;
+  margin-top: 2px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-evento-empty {
+  text-align: center;
+  color: rgba(224, 224, 255, 0.55);
+  padding: 14px 10px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-alert {
+  margin-top: 16px;
+  padding: 14px;
+  background: rgba(239, 68, 68, 0.10);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 10px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-alert-title {
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-alert-body {
+  color: rgba(224, 224, 255, 0.75);
+  font-size: 13px;
+}
+
+.bodega-area-dinamica .movimientos-view .tabla-despacho-inventario {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(0, 0, 0, 0.10);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(55, 148, 255, 0.14);
+}
+
+.bodega-area-dinamica .movimientos-view .tabla-despacho-inventario th,
+.bodega-area-dinamica .movimientos-view .tabla-despacho-inventario td {
+  padding: 10px 10px;
+  border-bottom: 1px solid rgba(55, 148, 255, 0.10);
+  color: rgba(224, 224, 255, 0.82);
+  vertical-align: top;
+}
+
+.bodega-area-dinamica .movimientos-view .tabla-despacho-inventario th {
+  text-align: left;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.90);
+  background: rgba(55, 148, 255, 0.08);
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-td-center {
+  text-align: center;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-stock-ok {
+  color: rgba(34, 197, 94, 0.95);
+  font-weight: 900;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-stock-bad {
+  color: rgba(239, 68, 68, 0.95);
+  font-weight: 900;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-hist-header {
+  background: rgba(55, 148, 255, 0.10);
+  padding: 12px 14px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  border-left: 4px solid rgba(55, 148, 255, 0.85);
+  border: 1px solid rgba(55, 148, 255, 0.18);
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-hist-title {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 14px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-hist-subtitle {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: rgba(224, 224, 255, 0.62);
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-hist-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-hist-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(55, 148, 255, 0.12);
+  padding: 12px;
+  border-radius: 10px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-hist-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-hist-num {
+  color: rgba(55, 148, 255, 0.95);
+  font-size: 13px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-hist-meta {
+  font-size: 12px;
+  color: rgba(224, 224, 255, 0.62);
+  margin-top: 2px;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-hist-right { text-align: right; }
+
+.bodega-area-dinamica .movimientos-view .despacho-hist-status {
+  font-size: 12px;
+  color: rgba(34, 197, 94, 0.95);
+  font-weight: 900;
+}
+
+.bodega-area-dinamica .movimientos-view .despacho-hist-count {
+  font-size: 11px;
+  color: rgba(224, 224, 255, 0.55);
+}
+
+@media (max-width: 980px) {
+  .bodega-area-dinamica .movimientos-view .despacho-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Ventas materiales: columna lateral (ventas procesadas) */
+.bodega-area-dinamica .movimientos-view .ventas-materiales-lateral,
+.bodega-area-dinamica .movimientos-view .ventas-procesadas-contenedor {
+  background: linear-gradient(180deg, rgba(17, 32, 56, 0.70), rgba(10, 18, 30, 0.70)) !important;
+  border: 1px solid rgba(55, 148, 255, 0.18) !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.30) !important;
+  border-radius: 12px !important;
+}
+
+.bodega-area-dinamica .movimientos-view .ventas-procesadas-contenedor {
+  padding: 16px;
+}
+
+.bodega-area-dinamica .movimientos-view .ventas-procesadas-titulo {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.bodega-area-dinamica .movimientos-view .ventas-procesadas-subtitulo {
+  margin: 6px 0 0 0;
+  font-size: 12px;
+}
+
+.bodega-area-dinamica .movimientos-view .ventas-procesadas-seccion {
+  margin-top: 12px;
+}
+
+.bodega-area-dinamica .movimientos-view .ventas-procesadas-titulo {
+  color: rgba(255, 255, 255, 0.96) !important;
+  text-shadow: 0 0 18px rgba(55, 148, 255, 0.18);
+}
+
+.bodega-area-dinamica .movimientos-view .ventas-procesadas-subtitulo,
+.bodega-area-dinamica .movimientos-view .ventas-procesadas-vacio {
+  color: rgba(224, 224, 255, 0.72) !important;
+}
+
+.bodega-area-dinamica .movimientos-view .ventas-procesadas-lista {
+  background: rgba(0, 0, 0, 0.10) !important;
+  border: 1px solid rgba(55, 148, 255, 0.14) !important;
+  border-radius: 12px !important;
+}
+
+.bodega-area-dinamica .movimientos-view .ventas-procesadas-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  max-height: 74vh;
+  overflow-y: auto;
+}
+
+.bodega-area-dinamica .movimientos-view .ventas-procesadas-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid rgba(55, 148, 255, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.20);
+  transition: transform 140ms ease, box-shadow 180ms ease, border-color 180ms ease, background-color 180ms ease;
+}
+
+.bodega-area-dinamica .movimientos-view .ventas-procesadas-item:hover {
+  transform: translateY(-1px);
+  border-color: rgba(55, 148, 255, 0.55);
+  background: rgba(55, 148, 255, 0.10);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.26);
+}
+
+.bodega-area-dinamica .movimientos-view .ventas-procesadas-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.bodega-area-dinamica .movimientos-view .ventas-procesadas-titulo-item {
+  font-weight: 900;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.94);
+  margin-bottom: 8px;
+}
+
+.bodega-area-dinamica .movimientos-view .ventas-procesadas-detalles {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  line-height: 1.25;
+  padding: 10px 10px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #0f172a;
+  box-shadow: 0 6px 16px rgba(2, 6, 23, 0.12);
+  overflow-wrap: anywhere;
+}
+
+.bodega-area-dinamica .movimientos-view .ventas-procesadas-detalles strong {
+  color: #1e3a8a;
+}
+
+.bodega-area-dinamica .movimientos-view .ventas-procesadas-acciones {
+  display: flex;
+  align-items: flex-start;
+}
+
+.bodega-area-dinamica .movimientos-view .ventas-procesadas-btn {
+  border-radius: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(55, 148, 255, 0.22);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 180ms ease, background-color 180ms ease, border-color 180ms ease;
+}
+
+.bodega-area-dinamica .movimientos-view .ventas-procesadas-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(55, 148, 255, 0.14);
+  border-color: rgba(55, 148, 255, 0.60);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.26);
+}
+
+.bodega-area-dinamica .movimientos-view .ventas-procesadas-vacio {
+  padding: 16px;
+  text-align: center;
+}
+
+/* Bajas: panel lateral derecho fijo */
+.bodega-area-dinamica .movimientos-view .panel-lateral {
+  background: linear-gradient(180deg, rgba(17, 32, 56, 0.94), rgba(10, 18, 30, 0.94)) !important;
+  border-left: 1px solid rgba(55, 148, 255, 0.30) !important;
+  box-shadow:
+    -10px 0 28px rgba(0, 0, 0, 0.45),
+    0 0 28px rgba(55, 148, 255, 0.10) !important;
+}
+
+.bodega-area-dinamica .movimientos-view .panel-header {
+  background: linear-gradient(135deg, rgba(55, 148, 255, 0.40), rgba(124, 92, 246, 0.28)) !important;
+  border-bottom: 1px solid rgba(55, 148, 255, 0.22) !important;
+  position: relative;
+}
+
+.bodega-area-dinamica .movimientos-view .panel-header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(55, 148, 255, 0.00), rgba(55, 148, 255, 0.75), rgba(124, 92, 246, 0.55), rgba(55, 148, 255, 0.00));
+}
+
+.bodega-area-dinamica .movimientos-view .panel-title {
+  color: rgba(255, 255, 255, 0.96) !important;
+  text-shadow: 0 0 16px rgba(55, 148, 255, 0.16);
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.bodega-area-dinamica .movimientos-view .panel-close-btn {
+  border-radius: 10px !important;
+  border: 1px solid rgba(55, 148, 255, 0.22) !important;
+  background: rgba(0, 0, 0, 0.12) !important;
+  color: rgba(255, 255, 255, 0.92) !important;
+  padding: 8px 10px !important;
+  font-weight: 900 !important;
+}
+
+.bodega-area-dinamica .movimientos-view .panel-close-btn:hover {
+  background: rgba(55, 148, 255, 0.14) !important;
+  border-color: rgba(55, 148, 255, 0.55) !important;
+  box-shadow: 0 0 14px rgba(55, 148, 255, 0.18) !important;
+}
+
+.bodega-area-dinamica .movimientos-view .panel-content {
+  padding: 12px !important;
+}
+
+.bodega-area-dinamica .movimientos-view .panel-content #listaSolicitudes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bodega-area-dinamica .movimientos-view .solicitud-item {
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid rgba(55, 148, 255, 0.16) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: rgba(224, 224, 255, 0.88) !important;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.22);
+  transition: transform 140ms ease, box-shadow 180ms ease, border-color 180ms ease, background-color 180ms ease;
+}
+
+.bodega-area-dinamica .movimientos-view .solicitud-item:hover {
+  background: rgba(55, 148, 255, 0.10) !important;
+  border-color: rgba(55, 148, 255, 0.55) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.28);
+}
+
+.bodega-area-dinamica .movimientos-view .solicitud-numero {
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.bodega-area-dinamica .movimientos-view .solicitud-fecha,
+.bodega-area-dinamica .movimientos-view .solicitud-personal {
+  color: rgba(224, 224, 255, 0.72);
+  font-size: 12px;
+}
+
+.bodega-area-dinamica .movimientos-view .solicitud-estado {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+  border: 1px solid rgba(55, 148, 255, 0.22);
+  background: rgba(55, 148, 255, 0.10);
+  color: rgba(224, 224, 255, 0.92);
+}
+
+.bodega-area-dinamica .movimientos-view .solicitud-estado.aprobada {
+  border-color: rgba(34, 197, 94, 0.28);
+  background: rgba(34, 197, 94, 0.12);
+  color: rgba(34, 197, 94, 0.95);
+}
+
+.bodega-area-dinamica .movimientos-view .solicitud-estado.pendiente {
+  border-color: rgba(250, 204, 21, 0.30);
+  background: rgba(250, 204, 21, 0.12);
+  color: rgba(250, 204, 21, 0.95);
+}
+
+.bodega-area-dinamica .movimientos-view .solicitud-btn {
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-weight: 900;
+  transition: transform 140ms ease, box-shadow 180ms ease, background-color 180ms ease, border-color 180ms ease;
+}
+
+.bodega-area-dinamica .movimientos-view .solicitud-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.26);
+}
+
+.bodega-area-dinamica .movimientos-view .solicitud-btn.exportar {
+  background: rgba(55, 148, 255, 0.16);
+  border-color: rgba(55, 148, 255, 0.55);
+}
+
+.bodega-area-dinamica .movimientos-view .solicitud-btn.editar {
+  background: rgba(124, 92, 246, 0.12);
+  border-color: rgba(124, 92, 246, 0.40);
+}
+
+.bodega-area-dinamica .movimientos-view .solicitud-btn.eliminar {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.40);
+}
+
+/* Fabricación: aside lateral */
+.bodega-area-dinamica .movimientos-view .lista-solicitudes {
+  background: linear-gradient(180deg, rgba(17, 32, 56, 0.70), rgba(10, 18, 30, 0.70)) !important;
+  border: 1px solid rgba(55, 148, 255, 0.18) !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.30) !important;
+  border-radius: 12px !important;
+}
+
+.bodega-area-dinamica .movimientos-view .lista-solicitudes h3 {
+  color: rgba(255, 255, 255, 0.96) !important;
+}
+
+.bodega-area-dinamica .movimientos-view .lista-solicitudes p {
+  color: rgba(224, 224, 255, 0.72) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bodega-area-dinamica .audiovisual-view,
+  .bodega-area-dinamica .hierro-view,
+  .bodega-area-dinamica .mobiliario-view,
+  .bodega-area-dinamica .movimientos-view {
+    animation: none;
+  }
+  .bodega-area-dinamica .audiovisual-boton,
+  .bodega-area-dinamica .audiovisual-input,
+  .bodega-area-dinamica .audiovisual-select,
+  .bodega-area-dinamica .hierro-boton,
+  .bodega-area-dinamica .hierro-input,
+  .bodega-area-dinamica .hierro-select,
+  .bodega-area-dinamica .mobiliario-boton,
+  .bodega-area-dinamica .mobiliario-input,
+  .bodega-area-dinamica .mobiliario-select,
+  .bodega-area-dinamica .movimientos-view .devolucion-panel-lateral-pestana {
+    transition: none;
+  }
+}

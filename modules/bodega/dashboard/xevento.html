@@ -1,0 +1,593 @@
+<div style="display:flex; gap:20px; height:100%;">
+
+  <div style="flex:1; display:flex; flex-direction:column; gap:20px;">
+
+    <!-- KPIs -->
+    <div style="display:flex; gap:20px;">
+      <div class="bodega-resumen-card">
+        <div>Despachos</div>
+        <div class="valor" id="kpi-despachos">–</div>
+      </div>
+      <div class="bodega-resumen-card">
+        <div>Ítems Únicos</div>
+        <div class="valor" id="kpi-items">–</div>
+      </div>
+      <div class="bodega-resumen-card">
+        <div>Total Unidades</div>
+        <div class="valor" id="kpi-unidades">–</div>
+      </div>
+      <div class="bodega-resumen-card">
+        <div>Faltantes</div>
+        <div class="valor" id="kpi-faltantes">–</div>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="bodega-filtros">
+      <div class="bodega-filtro-grupo">
+        <label>Evento</label>
+        <select id="filtro-evento" class="dashboard-select">
+          <option value="">Seleccione un evento...</option>
+        </select>
+      </div>
+      <button id="btn-exportar-xevento" class="bodega-export-pdf-btn">📄 Exportar Consolidado</button>
+    </div>
+
+    <!-- Info Evento -->
+    <div id="info-evento"
+      style="display:none; background:rgba(20,30,60,.6); border:1px solid rgba(99,102,241,.2); border-radius:12px; padding:16px;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div><strong style="color: #93c5fd;">Cliente:</strong> <span id="cliente-evento" style="color: #e0e0ff;">–</span></div>
+        <div><strong style="color: #93c5fd;">Lugar:</strong> <span id="lugar-evento" style="color: #e0e0ff;">–</span></div>
+        <div><strong style="color: #93c5fd;">Fecha inicio salidas:</strong> <span id="fecha-evento" style="color: #e0e0ff;">–</span></div>
+      </div>
+    </div>
+
+    <!-- Tabla -->
+    <div id="tabla-movimientos-evento" style="flex:1; overflow:auto;">
+      <p style="text-align:center; color:#cbd5e1; margin-top:40px;">
+        Seleccione un evento
+      </p>
+    </div>
+
+  </div>
+</div>
+
+<style>
+.bodega-resumen-card{
+  background:rgba(20,30,60,.6);
+  border:1px solid rgba(99,102,241,.2);
+  border-radius:8px;
+  padding:12px;
+  min-width:160px;
+  text-align:center;
+  color:#cbd5e1;
+}
+.bodega-resumen-card .valor{
+  font-size:24px;
+  font-weight:bold;
+  color:#64b5f6;
+}
+.dashboard-boton.export-pdf {
+  background: linear-gradient(135deg, #1e40af, #3730a3);
+  color: white;
+  padding: 10px 20px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s;
+}
+
+.dashboard-boton.export-pdf:hover {
+  background: linear-gradient(135deg, #313a9f, #2c2685);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* ✅ ESTILOS PARA LA TABLA: texto sólido y legible */
+.bodega-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #e0e0ff; /* ✅ Texto blanco sólido para toda la tabla */
+}
+
+.bodega-table th,
+.bodega-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.bodega-table th {
+  color: #93c5fd; /* Color de los encabezados de columna */
+  font-weight: 600;
+  background: rgba(20, 30, 60, 0.4);
+}
+
+.bodega-table tr:hover {
+  background: rgba(40, 50, 90, 0.4);
+}
+</style>
+
+<script>
+(function(){
+
+  const estado = {
+    supabase: window.supabaseClient || null,
+    movimientosActuales: [],
+    bodegaPorCodigo: new Map(),
+  };
+
+  function normalizarFecha(valor){
+    if(!valor) return null;
+    const d = new Date(valor);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  function limpiarUI(){
+    const cont = document.getElementById('tabla-movimientos-evento');
+    const info = document.getElementById('info-evento');
+    cont.innerHTML = `<p style="text-align:center;color:#cbd5e1;margin-top:40px;">Seleccione un evento</p>`;
+    info.style.display = 'none';
+    document.getElementById('kpi-despachos').textContent = '–';
+    document.getElementById('kpi-items').textContent = '–';
+    document.getElementById('kpi-unidades').textContent = '–';
+    document.getElementById('kpi-faltantes').textContent = '–';
+  }
+
+  function poblarSelectEventos(nombres){
+    const select = document.getElementById('filtro-evento');
+    while(select.options.length > 1) select.remove(1);
+    (nombres || []).forEach(nombre => {
+      const opt = document.createElement('option');
+      opt.value = nombre;
+      opt.textContent = nombre;
+      select.appendChild(opt);
+    });
+  }
+
+  async function cargarEventos(){
+    if(!estado.supabase){
+      console.warn('Supabase client no disponible en window.supabaseClient');
+      poblarSelectEventos([]);
+      return;
+    }
+    const { data, error } = await estado.supabase
+      .from('despachos_logistica')
+      .select('evento')
+      .not('evento', 'is', null)
+      .limit(5000);
+
+    if(error){
+      console.error('Error cargando eventos desde despachos_logistica:', error);
+      poblarSelectEventos([]);
+      return;
+    }
+
+    const unicos = Array.from(new Set((data || []).map(r => (r.evento || '').trim()).filter(Boolean)))
+      .sort((a,b)=>a.localeCompare(b));
+    poblarSelectEventos(unicos);
+  }
+
+  async function cargarBodegaPorCodigos(codigos){
+    estado.bodegaPorCodigo = new Map();
+    const lista = Array.from(new Set((codigos || []).filter(Boolean)));
+    if(!estado.supabase || lista.length === 0) return;
+
+    const lotes = [];
+    const tam = 800;
+    for(let i=0;i<lista.length;i+=tam) lotes.push(lista.slice(i, i+tam));
+
+    for(const lote of lotes){
+      // En V2 compat, catalogo expone bodega_secundaria (no 'bodega').
+      // En legacy, puede existir 'bodega' y no 'bodega_secundaria'.
+      let { data, error } = await estado.supabase
+        .from('catalogo')
+        .select('codigo,bodega_secundaria')
+        .eq('es_contenedor', false)
+        .in('codigo', lote);
+
+      if(error){
+        const msg = (error.message || '').toLowerCase();
+        const missingCol = (msg.includes('does not exist') && msg.includes('bodega_secundaria')) || error.code === '42703';
+        if (missingCol) {
+          const retry = await estado.supabase
+            .from('catalogo')
+            .select('codigo,bodega')
+            .eq('es_contenedor', false)
+            .in('codigo', lote);
+          data = retry.data;
+          error = retry.error;
+        }
+      }
+
+      if(error){
+        console.error('Error cargando bodegas desde catalogo:', error);
+        continue;
+      }
+
+      (data || []).forEach(row => {
+        if(!row || !row.codigo) return;
+        const b = row.bodega_secundaria || row.bodega || '-';
+        estado.bodegaPorCodigo.set(row.codigo, b);
+      });
+    }
+  }
+
+  async function cargarMovimientosPorEvento(eventoNombre){
+    const supabase = estado.supabase;
+    if(!supabase) throw new Error('Supabase client no disponible');
+
+    const { data: despachos, error: errDesp } = await supabase
+      .from('despachos_logistica')
+      .select('id,numero_despacho,evento,encargado_evento,fecha_despacho,cliente,lugar_montaje')
+      .eq('evento', eventoNombre)
+      .order('fecha_despacho', { ascending: true });
+
+    if(errDesp) throw errDesp;
+
+    const despachoIds = (despachos || []).map(d => d.id).filter(Boolean);
+    let items = [];
+
+    if(despachoIds.length > 0){
+      const { data: itemsData, error: errItems } = await supabase
+        .from('items_despacho_logistica')
+        .select('despacho_id,material_codigo,material_nombre,cantidad,cantidad_devuelta')
+        .in('despacho_id', despachoIds);
+      if(errItems) throw errItems;
+      items = itemsData || [];
+    }
+
+    const itemsPorDespacho = new Map();
+    items.forEach(it => {
+      if(!it || !it.despacho_id) return;
+      const arr = itemsPorDespacho.get(it.despacho_id) || [];
+      arr.push(it);
+      itemsPorDespacho.set(it.despacho_id, arr);
+    });
+
+    const movimientosDespacho = (despachos || []).map(d => {
+      const idDoc = d.numero_despacho || d.id;
+      const itemsDoc = (itemsPorDespacho.get(d.id) || []).map(it => ({
+        codigo: it.material_codigo,
+        nombre: it.material_nombre,
+        cantidad: Number(it.cantidad || 0),
+      }));
+      return {
+        id: String(idDoc),
+        tipo: 'despacho',
+        fecha: d.fecha_despacho,
+        evento: d.evento,
+        encargado: d.encargado_evento || '-',
+        cliente: d.cliente || '-',
+        lugar: d.lugar_montaje || '-',
+        items: itemsDoc,
+      };
+    });
+
+    let devoluciones = [];
+    try{
+      const { data: devData, error: errDev } = await supabase
+        .from('devoluciones')
+        .select('id,fecha,encargado_ingreso,evento,items')
+        .eq('evento', eventoNombre)
+        .order('fecha', { ascending: true });
+      if(errDev){
+        console.warn('No se pudieron cargar devoluciones:', errDev);
+      } else {
+        devoluciones = devData || [];
+      }
+    } catch (e){
+      console.warn('No se pudieron cargar devoluciones:', e);
+    }
+
+    const movimientosDevolucion = devoluciones.map(dev => {
+      const itemsDev = Array.isArray(dev.items) ? dev.items : [];
+      const itemsDoc = itemsDev.map(it => ({
+        codigo: it.codigo || it.material_codigo,
+        nombre: it.nombre || it.material_nombre,
+        cantidad: Number(it.cantidadRecibida || it.cantidad_recibida || it.cantidad || 0),
+      })).filter(it => it.codigo);
+
+      return {
+        id: String(dev.id || '-'),
+        tipo: 'devolucion',
+        fecha: dev.fecha,
+        evento: dev.evento,
+        encargado: dev.encargado_ingreso || '-',
+        items: itemsDoc,
+      };
+    });
+
+    const movimientos = [...movimientosDespacho, ...movimientosDevolucion]
+      .filter(m => m.items && m.items.length)
+      .sort((a,b)=>{
+        const da = normalizarFecha(a.fecha);
+        const db = normalizarFecha(b.fecha);
+        if(!da && !db) return 0;
+        if(!da) return 1;
+        if(!db) return -1;
+        return da - db;
+      });
+
+    const info = {
+      cliente: (despachos && despachos[0] && despachos[0].cliente) || '-',
+      lugar: (despachos && despachos[0] && despachos[0].lugar_montaje) || '-',
+      fechaInicio: (()=>{
+        const fechas = (despachos || []).map(d => normalizarFecha(d.fecha_despacho)).filter(Boolean).sort((a,b)=>a-b);
+        return fechas[0] ? fechas[0].toISOString().slice(0,10) : '-';
+      })(),
+    };
+
+    const codigos = [];
+    movimientos.forEach(m => (m.items || []).forEach(i => codigos.push(i.codigo)));
+    await cargarBodegaPorCodigos(codigos);
+
+    return { info, movimientos };
+  }
+
+  function construirFilasYKPIs(movimientos){
+    const movsOrdenados = [...(movimientos || [])].sort((a,b)=>{
+      const da = normalizarFecha(a.fecha);
+      const db = normalizarFecha(b.fecha);
+      if(!da && !db) return 0;
+      if(!da) return 1;
+      if(!db) return -1;
+      return da - db;
+    });
+
+    const totalDespachadoPorItem = {};
+    movsOrdenados.forEach(m => {
+      if(m.tipo !== 'despacho') return;
+      (m.items || []).forEach(i => {
+        const codigo = i.codigo;
+        if(!codigo) return;
+        totalDespachadoPorItem[codigo] = (totalDespachadoPorItem[codigo] || 0) + Number(i.cantidad || 0);
+      });
+    });
+
+    const devolucionAcumuladaPorItem = {};
+    const itemsUnicos = new Set();
+    let filas = '';
+
+    movsOrdenados.forEach(m => {
+      (m.items || []).forEach(i => {
+        if(!i.codigo) return;
+        itemsUnicos.add(i.codigo);
+        if(m.tipo === 'devolucion'){
+          devolucionAcumuladaPorItem[i.codigo] = (devolucionAcumuladaPorItem[i.codigo] || 0) + Number(i.cantidad || 0);
+        }
+        const totalDespachado = totalDespachadoPorItem[i.codigo] || 0;
+        const totalDevuelto = devolucionAcumuladaPorItem[i.codigo] || 0;
+        const faltante = Math.max(0, totalDespachado - totalDevuelto);
+        const bodega = estado.bodegaPorCodigo.get(i.codigo) || '-';
+
+        filas += `
+        <tr>
+          <td>${m.fecha || ''}</td>
+          <td>${m.id || ''}</td>
+          <td>${m.tipo || ''}</td>
+          <td>${m.encargado || ''}</td>
+          <td>${bodega}</td>
+          <td>${i.codigo}</td>
+          <td>${i.nombre || ''}</td>
+          <td>${i.cantidad ?? ''}</td>
+          <td>${faltante}</td>
+        </tr>`;
+      });
+    });
+
+    const totalDespachos = movsOrdenados.filter(m => m.tipo === 'despacho').length;
+    const totalUnidades = Object.values(totalDespachadoPorItem).reduce((sum, qty) => sum + Number(qty || 0), 0);
+    const totalFaltantes = Object.keys(totalDespachadoPorItem).reduce((sum, codigo) => {
+      const totalDespachado = totalDespachadoPorItem[codigo] || 0;
+      const totalDevuelto = devolucionAcumuladaPorItem[codigo] || 0;
+      return sum + Math.max(0, totalDespachado - totalDevuelto);
+    }, 0);
+
+    return {
+      filas,
+      kpis: {
+        totalDespachos,
+        itemsUnicos: itemsUnicos.size,
+        totalUnidades,
+        totalFaltantes,
+      },
+    };
+  }
+
+  async function renderizar(eventoNombre){
+    const cont = document.getElementById('tabla-movimientos-evento');
+    const info = document.getElementById('info-evento');
+
+    if(!eventoNombre){
+      limpiarUI();
+      return;
+    }
+
+    if(!estado.supabase){
+      cont.innerHTML = '<p style="text-align:center;color:#aaa;">Supabase no está inicializado.</p>';
+      return;
+    }
+
+    cont.innerHTML = '<p style="text-align:center;color:#cbd5e1;margin-top:40px;">Cargando...</p>';
+
+    try{
+      const { info: infoEvento, movimientos } = await cargarMovimientosPorEvento(eventoNombre);
+      estado.movimientosActuales = movimientos;
+
+      document.getElementById('cliente-evento').textContent = infoEvento.cliente || '-';
+      document.getElementById('lugar-evento').textContent = infoEvento.lugar || '-';
+      document.getElementById('fecha-evento').textContent = infoEvento.fechaInicio || '-';
+      info.style.display = 'block';
+
+      if(!movimientos.length){
+        cont.innerHTML = '<p style="text-align:center;color:#aaa;">Sin movimientos</p>';
+        document.getElementById('kpi-despachos').textContent = '0';
+        document.getElementById('kpi-items').textContent = '0';
+        document.getElementById('kpi-unidades').textContent = '0';
+        document.getElementById('kpi-faltantes').textContent = '0';
+        return;
+      }
+
+      const { filas, kpis } = construirFilasYKPIs(movimientos);
+      document.getElementById('kpi-despachos').textContent = kpis.totalDespachos;
+      document.getElementById('kpi-items').textContent = kpis.itemsUnicos;
+      document.getElementById('kpi-unidades').textContent = kpis.totalUnidades;
+      document.getElementById('kpi-faltantes').textContent = kpis.totalFaltantes;
+
+      cont.innerHTML = `
+      <table class="bodega-table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Documento</th>
+            <th>Tipo</th>
+            <th>Encargado</th>
+            <th>Bodega</th>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Cantidad</th>
+            <th>Faltante</th>
+          </tr>
+        </thead>
+        <tbody>${filas}</tbody>
+      </table>`;
+    } catch (e){
+      console.error('Error cargando consolidado por evento:', e);
+      cont.innerHTML = '<p style="text-align:center;color:#aaa;">Error cargando datos del evento.</p>';
+    }
+  }
+
+  document.getElementById('filtro-evento')
+    .addEventListener('change',e=>renderizar(e.target.value));
+
+  // Inicialización
+  limpiarUI();
+  cargarEventos();
+
+  // === FUNCIÓN DE EXPORTACIÓN FINAL ===
+  document.getElementById('btn-exportar-xevento').addEventListener('click', () => {
+    if (!window.html2pdf) {
+      alert('html2pdf no está cargado.');
+      return;
+    }
+    const eventoSeleccionado = document.getElementById('filtro-evento').value;
+    if (!eventoSeleccionado) {
+      alert('Por favor, seleccione un evento primero.');
+      return;
+    }
+
+    // === 1. RECOPILAR DATOS ===
+    const cliente = document.getElementById('cliente-evento').textContent;
+    const lugar = document.getElementById('lugar-evento').textContent;
+    const fechaReporte = new Date().toLocaleDateString('es-NI');
+
+    // === 2. PREPARAR DATOS PARA EL PDF (CON FALTANTE) ===
+    const movsOrdenadosPDF = [...(estado.movimientosActuales || [])].sort((a, b) => {
+      const da = normalizarFecha(a.fecha);
+      const db = normalizarFecha(b.fecha);
+      if(!da && !db) return 0;
+      if(!da) return 1;
+      if(!db) return -1;
+      return da - db;
+    });
+
+    const totalDespachadoPorItemPDF = {};
+    movsOrdenadosPDF.forEach(m => {
+      if (m.tipo !== 'despacho') return;
+      (m.items || []).forEach(i => {
+        totalDespachadoPorItemPDF[i.codigo] = (totalDespachadoPorItemPDF[i.codigo] || 0) + Number(i.cantidad || 0);
+      });
+    });
+
+    const devolucionAcumuladaPorItemPDF = {};
+    let filasPDF = '';
+    movsOrdenadosPDF.forEach(m => {
+      (m.items || []).forEach(i => {
+        if (m.tipo === 'devolucion') {
+          devolucionAcumuladaPorItemPDF[i.codigo] = (devolucionAcumuladaPorItemPDF[i.codigo] || 0) + Number(i.cantidad || 0);
+        }
+        const totalDespachado = totalDespachadoPorItemPDF[i.codigo] || 0;
+        const totalDevuelto = devolucionAcumuladaPorItemPDF[i.codigo] || 0;
+        const faltante = Math.max(0, totalDespachado - totalDevuelto);
+        const bodega = estado.bodegaPorCodigo.get(i.codigo) || '-';
+
+        filasPDF += `
+          <tr>
+            <td>${m.fecha || ''}</td>
+            <td>${m.id || ''}</td>
+            <td>${m.tipo || ''}</td>
+            <td>${m.encargado || ''}</td>
+            <td>${bodega}</td>
+            <td>${i.codigo || ''}</td>
+            <td>${i.nombre || ''}</td>
+            <td>${i.cantidad ?? ''}</td>
+            <td>${faltante}</td>
+          </tr>
+        `;
+      });
+    });
+
+    // === 3. CONSTRUIR HTML PARA PDF (Diseño de impresión) ===
+    const htmlPDF = `
+      <div style="font-family: Arial, sans-serif; padding: 20px; color: #000; width: 100%;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <img src="assets/logo.png" style="height: 60px; margin-bottom: 16px;">
+          <h2 style="color: #1e40af; margin: 0; font-size: 22px;">Consolidado de Movimientos por Evento</h2>
+          <p style="margin: 8px 0 0 0; color: #333; font-size: 14px;">
+            <strong>Evento:</strong> ${eventoSeleccionado}<br>
+            <strong>Cliente:</strong> ${cliente}<br>
+            <strong>Lugar:</strong> ${lugar}<br>
+            <strong>Fecha de Reporte:</strong> ${fechaReporte}
+          </p>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px;">
+          <thead>
+            <tr style="background-color: #f1f5f9; border-bottom: 2px solid #cbd5e1;">
+              <th style="padding: 10px; text-align: left; border-right: 1px solid #e2e8f0;">Fecha</th>
+              <th style="padding: 10px; text-align: left; border-right: 1px solid #e2e8f0;">Documento</th>
+              <th style="padding: 10px; text-align: left; border-right: 1px solid #e2e8f0;">Tipo</th>
+              <th style="padding: 10px; text-align: left; border-right: 1px solid #e2e8f0;">Encargado</th>
+              <th style="padding: 10px; text-align: left; border-right: 1px solid #e2e8f0;">Bodega</th>
+              <th style="padding: 10px; text-align: left; border-right: 1px solid #e2e8f0;">Código</th>
+              <th style="padding: 10px; text-align: left; border-right: 1px solid #e2e8f0;">Nombre</th>
+              <th style="padding: 10px; text-align: left; border-right: 1px solid #e2e8f0;">Cantidad</th>
+              <th style="padding: 10px; text-align: left;">Faltante</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filasPDF}
+          </tbody>
+        </table>
+
+        <div style="margin-top: 40px; text-align: center; font-size: 11px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 16px;">
+          <p>Documento generado por Absolute de Nicaragua</p>
+          <p>Original Bodega • Copia Caceta y Seguridad • Copia Encargado</p>
+        </div>
+      </div>
+    `;
+
+    // === 4. GENERAR PDF ===
+    html2pdf().from(htmlPDF).set({
+      margin: 15,
+      filename: `Consolidado_Evento_${eventoSeleccionado.replace(/ /g, '_')}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { 
+        scale: 2, 
+        useCORS: true,
+        backgroundColor: '#ffffff'
+      },
+      jsPDF: { 
+        unit: 'mm', 
+        format: 'letter', 
+        orientation: 'landscape' 
+      }
+    }).save();
+  });
+})();
+</script>

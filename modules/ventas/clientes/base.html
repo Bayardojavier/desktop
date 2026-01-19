@@ -1,0 +1,437 @@
+<!-- base.html -->
+<div class="cli-container">
+  <h1 class="cli-title">📄 Base de Clientes</h1>
+
+  <div class="cli-section">
+    <!-- Búsqueda -->
+    <input type="text" class="cli-input" placeholder="🔍 Buscar por empresa..." id="busqueda-clientes" style="width: 100%; margin-bottom: 16px;">
+
+    <!-- Ficha de cliente -->
+    <div id="ficha-cliente" class="cli-card">
+      <p class="cli-placeholder">Selecciona o busca un cliente para ver sus datos.</p>
+    </div>
+
+    <!-- Botones de navegación -->
+    <div id="botones-navegacion" class="cli-actions" style="display: none;">
+      <button class="cli-btn cli-btn-nav" id="btn-anterior">⬅ Anterior</button>
+      <button class="cli-btn cli-btn-nav" id="btn-siguiente">Siguiente ➡</button>
+      <button class="cli-btn cli-btn-edit" id="btn-editar">✏️ Modificar</button>
+      <button class="cli-btn cli-btn-save" id="btn-guardar" style="display: none;">💾 Guardar</button>
+      <button class="cli-btn cli-btn-cancel" id="btn-cancelar" style="display: none;">❌ Cancelar</button>
+      <button class="cli-btn cli-btn-delete" id="btn-eliminar">🗑️ Eliminar</button>
+    </div>
+
+    <!-- Nuevo cliente -->
+    <div class="cli-actions" style="margin-top: 20px;">
+      <button class="cli-btn cli-btn-primary" id="btn-nuevo-cliente">➕ Nuevo Cliente</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* =============================================================================
+     ESTILOS PROPIOS PARA CLIENTES (AISLADO DE APP.CSS)
+     ============================================================================= */
+  .cli-container {
+    padding: 20px;
+    max-width: 1000px;
+    margin: 0 auto;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #1e293b;
+  }
+
+  .cli-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    color: #1e3a8a;
+  }
+
+  .cli-section {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .cli-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 14px;
+    background: white;
+    color: #1e293b;
+  }
+
+  .cli-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  .cli-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 16px 0;
+    min-height: 120px;
+  }
+
+  .cli-placeholder {
+    color: #64748b;
+    text-align: center;
+    padding: 20px;
+  }
+
+  .cli-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .cli-grid-full {
+    grid-column: span 2;
+  }
+
+  .cli-field strong {
+    color: #334155;
+    margin-right: 8px;
+  }
+
+  .cli-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+  }
+
+  .cli-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .cli-btn-nav { background: #64748b; color: white; }
+  .cli-btn-edit { background: #3b82f6; color: white; }
+  .cli-btn-save { background: #10b981; color: white; }
+  .cli-btn-cancel { background: #6c757d; color: white; }
+  .cli-btn-delete { background: #ef4445; color: white; }
+  .cli-btn-primary { background: #0ea5e9; color: white; }
+
+  .cli-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  .cli-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .cli-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .cli-grid-full {
+      grid-column: span 1;
+    }
+  }
+</style>
+
+<script>
+  setTimeout(async () => {
+    // =============================================================================
+    // 🔹 CARGAR CLIENTES DE SUPABASE
+    // =============================================================================
+    let clientes = [];
+    let indiceActual = -1;
+    let modoEdicion = false;
+
+    async function cargarClientes() {
+      try {
+        const { data, error } = await window.supabaseClient
+          .from('clientes')
+          .select('*')
+          .order('nombre', { ascending: true });
+
+        if (error) {
+          console.error('Error al cargar clientes:', error);
+          clientes = [];
+          return;
+        }
+
+        clientes = data || [];
+      } catch (err) {
+        console.error('Error:', err);
+        clientes = [];
+      }
+    }
+
+    await cargarClientes();
+
+    // =============================================================================
+    // 🔹 FUNCIONES AUXILIARES
+    // =============================================================================
+    function mostrarMensaje(texto, exito = true) {
+      const ficha = document.getElementById('ficha-cliente');
+      ficha.innerHTML = `<p class="${exito ? 'cli-placeholder' : 'cli-error'}" style="color: ${exito ? '#64748b' : '#ef4445'};">${texto}</p>`;
+      document.getElementById('botones-navegacion').style.display = 'none';
+    }
+
+    function validarCliente(cliente) {
+      return cliente.nombre && cliente.contacto && cliente.telefono && cliente.direccion && cliente.ruc;
+    }
+
+    // =============================================================================
+    // 🔹 RENDERIZAR CLIENTE
+    // =============================================================================
+    function renderCliente(index) {
+      if (index < 0 || index >= clientes.length) {
+        mostrarMensaje('No hay clientes.');
+        return;
+      }
+
+      const cliente = clientes[index];
+      indiceActual = index;
+      const ficha = document.getElementById('ficha-cliente');
+
+      // Mostrar datos
+      ficha.innerHTML = `
+        <div class="cli-grid">
+          <div class="cli-field"><strong>Empresa:</strong> <span id="campo-nombre">${cliente.nombre}</span></div>
+          <div class="cli-field"><strong>Contacto:</strong> <span id="campo-contacto">${cliente.contacto}</span></div>
+          <div class="cli-field"><strong>Teléfono:</strong> <span id="campo-telefono">${cliente.telefono}</span></div>
+          <div class="cli-field"><strong>RUC:</strong> <span id="campo-ruc">${cliente.ruc}</span></div>
+          <div class="cli-field cli-grid-full"><strong>Dirección:</strong> <span id="campo-direccion">${cliente.direccion}</span></div>
+          <div class="cli-field cli-grid-full"><strong>Notas:</strong> <span id="campo-notas">${cliente.notas || '—'}</span></div>
+        </div>
+      `;
+
+      // Mostrar botones
+      document.getElementById('botones-navegacion').style.display = 'flex';
+      document.getElementById('btn-anterior').disabled = index === 0;
+      document.getElementById('btn-siguiente').disabled = index === clientes.length - 1;
+      document.getElementById('btn-editar').style.display = 'inline-block';
+      document.getElementById('btn-guardar').style.display = 'none';
+      document.getElementById('btn-cancelar').style.display = 'none';
+      modoEdicion = false;
+    }
+
+    // =============================================================================
+    // 🔹 MODO EDICIÓN
+    // =============================================================================
+    function activarEdicion() {
+      modoEdicion = true;
+      const cliente = clientes[indiceActual];
+      const ficha = document.getElementById('ficha-cliente');
+
+      ficha.innerHTML = `
+        <div class="cli-grid">
+          <div class="cli-field">
+            <strong>Empresa *</strong>
+            <input type="text" id="input-nombre" class="cli-input" value="${cliente.nombre}" required>
+          </div>
+          <div class="cli-field">
+            <strong>Contacto *</strong>
+            <input type="text" id="input-contacto" class="cli-input" value="${cliente.contacto}" required>
+          </div>
+          <div class="cli-field">
+            <strong>Teléfono *</strong>
+            <input type="text" id="input-telefono" class="cli-input" value="${cliente.telefono}" required>
+          </div>
+          <div class="cli-field">
+            <strong>RUC *</strong>
+            <input type="text" id="input-ruc" class="cli-input" value="${cliente.ruc}" required>
+          </div>
+          <div class="cli-field cli-grid-full">
+            <strong>Dirección *</strong>
+            <input type="text" id="input-direccion" class="cli-input" value="${cliente.direccion}" required>
+          </div>
+          <div class="cli-field cli-grid-full">
+            <strong>Notas</strong>
+            <input type="text" id="input-notas" class="cli-input" value="${cliente.notas || ''}">
+          </div>
+        </div>
+      `;
+
+      document.getElementById('btn-editar').style.display = 'none';
+      document.getElementById('btn-guardar').style.display = 'inline-block';
+      document.getElementById('btn-cancelar').style.display = 'inline-block';
+    }
+
+    async function guardarCambios() {
+      const cliente = {
+        nombre: document.getElementById('input-nombre').value.trim(),
+        contacto: document.getElementById('input-contacto').value.trim(),
+        telefono: document.getElementById('input-telefono').value.trim(),
+        ruc: document.getElementById('input-ruc').value.trim(),
+        direccion: document.getElementById('input-direccion').value.trim(),
+        notas: document.getElementById('input-notas').value.trim()
+      };
+
+      if (!validarCliente(cliente)) {
+        alert("⚠️ Todos los campos marcados con * son obligatorios.");
+        return;
+      }
+
+      try {
+        const { error } = await window.supabaseClient
+          .from('clientes')
+          .update(cliente)
+          .eq('id', clientes[indiceActual].id);
+
+        if (error) {
+          console.error('Error al actualizar cliente:', error);
+          alert('❌ Error al actualizar el cliente.');
+          return;
+        }
+
+        // Recargar clientes
+        await cargarClientes();
+        renderCliente(indiceActual);
+        alert("✅ Cliente actualizado.");
+      } catch (err) {
+        console.error('Error:', err);
+        alert('❌ Error al actualizar el cliente.');
+      }
+    }
+
+    function cancelarEdicion() {
+      renderCliente(indiceActual);
+    }
+
+    // =============================================================================
+    // 🔹 NUEVO CLIENTE
+    // =============================================================================
+    async function nuevoCliente() {
+      const cliente = {
+        nombre: '',
+        contacto: '',
+        telefono: '',
+        ruc: '',
+        direccion: '',
+        notas: ''
+      };
+
+      try {
+        const { data, error } = await window.supabaseClient
+          .from('clientes')
+          .insert(cliente)
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Error al crear cliente:', error);
+          alert('❌ Error al crear el cliente.');
+          return;
+        }
+
+        // Recargar clientes
+        await cargarClientes();
+        indiceActual = clientes.findIndex(c => c.id === data.id);
+        activarEdicion(); // Ir directamente al modo edición
+      } catch (err) {
+        console.error('Error:', err);
+        alert('❌ Error al crear el cliente.');
+      }
+    }
+
+    // =============================================================================
+    // 🔹 ELIMINAR CLIENTE
+    // =============================================================================
+    async function eliminarCliente() {
+      if (confirm('¿Eliminar este cliente? Esta acción no se puede deshacer.')) {
+        try {
+          const { error } = await window.supabaseClient
+            .from('clientes')
+            .delete()
+            .eq('id', clientes[indiceActual].id);
+
+          if (error) {
+            console.error('Error al eliminar cliente:', error);
+            alert('❌ Error al eliminar el cliente.');
+            return;
+          }
+
+          // Recargar clientes
+          await cargarClientes();
+          
+          if (clientes.length === 0) {
+            mostrarMensaje('No hay clientes.');
+          } else {
+            // Ajustar índice
+            if (indiceActual >= clientes.length) {
+              indiceActual = clientes.length - 1;
+            }
+            renderCliente(indiceActual);
+          }
+        } catch (err) {
+          console.error('Error:', err);
+          alert('❌ Error al eliminar el cliente.');
+        }
+      }
+    }
+
+    // =============================================================================
+    // 🔹 BÚSQUEDA
+    // =============================================================================
+    function buscarCliente(termino) {
+      if (!termino.trim()) {
+        if (clientes.length > 0) {
+          renderCliente(0);
+        } else {
+          mostrarMensaje('No hay clientes.');
+        }
+        return;
+      }
+
+      const coincidencias = clientes.filter(c => 
+        c.nombre.toLowerCase().includes(termino.toLowerCase())
+      );
+
+      if (coincidencias.length > 0) {
+        const idx = clientes.indexOf(coincidencias[0]);
+        renderCliente(idx);
+      } else {
+        mostrarMensaje('No se encontraron resultados.');
+      }
+    }
+
+    // =============================================================================
+    // 🔹 INICIALIZACIÓN
+    // =============================================================================
+    if (clientes.length > 0) {
+      renderCliente(0);
+    } else {
+      mostrarMensaje('No hay clientes. ¡Crea uno nuevo!');
+    }
+
+    // Eventos
+    document.getElementById('btn-editar').addEventListener('click', activarEdicion);
+    document.getElementById('btn-guardar').addEventListener('click', guardarCambios);
+    document.getElementById('btn-cancelar').addEventListener('click', cancelarEdicion);
+    document.getElementById('btn-eliminar').addEventListener('click', eliminarCliente);
+    document.getElementById('btn-nuevo-cliente').addEventListener('click', nuevoCliente);
+
+    document.getElementById('btn-anterior').addEventListener('click', () => {
+      if (indiceActual > 0) renderCliente(indiceActual - 1);
+    });
+
+    document.getElementById('btn-siguiente').addEventListener('click', () => {
+      if (indiceActual < clientes.length - 1) renderCliente(indiceActual + 1);
+    });
+
+    document.getElementById('busqueda-clientes').addEventListener('input', (e) => {
+      buscarCliente(e.target.value);
+    });
+
+  }, 50);
+</script>
