@@ -1,6 +1,6 @@
 {
   "name": "absolute-desktop",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "App de escritorio de Absolute de Nicaragua",
   "main": "main.js",
   "author": "Bayardo Davila",
@@ -81,12 +81,32 @@
       ]
     },
     "files": [
-      "**/*",
+      "main.js",
+      "preload.js",
+      "renderer.js",
+      "index.html",
+      "splash.html",
+      "src/**/*",
+      "modules/**/*",
+      "assets/**/*",
+      "styles/**/*",
+      "shared/**/*",
+      "constants.js",
+      "!node_modules",
+      "!**/*.sql",
+      "!**/*.md",
+      "!**/*.log",
       "!dist",
-      "!build/installer.nsh",
-      "modules/**/*.css",
-      "modules/**/*.html",
-      "modules/**/*.js"
+      "!release",
+      "!out",
+      "!build",
+      "!releases",
+      "!desktop",
+      "!mobile",
+      "!tools",
+      "!sql",
+      "!_terminal_test.txt",
+      "!db-usage-report.txt"
     ]
   },
   "repository": {
