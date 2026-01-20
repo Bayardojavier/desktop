@@ -1,6 +1,6 @@
 {
   "name": "absolute-desktop",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "App de escritorio de Absolute de Nicaragua",
   "main": "main.js",
   "author": "Bayardo Davila",
@@ -9,7 +9,8 @@
     "dist:win": "electron-builder --win --x64",
     "dist:mac": "electron-builder --mac",
     "package": "electron-forge package",
-    "make": "electron-forge make"
+    "make": "electron-forge make",
+    "publish:win": "electron-builder --win --x64 --publish=always && rmdir /s /q temp_build"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.84.0",
@@ -36,7 +37,7 @@
     "appId": "com.absolute.nicaragua",
     "asar": false,
     "directories": {
-      "output": "dist",
+      "output": "temp_build",
       "buildResources": "build"
     },
     "win": {
