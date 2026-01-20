@@ -28,7 +28,8 @@
     "@electron-forge/plugin-auto-unpack-natives": "^7.11.1",
     "@electron-forge/plugin-fuses": "^7.11.1",
     "electron": "^28.0.0",
-    "electron-builder": "^24.6.0"
+    "electron-builder": "^24.6.0",
+    "electron-prebuilt-compile": "^8.2.0"
   },
   "build": {
     "productName": "Absolute de Nicaragua",
@@ -82,7 +83,10 @@
     "files": [
       "**/*",
       "!dist",
-      "!build/installer.nsh"
+      "!build/installer.nsh",
+      "modules/**/*.css",
+      "modules/**/*.html",
+      "modules/**/*.js"
     ]
   },
   "repository": {

@@ -21,4 +21,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // === Actualizaciones ===
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+
+  // === Configuración de ventana ===
+  getWindowConfig: () => ipcRenderer.invoke('get-window-config'),
+  setWindowConfig: (config) => ipcRenderer.invoke('set-window-config', config),
+  restartApp: () => ipcRenderer.send('restart-app'),
 });

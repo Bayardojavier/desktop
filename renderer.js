@@ -386,6 +386,86 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
+    // === CONFIGURACIÓN DE VENTANA ===
+    const btnConfigVentana = document.getElementById('btn-config-ventana');
+    const modalConfigVentana = document.getElementById('modal-config-ventana');
+    const btnCerrarConfig = document.getElementById('btn-cerrar-config-ventana');
+    const btnGuardarConfig = document.getElementById('btn-guardar-config-ventana');
+    const btnCancelarConfig = document.getElementById('btn-cancelar-config-ventana');
+
+    if (btnConfigVentana) {
+      btnConfigVentana.addEventListener('click', async () => {
+        try {
+          // Cargar configuración actual
+          const config = await window.electronAPI.getWindowConfig();
+
+          // Marcar el radio button correspondiente
+          const radios = document.getElementsByName('window-mode');
+          radios.forEach(radio => {
+            radio.checked = radio.value === config.mode;
+          });
+
+          // Mostrar modal
+          modalConfigVentana.style.display = 'flex';
+        } catch (error) {
+          console.error('Error loading window config:', error);
+          alert('Error al cargar la configuración');
+        }
+      });
+    }
+
+    // Cerrar modal
+    if (btnCerrarConfig) {
+      btnCerrarConfig.addEventListener('click', () => {
+        modalConfigVentana.style.display = 'none';
+      });
+    }
+
+    if (btnCancelarConfig) {
+      btnCancelarConfig.addEventListener('click', () => {
+        modalConfigVentana.style.display = 'none';
+      });
+    }
+
+    // Cerrar modal al hacer click fuera
+    if (modalConfigVentana) {
+      modalConfigVentana.addEventListener('click', (e) => {
+        if (e.target === modalConfigVentana) {
+          modalConfigVentana.style.display = 'none';
+        }
+      });
+    }
+
+    // Guardar configuración
+    if (btnGuardarConfig) {
+      btnGuardarConfig.addEventListener('click', async () => {
+        try {
+          const selectedMode = document.querySelector('input[name="window-mode"]:checked').value;
+          const config = { mode: selectedMode };
+
+          // Si es modo fijo, mantener las dimensiones actuales
+          if (selectedMode === 'fixed') {
+            config.width = 1200;
+            config.height = 800;
+          }
+
+          // Guardar configuración
+          const result = await window.electronAPI.setWindowConfig(config);
+          if (result.success) {
+            alert('Configuración guardada. La aplicación se reiniciará.');
+            modalConfigVentana.style.display = 'none';
+            // Reiniciar aplicación
+            window.electronAPI.restartApp();
+          } else {
+            alert('Error al guardar la configuración: ' + result.error);
+          }
+        } catch (error) {
+          console.error('Error saving window config:', error);
+          alert('Error al guardar la configuración');
+        }
+      });
+    }
+
     // Cargar dashboard
     loadDashboard();
   } else {
