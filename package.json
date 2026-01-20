@@ -1,6 +1,6 @@
 {
   "name": "absolute-desktop",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "App de escritorio de Absolute de Nicaragua",
   "main": "main.js",
   "author": "Bayardo Davila",
@@ -35,6 +35,9 @@
     "productName": "Absolute de Nicaragua",
     "appId": "com.absolute.nicaragua",
     "asar": true,
+    "asarUnpack": [
+      "node_modules/electron-updater"
+    ],
     "directories": {
       "output": "dist",
       "buildResources": "build"
@@ -102,21 +105,6 @@
       "!node_modules/@electron-forge",
       "!node_modules/electron-builder",
       "!node_modules/app-builder-bin"
-    ]
-      "!**/*.sql",
-      "!**/*.md",
-      "!**/*.log",
-      "!dist",
-      "!release",
-      "!out",
-      "!build",
-      "!releases",
-      "!desktop",
-      "!mobile",
-      "!tools",
-      "!sql",
-      "!_terminal_test.txt",
-      "!db-usage-report.txt"
     ]
   },
   "repository": {
