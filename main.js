@@ -122,6 +122,11 @@ async function createWindow() {
   }
 
   // Configurar auto-updater
+  autoUpdater.setFeedURL({
+    provider: 'github',
+    owner: 'Bayardojavier',
+    repo: 'desktop'
+  });
   autoUpdater.checkForUpdatesAndNotify();
 
   // === IPC Handlers ===
