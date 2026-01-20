@@ -1,6 +1,6 @@
 {
   "name": "absolute-desktop",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "App de escritorio de Absolute de Nicaragua",
   "main": "main.js",
   "author": "Bayardo Davila",
@@ -92,7 +92,9 @@
       "styles/**/*",
       "shared/**/*",
       "constants.js",
+      "node_modules/electron-updater/**/*",
       "!node_modules",
+      "!**/*.sql",
       "!**/*.sql",
       "!**/*.md",
       "!**/*.log",
