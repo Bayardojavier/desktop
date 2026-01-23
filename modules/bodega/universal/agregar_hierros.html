@@ -1495,8 +1495,9 @@
           };
           const extras = (state.codigoOrdenMaterial || []).map(k => components[k]).filter(Boolean).slice(0, 2);
 
-          // Si cantidad > 1, crear códigos consecutivos para cada unidad
-          if (cantidad > 1) {
+          // Lógica según tipo de item
+          if (state.itemTipo === 'EQUIPO' && cantidad > 1) {
+            // Equipo/Estructura: múltiples registros con abreviación + número consecutivo
             const abrevProducto = (document.getElementById('nombre-abrev')?.value || '').trim() || abrev(nombreFinal);
             const suffixBase = [base, ...extras].filter(Boolean).join('-');
 
@@ -1521,10 +1522,20 @@
             }
             alert(`Guardadas ${cantidad} unidades en catálogo con códigos consecutivos.`);
           } else {
-            // Cantidad = 1, guardar como antes
+            // Pieza o cantidad = 1: un solo registro
             const suffix = [base, ...extras].filter(Boolean).join('-');
             const consec = await obtenerSiguienteConsecutivo(suffix);
-            const codigo = `${consec}-${suffix}`;
+            let codigo;
+            if (state.itemTipo === 'ACCESORIO') {
+              // Pieza: terminación abreviación + largo accesorio
+              const abrevProducto = (document.getElementById('nombre-abrev')?.value || '').trim() || abrev(nombreFinal);
+              const largoAccesorio = (document.getElementById('ua-accesorio-largo')?.value || '').trim() || '';
+              const terminacion = [abrevProducto, largoAccesorio].filter(Boolean).join('-');
+              codigo = `${consec}-${suffix}-${terminacion}`;
+            } else {
+              // Equipo/Estructura cantidad = 1: terminación normal
+              codigo = `${consec}-${suffix}`;
+            }
             const payload = { ...payloadBase, codigo };
             const res = await insertConFallback(TABLE_CATALOGO, payload);
             if (!res.ok) { alert('Error al guardar: ' + res.error); return; }
