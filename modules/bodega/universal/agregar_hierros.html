@@ -465,6 +465,11 @@
       if (btnAccesorio) {
         btnAccesorio.addEventListener('click', () => {
           state.itemTipo = 'ACCESORIO';
+          // Mostrar campos para Piezas
+          const nombreAbrevEl = document.getElementById('nombre-abrev');
+          const accesorioLargoEl = document.getElementById('ua-accesorio-largo');
+          if (nombreAbrevEl) nombreAbrevEl.placeholder = 'Ej: CALA';
+          if (accesorioLargoEl) accesorioLargoEl.placeholder = 'Ej: 10CM';
           paintTipoButtons();
           updateItemTipoUI();
           updateResumen();
@@ -1366,9 +1371,19 @@
         submitBtn.textContent = 'Guardando...';
       }
 
+      // Función para resetear el botón en caso de error
+      const resetSubmitButton = () => {
+        state.isSubmitting = false;
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Guardar en catálogo';
+        }
+      };
+
       try {
         if (!state.secundariaId || !state.secundariaNombre) {
           alert('Debes seleccionar una Bodega Secundaria antes de guardar.');
+          resetSubmitButton();
           return;
         }
 
@@ -1377,10 +1392,12 @@
         if (tipo === 'MATERIAL') {
           if (!state.contenedorCodigo) {
             alert('Para agregar material debes seleccionar un Contenedor creado.');
+            resetSubmitButton();
             return;
           }
           if (state.contenedorCerrado) {
             alert('Este contenedor está CERRADO. No se puede agregar más material aquí.');
+            resetSubmitButton();
             return;
           }
         }
@@ -1391,6 +1408,7 @@
         const codigoPreview = await updateCodigoPreview();
         if (!codigoPreview) {
           alert('No se pudo generar el código. Revisa selección/inputs.');
+          resetSubmitButton();
           return;
         }
 
@@ -1404,8 +1422,8 @@
 
         // Contenedor identidad
         if (tipo === 'CONTENEDOR') {
-          if (!contBaseVal) { alert('Para guardar un contenedor debes llenar el Nombre Base.'); return; }
-          if (!numeroNorm) { alert('Para guardar un contenedor debes llenar el Número.'); return; }
+          if (!contBaseVal) { alert('Para guardar un contenedor debes llenar el Nombre Base.'); resetSubmitButton(); return; }
+          if (!numeroNorm) { alert('Para guardar un contenedor debes llenar el Número.'); resetSubmitButton(); return; }
         }
 
         // Nombre final / contenedor final
@@ -1419,8 +1437,8 @@
           ? contenedorNombre
           : (apodo || contenedorNombre);
 
-        if (tipo === 'MATERIAL' && !nombreFinal) { alert('Para agregar material debes llenar el Nombre del Producto.'); return; }
-        if (tipo === 'MATERIAL' && !contenedorFinal) { alert('Selecciona un contenedor válido.'); return; }
+        if (tipo === 'MATERIAL' && !nombreFinal) { alert('Para agregar material debes llenar el Nombre del Producto.'); resetSubmitButton(); return; }
+        if (tipo === 'MATERIAL' && !contenedorFinal) { alert('Selecciona un contenedor válido.'); resetSubmitButton(); return; }
 
         // Foto
         const fotoUrl = await uploadFotoIfNeeded();
@@ -1490,27 +1508,107 @@
           };
           const extras = (state.codigoOrdenMaterial || []).map(k => components[k]).filter(Boolean).slice(0, 2);
 
-          // Siempre guardar como un solo material con cantidad total
-          const suffix = [base, ...extras].filter(Boolean).join('-');
-          const consec = await obtenerSiguienteConsecutivo(suffix);
-          const codigo = `${consec}-${suffix}`;
-          const payload = { ...payloadBase, codigo };
-          const res = await insertConFallback(TABLE_CATALOGO, payload);
-          if (!res.ok) { alert('Error al guardar: ' + res.error); return; }
+          // Lógica según tipo de item
+          if (state.itemTipo === 'EQUIPO' && cantidad > 1) {
+            // Equipo/Estructura: múltiples registros con abreviación + número consecutivo
+            const abrevProducto = (document.getElementById('nombre-abrev')?.value || '').trim() || abrev(nombreFinal);
+            const suffixBase = [base, ...extras].filter(Boolean).join('-');
 
-          if (state.esActivo) {
-            const resMov = await crearMovimientoIngreso({ codigo, nombre: nombreFinal, cantidadMov: cantidad });
-            if (!resMov.ok) {
-              alert('Se guardó el catálogo pero NO se pudo crear el movimiento de ingreso.\n' + resMov.error);
+            const unidadesGuardadas = [];
+            let errorOcurrido = false;
+            let ultimoError = '';
+
+            for (let i = 1; i <= cantidad; i++) {
+              const numeroUnidad = String(i).padStart(2, '0');
+              const loteConsecutivo = await obtenerSiguienteConsecutivo(suffixBase);
+              const codigo = `${loteConsecutivo}-${suffixBase}-${abrevProducto}-${numeroUnidad}`;
+              const payload = { ...payloadBase, codigo, nombre: `${nombreFinal} ${numeroUnidad}` };
+              const res = await insertConFallback(TABLE_CATALOGO, payload);
+              if (!res.ok) {
+                errorOcurrido = true;
+                ultimoError = `Error al guardar unidad ${i}: ${res.error}`;
+                break;
+              }
+              unidadesGuardadas.push(codigo);
+
+              if (state.esActivo) {
+                const resMov = await crearMovimientoIngreso({ codigo, nombre: `${nombreFinal} ${numeroUnidad}`, cantidadMov: 1 });
+                if (!resMov.ok) {
+                  errorOcurrido = true;
+                  ultimoError = `Se guardó la unidad ${i} en catálogo pero NO se pudo crear el movimiento de ingreso.\n${resMov.error}`;
+                  break;
+                }
+              }
+            }
+
+            if (errorOcurrido) {
+              // Intentar rollback: borrar las unidades que ya se guardaron
+              if (unidadesGuardadas.length > 0) {
+                try {
+                  for (const codigo of unidadesGuardadas) {
+                    await supa.from(TABLE_CATALOGO).delete().eq('codigo', codigo);
+                  }
+                  alert(`${ultimoError}\n\nSe hizo rollback: se eliminaron las ${unidadesGuardadas.length} unidades que ya se habían guardado.`);
+                } catch (rollbackError) {
+                  alert(`${ultimoError}\n\nERROR: No se pudo hacer rollback automático. Quedaron ${unidadesGuardadas.length} unidades guardadas parcialmente. Contacta al administrador.\nCódigos afectados: ${unidadesGuardadas.join(', ')}`);
+                }
+              } else {
+                alert(ultimoError);
+              }
+              resetSubmitButton();
               return;
             }
+
+            alert(`Guardadas ${cantidad} unidades en catálogo con códigos consecutivos.`);
+          } else {
+            // Pieza o cantidad = 1: un solo registro
+            let filteredExtras = extras;
+            if (state.itemTipo === 'ACCESORIO') {
+              // Para Piezas, no incluir nombre_abrev en extras para evitar duplicación
+              filteredExtras = extras.filter(e => e !== components.nombre_abrev);
+            }
+            const suffix = [base, ...filteredExtras].filter(Boolean).join('-');
+            const consec = await obtenerSiguienteConsecutivo(suffix);
+            let codigo;
+            if (state.itemTipo === 'ACCESORIO') {
+              // Pieza: terminación abreviación + largo accesorio
+              const abrevProducto = (document.getElementById('nombre-abrev')?.value || '').trim() || abrev(nombreFinal);
+              const largoAccesorioRaw = (document.getElementById('ua-accesorio-largo')?.value || '').trim();
+              const largoAccesorio = normalizeAccesorioLargo(largoAccesorioRaw);
+              
+              // Validar que el largo accesorio tenga formato correcto
+              if (largoAccesorioRaw && !largoAccesorio) {
+                alert('El largo del accesorio debe contener solo letras, números y guiones (ej: 10CM, 5PULG)');
+                resetSubmitButton();
+                return;
+              }
+              
+              const terminacion = [abrevProducto, largoAccesorio].filter(Boolean).join('-');
+              codigo = `${consec}-${suffix}-${terminacion}`;
+            } else {
+              // Equipo/Estructura cantidad = 1: terminación normal
+              codigo = `${consec}-${suffix}`;
+            }
+            const payload = { ...payloadBase, codigo };
+            const res = await insertConFallback(TABLE_CATALOGO, payload);
+            if (!res.ok) { alert('Error al guardar: ' + res.error); resetSubmitButton(); return; }
+
+            if (state.esActivo) {
+              const resMov = await crearMovimientoIngreso({ codigo, nombre: nombreFinal, cantidadMov: cantidad });
+              if (!resMov.ok) {
+                alert('Se guardó el catálogo pero NO se pudo crear el movimiento de ingreso.\n' + resMov.error);
+                resetSubmitButton();
+                return;
+              }
+            }
+            alert(`Guardado en catálogo: ${codigo}`);
           }
-          alert(`Guardado en catálogo: ${codigo}`);
 
           if (state.cerrarContenedor) {
             const cierre = await cerrarContenedorActual();
             if (!cierre.ok) {
-              alert('Se guardó el material, pero NO se pudo cerrar el contenedor.\n' + cierre.error);
+              alert('Se guardaron las unidades, pero NO se pudo cerrar el contenedor.\n' + cierre.error);
+              resetSubmitButton();
               return;
             }
             await loadContenedores();
@@ -1520,12 +1618,13 @@
           const codigo = codigoPreview;
           const payload = { ...payloadBase, codigo };
           const res = await insertConFallback(TABLE_CATALOGO, payload);
-          if (!res.ok) { alert('Error al guardar contenedor: ' + res.error); return; }
+          if (!res.ok) { alert('Error al guardar contenedor: ' + res.error); resetSubmitButton(); return; }
 
           if (state.esActivo) {
             const resMov = await crearMovimientoIngreso({ codigo, nombre: contenedorFinal || nombreFinal, cantidadMov: 1, referenciaTipo: 'alta_contenedor_activo' });
             if (!resMov.ok) {
               alert('Se guardó el contenedor en catálogo pero NO se pudo crear el movimiento de ingreso.\n' + resMov.error);
+              resetSubmitButton();
               return;
             }
           }
@@ -1642,16 +1741,6 @@
     applyAltaTipoUI();
     updateResumen();
     updateCodigoPreview();
-  }
-
-  function isContenedorCerrado(campos) {
-    if (!campos) return false;
-    try {
-      const parsed = typeof campos === 'string' ? JSON.parse(campos) : campos;
-      return parsed.cerrar_contenedor === true;
-    } catch (e) {
-      return false;
-    }
   }
 
   // Inicializar contenedores
