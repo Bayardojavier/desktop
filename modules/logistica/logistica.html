@@ -1,0 +1,48 @@
+<link rel="stylesheet" href="./logistica.css">
+
+
+
+<div class="log-container">
+    <div class="log-menu-lateral">
+        <h3 style="color: white; margin-bottom: 20px; font-size: 18px;">📦 Bodega e Inventario</h3>
+        <button class="log-submenu-btn" data-vista="log-solicitud">📝 Nueva Solicitud</button>
+        <button class="log-submenu-btn" data-vista="log-seguimiento">🚚 Seguimiento Despachos</button>
+
+        <h3 style="color: white; margin: 25px 0 15px; font-size: 18px;">📊 Reportes</h3>
+        <button class="log-submenu-btn" data-vista="log-dashboard">📈 Dashboard Logística</button>
+
+        <h3 style="color: white; margin: 25px 0 15px; font-size: 18px;"> 📝 Recetas</h3>
+        <button class="log-submenu-btn" data-vista="log-recetas">📋 Gestión de Recetas</button>
+
+        <h3 style="color: white; margin: 25px 0 15px; font-size: 18px;">📊 Exportar Datos</h3>
+        <button class="log-submenu-btn" onclick="exportarLogisticaAExcel()">📊 Exportar Logística a Excel</button>
+    </div>
+
+    <div class="log-area-dinamica">
+    <div class="log-encabezado">
+        <h1 class="log-titulo">🚛 Módulo de Logística</h1>
+        <p style="color: #64748b; font-size: 14px; margin-top: 4px;">
+            Gestión de suministros y coordinación de eventos
+        </p>
+    </div>
+
+    <div class="log-dashboard-tabs">
+        <button class="log-tab-btn active" data-vista="log-dashboard">Resumen General</button>
+        <button class="log-tab-btn" data-vista="tab-pendientes">Solicitudes Pendientes</button>
+    </div>
+
+    <div id="log-tab-panel" style="background: white; border: 1px solid var(--border); border-top: none; padding: 20px; border-radius: 0 0 8px 8px;">
+        </div>
+</div>
+    </div>
+</div>
+
+<script>
+    // Inicialización de pestañas internas
+    document.querySelectorAll('.log-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.log-tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
+    });
+</script>

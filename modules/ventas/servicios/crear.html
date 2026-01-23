@@ -1,0 +1,285 @@
+<!-- crear.html -->
+<div class="srv-container">
+  <h1 class="srv-title">🛠️ Crear Servicio</h1>
+
+  <form id="form-servicio" class="srv-form">
+    <!-- ID (solo lectura) -->
+    <div class="srv-field">
+      <label class="srv-label">ID del Servicio</label>
+      <input type="text" id="servicio-id" class="srv-input" readonly placeholder="SRV-00001">
+    </div>
+
+    <!-- Descripción Corta -->
+    <div class="srv-field">
+      <label class="srv-label">Descripción Corta * <span style="font-weight: normal; font-size: 12px; color: #64748b;">(máx. 50 caracteres)</span></label>
+      <input type="text" id="servicio-desc-corta" class="srv-input" maxlength="50" 
+             placeholder="Ej: Limpieza de Oficinas">
+      <div id="error-desc-corta" class="srv-error"></div>
+    </div>
+
+    <!-- Descripción Larga -->
+    <div class="srv-field">
+      <label class="srv-label">Descripción Detallada</label>
+      <textarea id="servicio-descripcion" class="srv-textarea" rows="3" 
+                placeholder="Ej: Incluye limpieza de baños, pisos, y mobiliario..."></textarea>
+    </div>
+
+    <!-- Precios A, B, C (en dólares) -->
+    <div class="srv-precios-grid">
+      <div class="srv-field">
+        <label class="srv-label">Precio A ($) *</label>
+        <input type="number" id="precio-a" class="srv-input" step="0.01" min="0" placeholder="0.00">
+        <div id="error-a" class="srv-error"></div>
+      </div>
+      <div class="srv-field">
+        <label class="srv-label">Precio B ($)</label>
+        <input type="number" id="precio-b" class="srv-input" step="0.01" min="0" placeholder="0.00">
+      </div>
+      <div class="srv-field">
+        <label class="srv-label">Precio C ($)</label>
+        <input type="number" id="precio-c" class="srv-input" step="0.01" min="0" placeholder="0.00">
+      </div>
+    </div>
+
+    <!-- Acciones -->
+    <div class="srv-actions">
+      <button type="submit" class="srv-btn srv-btn-save">➕ Agregar Servicio</button>
+      <button type="button" id="btn-nuevo" class="srv-btn srv-btn-secondary">🔄 Nuevo</button>
+    </div>
+  </form>
+</div>
+
+<style>
+  /* =============================================================================
+     ESTILOS PROPIOS PARA SERVICIOS (AISLADO DE APP.CSS)
+     ============================================================================= */
+  .srv-container {
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #1e293b;
+  }
+
+  .srv-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    color: #1e3a8a;
+  }
+
+  .srv-form {
+    display: grid;
+    gap: 20px;
+  }
+
+  .srv-field {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .srv-label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #334155;
+  }
+
+  .srv-input,
+  .srv-textarea {
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 14px;
+    background: white;
+    color: #1e293b;
+  }
+
+  .srv-input:focus,
+  .srv-textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  .srv-textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+
+  .srv-precios-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+  }
+
+  .srv-error {
+    color: #ef4445;
+    font-size: 12px;
+    margin-top: 4px;
+    min-height: 16px;
+  }
+
+  .srv-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+  }
+
+  .srv-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .srv-btn-save {
+    background: #10b981;
+    color: white;
+  }
+
+  .srv-btn-secondary {
+    background: #64748b;
+    color: white;
+  }
+
+  .srv-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .srv-precios-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  setTimeout(() => {
+    // =============================================================================
+    // 🔹 GENERAR ID ÚNICO
+    // =============================================================================
+    // 🔹 SOLO MUESTRA el siguiente ID (NO incrementa)
+function obtenerSiguienteIdServicio() {
+  let ultimoNumero = parseInt(localStorage.getItem('ultimoNumServicio')) || 0;
+  return `SRV-${String(ultimoNumero + 1).padStart(5, '0')}`;
+}
+
+// 🔹 CONFIRMA el ID (SOLO al guardar)
+function confirmarIdServicio() {
+  let ultimoNumero = parseInt(localStorage.getItem('ultimoNumServicio')) || 0;
+  ultimoNumero++;
+  localStorage.setItem('ultimoNumServicio', ultimoNumero.toString());
+  return `SRV-${String(ultimoNumero).padStart(5, '0')}`;
+}
+
+
+    // =============================================================================
+    // 🔹 VALIDAR FORMULARIO
+    // =============================================================================
+    function validarFormulario() {
+      let esValido = true;
+      document.querySelectorAll('.srv-error').forEach(el => el.textContent = '');
+
+      const descCorta = document.getElementById('servicio-desc-corta').value.trim();
+      const precioA = document.getElementById('precio-a').value.trim();
+
+      if (!descCorta) {
+        document.getElementById('error-desc-corta').textContent = "La descripción corta es obligatoria.";
+        esValido = false;
+      } else if (descCorta.length < 3) {
+        document.getElementById('error-desc-corta').textContent = "Mínimo 3 caracteres.";
+        esValido = false;
+      }
+
+      if (!precioA) {
+        document.getElementById('error-a').textContent = "El Precio A es obligatorio.";
+        esValido = false;
+      } else if (parseFloat(precioA) < 0) {
+        document.getElementById('error-a').textContent = "El precio no puede ser negativo.";
+        esValido = false;
+      }
+
+      return esValido;
+    }
+
+    // =============================================================================
+    // 🔹 GUARDAR SERVICIO (precios en dólares)
+    // =============================================================================
+    async function guardarServicio(e) {
+      e.preventDefault();
+      
+      if (!validarFormulario()) return;
+
+      const servicio = {
+        id: confirmarIdServicio(),
+        nombre: document.getElementById('servicio-desc-corta').value.trim(),
+        descripcion: document.getElementById('servicio-descripcion').value.trim(),
+        precio_a: parseFloat(document.getElementById('precio-a').value) || 0,
+        precio_b: parseFloat(document.getElementById('precio-b').value) || 0,
+        precio_c: parseFloat(document.getElementById('precio-c').value) || 0,
+        activo: true
+      };
+
+      try {
+        const { data, error } = await window.supabaseClient
+          .from('servicios')
+          .insert(servicio)
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Error al guardar servicio:', error);
+          alert('❌ Error al guardar el servicio.');
+          return;
+        }
+
+        alert(`✅ Servicio "${data.nombre}" guardado en dólares con ID ${data.id}.`);
+        
+        // Resetear formulario
+        document.getElementById('servicio-id').value = obtenerSiguienteIdServicio();
+        document.getElementById('servicio-desc-corta').value = '';
+        document.getElementById('servicio-descripcion').value = '';
+        document.getElementById('precio-a').value = '';
+        document.getElementById('precio-b').value = '';
+        document.getElementById('precio-c').value = '';
+        document.getElementById('servicio-desc-corta').focus();
+      } catch (err) {
+        console.error('Error:', err);
+        alert('❌ Error al guardar el servicio.');
+      }
+    }
+
+    // =============================================================================
+    // 🔹 CREAR NUEVO
+    // =============================================================================
+    function crearNuevo() {
+      if (confirm("¿Desea crear un nuevo servicio? Se perderán los cambios no guardados.")) {
+        document.getElementById('servicio-id').value = obtenerSiguienteIdServicio();
+
+        document.getElementById('servicio-desc-corta').value = '';
+        document.getElementById('servicio-descripcion').value = '';
+        document.getElementById('precio-a').value = '';
+        document.getElementById('precio-b').value = '';
+        document.getElementById('precio-c').value = '';
+        document.querySelectorAll('.srv-error').forEach(el => el.textContent = '');
+        document.getElementById('servicio-desc-corta').focus();
+      }
+    }
+
+    // =============================================================================
+    // 🔹 INICIALIZACIÓN
+    // =============================================================================
+   document.getElementById('servicio-id').value = obtenerSiguienteIdServicio();
+
+    
+    document.getElementById('form-servicio').addEventListener('submit', guardarServicio);
+    document.getElementById('btn-nuevo').addEventListener('click', crearNuevo);
+    
+  }, 50);
+</script>

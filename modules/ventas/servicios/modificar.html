@@ -1,0 +1,462 @@
+<!-- base.html -->
+<div class="srv-container">
+  <h1 class="srv-title">📄 Base de Servicios</h1>
+
+  <div class="srv-section">
+    <!-- Búsqueda -->
+    <input type="text" class="srv-input" placeholder="🔍 Buscar por nombre..." id="busqueda-servicios" style="width: 100%; margin-bottom: 16px;">
+
+    <!-- Ficha de servicio -->
+    <div id="ficha-servicio" class="srv-card">
+      <p class="srv-placeholder">Selecciona o busca un servicio para ver sus datos.</p>
+    </div>
+
+    <!-- Botones de navegación -->
+    <div id="botones-navegacion" class="srv-actions" style="display: none;">
+      <button class="srv-btn srv-btn-nav" id="btn-anterior">⬅ Anterior</button>
+      <button class="srv-btn srv-btn-nav" id="btn-siguiente">Siguiente ➡</button>
+      <button class="srv-btn srv-btn-edit" id="btn-editar">✏️ Modificar</button>
+      <button class="srv-btn srv-btn-save" id="btn-guardar" style="display: none;">💾 Guardar</button>
+      <button class="srv-btn srv-btn-cancel" id="btn-cancelar" style="display: none;">❌ Cancelar</button>
+      <button class="srv-btn srv-btn-delete" id="btn-eliminar">🗑️ Eliminar</button>
+    </div>
+
+    <!-- Nuevo servicio -->
+    <div class="srv-actions" style="margin-top: 20px;">
+      <button class="srv-btn srv-btn-primary" id="btn-nuevo-servicio">➕ Nuevo Servicio</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* =============================================================================
+     ESTILOS PROPIOS PARA SERVICIOS (AISLADO DE APP.CSS)
+     ============================================================================= */
+  .srv-container {
+    padding: 20px;
+    max-width: 1000px;
+    margin: 0 auto;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #1e293b;
+  }
+
+  .srv-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    color: #1e3a8a;
+  }
+
+  .srv-section {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .srv-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 14px;
+    background: white;
+    color: #1e293b;
+  }
+
+  .srv-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  .srv-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 16px 0;
+    min-height: 120px;
+  }
+
+  .srv-placeholder {
+    color: #64748b;
+    text-align: center;
+    padding: 20px;
+  }
+
+  .srv-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .srv-grid-full {
+    grid-column: span 2;
+  }
+
+  .srv-field strong {
+    color: #334155;
+    margin-right: 8px;
+  }
+
+  .srv-field {
+    margin-bottom: 12px;
+  }
+
+  .srv-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .srv-btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .srv-btn-primary {
+    background: #10b981;
+    color: white;
+  }
+
+  .srv-btn-save {
+    background: #10b981;
+    color: white;
+  }
+
+  .srv-btn-edit {
+    background: #f59e0b;
+    color: white;
+  }
+
+  .srv-btn-delete {
+    background: #ef4445;
+    color: white;
+  }
+
+  .srv-btn-nav {
+    background: #64748b;
+    color: white;
+  }
+
+  .srv-btn-cancel {
+    background: #6b7280;
+    color: white;
+  }
+
+  .srv-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  .srv-error {
+    color: #ef4445;
+    font-size: 12px;
+    margin-top: 4px;
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .srv-actions {
+      flex-direction: column;
+    }
+  }
+</style>
+
+<script>
+  setTimeout(async () => {
+    // =============================================================================
+    // 🔹 CARGAR SERVICIOS DE SUPABASE
+    // =============================================================================
+    let servicios = [];
+    let indiceActual = -1;
+    let modoEdicion = false;
+
+    async function cargarServicios() {
+      try {
+        const { data, error } = await window.supabaseClient
+          .from('servicios')
+          .select('*')
+          .eq('activo', true)
+          .order('nombre', { ascending: true });
+
+        if (error) {
+          console.error('Error al cargar servicios:', error);
+          servicios = [];
+          return;
+        }
+
+        servicios = data || [];
+      } catch (err) {
+        console.error('Error:', err);
+        servicios = [];
+      }
+    }
+
+    await cargarServicios();
+
+    // =============================================================================
+    // 🔹 FUNCIONES AUXILIARES
+    // =============================================================================
+    function mostrarMensaje(texto, exito = true) {
+      const ficha = document.getElementById('ficha-servicio');
+      ficha.innerHTML = `<p class="${exito ? 'srv-placeholder' : 'srv-error'}" style="color: ${exito ? '#64748b' : '#ef4445'};">${texto}</p>`;
+      document.getElementById('botones-navegacion').style.display = 'none';
+    }
+
+    function validarServicio(servicio) {
+      return servicio.nombre && servicio.precio_a >= 0;
+    }
+
+    // =============================================================================
+    // 🔹 RENDERIZAR SERVICIO
+    // =============================================================================
+    function renderServicio(index) {
+      if (index < 0 || index >= servicios.length) {
+        mostrarMensaje('No hay servicios.');
+        return;
+      }
+
+      const servicio = servicios[index];
+      indiceActual = index;
+      const ficha = document.getElementById('ficha-servicio');
+
+      // Mostrar datos
+      ficha.innerHTML = `
+        <div class="srv-grid">
+          <div class="srv-field"><strong>ID:</strong> <span id="campo-id">${servicio.id}</span></div>
+          <div class="srv-field"><strong>Nombre:</strong> <span id="campo-nombre">${servicio.nombre}</span></div>
+          <div class="srv-field srv-grid-full"><strong>Descripción:</strong> <span id="campo-descripcion">${servicio.descripcion || '—'}</span></div>
+          <div class="srv-field"><strong>Precio A:</strong> <span id="campo-precio-a">C$${servicio.precio_a.toFixed(2)}</span></div>
+          <div class="srv-field"><strong>Precio B:</strong> <span id="campo-precio-b">C$${servicio.precio_b.toFixed(2)}</span></div>
+          <div class="srv-field"><strong>Precio C:</strong> <span id="campo-precio-c">C$${servicio.precio_c.toFixed(2)}</span></div>
+        </div>
+      `;
+
+      // Mostrar botones
+      document.getElementById('botones-navegacion').style.display = 'flex';
+      document.getElementById('btn-anterior').disabled = index === 0;
+      document.getElementById('btn-siguiente').disabled = index === servicios.length - 1;
+      document.getElementById('btn-editar').style.display = 'inline-block';
+      document.getElementById('btn-guardar').style.display = 'none';
+      document.getElementById('btn-cancelar').style.display = 'none';
+      modoEdicion = false;
+    }
+
+    // =============================================================================
+    // 🔹 MODO EDICIÓN
+    // =============================================================================
+    function activarEdicion() {
+      modoEdicion = true;
+      const servicio = servicios[indiceActual];
+      const ficha = document.getElementById('ficha-servicio');
+
+      ficha.innerHTML = `
+        <div class="srv-grid">
+          <div class="srv-field">
+            <strong>ID</strong>
+            <input type="text" id="input-id" class="srv-input" value="${servicio.id}" readonly>
+          </div>
+          <div class="srv-field">
+            <strong>Nombre *</strong>
+            <input type="text" id="input-nombre" class="srv-input" value="${servicio.nombre}" required>
+          </div>
+          <div class="srv-field srv-grid-full">
+            <strong>Descripción</strong>
+            <textarea id="input-descripcion" class="srv-input" rows="3">${servicio.descripcion || ''}</textarea>
+          </div>
+          <div class="srv-field">
+            <strong>Precio A *</strong>
+            <input type="number" id="input-precio-a" class="srv-input" step="0.01" min="0" value="${servicio.precio_a}" required>
+          </div>
+          <div class="srv-field">
+            <strong>Precio B</strong>
+            <input type="number" id="input-precio-b" class="srv-input" step="0.01" min="0" value="${servicio.precio_b}">
+          </div>
+          <div class="srv-field">
+            <strong>Precio C</strong>
+            <input type="number" id="input-precio-c" class="srv-input" step="0.01" min="0" value="${servicio.precio_c}">
+          </div>
+        </div>
+      `;
+
+      document.getElementById('btn-editar').style.display = 'none';
+      document.getElementById('btn-guardar').style.display = 'inline-block';
+      document.getElementById('btn-cancelar').style.display = 'inline-block';
+    }
+
+    async function guardarCambios() {
+      const servicio = {
+        nombre: document.getElementById('input-nombre').value.trim(),
+        descripcion: document.getElementById('input-descripcion').value.trim(),
+        precio_a: parseFloat(document.getElementById('input-precio-a').value) || 0,
+        precio_b: parseFloat(document.getElementById('input-precio-b').value) || 0,
+        precio_c: parseFloat(document.getElementById('input-precio-c').value) || 0
+      };
+
+      if (!validarServicio(servicio)) {
+        alert("⚠️ Nombre y Precio A son obligatorios.");
+        return;
+      }
+
+      try {
+        const { error } = await window.supabaseClient
+          .from('servicios')
+          .update(servicio)
+          .eq('id', servicios[indiceActual].id);
+
+        if (error) {
+          console.error('Error al actualizar servicio:', error);
+          alert('❌ Error al actualizar el servicio.');
+          return;
+        }
+
+        // Recargar servicios
+        await cargarServicios();
+        renderServicio(indiceActual);
+        alert("✅ Servicio actualizado.");
+      } catch (err) {
+        console.error('Error:', err);
+        alert('❌ Error al actualizar el servicio.');
+      }
+    }
+
+    function cancelarEdicion() {
+      renderServicio(indiceActual);
+    }
+
+    // =============================================================================
+    // 🔹 NUEVO SERVICIO
+    // =============================================================================
+    async function nuevoServicio() {
+      const servicio = {
+        id: `SRV-${Date.now()}`,
+        nombre: '',
+        descripcion: '',
+        precio_a: 0,
+        precio_b: 0,
+        precio_c: 0,
+        activo: true
+      };
+
+      try {
+        const { data, error } = await window.supabaseClient
+          .from('servicios')
+          .insert(servicio)
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Error al crear servicio:', error);
+          alert('❌ Error al crear el servicio.');
+          return;
+        }
+
+        // Recargar servicios
+        await cargarServicios();
+        indiceActual = servicios.findIndex(s => s.id === data.id);
+        activarEdicion(); // Ir directamente al modo edición
+      } catch (err) {
+        console.error('Error:', err);
+        alert('❌ Error al crear el servicio.');
+      }
+    }
+
+    // =============================================================================
+    // 🔹 ELIMINAR SERVICIO
+    // =============================================================================
+    async function eliminarServicio() {
+      if (confirm('¿Eliminar este servicio? Esta acción no se puede deshacer.')) {
+        try {
+          const { error } = await window.supabaseClient
+            .from('servicios')
+            .update({ activo: false })
+            .eq('id', servicios[indiceActual].id); // Soft delete
+
+          if (error) {
+            console.error('Error al eliminar servicio:', error);
+            alert('❌ Error al eliminar el servicio.');
+            return;
+          }
+
+          // Recargar servicios
+          await cargarServicios();
+
+          if (servicios.length === 0) {
+            mostrarMensaje('No hay servicios.');
+          } else {
+            // Ajustar índice
+            if (indiceActual >= servicios.length) {
+              indiceActual = servicios.length - 1;
+            }
+            renderServicio(indiceActual);
+          }
+        } catch (err) {
+          console.error('Error:', err);
+          alert('❌ Error al eliminar el servicio.');
+        }
+      }
+    }
+
+    // =============================================================================
+    // 🔹 BÚSQUEDA
+    // =============================================================================
+    function buscarServicio(termino) {
+      if (!termino.trim()) {
+        if (servicios.length > 0) {
+          renderServicio(0);
+        } else {
+          mostrarMensaje('No hay servicios.');
+        }
+        return;
+      }
+
+      const coincidencias = servicios.filter(s => 
+        s.nombre.toLowerCase().includes(termino.toLowerCase())
+      );
+
+      if (coincidencias.length > 0) {
+        const idx = servicios.indexOf(coincidencias[0]);
+        renderServicio(idx);
+      } else {
+        mostrarMensaje('No se encontraron resultados.');
+      }
+    }
+
+    // =============================================================================
+    // 🔹 INICIALIZACIÓN
+    // =============================================================================
+    if (servicios.length > 0) {
+      renderServicio(0);
+    } else {
+      mostrarMensaje('No hay servicios. ¡Crea uno nuevo!');
+    }
+
+    // Eventos
+    document.getElementById('btn-editar').addEventListener('click', activarEdicion);
+    document.getElementById('btn-guardar').addEventListener('click', guardarCambios);
+    document.getElementById('btn-cancelar').addEventListener('click', cancelarEdicion);
+    document.getElementById('btn-eliminar').addEventListener('click', eliminarServicio);
+    document.getElementById('btn-nuevo-servicio').addEventListener('click', nuevoServicio);
+
+    document.getElementById('btn-anterior').addEventListener('click', () => {
+      if (indiceActual > 0) renderServicio(indiceActual - 1);
+    });
+
+    document.getElementById('btn-siguiente').addEventListener('click', () => {
+      if (indiceActual < servicios.length - 1) renderServicio(indiceActual + 1);
+    });
+
+    document.getElementById('busqueda-servicios').addEventListener('input', (e) => {
+      buscarServicio(e.target.value);
+    });
+
+  }, 50);
+</script>

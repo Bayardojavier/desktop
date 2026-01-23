@@ -1,0 +1,524 @@
+!-- desktop/modules/rrhh/tarjeta.html -->
+<div class="rrhh-container">
+  <div class="rrhh-area-dinamica">
+    <h2 style="color: #2d2d2d; margin-bottom: 20px;">📇 Tarjeta de Empleado</h2>
+
+    <div class="rrhh-tarjeta-desktop-layout">
+      <div class="rrhh-control-panel">
+        <h3 style="color: var(--tab-text); font-size: 16px; margin-bottom: 15px; font-weight: 600;">4 Navegación</h3>
+        <div class="rrhh-input-group" style="margin-bottom: 12px;">
+          <select class="rrhh-select rrhh-select-dark" id="tarjeta-empleado-selector">
+            <!-- Se llenará dinámicamente -->
+          </select>
+        </div>
+
+        <div class="rrhh-nav-buttons-vertical" style="margin-bottom: 30px;">
+          <button class="rrhh-button rrhh-nav-btn rrhh-nav-full" id="tarjeta-btn-anterior">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="19" x2="12" y2="5"></line>
+              <polyline points="5 12 12 5 19 12"></polyline>
+            </svg>
+            Empleado Anterior
+          </button>
+          <button class="rrhh-button rrhh-nav-btn rrhh-nav-full" id="tarjeta-btn-siguiente">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <polyline points="19 12 12 19 5 12"></polyline>
+            </svg>
+            Empleado Siguiente 
+          </button>
+        </div>
+        
+        <h3 style="color: var(--tab-text); font-size: 16px; margin-bottom: 12px; font-weight: 600;">Exportar</h3>
+        <div class="rrhh-export-buttons-vertical">
+          <button class="rrhh-button rrhh-export-img rrhh-export-full rrhh-accent-btn" id="btn-export-png">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+              <path d="M21 15l-2.91-2.91a1.87 1.87 0 0 0-2.64 0l-3.08 3.08-1.41-1.41a1.87 1.87 0 0 0-2.64 0L5 17"></path>
+            </svg>
+            Guardar Imagen (PNG)
+          </button>
+          <button class="rrhh-button rrhh-export-pdf rrhh-export-full rrhh-accent-btn" id="btn-export-pdf">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <path d="M14 2v6h6"></path>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <path d="M10 9h4"></path>
+            </svg>
+            Generar PDF
+          </button>
+        </div>
+      </div>
+
+      <div class="rrhh-tarjeta-movil-wrapper">
+        <div class="rrhh-tarjeta-final" id="carnet-display">
+          <div class="tarjeta-top-area">
+            <div class="tarjeta-wave-bg"></div>
+            <div class="tarjeta-logo">
+              <img src="./assets/logo.png" id="tarjeta-logo-img" alt="Logo de la Compañía"> 
+            </div>
+            <div class="tarjeta-foto-container">
+              <div class="tarjeta-foto-wrapper">
+                <img id="tarjeta-foto-preview" src="" alt="Foto de Perfil" style="display: none;">
+                <div id="tarjeta-foto-icono">
+                  <svg width="70" height="70" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="tarjeta-data-area">
+            <h2 id="tarjeta-nombres-apellidos" class="tarjeta-nombre-full"></h2>
+            <h3 id="tarjeta-puesto" class="tarjeta-puesto"></h3>
+            <p id="tarjeta-id" class="tarjeta-id-label"></p>
+
+            <div class="tarjeta-datos-grid">
+              <div class="tarjeta-data-col">
+                <p class="tarjeta-grid-value" id="tarjeta-estatus"></p>
+                <p class="tarjeta-grid-label">Estatus</p>
+              </div>
+              <div class="tarjeta-data-col">
+                <p class="tarjeta-grid-value" id="tarjeta-fecha-ingreso"></p>
+                <p class="tarjeta-grid-label">Fecha de Ingreso</p>
+              </div>
+            </div>
+
+            <div class="tarjeta-barcode-section">
+              <div id="qr-code" class="qr-box"></div>
+              <p id="tarjeta-id-barcode" class="barcode-number"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* ---------------------------------- */
+/* ESTILOS DE LA VISTA DE TARJETA (rrhh/personal/tarjeta.html) */
+/* ---------------------------------- */
+
+.rrhh-tarjeta-desktop-layout {
+    display: flex;
+    justify-content: space-between; 
+    gap: 40px;
+}
+
+/* 1. Panel de Control (Lateral) - Mantiene estilos de la App (Azul/Oscuro) */
+.rrhh-control-panel {
+    flex: 0 0 280px; 
+    padding: 16px;
+    background-color: var(--panel-bg); 
+    border-radius: 8px; 
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); 
+    align-self: flex-start; 
+}
+
+.rrhh-select-dark {
+    background-color: #3c3c3c;
+    color: var(--panel-text);
+    border: 1px solid var(--border);
+}
+
+/* Botones de Navegación/Exportación: USAN LOS COLORES DE LA APP (var(--accent)) */
+.rrhh-nav-buttons-vertical, .rrhh-export-buttons-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.rrhh-nav-btn { background-color: var(--accent) !important; color: var(--tab-active-text) !important; }
+.rrhh-export-img, .rrhh-export-pdf { background-color: var(--accent) !important; } /* Revertido a color de acento de la APP */
+
+.rrhh-nav-full, .rrhh-export-full { width: 100%; }
+.rrhh-nav-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+
+/* 2. Carné de Empleado (Estilo Imágen - Naranja/Blanco) */
+.rrhh-tarjeta-movil-wrapper {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center; 
+    align-items: flex-start;
+    padding-top: 20px;
+}
+.rrhh-tarjeta-final {
+    width: 320px; 
+    height: 500px; 
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); 
+    overflow: hidden;
+    background-color: white; 
+    font-family: Arial, sans-serif; 
+    position: relative;
+}
+
+/* A. Área Superior (Olas, Logo y Foto) */
+.tarjeta-top-area {
+    height: 180px;
+    background-color: #f0f0f0; 
+    position: relative;
+}
+.tarjeta-wave-bg {
+    height: 100%;
+    /* Degradado Naranja/Blanco (SÓLO DENTRO DEL CARNÉ) */
+    background: linear-gradient(135deg, #ffffff 0%, #ffcc80 50%, #f9a825 100%);
+    clip-path: polygon(0 0, 100% 0, 100% 70%, 50% 100%, 0 70%); 
+}
+.tarjeta-logo {
+    position: absolute;
+    top: -25px;
+    right: 15px;
+    text-align: right;
+    color: #1a365d;
+}
+.tarjeta-logo img {
+    display: block;
+    width: 150px;
+    height: 150px;
+    object-fit: contain;
+    margin-left: auto;
+}
+.tarjeta-logo p {
+    font-size: 10px;
+    font-weight: 600;
+    margin: 10px;
+}
+
+/* Foto Circular Centrada */
+.tarjeta-foto-container {
+    position: absolute;
+    top: 50%; 
+    left: 50%;
+    transform: translate(-50%, -10%); 
+    z-index: 10;
+}
+.tarjeta-foto-wrapper {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 5px solid white; 
+    background-color: #ccc;
+    box-shadow: 0 0 0 3px var(--accent); /* Se mantiene el color de acento de la APP para el anillo de la foto */
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.tarjeta-foto-wrapper img, .tarjeta-foto-wrapper div {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* B. Área de Datos Inferior */
+/* ... [Resto de estilos de datos omitidos, no fueron modificados] ... */
+.tarjeta-data-area {
+  padding: 22px 20px 20px;
+  text-align: center;
+}
+
+.tarjeta-nombre-full {
+    font-size: 18px;
+    color: #1a365d;
+    font-weight: 700;
+    margin: 0;
+    text-transform: uppercase;
+}
+.tarjeta-puesto {
+    font-size: 14px;
+    color: #4a5568;
+    font-weight: 600;
+    margin: 4px 0 10px;
+    text-transform: uppercase;
+}
+.tarjeta-id-label {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+/* Grid de Información (Fechas, Estatus) */
+.tarjeta-datos-grid {
+    display: flex;
+    justify-content: space-around;
+    padding: 15px 0;
+    border-top: 1px dashed #eee;
+    border-bottom: 1px dashed #eee;
+    margin-bottom: 20px;
+}
+.tarjeta-data-col {
+    text-align: center;
+}
+.tarjeta-grid-value {
+    font-size: 14px;
+    font-weight: 700;
+    color: #333;
+    margin: 0;
+}
+.tarjeta-grid-label {
+    font-size: 11px;
+    color: #888;
+    margin: 0;
+    text-transform: uppercase;
+}
+
+/* Código de Barras */
+.tarjeta-barcode-section { text-align: center; }
+.qr-box {
+  width: 120px;
+  height: 120px;
+  margin: -12px auto 6px;
+}
+.barcode-number {
+  font-size: 16px;
+  font-weight: 700;
+  font-family: monospace;
+  color: #000;
+  margin: 0;
+}
+</style>
+<!-- Librerías externas -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../../src/config/supabaseClient.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+let empleados = [];
+let indiceActual = 0;
+let qrCodeInstance = null;
+
+// Carga segura de librerías externas cuando el HTML se inyecta dinámicamente.
+function loadScriptOnce(src, globalCheck) {
+  return new Promise((resolve, reject) => {
+    if (globalCheck && typeof globalCheck === 'function' && globalCheck()) return resolve();
+    if (document.querySelector(`script[data-dynamic-src="${src}"]`)) {
+      const existing = document.querySelector(`script[data-dynamic-src="${src}"]`);
+      if (existing.getAttribute('data-loaded') === 'true') return resolve();
+      existing.addEventListener('load', () => resolve());
+      existing.addEventListener('error', (e) => reject(e));
+      return;
+    }
+    const s = document.createElement('script');
+    s.src = src;
+    s.async = true;
+    s.setAttribute('data-dynamic-src', src);
+    s.addEventListener('load', () => { s.setAttribute('data-loaded', 'true'); resolve(); });
+    s.addEventListener('error', (e) => reject(e));
+    document.head.appendChild(s);
+  });
+}
+
+// =============================================================================
+// 🔹 CARGAR EMPLEADOS DESDE SUPABASE
+// =============================================================================
+async function cargarEmpleadosDesdeSupabase() {
+  try {
+    const { data, error } = await supabaseClient
+      .from('empleados')
+      .select('*')
+      .order('nombres', { ascending: true });
+
+    if (error) throw error;
+    empleados = data || [];
+    renderSelectorEmpleados();
+    if (empleados.length > 0) {
+      indiceActual = 0;
+      cargarTarjeta(indiceActual);
+    }
+  } catch (err) {
+    console.error('Error al cargar empleados:', err);
+    alert('❌ No se pudieron cargar los empleados desde Supabase.');
+  }
+}
+
+function renderSelectorEmpleados() {
+  const selector = document.getElementById('tarjeta-empleado-selector');
+  selector.innerHTML = '<option value="">Seleccione un empleado...</option>';
+  empleados.forEach(emp => {
+    const option = document.createElement('option');
+    option.value = emp.id;
+    option.textContent = `${emp.nombres} ${emp.apellidos} - ${emp.codigo_empleado}`;
+    selector.appendChild(option);
+  });
+}
+
+// =============================================================================
+// 🔹 CARGAR Y MOSTRAR TARJETA
+// =============================================================================
+function cargarTarjeta(idx) {
+  if (idx < 0 || idx >= empleados.length) return;
+  
+  const emp = empleados[idx];
+  indiceActual = idx;
+
+  // Datos
+  document.getElementById('tarjeta-nombres-apellidos').textContent = `${emp.nombres} ${emp.apellidos}`;
+  document.getElementById('tarjeta-puesto').textContent = emp.puesto;
+  document.getElementById('tarjeta-id').textContent = `ID: ${emp.codigo_empleado}`;
+  document.getElementById('tarjeta-estatus').textContent = emp.estatus;
+  
+  // Fecha de ingreso
+  if (emp.estatus === 'Fijo' && emp.fecha_ingreso) {
+    const fecha = new Date(emp.fecha_ingreso);
+    document.getElementById('tarjeta-fecha-ingreso').textContent = 
+      `${fecha.getDate().toString().padStart(2, '0')}/${(fecha.getMonth() + 1).toString().padStart(2, '0')}/${fecha.getFullYear()}`;
+  } else {
+    document.getElementById('tarjeta-fecha-ingreso').textContent = '—';
+  }
+
+  // Foto
+  const fotoPreview = document.getElementById('tarjeta-foto-preview');
+  const fotoIcono = document.getElementById('tarjeta-foto-icono');
+  if (emp.foto_url) {
+    fotoPreview.src = emp.foto_url;
+    fotoPreview.style.display = 'block';
+    fotoIcono.style.display = 'none';
+  } else {
+    fotoPreview.style.display = 'none';
+    fotoIcono.style.display = 'block';
+  }
+
+  // Código QR
+  if (emp.codigo_empleado && window.QRCode) {
+    const qrContainer = document.getElementById('qr-code');
+    if (qrContainer) {
+      qrContainer.innerHTML = '';
+      qrCodeInstance = new QRCode(qrContainer, {
+        text: emp.codigo_empleado,
+        width: 120,
+        height: 120,
+        colorDark: '#000000',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    }
+    document.getElementById('tarjeta-id-barcode').textContent = emp.codigo_empleado;
+  }
+
+  // Botones de navegación
+  document.getElementById('tarjeta-btn-anterior').disabled = idx === 0;
+  document.getElementById('tarjeta-btn-siguiente').disabled = idx === empleados.length - 1;
+  document.getElementById('tarjeta-empleado-selector').value = emp.id;
+}
+
+// =============================================================================
+// 🔹 EXPORTACIÓN REAL A PNG Y PDF
+// =============================================================================
+// =============================================================================
+// 🔹 EXPORTACIÓN MEJORADA (PNG Y PDF)
+// =============================================================================
+
+async function exportarPNG() {
+  if (!empleados[indiceActual]) {
+    alert('⚠️ No hay empleado cargado.');
+    return;
+  }
+  
+  const tarjeta = document.getElementById('carnet-display');
+  
+  // Pequeña espera para asegurar que el DOM y el barcode estén procesados
+  setTimeout(async () => {
+    try {
+      const canvas = await html2canvas(tarjeta, {
+        scale: 3,            // Mayor escala para nitidez profesional
+        useCORS: true,       // Fundamental para fotos de Supabase/External
+        allowTaint: true,
+        backgroundColor: null, // Mantiene transparencia si los bordes son redondeados
+        logging: false
+      });
+      
+      const link = document.createElement('a');
+      link.download = `Tarjeta_${empleados[indiceActual].codigo_empleado}.png`;
+      link.href = canvas.toDataURL('image/png', 1.0);
+      link.click();
+    } catch (err) {
+      console.error('Error al exportar PNG:', err);
+      alert('❌ Error al generar la imagen: ' + err.message);
+    }
+  }, 300); // Timeout preventivo
+}
+
+async function exportarPDF() {
+  if (!empleados[indiceActual]) {
+    alert('⚠️ No hay empleado cargado.');
+    return;
+  }
+  
+  const tarjeta = document.getElementById('carnet-display');
+  
+  setTimeout(async () => {
+    try {
+      const canvas = await html2canvas(tarjeta, {
+        scale: 3,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+      
+      const imgData = canvas.toDataURL('image/jpeg', 1.0);
+      const { jsPDF } = window.jspdf;
+      
+      // Dimensiones de la tarjeta en mm (estándar CR80: 85.6 x 54)
+      // Ajustado a la proporción de tu diseño (320x500px -> aprox 54x85mm vertical)
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: [54, 86] 
+      });
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Tarjeta_${empleados[indiceActual].codigo_empleado}.pdf`);
+    } catch (err) {
+      console.error('Error al exportar PDF:', err);
+      alert('❌ Error al generar el PDF: ' + err.message);
+    }
+  }, 300);
+}
+// =============================================================================
+// 🔹 INICIALIZACIÓN
+// =============================================================================
+async function initTarjeta() {
+  // Garantizar librerías externas (se pierden al inyectar el HTML sin scripts inline)
+  await Promise.all([
+    loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js', () => typeof window.QRCode !== 'undefined'),
+    loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', () => typeof window.html2canvas !== 'undefined'),
+    loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', () => typeof window.jspdf !== 'undefined')
+  ]);
+
+  // Eventos de navegación
+  document.getElementById('tarjeta-btn-anterior').addEventListener('click', () => {
+    if (indiceActual > 0) cargarTarjeta(indiceActual - 1);
+  });
+  document.getElementById('tarjeta-btn-siguiente').addEventListener('click', () => {
+    if (indiceActual < empleados.length - 1) cargarTarjeta(indiceActual + 1);
+  });
+  document.getElementById('tarjeta-empleado-selector').addEventListener('change', (e) => {
+    const id = e.target.value;
+    const idx = empleados.findIndex(emp => emp.id === id);
+    if (idx !== -1) cargarTarjeta(idx);
+  });
+
+  // Eventos de exportación
+  document.getElementById('btn-export-png').addEventListener('click', exportarPNG);
+  document.getElementById('btn-export-pdf').addEventListener('click', exportarPDF);
+
+  // Cargar empleados
+  cargarEmpleadosDesdeSupabase();
+}
+
+// Iniciar
+initTarjeta();
+</script>

@@ -1,0 +1,1124 @@
+<div class="movimientos-view">
+    <div class="despacho-wrapper-custom">
+        <div class="despacho-header">
+            <div>
+                <h2 class="despacho-header-title">📤 Despacho de Materiales</h2>
+                <p class="despacho-txt-muted">Gestión de salidas con correlativo secuencial y actas originales.</p>
+            </div>
+            <div id="reloj-bodega" class="despacho-badge">Bodega Central</div>
+        </div>
+
+        <div class="despacho-grid">
+            <!-- Panel izquierdo: Vista detallada -->
+            <div id="panelVistaDetallada" class="despacho-panel-left">
+                <div class="despacho-hint">
+                    <h3 class="despacho-hint-title">📋 Vista de Despacho</h3>
+                    <p class="despacho-hint-text">Selecciona una solicitud de la lista para ver los detalles</p>
+                </div>
+            </div>
+
+            <!-- Panel derecho: Lista de solicitudes -->
+            <div id="panelListaSolicitudes" class="despacho-panel-right">
+                <div class="despacho-panel-right-header">
+                    <h3 class="despacho-panel-title">📤 Solicitudes de Despacho</h3>
+                    <button class="btn-despacho-outline despacho-btn-xs" onclick="window.verDespachosHistoricos()">📋 Historial Completo</button>
+                </div>
+                <div id="contenidoListaSolicitudes">
+                    <div class="despacho-empty">
+                        <div class="despacho-empty-icon">📋</div>
+                        Cargando solicitudes...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ... (tu mismo HTML, sin cambios) ... -->
+
+<script src="../../../src/config/supabaseClient.js"></script>
+<script>
+(function() {
+    // 1. CARGA DE LIBRERIAS Y HELPERS
+    if (!window.html2pdf) {
+        const script = document.createElement('script');
+        script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
+        document.head.appendChild(script);
+    }
+
+    const DB = {
+        get: (k) => JSON.parse(localStorage.getItem(k) || "[]"),
+        set: (k, v) => localStorage.setItem(k, JSON.stringify(v))
+    };
+
+    const formatDateTime = (f, h) => (f && h) ? new Date(f + 'T' + h).toLocaleString("es-ES") : "—";
+    const formatDate = (date) => new Date(date).toLocaleDateString("es-ES");
+
+    // 2. FUNCIÓN DE CORRELATIVO SECUENCIAL
+    async function generarCorrelativo() {
+        try {
+            // Intentar obtener el último correlativo desde Supabase
+            const { data: despachos, error } = await window.supabaseClient
+                .from('despachos_logistica')
+                .select('numero_despacho')
+                .order('creado_en', { ascending: false })
+                .limit(1);
+
+            let ultimoNumero = 0;
+            if (!error && despachos && despachos.length > 0) {
+                // Extraer el número del formato "DESE-XXXXX" o "DES-XXXXX" (compatibilidad)
+                const match = despachos[0].numero_despacho.match(/(?:DESE|DES)-(\d+)/);
+                if (match) {
+                    ultimoNumero = parseInt(match[1]);
+                }
+            }
+
+            const nuevoNumero = ultimoNumero + 1;
+            return "DESE-" + nuevoNumero.toString().padStart(5, '0');
+        } catch (error) {
+            console.error('Error al generar correlativo desde Supabase:', error);
+            // Fallback a localStorage
+            let ultimo = parseInt(localStorage.getItem('ultimo_correlativo_despacho') || "0");
+            let nuevo = ultimo + 1;
+            localStorage.setItem('ultimo_correlativo_despacho', nuevo.toString());
+            return "DESE-" + nuevo.toString().padStart(5, '0');
+        }
+    }
+
+    // 3. RENDERIZACIÓN DE VISTAS
+    async function renderLista() {
+
+        try {
+            // Obtener solicitudes desde Supabase - incluir completadas para reimpresión
+            const { data: solicitudes, error } = await window.supabaseClient
+                .from('solicitudes_logistica')
+                .select('*')
+                .eq('tipo', 'despacho')
+                .in('estado', ['pendiente_bodega', 'completada'])
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error('Error al obtener solicitudes:', error);
+                document.getElementById("contenidoListaSolicitudes").innerHTML =
+                    `<div class="despacho-empty">Error al cargar solicitudes.</div>`;
+                return;
+            }
+
+            let html = `<div class="despacho-list">`;
+
+            if (!solicitudes || solicitudes.length === 0) {
+                html += `<div class="despacho-empty">No hay solicitudes de despacho pendientes o completadas.</div>`;
+            } else {
+                solicitudes.forEach(s => {
+                    const esCompletada = s.estado === 'completada';
+                    const textoEstado = esCompletada ? '✅ Completada' : '⏳ Pendiente';
+                    
+                    let botonesHTML = '';
+                    if (esCompletada) {
+                        // Para solicitudes completadas, buscar el número de despacho
+                        botonesHTML = `<button class="btn-despacho-outline" onclick="window.buscarDespachoParaReimprimir('${s.id}')">📄 Reimprimir</button>`;
+                    }
+                    botonesHTML += `<button class="btn-despacho-solido" onclick="window.verPedidoDespacho('${s.id}')">REVISAR SALIDA</button>`;
+                    
+                    html += `
+                        <div class="despacho-card ${esCompletada ? 'is-completada' : 'is-pendiente'}">
+                            <div class="despacho-card-info">
+                                <strong class="despacho-card-id">${s.id}</strong>
+                                <div class="despacho-card-status">${textoEstado}</div>
+                                <div class="despacho-card-meta">${s.evento} • Resp: ${s.encargado_evento}</div>
+                            </div>
+                            <div class="despacho-card-actions">${botonesHTML}</div>
+                        </div>`;
+                });
+            }
+
+            document.getElementById("contenidoListaSolicitudes").innerHTML = html + `</div>`;
+        } catch (error) {
+            console.error('Error en renderLista:', error);
+            document.getElementById("contenidoListaSolicitudes").innerHTML =
+                `<div class="despacho-empty">Error al cargar solicitudes.</div>`;
+        }
+    }
+
+    // Nueva función para ver despachos históricos
+    window.verDespachosHistoricos = async function() {
+        try {
+            const { data: despachos, error } = await window.supabaseClient
+                .from('despachos_logistica')
+                .select(`
+                    *,
+                    solicitudes_logistica!inner(evento)
+                `)
+                .eq('estado', 'completado')
+                .order('fecha_despacho', { ascending: false })
+                .limit(20);
+
+            if (error) {
+                console.error('Error al obtener despachos históricos:', error);
+                alert('Error al cargar despachos históricos');
+                return;
+            }
+
+            let html = `
+                <div class="despacho-hist-header">
+                    <h3 class="despacho-hist-title">📋 Historial de Despachos</h3>
+                    <p class="despacho-hist-subtitle">Últimos 20 despachos completados</p>
+                </div>
+                <div class="despacho-hist-list">`;
+
+            if (!despachos || despachos.length === 0) {
+                html += `<div class="despacho-empty">No hay despachos registrados.</div>`;
+            } else {
+                // Obtener conteo de items para cada despacho
+                for (const despacho of despachos) {
+                    try {
+                        const { count, error: countError } = await window.supabaseClient
+                            .from('movimientos_bodega')
+                            .select('*', { count: 'exact', head: true })
+                            .eq('referencia_documento', despacho.numero_despacho);
+
+                        const itemCount = countError ? 0 : count;
+
+                        const fecha = new Date(despacho.fecha_despacho).toLocaleDateString('es-ES');
+                        html += `
+                            <div class="despacho-hist-item">
+                                <div class="despacho-hist-item-row">
+                                    <div>
+                                        <strong class="despacho-hist-num">${despacho.numero_despacho}</strong>
+                                        <div class="despacho-hist-meta">${despacho.evento} • ${fecha} • ${despacho.encargado_evento}</div>
+                                    </div>
+                                    <div class="despacho-hist-right">
+                                        <div class="despacho-hist-status">✅ Completado</div>
+                                        <div class="despacho-hist-count">${itemCount} items</div>
+                                        <button class="btn-despacho-outline despacho-btn-xxs" onclick="window.reimprimirDespacho('${despacho.numero_despacho}')">📄 Reimprimir</button>
+                                    </div>
+                                </div>
+                            </div>`;
+                    } catch (countError) {
+                        console.error('Error obteniendo conteo para despacho:', despacho.numero_despacho, countError);
+                        // Mostrar despacho sin conteo
+                        const fecha = new Date(despacho.fecha_despacho).toLocaleDateString('es-ES');
+                        html += `
+                            <div class="despacho-hist-item">
+                                <div class="despacho-hist-item-row">
+                                    <div>
+                                        <strong class="despacho-hist-num">${despacho.numero_despacho}</strong>
+                                        <div class="despacho-hist-meta">${despacho.evento} • ${fecha} • ${despacho.encargado_evento}</div>
+                                    </div>
+                                    <div class="despacho-hist-right">
+                                        <div class="despacho-hist-status">✅ Completado</div>
+                                        <div class="despacho-hist-count">- items</div>
+                                        <button class="btn-despacho-outline despacho-btn-xxs" onclick="window.reimprimirDespacho('${despacho.numero_despacho}')">📄 Reimprimir</button>
+                                    </div>
+                                </div>
+                            </div>`;
+                    }
+                }
+            }
+
+            html += `
+                </div>
+                <div class="despacho-actions-center">
+                    <button class="btn-despacho-outline" onclick="window.renderLista()">VOLVER</button>
+                </div>`;
+
+            document.getElementById("contenidoDinamicoDespacho").innerHTML = html;
+        } catch (error) {
+            console.error('Error en verDespachosHistoricos:', error);
+            alert('Error al cargar despachos históricos');
+        }
+    };
+
+    // Función para reimprimir un despacho
+    window.reimprimirDespacho = async function(numeroDespacho) {
+        try {
+            console.log('Reimprimiendo despacho:', numeroDespacho);
+
+            // Obtener datos del despacho
+            const { data: despacho, error: errorDespacho } = await window.supabaseClient
+                .from('despachos_logistica')
+                .select('*')
+                .eq('numero_despacho', numeroDespacho)
+                .single();
+
+            if (errorDespacho || !despacho) {
+                console.error('Error al obtener despacho:', errorDespacho);
+                alert('Error al obtener datos del despacho');
+                return;
+            }
+
+            // Obtener items del despacho desde movimientos_bodega
+            const { data: movimientos, error: errorMovimientos } = await window.supabaseClient
+                .from('movimientos_bodega')
+                .select('*')
+                .eq('referencia_documento', numeroDespacho)
+                .eq('tipo_movimiento', 'despacho');
+
+            if (errorMovimientos) {
+                console.error('Error al obtener movimientos:', errorMovimientos);
+                alert('Error al obtener items del despacho');
+                return;
+            }
+
+            // Obtener datos del evento
+            let eventoData = null;
+            if (despacho.evento) {
+                const { data: eventosEncontrados } = await window.supabaseClient
+                    .from('eventos')
+                    .select('*')
+                    .ilike('nombre', `%${despacho.evento}%`);
+
+                if (eventosEncontrados && eventosEncontrados.length > 0) {
+                    eventoData = eventosEncontrados[0];
+                }
+            }
+
+            // Preparar datos para el PDF
+            const datosPDF = {
+                numeroRegistro: numeroDespacho,
+                fechaDespacho: formatDate(new Date(despacho.fecha_despacho)),
+                personalEntrega: despacho.encargado_evento,
+                evento: despacho.evento,
+                clienteEvento: eventoData?.cliente || "",
+                lugarMontaje: eventoData?.lugar || "",
+                itemsSalida: movimientos.map(mov => ({
+                    material: mov.material_nombre || mov.material_codigo,
+                    cantidad: Math.abs(mov.cantidad), // Convertir a positivo
+                    estado: "Despachado",
+                    observacion: mov.observaciones || ""
+                })),
+                eventoCompleto: eventoData || {}
+            };
+
+            console.log('Datos para reimpresión:', datosPDF);
+
+            // Generar el PDF
+            generarActaDeEntregaPDF(datosPDF);
+
+        } catch (error) {
+            console.error('Error en reimprimirDespacho:', error);
+            alert('Error al reimprimir el despacho');
+        }
+    };
+
+    // Función para buscar despacho de una solicitud completada y reimprimir
+    window.buscarDespachoParaReimprimir = async function(idSolicitud) {
+        try {
+            console.log('Buscando despacho para solicitud:', idSolicitud);
+            
+            // Buscar en las observaciones de la solicitud el número de despacho
+            const { data: solicitud, error: errorSolicitud } = await window.supabaseClient
+                .from('solicitudes_logistica')
+                .select('observaciones')
+                .eq('id', idSolicitud)
+                .single();
+
+            if (errorSolicitud || !solicitud) {
+                console.error('Error al obtener solicitud:', errorSolicitud);
+                alert('Error al buscar datos de la solicitud');
+                return;
+            }
+
+            // Extraer número de despacho de las observaciones (formato: [DESPACHO: DESE-XXXXX - fecha])
+            const match = solicitud.observaciones?.match(/\[DESPACHO:\s*(DESE-\d+)\s*-/);
+            if (match) {
+                const numeroDespacho = match[1];
+                console.log('Número de despacho encontrado:', numeroDespacho);
+                window.reimprimirDespacho(numeroDespacho);
+            } else {
+                console.log('No se encontró número de despacho en observaciones');
+                alert('No se encontró el número de despacho para esta solicitud');
+            }
+
+        } catch (error) {
+            console.error('Error en buscarDespachoParaReimprimir:', error);
+            alert('Error al buscar el despacho para reimprimir');
+        }
+    };
+
+    window.verPedidoDespacho = async function(id) {
+        try {
+            // Obtener solicitud desde Supabase
+            const { data: solicitud, error: errorSolicitud } = await window.supabaseClient
+                .from('solicitudes_logistica')
+                .select('*, items_solicitud_logistica(*)')
+                .eq('id', id)
+                .single();
+
+            if (errorSolicitud || !solicitud) {
+                console.error('Error al obtener solicitud:', errorSolicitud);
+                alert('Error al cargar la solicitud');
+                return;
+            }
+
+            // Obtener datos del evento - búsqueda más robusta
+            let eventoData = null;
+            const { data: eventosEncontrados, error: errorEvento } = await window.supabaseClient
+                .from('eventos')
+                .select('*')
+                .ilike('nombre', `%${solicitud.evento}%`);
+
+            if (errorEvento) {
+                console.log('Error al buscar evento:', errorEvento);
+            } else if (eventosEncontrados && eventosEncontrados.length > 0) {
+                // Tomar el primer evento que coincida
+                eventoData = eventosEncontrados[0];
+                console.log('Evento encontrado por nombre parcial:', eventoData);
+            } else {
+                console.log('Evento no encontrado con nombre:', solicitud.evento);
+                // Intentar búsqueda alternativa por otros campos si es necesario
+            }
+
+            // Obtener servicios con cantidades desde la cotización si existe
+            let serviciosTexto = 'No disponible';
+            if (eventoData && eventoData.cotizacion_id) {
+                console.log('Consultando cotización:', eventoData.cotizacion_id);
+                try {
+                    const { data: cotizacion, error: cotError } = await window.supabaseClient
+                        .from('cotizaciones')
+                        .select('servicios')
+                        .eq('id', eventoData.cotizacion_id)
+                        .single();
+
+                    if (cotError) {
+                        console.error('Error consultando cotización:', cotError);
+                    } else {
+                        console.log('Cotización obtenida:', cotizacion);
+                    }
+
+                    if (!cotError && cotizacion?.servicios && cotizacion.servicios.length > 0) {
+                        serviciosTexto = cotizacion.servicios.map(s => {
+                            const cantidad = s.cantidad || 1;
+                            const nombre = s.nombre || 'Servicio sin nombre';
+                            return `• ${cantidad} ${nombre}`;
+                        }).join('<br>');
+                        console.log('Servicios texto generado:', serviciosTexto);
+                    }
+                } catch (cotErr) {
+                    console.warn('Error al cargar servicios de cotización:', cotErr);
+                    // Fallback a la descripción guardada en el evento
+                    serviciosTexto = (Array.isArray(eventoData.descripcion) ? eventoData.descripcion : [eventoData.descripcion])
+                        .map(i => `• ${i}`).join('<br>') || "No disponible";
+                }
+            } else {
+                console.log('Evento sin cotizacion_id o evento no encontrado');
+                // Fallback a la descripción guardada en el evento
+                if (eventoData) {
+                    serviciosTexto = (Array.isArray(eventoData.descripcion) ? eventoData.descripcion : [eventoData.descripcion])
+                        .map(i => `• ${i}`).join('<br>') || "No disponible";
+                }
+            }
+
+            actualizarPanelEvento(eventoData || {}, serviciosTexto);
+
+            // Obtener stock actual calculado desde movimientos_bodega
+            const { data: movimientosStock, error: errorStock } = await window.supabaseClient
+                .from('movimientos_bodega')
+                .select('material_codigo, cantidad, signo')
+                .eq('estado', 'completado');
+
+            if (errorStock) {
+                console.error('Error al obtener stock:', errorStock);
+            }
+
+            // Calcular stock por material
+            const stockPorMaterial = {};
+            movimientosStock?.forEach(mov => {
+                if (!stockPorMaterial[mov.material_codigo]) {
+                    stockPorMaterial[mov.material_codigo] = 0;
+                }
+                stockPorMaterial[mov.material_codigo] += (mov.cantidad * mov.signo);
+            });
+
+            function isCaseBaseCodigo(codigo) {
+                return (codigo || '').toString().startsWith('CASEBASE|');
+            }
+            function getCaseBaseFromCodigo(codigo) {
+                const s = (codigo || '').toString();
+                if (!s.startsWith('CASEBASE|')) return '';
+                return s.substring('CASEBASE|'.length).trim();
+            }
+            function renderCodigoNombreHTML(item) {
+                const cod = item?.codigo_material;
+                if (isCaseBaseCodigo(cod)) {
+                    const base = getCaseBaseFromCodigo(cod) || (item?.nombre_material || 'Case');
+                    return `<b>CASE ${base}</b><br><small>Pendiente de selección en despacho</small>`;
+                }
+                return `<b>${cod}</b><br><small>${item?.nombre_material || ''} (${item?.medidas || ''})</small>`;
+            }
+
+            let tabla = `
+                <table class="tabla-despacho-inventario">
+                    <thead><tr><th>Material</th><th>Cantidad</th><th>Estado</th><th>Stock</th></tr></thead>
+                    <tbody>`;
+            
+            solicitud.items_solicitud_logistica.forEach(it => {
+                const stock = stockPorMaterial[it.codigo_material] || 0;
+                const stockClass = stock >= it.cantidad_solicitada ? 'despacho-stock-ok' : 'despacho-stock-bad';
+                tabla += `
+                    <tr>
+                        <td>${renderCodigoNombreHTML(it)}</td>
+                        <td class="despacho-td-center">${it.cantidad_solicitada}</td>
+                        <td class="despacho-td-center">${it.estado || 'Nuevo'}</td>
+                        <td class="despacho-td-center ${stockClass}">${stock}</td>
+                    </tr>`;
+            });
+
+            // Verificar si ya existe un despacho para esta solicitud o si ya fue procesada
+            const { data: despachoExistente, error: errorDespachoExistente } = await window.supabaseClient
+                .from('despachos_logistica')
+                .select('numero_despacho, fecha_despacho')
+                .eq('solicitud_id', id);
+
+            let estadoHeader = `Confirmación de Salida: ${solicitud.id}`;
+            let botonesHTML = `
+                <div class="despacho-actions">
+                    <button class="btn-despacho-solido despacho-action-main" onclick="window.confirmarDespachoOficial('${solicitud.id}')">✅ CONFIRMAR Y GENERAR ACTA</button>
+                    <button class="btn-despacho-outline despacho-action-secondary" onclick="window.limpiarVistaDetallada()">VOLVER</button>
+                </div>`;
+
+            // Si la solicitud ya fue procesada (tiene fecha_procesamiento) o tiene un despacho existente, mostrar información diferente
+            if (solicitud.fecha_procesamiento || (!errorDespachoExistente && despachoExistente && despachoExistente.length > 0)) {
+                estadoHeader = `Solicitud Procesada: ${solicitud.id}`;
+                const numeroDespacho = despachoExistente?.[0]?.numero_despacho || 'N/A';
+                const fechaDespacho = despachoExistente?.[0]?.fecha_despacho ? new Date(despachoExistente[0].fecha_despacho).toLocaleDateString('es-ES') : solicitud.fecha_procesamiento ? new Date(solicitud.fecha_procesamiento).toLocaleDateString('es-ES') : 'N/A';
+
+                botonesHTML = `
+                    <div class="despacho-alert">
+                        <div class="despacho-alert-title">📋 Esta solicitud ya fue procesada</div>
+                        <div class="despacho-alert-body">
+                            <strong>Número de Despacho:</strong> ${numeroDespacho}<br>
+                            <strong>Fecha de Procesamiento:</strong> ${fechaDespacho}<br>
+                            <strong>Estado:</strong> Procesada
+                        </div>
+                    </div>
+                    <div class="despacho-actions">
+                        <button class="btn-despacho-outline despacho-action-full" onclick="window.limpiarVistaDetallada()">VOLVER A LA LISTA</button>
+                    </div>`;
+            }
+
+            document.getElementById("panelVistaDetallada").innerHTML = `
+                <div class="despacho-section-header">
+                    <h3 class="despacho-section-title">${estadoHeader}</h3>
+                </div>
+                ${tabla}</tbody></table>
+
+                <!-- Panel de información del evento -->
+                <div id="panelResumenEvento" class="despacho-evento-panel">
+                    <h4 class="despacho-evento-title">📋 Información del Evento</h4>
+                    <div class="despacho-evento-grid">
+                        <div>
+                            <label class="despacho-evento-label">Nombre</label>
+                            <div id="resumen-nombre" class="despacho-evento-value-strong">${eventoData?.nombre || eventoData?.evento || "—"}</div>
+                        </div>
+                        <div>
+                            <label class="despacho-evento-label">Cliente</label>
+                            <div id="resumen-cliente" class="despacho-evento-value">${eventoData?.cliente || "—"}</div>
+                        </div>
+                        <div>
+                            <label class="despacho-evento-label">Lugar</label>
+                            <div id="resumen-lugar" class="despacho-evento-value">${eventoData?.lugar || "—"}</div>
+                        </div>
+                        <div>
+                            <label class="despacho-evento-label">Tipo</label>
+                            <div id="resumen-tipo" class="despacho-evento-value">${eventoData?.tipo_evento || eventoData?.tipo || "Evento"}</div>
+                        </div>
+                    </div>
+                    <div class="despacho-evento-block">
+                        <label class="despacho-evento-label">Tiempos</label>
+                        <div class="despacho-evento-time" id="resumen-montaje">${formatDateTime(eventoData?.fecha_montaje, eventoData?.hora_montaje)}</div>
+                        <div class="despacho-evento-time-danger" id="resumen-desmontaje">${formatDateTime(eventoData?.fecha_desmontaje, eventoData?.hora_desmontaje)}</div>
+                    </div>
+                    <div class="despacho-evento-block">
+                        <label class="despacho-evento-label">Servicios</label>
+                        <div id="resumen-descripcion" class="despacho-evento-desc">${serviciosTexto}</div>
+                    </div>
+                </div>
+
+                ${botonesHTML}`;
+        } catch (error) {
+            console.error('Error en verPedidoDespacho:', error);
+            alert('Error al cargar los detalles del despacho');
+        }
+    };
+
+    // 4. LÓGICA DE CIERRE: VALIDAR STOCK + PDF CON DATOS COMPLETOS
+    window.confirmarDespachoOficial = async function(id) {
+        try {
+            // Obtener solicitud completa desde Supabase
+            const { data: solicitud, error: errorSolicitud } = await window.supabaseClient
+                .from('solicitudes_logistica')
+                .select('*, items_solicitud_logistica(*)')
+                .eq('id', id)
+                .single();
+
+            if (errorSolicitud || !solicitud) {
+                console.error('Error al obtener solicitud:', errorSolicitud);
+                alert('Error al obtener la solicitud');
+                return;
+            }
+
+            // ✅ VALIDAR QUE LA SOLICITUD NO HAYA SIDO DESPACHADA ANTERIORMENTE
+            // Nota: Las solicitudes completadas tienen estado 'completada' y fecha_procesamiento
+            if (solicitud.fecha_procesamiento) {
+                alert(`❌ Esta solicitud ya fue procesada el ${new Date(solicitud.fecha_procesamiento).toLocaleDateString('es-ES')}`);
+                console.log('Intento de despachar solicitud ya procesada:', solicitud);
+                // Recargar la lista para reflejar el estado actual
+                renderLista();
+                return;
+            }
+
+            // ✅ VALIDAR QUE NO EXISTA YA UN DESPACHO PARA ESTA SOLICITUD
+            const { data: despachoExistente, error: errorDespachoExistente } = await window.supabaseClient
+                .from('despachos_logistica')
+                .select('id, numero_despacho')
+                .eq('solicitud_id', id);
+
+            if (!errorDespachoExistente && despachoExistente && despachoExistente.length > 0) {
+                alert(`❌ Esta solicitud ya tiene un despacho registrado: ${despachoExistente[0].numero_despacho}`);
+                console.log('Despacho ya existente:', despachoExistente[0]);
+                renderLista();
+                return;
+            }
+
+            // Obtener stock actual calculado desde movimientos_bodega
+            const { data: movimientosStock, error: errorStock } = await window.supabaseClient
+                .from('movimientos_bodega')
+                .select('material_codigo, cantidad, signo')
+                .eq('estado', 'completado');
+
+            if (errorStock) {
+                console.error('Error al obtener stock:', errorStock);
+                alert('Error al verificar inventario');
+                return;
+            }
+
+            // Calcular stock por material
+            const stockPorMaterial = {};
+            movimientosStock?.forEach(mov => {
+                if (!stockPorMaterial[mov.material_codigo]) {
+                    stockPorMaterial[mov.material_codigo] = 0;
+                }
+                stockPorMaterial[mov.material_codigo] += (mov.cantidad * mov.signo);
+            });
+
+            // ✅ VALIDAR STOCK ANTES DE DESPACHAR
+            let stockInsuficiente = false;
+            solicitud.items_solicitud_logistica.forEach(item => {
+                // Los CASE genéricos se resuelven luego a códigos reales.
+                if (isCaseBaseCodigo(item.codigo_material)) return;
+                const stock = stockPorMaterial[item.codigo_material] || 0;
+                if (stock < item.cantidad_solicitada) {
+                    stockInsuficiente = true;
+                }
+            });
+
+            if (stockInsuficiente) {
+                alert("❌ STOCK INSUFICIENTE: No se puede despachar material con existencia insuficiente.");
+                return;
+            }
+
+            // ✅ CORRECCIÓN: Obtener datos del evento desde Supabase
+            const { data: eventoData, error: errorEvento } = await window.supabaseClient
+                .from('eventos')
+                .select('*')
+                .eq('nombre', solicitud.evento);
+            
+            const numeroRegistro = await generarCorrelativo();
+
+            // Se usará también fuera del try (PDF).
+            let itemsResueltos = null;
+            
+            // 🔄 INTEGRACIÓN CON SUPABASE: Crear registro de despacho y movimientos
+            try {
+                // 1. Crear registro maestro del despacho
+                const despachoData = {
+                    numero_despacho: numeroRegistro,
+                    solicitud_id: solicitud.id,
+                    evento: solicitud.evento,
+                    encargado_evento: solicitud.encargado_evento,
+                    cliente: (eventoData && eventoData.length > 0) ? eventoData[0].cliente : null,
+                    lugar_montaje: (eventoData && eventoData.length > 0) ? eventoData[0].lugar : null,
+                    fecha_montaje: (eventoData && eventoData.length > 0 && eventoData[0].fecha_montaje) ? new Date(eventoData[0].fecha_montaje + 'T' + (eventoData[0].hora_montaje || '00:00')).toISOString() : null,
+                    fecha_desmontaje: (eventoData && eventoData.length > 0 && eventoData[0].fecha_desmontaje) ? new Date(eventoData[0].fecha_desmontaje + 'T' + (eventoData[0].hora_desmontaje || '00:00')).toISOString() : null,
+                    numero_acta: numeroRegistro,
+                    fecha_despacho: new Date().toISOString(),
+                    estado: 'completado',
+                    observaciones: `Despacho generado desde solicitud ${solicitud.id}`
+                };
+
+                const { data: despachoCreado, error: errorDespacho } = await window.supabaseClient
+                    .from('despachos_logistica')
+                    .insert(despachoData)
+                    .select('id')
+                    .single();
+
+                if (errorDespacho) {
+                    console.error('Error al crear despacho:', errorDespacho);
+                    alert('❌ Error al registrar el despacho en la base de datos.');
+                    return;
+                }
+
+                console.log('✅ Despacho creado:', despachoCreado);
+
+                // 2. Crear movimientos de bodega referenciando al despacho
+                // IMPORTANTE (Bodegas V2): registrar bodega_principal/bodega_secundaria reales para que el stock se descuente correctamente.
+                // isCaseBaseCodigo/getCaseBaseFromCodigo definidos arriba
+
+                // Resolver items genéricos tipo CASEBASE|<base> a códigos reales antes de despachar.
+                const itemsOriginales = (solicitud.items_solicitud_logistica || []);
+                itemsResueltos = [];
+
+                for (const it of itemsOriginales) {
+                    const cod = it.codigo_material;
+                    const qty = Number(it.cantidad_solicitada) || 0;
+                    if (!cod || qty <= 0) continue;
+
+                    if (!isCaseBaseCodigo(cod)) {
+                        itemsResueltos.push(it);
+                        continue;
+                    }
+
+                    const base = getCaseBaseFromCodigo(cod) || 'Case';
+
+                    // 1) Buscar Cases físicos candidatos por Nombre Base (campos_personalizados) o por nombre
+                    let candidatos = [];
+                    try {
+                        const { data: catData, error: catErr } = await window.supabaseClient
+                            .from('catalogo')
+                            .select('codigo, nombre, bodega_principal, bodega_secundaria, es_contenedor, tipo_material, tipo_uso, campos_personalizados')
+                            .eq('es_contenedor', true)
+                            .or(`tipo_material.ilike.%case%,tipo_uso.ilike.%case%,nombre.ilike.%case%`);
+
+                        if (catErr) throw catErr;
+                        const rows = catData || [];
+                        const matchBase = (row) => {
+                            const cps = row.campos_personalizados;
+                            if (Array.isArray(cps)) {
+                                const nb = cps.find(x => (x?.nombre || '').toString().trim().toLowerCase() === 'nombre base' && (x?.valor || '').toString().trim());
+                                const v = (nb?.valor || '').toString().trim();
+                                if (v && v.toLowerCase() === base.toLowerCase()) return true;
+                            }
+                            const nm = (row.nombre || '').toString().trim().toLowerCase();
+                            return nm.startsWith(base.toLowerCase());
+                        };
+
+                        candidatos = rows.filter(r => matchBase(r)).map(r => ({
+                            codigo: r.codigo,
+                            nombre: r.nombre || r.codigo,
+                            bodega_principal: r.bodega_principal || 'Principal',
+                            bodega_secundaria: r.bodega_secundaria || 'General'
+                        }));
+                    } catch (e) {
+                        console.error('Error cargando catálogo para resolver CASEBASE:', e);
+                        alert(`❌ No se pudo cargar catálogo para resolver ${base}.`);
+                        return;
+                    }
+
+                    if (candidatos.length === 0) {
+                        alert(`❌ No hay Cases físicos disponibles en catálogo para: ${base}`);
+                        return;
+                    }
+
+                    // 2) Filtrar por stock > 0
+                    let disponibles = [];
+                    try {
+                        const cods = candidatos.map(c => c.codigo).filter(Boolean);
+                        const { data: stockData, error: stockErr } = await window.supabaseClient
+                            .from('stock_actual_con_precio')
+                            .select('material_codigo, bodega_principal, bodega_secundaria, existencia')
+                            .in('material_codigo', cods);
+                        if (stockErr) throw stockErr;
+
+                        const stockMap = new Map();
+                        (stockData || []).forEach(r => {
+                            stockMap.set((r.material_codigo || '').toString(), Number(r.existencia) || 0);
+                        });
+
+                        disponibles = candidatos
+                            .map(c => ({ ...c, existencia: stockMap.get(c.codigo) || 0 }))
+                            .filter(c => (Number(c.existencia) || 0) > 0)
+                            .sort((a, b) => (b.existencia || 0) - (a.existencia || 0));
+                    } catch (e) {
+                        console.warn('No se pudo cargar stock para resolver CASEBASE; usando candidatos sin validar existencia:', e);
+                        disponibles = candidatos.map(c => ({ ...c, existencia: 0 }));
+                    }
+
+                    if (disponibles.length === 0) {
+                        alert(`❌ No hay stock disponible para cases de: ${base}`);
+                        return;
+                    }
+
+                    // 3) Pedir selección manual de códigos
+                    const lista = disponibles.slice(0, 30).map(d => `${d.codigo} (${d.bodega_principal}/${d.bodega_secundaria}) x${d.existencia}`).join('\n');
+                    const promptTxt = `Resolver CASE genérico: ${base}\nCantidad requerida: ${qty}\n\nEscriba los códigos a despachar, separados por coma (deben ser ${qty}):\n\nDisponibles (top 30):\n${lista}`;
+                    const resp = window.prompt(promptTxt, '');
+                    if (!resp) {
+                        alert('❌ Debe seleccionar los códigos de Case para continuar.');
+                        return;
+                    }
+                    const elegidos = resp.split(',').map(s => s.trim()).filter(Boolean);
+                    if (elegidos.length !== qty) {
+                        alert(`❌ Debe ingresar exactamente ${qty} códigos. Ingresó: ${elegidos.length}`);
+                        return;
+                    }
+
+                    const setDisp = new Set(disponibles.map(d => d.codigo));
+                    for (const c of elegidos) {
+                        if (!setDisp.has(c)) {
+                            alert(`❌ Código no válido o sin stock: ${c}`);
+                            return;
+                        }
+                        itemsResueltos.push({
+                            ...it,
+                            codigo_material: c,
+                            nombre_material: base,
+                            cantidad_solicitada: 1,
+                            observacion: `Resuelto de ${cod}. ${it.observacion || ''}`.trim()
+                        });
+                    }
+
+                    // Opcional: actualizar la BD para reflejar resolución (best-effort)
+                    try {
+                        if (it.id) {
+                            await window.supabaseClient
+                                .from('items_solicitud_logistica')
+                                .delete()
+                                .eq('id', it.id);
+                        }
+                        const inserts = elegidos.map(c => ({
+                            solicitud_id: solicitud.id,
+                            codigo_material: c,
+                            nombre_material: base,
+                            cantidad_solicitada: 1,
+                            estado: it.estado || 'pendiente',
+                            observacion: `Resuelto de ${cod}. ${it.observacion || ''}`.trim(),
+                            medidas: it.medidas || null,
+                            color: it.color || null
+                        }));
+                        if (inserts.length) {
+                            await window.supabaseClient.from('items_solicitud_logistica').insert(inserts);
+                        }
+                    } catch (e) {
+                        console.warn('No se pudo actualizar items_solicitud_logistica al resolver CASEBASE (se continúa):', e);
+                    }
+                }
+
+                const codigosUnicos = Array.from(new Set((itemsResueltos || []).map(i => i.codigo_material).filter(Boolean)));
+
+                let stockRows = [];
+                if (codigosUnicos.length > 0) {
+                    const { data: stockData, error: stockDataErr } = await window.supabaseClient
+                        .from('stock_actual_con_precio')
+                        .select('material_codigo, bodega_principal, bodega_secundaria, existencia')
+                        .in('material_codigo', codigosUnicos);
+                    if (stockDataErr) {
+                        console.warn('No se pudo cargar stock_actual_con_precio para bodegas:', stockDataErr);
+                    } else {
+                        stockRows = stockData || [];
+                    }
+                }
+
+                const stockPorCodigo = new Map();
+                (stockRows || []).forEach(r => {
+                    const c = (r?.material_codigo || '').toString();
+                    if (!c) return;
+                    const arr = stockPorCodigo.get(c) || [];
+                    arr.push({
+                        bodega_principal: r.bodega_principal || 'Principal',
+                        bodega_secundaria: r.bodega_secundaria || 'General',
+                        existencia: Number(r.existencia) || 0
+                    });
+                    stockPorCodigo.set(c, arr);
+                });
+                // Ordenar por existencia desc para despachar primero de la bodega con más stock
+                for (const [c, arr] of stockPorCodigo.entries()) {
+                    arr.sort((a, b) => (b.existencia || 0) - (a.existencia || 0));
+                }
+
+                const movimientos = [];
+                for (const item of (itemsResueltos || [])) {
+                    const codigo = item.codigo_material;
+                    let restante = parseFloat(item.cantidad_solicitada) || 0;
+                    if (!codigo || restante <= 0) continue;
+
+                    const filas = stockPorCodigo.get(codigo) || [];
+                    for (const f of filas) {
+                        if (restante <= 0) break;
+                        const disp = Number(f.existencia) || 0;
+                        if (disp <= 0) continue;
+                        const usar = Math.min(restante, disp);
+                        movimientos.push({
+                            material_codigo: codigo,
+                            material_nombre: item.nombre_material || '',
+                            bodega_principal: f.bodega_principal,
+                            bodega_secundaria: f.bodega_secundaria,
+                            tipo_movimiento: 'despacho',
+                            cantidad: usar,
+                            signo: -1,
+                            referencia_documento: numeroRegistro,
+                            referencia_tipo: 'despacho_bodega',
+                            responsable: solicitud.encargado_evento,
+                            observaciones: `Despacho ${numeroRegistro} - Evento: ${solicitud.evento}. Estado: ${item.estado || 'Nuevo'}. ${item.observacion || ''}`,
+                            estado: 'completado',
+                            // Ubicación fina (contenedor) no aplica aquí
+                            ubicacion_codigo: null,
+                            ubicacion_nombre: null
+                        });
+                        restante -= usar;
+                    }
+
+                    // Si por alguna razón no se pudo asignar bodega (o quedó restante), hacemos fallback.
+                    if (restante > 0) {
+                        movimientos.push({
+                            material_codigo: codigo,
+                            material_nombre: item.nombre_material || '',
+                            bodega_principal: 'Principal',
+                            bodega_secundaria: 'General',
+                            tipo_movimiento: 'despacho',
+                            cantidad: restante,
+                            signo: -1,
+                            referencia_documento: numeroRegistro,
+                            referencia_tipo: 'despacho_bodega',
+                            responsable: solicitud.encargado_evento,
+                            observaciones: `Despacho ${numeroRegistro} - Evento: ${solicitud.evento}. Estado: ${item.estado || 'Nuevo'}. ${item.observacion || ''}`,
+                            estado: 'completado',
+                            ubicacion_codigo: null,
+                            ubicacion_nombre: null
+                        });
+                    }
+                }
+
+                const { data: movimientosInsertados, error: errorMovimientos } = await window.supabaseClient
+                    .from('movimientos_bodega')
+                    .insert(movimientos)
+                    .select();
+
+                if (errorMovimientos) {
+                    console.error('Error al registrar movimientos:', errorMovimientos);
+                    alert('❌ Error al registrar movimientos. Despacho creado pero sin movimientos.');
+                } else {
+                    console.log('✅ Movimientos registrados:', movimientosInsertados);
+                }
+            } catch (error) {
+                console.error('Error en integración con Supabase:', error);
+                alert('❌ Error en integración con base de datos. El despacho se realizó localmente.');
+            }
+            
+            const datosPDF = {
+                numeroRegistro,
+                fechaDespacho: formatDate(new Date()),
+                personalEntrega: solicitud.encargado_evento,
+                evento: solicitud.evento,
+                clienteEvento: eventoData?.cliente || "",
+                lugarMontaje: eventoData?.lugar || "",
+                itemsSalida: (itemsResueltos || solicitud.items_solicitud_logistica || []).map(it => ({
+                    material: (isCaseBaseCodigo(it.codigo_material)
+                      ? `CASE ${getCaseBaseFromCodigo(it.codigo_material) || it.nombre_material || 'Case'}`
+                      : (it.nombre_material || it.codigo_material + (it.medidas ? ` (${it.medidas})` : ""))),
+                    cantidad: it.cantidad_solicitada,
+                    estado: it.estado || "Nuevo",
+                    observacion: it.observacion || ""
+                })),
+                eventoCompleto: eventoData || {} // ✅ Ahora contiene todos los datos
+            };
+
+            // Generar Acta
+            generarActaDeEntregaPDF(datosPDF);
+
+// ✅ Actualizar información de procesamiento en la solicitud
+            const { error: errorUpdateSolicitud } = await window.supabaseClient
+                .from('solicitudes_logistica')
+                .update({
+                    estado: 'completada',
+                    fecha_procesamiento: new Date().toISOString(),
+                    observaciones: `${solicitud.observaciones || ''}\n[DESPACHO: ${numeroRegistro} - ${new Date().toLocaleString()}]`.trim(),
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', id);
+
+            if (errorUpdateSolicitud) {
+                console.error('Error al actualizar solicitud:', errorUpdateSolicitud);
+                alert('❌ Error al actualizar el estado de la solicitud.');
+            }
+
+            alert(`✅ Despacho ${numeroRegistro} procesado y guardado.`);
+            renderLista();
+        } catch (error) {
+            console.error('Error en confirmarDespachoOficial:', error);
+            alert('❌ Error al procesar el despacho.');
+        }
+    };
+
+    // 5. TU FUNCIÓN DE PDF ORIGINAL (ya correcta, pero ahora con datos completos)
+    function generarActaDeEntregaPDF(data) {
+        const recibe = data.personalEntrega;
+        const copias = [
+            { leyenda: "Original – Bodega" },
+            { leyenda: "Copia – Caseta de Seguridad" },
+            { leyenda: "Copia – Encargado" }
+        ];
+        let contenidoCompleto = "";
+        copias.forEach(copia => {
+            const tablaEncabezados = `
+                <tr style="background-color: #f1f5f9; color: #1e40af; font-size: 10pt; font-weight: bold;">
+                    <th style="padding: 6pt; border: 1px solid #e2e8f0;">Material</th>
+                    <th style="padding: 6pt; border: 1px solid #e2e8f0;">Cantidad</th>
+                    <th style="padding: 6pt; border: 1px solid #e2e8f0;">Estado</th>
+                    <th style="padding: 6pt; border: 1px solid #e2e8f0;">Observación</th>
+                </tr>`;
+            const tablaFilas = data.itemsSalida.map(item => `
+                <tr style="font-size: 9pt;">
+                    <td style="padding: 6pt; border: 1px solid #e2e8f0;">${item.material}</td>
+                    <td style="padding: 6pt; border: 1px solid #e2e8f0; text-align: center;">${item.cantidad}</td>
+                    <td style="padding: 6pt; border: 1px solid #e2e8f0;">${item.estado}</td>
+                    <td style="padding: 6pt; border: 1px solid #e2e8f0;">${item.observacion}</td>
+                </tr>`).join("");
+            
+            let servicioHTML = "No disponible";
+            if (data.eventoCompleto && Array.isArray(data.eventoCompleto.descripcion)) {
+                servicioHTML = '<ul style="margin: 4pt 0; padding-left: 16pt; font-size: 9pt;">' +
+                    data.eventoCompleto.descripcion.map(item => `<li><em>${item}</em></li>`).join('') + '</ul>';
+            }
+
+            const montaje = data.eventoCompleto ? formatDateTime(data.eventoCompleto.fecha_montaje, data.eventoCompleto.hora_montaje) : "—";
+            const desmontaje = data.eventoCompleto ? formatDateTime(data.eventoCompleto.fecha_desmontaje, data.eventoCompleto.hora_desmontaje) : "—";
+            
+            contenidoCompleto += `
+            <div style="width: 185mm; font-family: Arial, sans-serif; color: #333; line-height: 1.3; font-size: 10pt; page-break-after: always; padding: 10mm; background: white;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10pt; border-bottom: 2px solid #1e40af; padding-bottom: 6pt;">
+                    <img src="assets/logo.png" alt="Logo" style="height: 20mm; margin-right: 8mm;">
+                    <div style="text-align: center; flex: 1;">
+                        <h1 style="color: #1e40af; margin: 0; font-size: 16pt;">Acta de Despacho – Interno</h1>
+                        <p style="margin: 3pt 0 0 0; color: #555; font-size: 9pt;">Fecha: ${data.fechaDespacho}</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 24pt; font-weight: bold; color: #1e40af; letter-spacing: 1px;">${data.numeroRegistro}</div>
+                    </div>
+                </div>
+                <div style="background: #f8fafc; padding: 6pt; border-radius: 4pt; margin: 8pt 0; font-size: 9pt; border: 1px solid #e2e8f0;">
+                    <p><strong>Número de Despacho:</strong> <em>${data.numeroRegistro}</em></p>
+                    <p><strong>Encargado del Evento:</strong> <em>${recibe}</em></p>
+                </div>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4pt; padding: 6pt; margin: 8pt 0; font-size: 9pt;">
+                    <h4 style="margin: 0 0 6pt 0; color: #1e40af; font-size: 10pt; border-bottom: 1px solid #cbd5e1; padding-bottom: 4pt;">📋 Información del Evento</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8pt; font-size: 9pt;">
+                        <div>
+                            <p style="margin: 4pt 0;"><strong>Evento:</strong> <em>${data.evento || 'N/A'}</em></p>
+                            <p style="margin: 4pt 0;"><strong>Cliente:</strong> <em>${data.clienteEvento || 'N/A'}</em></p>
+                            <p style="margin: 4pt 0;"><strong>Lugar:</strong> <em>${data.lugarMontaje || 'N/A'}</em></p>
+                        </div>
+                        <div>
+                            <p style="margin: 4pt 0;"><strong>Montaje:</strong> <em>${montaje}</em></p>
+                            <p style="margin: 4pt 0;"><strong>Desmontaje:</strong> <em>${desmontaje}</em></p>
+                        </div>
+                    </div>
+                    <div style="margin-top: 8pt;"><p style="margin: 4pt 0;"><strong>Servicio Solicitado:</strong></p>${servicioHTML}</div>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; font-size: 9pt;"><thead>${tablaEncabezados}</thead><tbody>${tablaFilas}</tbody></table>
+                <div style="display: flex; justify-content: space-around; margin-top: 20mm;">
+                    <div style="text-align: center; width: 30%;"><div style="border-top: 1px solid black; padding-top: 5pt; font-weight: bold;">Bodega</div><p style="margin: 5pt 0 0 0; font-size: 8pt;">Entrega</p></div>
+                    <div style="text-align: center; width: 30%;"><div style="border-top: 1px solid black; padding-top: 5pt; font-weight: bold;">${recibe}</div><p style="margin: 5pt 0 0 0; font-size: 8pt;">Recibe</p></div>
+                    <div style="text-align: center; width: 30%;"><div style="border-top: 1px solid black; padding-top: 5pt; font-weight: bold;">Jefe de Operaciones</div><p style="margin: 5pt 0 0 0; font-size: 8pt;">Autoriza</p></div>
+                </div>
+                <div style="margin-top: 10mm; text-align: center; font-size: 9pt; color: #666; border-top: 1px solid #eee; padding-top: 4pt;">${copia.leyenda}</div>
+            </div>`;
+        });
+
+        const options = {
+            margin: [0, 0, 0, 0],
+            filename: `Acta_Despacho_${data.numeroRegistro}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+            jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
+        };
+        html2pdf().from(contenidoCompleto).set(options).save();
+    }
+
+    function actualizarPanelEvento(data, serviciosTexto = 'No disponible') {
+        console.log('🔄 Ejecutando actualizarPanelEvento con:', { data, serviciosTexto });
+
+        const panel = document.getElementById("panelResumenEvento");
+        console.log('Panel encontrado:', panel);
+
+        if (!panel) {
+            console.error('❌ Panel panelResumenEvento no encontrado');
+            return;
+        }
+
+        // Ocultar el panel si no hay datos o si los datos están vacíos
+        if (!data || !data.nombre || Object.keys(data).length === 0) {
+            console.log('Ocultando panel - no hay datos válidos');
+            panel.style.display = "none";
+            return;
+        }
+
+        console.log('Mostrando panel con datos');
+        panel.style.display = "block";
+
+        // Mostrar información del evento con los nombres correctos de campos de la tabla eventos
+        const nombreEl = document.getElementById("resumen-nombre");
+        const clienteEl = document.getElementById("resumen-cliente");
+        const lugarEl = document.getElementById("resumen-lugar");
+        const montajeEl = document.getElementById("resumen-montaje");
+        const desmontajeEl = document.getElementById("resumen-desmontaje");
+        const tipoEl = document.getElementById("resumen-tipo");
+        const descripcionEl = document.getElementById("resumen-descripcion");
+
+        console.log('Elementos encontrados:', {
+            nombreEl, clienteEl, lugarEl, montajeEl, desmontajeEl, tipoEl, descripcionEl
+        });
+
+        if (nombreEl) {
+            nombreEl.textContent = data.nombre || data.evento || "—";
+            console.log('Nombre actualizado:', nombreEl.textContent);
+        }
+        if (clienteEl) {
+            clienteEl.textContent = data.cliente || "—";
+            console.log('Cliente actualizado:', clienteEl.textContent);
+        }
+        if (lugarEl) {
+            lugarEl.textContent = data.lugar || "—";
+            console.log('Lugar actualizado:', lugarEl.textContent);
+        }
+        if (montajeEl) {
+            montajeEl.textContent = formatDateTime(data.fecha_montaje, data.hora_montaje);
+            console.log('Montaje actualizado:', montajeEl.textContent);
+        }
+        if (desmontajeEl) {
+            desmontajeEl.textContent = formatDateTime(data.fecha_desmontaje, data.hora_desmontaje);
+            console.log('Desmontaje actualizado:', desmontajeEl.textContent);
+        }
+        if (tipoEl) {
+            tipoEl.textContent = data.tipo_evento || data.tipo || "Evento";
+            console.log('Tipo actualizado:', tipoEl.textContent);
+        }
+        if (descripcionEl) {
+            descripcionEl.innerHTML = serviciosTexto;
+            console.log('Descripción actualizada:', descripcionEl.innerHTML);
+        }
+
+        // Debug: mostrar todos los campos disponibles del evento
+        console.log('Datos del evento disponibles:', data);
+        console.log('Campos del evento:', Object.keys(data));
+        console.log('Servicios texto:', serviciosTexto);
+    }
+
+    // Función para limpiar la vista detallada y volver al estado inicial
+    window.limpiarVistaDetallada = function() {
+        document.getElementById("panelVistaDetallada").innerHTML = `
+            <div class="despacho-hint">
+                <h3 class="despacho-hint-title">📋 Vista de Despacho</h3>
+                <p class="despacho-hint-text">Selecciona una solicitud de la lista para ver los detalles</p>
+            </div>
+            <!-- Panel de información del evento vacío -->
+            <div id="panelResumenEvento" class="despacho-evento-panel" style="display: none;">
+                <h4 class="despacho-evento-title">📋 Información del Evento</h4>
+                <div class="despacho-evento-empty">Selecciona una solicitud para ver la información del evento</div>
+            </div>`;
+    };
+
+    window.renderLista = renderLista;
+    renderLista();
+})();
+</script>

@@ -1,0 +1,312 @@
+<!-- crear.html -->
+<div class="cli-container">
+  <h1 class="cli-title">✅ Crear Nuevo Cliente</h1>
+
+  <form id="form-cliente" class="cli-form">
+    <div class="cli-form-grid">
+      <!-- Empresa -->
+      <div class="cli-field">
+        <label class="cli-label">Empresa *</label>
+        <input type="text" id="input-nombre" class="cli-input" placeholder="Nombre de la empresa" required>
+        <div id="error-nombre" class="cli-error"></div>
+      </div>
+
+      <!-- Contacto -->
+      <div class="cli-field">
+        <label class="cli-label">Contacto *</label>
+        <input type="text" id="input-contacto" class="cli-input" placeholder="Nombre del contacto" required>
+        <div id="error-contacto" class="cli-error"></div>
+      </div>
+
+      <!-- Teléfono -->
+      <div class="cli-field">
+        <label class="cli-label">Teléfono *</label>
+        <input type="text" id="input-telefono" class="cli-input" placeholder="Teléfono principal" required>
+        <div id="error-telefono" class="cli-error"></div>
+      </div>
+
+      <!-- RUC -->
+      <div class="cli-field">
+        <label class="cli-label">RUC *</label>
+        <input type="text" id="input-ruc" class="cli-input" placeholder="Ej: 123-456-789" required>
+        <div id="error-ruc" class="cli-error"></div>
+      </div>
+
+      <!-- Teléfono 2 -->
+      <div class="cli-field">
+        <label class="cli-label">Teléfono 2</label>
+        <input type="text" id="input-telefono2" class="cli-input" placeholder="Teléfono secundario">
+      </div>
+
+      <!-- Email -->
+      <div class="cli-field">
+        <label class="cli-label">Email</label>
+        <input type="email" id="input-email" class="cli-input" placeholder="correo@empresa.com">
+        <div id="error-email" class="cli-error"></div>
+      </div>
+
+      <!-- Dirección (obligatoria) -->
+      <div class="cli-field cli-field-full">
+        <label class="cli-label">Dirección *</label>
+        <textarea id="input-direccion" class="cli-textarea" placeholder="Dirección completa" required></textarea>
+        <div id="error-direccion" class="cli-error"></div>
+      </div>
+
+      <!-- Notas -->
+      <div class="cli-field cli-field-full">
+        <label class="cli-label">Notas</label>
+        <textarea id="input-notas" class="cli-textarea" placeholder="Notas adicionales"></textarea>
+      </div>
+    </div>
+
+    <!-- Acciones -->
+    <div class="cli-actions">
+      <button type="submit" class="cli-btn cli-btn-save">💾 Guardar Cliente</button>
+      <button type="button" id="btn-nuevo" class="cli-btn cli-btn-secondary">🔄 Nuevo</button>
+    </div>
+  </form>
+</div>
+
+<style>
+  /* =============================================================================
+     ESTILOS PROPIOS PARA CLIENTES (AISLADO DE APP.CSS)
+     ============================================================================= */
+  .cli-container {
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #1e293b;
+  }
+
+  .cli-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    color: #1e3a8a;
+  }
+
+  .cli-form {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 24px;
+  }
+
+  .cli-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .cli-field {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cli-field-full {
+    grid-column: span 2;
+  }
+
+  .cli-label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #334155;
+  }
+
+  .cli-input,
+  .cli-textarea {
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 14px;
+    background: white;
+    color: #1e293b;
+  }
+
+  .cli-input:focus,
+  .cli-textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  .cli-textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+
+  .cli-error {
+    color: #ef4445;
+    font-size: 12px;
+    margin-top: 4px;
+    min-height: 16px;
+  }
+
+  .cli-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    justify-content: flex-end;
+  }
+
+  .cli-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .cli-btn-save {
+    background: #10b981;
+    color: white;
+  }
+
+  .cli-btn-secondary {
+    background: #64748b;
+    color: white;
+  }
+
+  .cli-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .cli-form-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .cli-field-full {
+      grid-column: span 1;
+    }
+  }
+</style>
+
+<script>
+  setTimeout(() => {
+    // =============================================================================
+    // 🔹 FUNCIONES AUXILIARES
+    // =============================================================================
+    function mostrarError(id, mensaje) {
+      document.getElementById(id).textContent = mensaje;
+    }
+
+    function limpiarErrores() {
+      document.querySelectorAll('.cli-error').forEach(el => el.textContent = '');
+    }
+
+    // =============================================================================
+    // 🔹 VALIDAR FORMULARIO
+    // =============================================================================
+    function validarFormulario() {
+      limpiarErrores();
+      let esValido = true;
+
+      const nombre = document.getElementById('input-nombre').value.trim();
+      const contacto = document.getElementById('input-contacto').value.trim();
+      const telefono = document.getElementById('input-telefono').value.trim();
+      const ruc = document.getElementById('input-ruc').value.trim();
+      const direccion = document.getElementById('input-direccion').value.trim();
+      const email = document.getElementById('input-email').value.trim();
+
+      if (!nombre) {
+        mostrarError('error-nombre', 'El nombre de la empresa es obligatorio.');
+        esValido = false;
+      }
+
+      if (!contacto) {
+        mostrarError('error-contacto', 'El contacto es obligatorio.');
+        esValido = false;
+      }
+
+      if (!telefono) {
+        mostrarError('error-telefono', 'El teléfono es obligatorio.');
+        esValido = false;
+      }
+
+      if (!ruc) {
+        mostrarError('error-ruc', 'El RUC es obligatorio.');
+        esValido = false;
+      }
+
+      if (!direccion) {
+        mostrarError('error-direccion', 'La dirección es obligatoria.');
+        esValido = false;
+      }
+
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        mostrarError('error-email', 'El email no tiene un formato válido.');
+        esValido = false;
+      }
+
+      return esValido;
+    }
+
+    // =============================================================================
+    // 🔹 GUARDAR CLIENTE
+    // =============================================================================
+    async function guardarCliente(e) {
+      e.preventDefault();
+      
+      if (!validarFormulario()) return;
+
+      const cliente = {
+        nombre: document.getElementById('input-nombre').value.trim(),
+        contacto: document.getElementById('input-contacto').value.trim(),
+        telefono: document.getElementById('input-telefono').value.trim(),
+        telefono2: document.getElementById('input-telefono2').value.trim(),
+        ruc: document.getElementById('input-ruc').value.trim(),
+        direccion: document.getElementById('input-direccion').value.trim(),
+        email: document.getElementById('input-email').value.trim(),
+        notas: document.getElementById('input-notas').value.trim()
+      };
+
+      try {
+        const { data, error } = await window.supabaseClient
+          .from('clientes')
+          .insert(cliente)
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Error al guardar cliente:', error);
+          alert('❌ Error al guardar el cliente.');
+          return;
+        }
+
+        alert(`✅ Cliente "${data.nombre}" guardado con éxito.`);
+        
+        // Resetear formulario
+        document.getElementById('form-cliente').reset();
+        limpiarErrores();
+      } catch (err) {
+        console.error('Error:', err);
+        alert('❌ Error al guardar el cliente.');
+      }
+    }
+
+    // =============================================================================
+    // 🔹 CREAR NUEVO
+    // =============================================================================
+    function crearNuevo() {
+      if (confirm("¿Desea crear un nuevo cliente? Se perderán los cambios no guardados.")) {
+        document.getElementById('form-cliente').reset();
+        limpiarErrores();
+        document.getElementById('input-nombre').focus();
+      }
+    }
+
+    // =============================================================================
+    // 🔹 INICIALIZACIÓN
+    // =============================================================================
+    document.getElementById('form-cliente').addEventListener('submit', guardarCliente);
+    document.getElementById('btn-nuevo').addEventListener('click', crearNuevo);
+    
+  }, 50);
+</script>

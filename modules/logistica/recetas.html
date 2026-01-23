@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Administrar Recetas</title>
+<link rel="stylesheet" href="./modules/logistica/recetas.css">
+<style>
+/* CSS crítico inline como respaldo */
+.layout-fade {
+  background: linear-gradient(135deg, #1e1e1e 0%, #2d2d30 100%);
+  height: calc(100vh - 120px);
+  width: 100%;
+  max-width: 1550px;
+  font-family: 'Segoe UI', 'Inter', sans-serif;
+  color: #ffffff;
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 10px;
+  border-radius: 10px;
+  padding: 10px;
+  box-sizing: border-box;
+  overflow-x: auto;
+}
+</style>
+</head>
+<body>
+  <div class="layout-fade">
+
+    <!-- Lista lateral de recetas -->
+    <aside class="sidebar-effect">
+      <div class="sidebar-header">
+        <div>
+          <h3>Recetas Existentes</h3>
+          <p>Editar o eliminar recetas</p>
+        </div>
+        <button id="recetas-refresh-list" class="button-add">↻</button>
+      </div>
+      <div id="contenedorRecetas" class="sidebar-container"></div>
+    </aside>
+
+    <!-- Formulario principal -->
+    <div class="main-content">
+      <div class="card-glass">
+        <h1 class="title-shine">📚 Gestión de Recetas</h1>
+        <p class="subtitle-fade">Crea grupos predefinidos de materiales por rubro</p>
+
+        <div class="section-bounce">
+          <label class="label-glow">Modo de Creación:</label>
+          <select id="modoCreacion" class="select-shadow">
+            <option value="PLANTILLAS">Por Plantillas (Recomendable)</option>
+            <option value="CODIGO">Por Código Específico</option>
+          </select>
+        </div>
+
+        <div class="form-fade">
+          <div class="grid-split">
+            <div>
+              <label class="label-glow">Nombre de la Receta</label>
+              <input type="text" id="nombreReceta" class="input-shadow" placeholder="Ej: Kit Iluminación Básico" />
+            </div>
+            <div>
+              <label class="label-glow">Rubro</label>
+              <select id="rubroReceta" class="select-shadow">
+                <option value="">Seleccione...</option>
+                <option value="Estructuras">Estructuras</option>
+                <option value="Audiovisual">Audiovisual</option>
+                <option value="Mobiliario">Mobiliario</option>
+                <option value="Iluminación">Iluminación</option>
+                <option value="Otros">Otros</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="section-bounce">
+            <h3 class="subtitle-section">Materiales en la Receta</h3>
+            <div id="listaMaterialesReceta"></div>
+          </div>
+
+          <div class="actions-pulse">
+            <button id="btnAbrirCatalogo" class="button-add">📦 Abrir Catálogo</button>
+            <button id="btnGuardarReceta" class="button-pulse">💾 Guardar Receta</button>
+            <button id="btnLimpiarForm" class="button-secondary">🗑️ Limpiar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal del Catálogo de Materiales -->
+    <div id="modalCatalogo" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>📦 CATÁLOGO DE MATERIALES</h2>
+          <button id="btnCerrarModal" class="modal-close">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="filters-fade">
+            <div class="filter-group">
+              <label>Buscar por nombre:</label>
+              <input type="text" id="buscador-nombre-recetas" class="input-shadow" placeholder="Escriba para buscar...">
+            </div>
+            <div class="filter-group">
+              <label>Filtrar por Bodega Principal:</label>
+              <select id="filtro-bodega-principal-recetas" class="select-shadow">
+                <option value="todas">Todas las Bodegas</option>
+              </select>
+            </div>
+            <div class="catalogo-filtro-grupo">
+              <label>Filtrar por Bodega Secundaria:</label>
+              <select id="filtro-bodega-secundaria-recetas" class="select-shadow">
+                <option value="todas">Todas las Bodegas</option>
+              </select>
+            </div>
+            <div class="view-switch-group">
+              <label>Vista:</label>
+              <div class="view-switch">
+                <button id="btnVistaLista" class="view-option active" data-view="list">📋 Lista</button>
+                <button id="btnVistaTarjetas" class="view-option" data-view="cards">🎴 Tarjetas</button>
+              </div>
+            </div>
+            <button id="btn-restablecer-filtros-recetas" class="button-add">🔄 Restablecer</button>
+          </div>
+          <div id="resultados-busqueda-recetas" class="results-grid-modal"></div>
+        </div>
+      </div>
+    </div>
+
+   
+  <script>
+    // =====================================================
+    // 🔌 Configuración de Supabase
+    // =====================================================
+    // Usa window.supabaseClient configurado globalmente
+
+    // =====================================================
+    // 🧠 Estado
+    // =====================================================
+    let materialesCatalogo = [];
+    let casesCatalogo = [];
+    let caseBases = []; // [{ base, bodega_principal, bodega_secundaria, count }]
+    let materialesReceta = [];
+    let isEditing = false;
+    let editingId = null;
+    let modoCreacion = 'PLANTILLAS'; // PLANTILLAS | CODIGO
+
+    let gruposCatalogo = []; // [{ clave, nombre, descripcion, tipo }]
+
+    const CATALOGOS = [
+      { key: 'AUDIOVISUAL', label: 'Audiovisual', table: 'catalogo_audiovisual' },
+      { key: 'HIERROS', label: 'Hierros', table: 'catalogo_hierros' },
+      { key: 'CONSUMIBLES', label: 'Consumibles', table: 'catalogo_consumibles' }
+    ];
+    const CATALOGO_STORAGE_KEY = 'logistica_recetas_catalogo_v1';
+    let catalogoActivoKey = 'AUDIOVISUAL';
+
+    // Variables para el modal
+    let resultadosContainer;
+    let btnVistaLista;
+    let btnVistaTarjetas;
+    let vistaActual = 'cards';
+
+    function normalizeCatalogoKey(v) {
+      const t = (v || '').toString().trim().toUpperCase();
+      return (t === 'AUDIOVISUAL' || t === 'HIERROS' || t === 'CONSUMIBLES' || t === 'TODOS') ? t : 'AUDIOVISUAL';
+    }
+
+    function loadCatalogoKey() {
+      try {
+        return normalizeCatalogoKey(localStorage.getItem(CATALOGO_STORAGE_KEY));
+      } catch (_) {
+        return 'AUDIOVISUAL';
+      }
+    }
+
+    function setCatalogoKey(v) {
+      catalogoActivoKey = normalizeCatalogoKey(v);
+      try { localStorage.setItem(CATALOGO_STORAGE_KEY, catalogoActivoKey); } catch (_) {}
+    }
+
+    function asBool(v) {
+      if (v === true) return true;
+      if (v === false || v == null) return false;
+      if (v === 1 || v === '1') return true;
+      if (typeof v === 'string') {
+        const t = v.trim().toLowerCase();
+        return t === 't' || t === 'true' || t === 'yes' || t === 'si' || t === 'sí';
+      }
+      return false;
+    }
+
+    function normalizeTipoAlta(v) {
+      const t = (v || '').toString().trim().toUpperCase();
+      if (t.includes('CONTEN')) return 'CONTENEDOR';
+      if (t.includes('MATER')) return 'MATERIAL';
+      return '';
+    }
+
+    function decodeLegacyTipoFromObs(observacion) {
+      const raw = (observacion || '').toString().trim();
+      if (raw === 'CASE') return { tipo: 'CASE', obs: '' };
+      if (raw.startsWith('CASE|')) return { tipo: 'CASE', obs: raw.substring(5) };
+      if (raw.startsWith('CASE:')) return { tipo: 'CASE', obs: raw.substring(5).trim() };
+      return { tipo: 'ITEM', obs: raw };
+    }
+
+    function isCaseBaseCodigo(codigo) {
+      return (codigo || '').toString().startsWith('CASEBASE|');
+    }
+
+    function isGrupoCodigo(codigo) {
+      return (codigo || '').toString().startsWith('PLANTILLA|');
+    }
+
+    function getGrupoClaveFromCodigo(codigo) {
+      const s = (codigo || '').toString();
+      if (!s.startsWith('PLANTILLA|')) return '';
+      return s.substring('PLANTILLA|'.length).trim();
+    }
+
+    function getCaseBaseFromCodigo(codigo) {
+      const s = (codigo || '').toString();
+      if (!s.startsWith('CASEBASE|')) return '';
+      return s.substring('CASEBASE|'.length).trim();
+    }
+
+    function encodeObservacion(_tipo, obs) {
+      // Nuevo comportamiento: la observación es libre. El tipo CASE se marca por material_codigo = CASEBASE|<base>
+      return (obs || '').toString().trim();
+    }
+
+    function getCampo(cp, nombre) {
+      const key = (nombre || '').toString().trim().toLowerCase();
+      if (!key) return '';
+      if (Array.isArray(cp)) {
+        const found = cp.find(x => (x?.nombre || '').toString().trim().toLowerCase() === key);
+        return (found?.valor || '').toString().trim();
+      }
+      if (cp && typeof cp === 'object') {
+        // soporta cp como objeto (consumibles)
+        const direct = cp[nombre] ?? cp[key] ?? cp[key.replace(/\s+/g, '_')];
+        return (direct ?? '').toString().trim();
+      }
+      return '';
+    }
+
+    function isRowContenedor(r) {
+      if (!r) return false;
+      if (r.es_contenedor !== undefined) return asBool(r.es_contenedor);
+      const tipo = normalizeTipoAlta(r.tipo_alta || r?.campos_personalizados?.tipo_alta);
+      return tipo === 'CONTENEDOR';
+    }
+
+    function isRowCase(r) {
+      const tm = (r?.tipo_material || '').toString().toLowerCase();
+      const tu = (r?.tipo_uso || '').toString().toLowerCase();
+      const nm = (r?.nombre || '').toString().toLowerCase();
+      if (tm === 'case' || tu === 'case') return true;
+      if (nm.includes('case')) return true;
+      return false;
+    }
+
+    function parseBaseNombreCase(nombre) {
+      const n = (nombre || '').toString().trim();
+      if (!n) return '';
+      // Quitar sufijo numérico tipo "Case 01" => "Case"
+      const m = n.replace(/\s+\d+\s*$/g, '').trim();
+      return m || n;
+    }
+
+    // =====================================================
+    // 📥 Cargar datos
+    // =====================================================
+    async function fetchCatalogRows(table) {
+      const isConsumibles = (table === 'catalogo_consumibles');
+      const selectStr = isConsumibles
+        ? 'codigo, nombre, bodega_principal, bodega_secundaria, foto_url, campos_personalizados'
+        : 'codigo, nombre, bodega_principal, bodega_secundaria, foto_url, tipo_material, tipo_uso, es_contenedor, tipo_alta, campos_personalizados';
+
+      let { data, error } = await window.supabaseClient
+        .from(table)
+        .select(selectStr)
+        .order('codigo', { ascending: true });
+
+      if (error) {
+        // fallback mínimo por si faltan columnas
+        const retry = await window.supabaseClient
+          .from(table)
+          .select('codigo, nombre, bodega_principal, bodega_secundaria, foto_url, campos_personalizados')
+          .order('codigo', { ascending: true });
+        if (retry.error) throw retry.error;
+        data = retry.data || [];
+      }
+const tables = CATALOGOS.map(c => c.table);  // Siempre cargar todos los catálogos
+      const rows = Array.isArray(data) ? data : [];
+      return rows.map(r => ({ ...r, __catalogo_table: table }));
+    }
+
+    async function cargarCatalogo() {
+      try {
+        const tables = (catalogoActivoKey === 'TODOS')
+          ? CATALOGOS.map(c => c.table)
+          : [CATALOGOS.find(c => c.key === catalogoActivoKey)?.table].filter(Boolean);
+
+        const allRows = [];
+        for (const t of tables) {
+          const part = await fetchCatalogRows(t);
+          allRows.push(...part);
+        }
+
+        // En recetas, el catálogo es solo lectura: no depende de stock.
+        // Materiales: todo lo que NO sea contenedor.
+        materialesCatalogo = allRows.filter(r => !isRowContenedor(r));
+
+        // Cases (plantillas): contenedores que parezcan Case.
+        casesCatalogo = allRows.filter(r => isRowContenedor(r) && isRowCase(r));
+
+        // Poblar filtros después de cargar
+        poblarFiltrosBodega();
+
+        // Agrupar Cases por "Nombre Clave/Base" para mostrarlos como genéricos en recetas.
+        // Importante: NO amarrar a un código específico ni a existencia actual.
+        const baseMap = new Map();
+        (casesCatalogo || []).forEach(c => {
+          const base = (
+            getCampo(c.campos_personalizados, 'Nombre Clave') ||
+            getCampo(c.campos_personalizados, 'Nombre Base') ||
+            parseBaseNombreCase(c.nombre)
+          ).trim();
+          if (!base) return;
+
+          const key = base; // solo por nombre clave/base
+          const prev = baseMap.get(key) || {
+            base,
+            count: 0,
+            _bp: new Set()
+          };
+          prev.count += 1;
+          if (c.bodega_principal) prev._bp.add(c.bodega_principal);
+          baseMap.set(key, prev);
+        });
+
+        caseBases = Array.from(baseMap.values()).map(x => {
+          const bp = Array.from(x._bp);
+          return {
+            base: x.base,
+            count: x.count,
+            bodega_principal: (bp.length === 1) ? bp[0] : 'Varias'
+          };
+        }).sort((a, b) => (a.base || '').localeCompare(b.base || ''));
+
+    } catch (error) {
+      console.error('Error al cargar catálogo:', error);
+      alert('⚠️ No se pudo cargar el catálogo.');
+      materialesCatalogo = [];
+      casesCatalogo = [];
+      caseBases = [];
+    }
+
+    }
+
+    // =====================================================
+    // 🔍 Funciones de Búsqueda por Modo
+    // =====================================================
+
+    // Función para poblar filtros en modo PLANTILLAS
+    function poblarFiltrosPlantillas(filtroPrincipal = 'todas', filtroSecundaria = 'todas') {
+      // Recopilar bodegas principales de plantillas
+      const bodegasPrincipales = [...new Set(gruposCatalogo.flatMap(m => [
+        m.catalogo,
+        ...(m.catalogos || [])
+      ].filter(Boolean)))].sort();
+
+      // Recopilar bodegas secundarias de plantillas
+      const bodegasSecundarias = [...new Set(gruposCatalogo.flatMap(m => [
+        ...(m.bodega_secundaria || [])
+      ].filter(Boolean)))].sort();
+
+      const selectPrincipal = document.getElementById('filtro-bodega-principal-recetas');
+      const selectSecundaria = document.getElementById('filtro-bodega-secundaria-recetas');
+
+      // Limpiar opciones existentes
+      selectPrincipal.innerHTML = '<option value="todas">Todas las Bodegas</option>';
+      selectSecundaria.innerHTML = '<option value="todas">Todas las Bodegas</option>';
+
+      // Poblar bodegas principales
+      bodegasPrincipales.forEach(bodega => {
+        selectPrincipal.innerHTML += `<option value="${bodega}">${bodega}</option>`;
+      });
+
+      // Poblar bodegas secundarias
+      bodegasSecundarias.forEach(bodega => {
+        selectSecundaria.innerHTML += `<option value="${bodega}">${bodega}</option>`;
+      });
+
+      // Reset valores
+      selectPrincipal.value = filtroPrincipal;
+      selectSecundaria.value = filtroSecundaria;
+    }
+
+    // Función para poblar filtros en modo CODIGO
+    function poblarFiltrosCodigos(filtroPrincipal = 'todas', filtroSecundaria = 'todas') {
+      // Recopilar bodegas principales de catálogos
+      const bodegasPrincipales = [...new Set(materialesCatalogo.map(m => m.bodega_principal).filter(Boolean))].sort();
+
+      // Recopilar bodegas secundarias de catálogos
+      const bodegasSecundarias = [...new Set(materialesCatalogo.map(m => m.bodega_secundaria).filter(Boolean))].sort();
+
+      const selectPrincipal = document.getElementById('filtro-bodega-principal-recetas');
+      const selectSecundaria = document.getElementById('filtro-bodega-secundaria-recetas');
+
+      // Limpiar opciones existentes
+      selectPrincipal.innerHTML = '<option value="todas">Todas las Bodegas</option>';
+      selectSecundaria.innerHTML = '<option value="todas">Todas las Bodegas</option>';
+
+      // Poblar bodegas principales
+      bodegasPrincipales.forEach(bodega => {
+        selectPrincipal.innerHTML += `<option value="${bodega}">${bodega}</option>`;
+      });
+
+      // Poblar bodegas secundarias
+      bodegasSecundarias.forEach(bodega => {
+        selectSecundaria.innerHTML += `<option value="${bodega}">${bodega}</option>`;
+      });
+
+      // Reset valores
+      selectPrincipal.value = filtroPrincipal;
+      selectSecundaria.value = filtroSecundaria;
+    }
+
+    // Función unificada para renderizar resultados según modo
+    function renderizarResultadosCatalogo() {
+      if (modoCreacion === 'PLANTILLAS') {
+        renderResultadosPlantillas();
+      } else {
+        renderResultadosCodigos();
+      }
+    }
+
+    // Exponer función globalmente para el switch de vista
+    window.renderizarResultadosCatalogo = renderizarResultadosCatalogo;
+
+    // =====================================================
+    // 🔍 Funciones de Búsqueda por Modo
+    // =====================================================
+
+    // Función helper para renderizar un material según la vista actual
+    function renderizarMaterial(material, tipo = 'material') {
+      const nombre = material.nombre || 'Sin nombre';
+      const codigo = material.codigo || material.clave || 'Sin código';
+      
+      // Recopilar todas las bodegas disponibles
+      const bodegas = [
+        material.bodega_principal,
+        material.bodega_secundaria,
+        ...(material.catalogos || []),
+        ...(Array.isArray(material.bodega_secundaria) ? material.bodega_secundaria : [])
+      ].filter(Boolean);
+      
+      const bodegaDisplay = bodegas.length > 0 ? bodegas.join(', ') : 'Sin bodega';
+      const descripcion = material.descripcion || '';
+      const subtitulo = tipo === 'plantilla' ? descripcion : codigo;
+      const textoBoton = 'Seleccionar Material';
+      
+      const materialData = {
+        codigo: material.codigo || material.clave,
+        nombre,
+        bodega_principal: material.bodega_principal || 'Sin bodega',
+        bodega_secundaria: material.bodega_secundaria || (Array.isArray(material.bodega_secundaria) ? material.bodega_secundaria : '—'),
+        clave: material.clave || null
+      };
+
+      if (vistaActual === 'list') {
+        return `
+          <div class="list-item">
+            <div class="list-item-content">
+              <div class="list-item-icon">${tipo === 'plantilla' ? '📋' : '🔧'}</div>
+              <div class="list-item-info">
+                <h4>${nombre}</h4>
+                <p>${subtitulo} • ${bodegaDisplay}</p>
+              </div>
+            </div>
+            <div class="list-item-actions">
+              <button class="btn-add catalogo-select-btn" data-material='${JSON.stringify(materialData)}'>
+                ${textoBoton}
+              </button>
+            </div>
+          </div>
+        `;
+      } else {
+        return `
+          <div class="catalogo-card">
+            <div class="catalogo-card-header">
+              <div>
+                <div class="catalogo-card-title">${nombre}</div>
+                <div class="catalogo-card-subtitle">${subtitulo}</div>
+              </div>
+            </div>
+            <div class="catalogo-badges">
+              <span class="catalogo-badge">${bodegaDisplay}</span>
+            </div>
+            <button class="btn-add catalogo-select-btn" data-material='${JSON.stringify(materialData)}'>
+              ${textoBoton}
+            </button>
+          </div>
+        `;
+      }
+    }
+
+    // Función para renderizar resultados en modo PLANTILLAS
+    async function renderResultadosPlantillas() {
+      const contenedor = document.getElementById('resultados-busqueda-recetas');
+      const terminoBusqueda = document.getElementById('buscador-nombre-recetas').value.toLowerCase();
+      const bodegaPrincipalFiltro = document.getElementById('filtro-bodega-principal-recetas').value;
+      const bodegaSecundariaFiltro = document.getElementById('filtro-bodega-secundaria-recetas').value;
+
+      try {
+        let materiales = gruposCatalogo; // Solo plantillas
+
+        // Filtrar por búsqueda de nombre
+        if (terminoBusqueda) {
+          materiales = materiales.filter(m => {
+            const nombre = (m.nombre || '').toLowerCase();
+            return nombre.includes(terminoBusqueda);
+          });
+        }
+
+        // Filtrar por bodega principal (catálogo)
+        if (bodegaPrincipalFiltro !== 'todas') {
+          materiales = materiales.filter(m => {
+            const bodegasPrincipales = [
+              m.catalogo,
+              ...(m.catalogos || [])
+            ].filter(Boolean);
+            return bodegasPrincipales.includes(bodegaPrincipalFiltro);
+          });
+        }
+
+        // Filtrar por bodega secundaria
+        if (bodegaSecundariaFiltro !== 'todas') {
+          materiales = materiales.filter(m => {
+            const bodegasSecundarias = [
+              ...(m.bodega_secundaria || [])
+            ].filter(Boolean);
+            return bodegasSecundarias.includes(bodegaSecundariaFiltro);
+          });
+        }
+
+        // Limitar resultados
+        materiales = materiales.slice(0, 50);
+
+        if (!materiales || materiales.length === 0) {
+          contenedor.innerHTML = '<p class="empty-state">No se encontraron plantillas.</p>';
+          return;
+        }
+
+        contenedor.innerHTML = materiales.map(material => 
+          renderizarMaterial(material, 'plantilla')
+        ).join('');
+
+        contenedor.querySelectorAll('button[data-material]').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            try {
+              const material = JSON.parse(e.currentTarget.dataset.material);
+              agregarMaterialALista(material);
+            } catch (err) {
+              console.error('Error parsing material data:', err);
+            }
+          });
+        });
+
+      } catch (err) {
+        console.error('Error renderizando plantillas:', err);
+        contenedor.innerHTML = '<p class="error-state">Error al cargar plantillas.</p>';
+      }
+    }
+
+    // Función para renderizar resultados en modo CODIGO
+    async function renderResultadosCodigos() {
+      const contenedor = document.getElementById('resultados-busqueda-recetas');
+      const terminoBusqueda = document.getElementById('buscador-nombre-recetas').value.toLowerCase();
+      const bodegaPrincipalFiltro = document.getElementById('filtro-bodega-principal-recetas').value;
+      const bodegaSecundariaFiltro = document.getElementById('filtro-bodega-secundaria-recetas').value;
+
+      try {
+        let materiales = materialesCatalogo; // Solo códigos del catálogo
+
+        // Filtrar por búsqueda de nombre
+        if (terminoBusqueda) {
+          materiales = materiales.filter(m => {
+            const nombre = (m.nombre || '').toLowerCase();
+            return nombre.includes(terminoBusqueda);
+          });
+        }
+
+        // Filtrar por bodega principal
+        if (bodegaPrincipalFiltro !== 'todas') {
+          if (bodegaPrincipalFiltro === 'sin_bodega') {
+            materiales = materiales.filter(m => !m.bodega_principal);
+          } else {
+            materiales = materiales.filter(m => m.bodega_principal === bodegaPrincipalFiltro);
+          }
+        }
+
+        // Filtrar por bodega secundaria
+        if (bodegaSecundariaFiltro !== 'todas') {
+          materiales = materiales.filter(m => m.bodega_secundaria === bodegaSecundariaFiltro);
+        }
+
+        // Limitar resultados
+        materiales = materiales.slice(0, 50);
+
+        if (!materiales || materiales.length === 0) {
+          contenedor.innerHTML = '<p class="empty-state">No se encontraron materiales.</p>';
+          return;
+        }
+
+        contenedor.innerHTML = materiales.map(material => 
+          renderizarMaterial(material, 'material')
+        ).join('');
+
+        contenedor.querySelectorAll('button[data-material]').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            try {
+              const material = JSON.parse(e.currentTarget.dataset.material);
+              agregarMaterialALista(material);
+            } catch (err) {
+              console.error('Error parsing material data:', err);
+            }
+          });
+        });
+
+      } catch (err) {
+        console.error('Error renderizando códigos:', err);
+        contenedor.innerHTML = '<p class="error-state">Error al cargar materiales.</p>';
+      }
+    }
+
+    // =====================================================
+    // 🔍 Búsqueda y Selección de Materiales
+    // =====================================================
+    // Función unificada para renderizar resultados según modo
+    async function renderResultadosBusquedaRecetas() {
+      if (modoCreacion === 'PLANTILLAS') {
+        await renderResultadosPlantillas();
+      } else {
+        await renderResultadosCodigos();
+      }
+    }
+
+    async function agregarMaterialALista(material) {
+      const tipo = (material.clave && material.clave.startsWith('PLANTILLA_')) ? 'GRUPO' : 'ITEM';
+      if (tipo === 'GRUPO') {
+        const clave = material.clave;
+        // Agregar como ítem único
+        if (materialesReceta.some(item => item.material_codigo === clave)) {
+          alert('⚠️ Esta plantilla ya está en la lista de la receta.');
+          return;
+        }
+        materialesReceta.push({
+          material_codigo: clave,
+          cantidad: 1,
+          tipo,
+          observacion: ''
+        });
+      } else {
+        // Verificar si ya está en la lista
+        if (materialesReceta.some(item => item.material_codigo === material.codigo)) {
+          alert('⚠️ Este material ya está en la lista de la receta.');
+          return;
+        }
+        // Agregar el material
+        materialesReceta.push({
+          material_codigo: material.codigo,
+          cantidad: 1,
+          tipo,
+          observacion: ''
+        });
+      }
+
+      renderListaMateriales();
+    }
+
+    async function cargarRecetasExistentes() {
+      const tablaRecetas = modoCreacion === 'PLANTILLAS' ? 'recetas' : 'recetas_especificas';
+      const tablaMateriales = modoCreacion === 'PLANTILLAS' ? 'recetas_materiales' : 'recetas_especificas_materiales';
+
+      const { data: recetas, error } = await window.supabaseClient
+        .from(tablaRecetas)
+        .select('id, nombre, rubro')
+        .order('creado_en', { ascending: false });
+      if (error) {
+        console.error('Error al cargar recetas:', error);
+        return;
+      }
+      const contenedor = document.getElementById('contenedorRecetas');
+      if (recetas.length === 0) {
+        contenedor.innerHTML = '<p id="mensajeVacio">No hay recetas guardadas.</p>';
+        return;
+      }
+
+      let html = `<div class="list-full">`;
+      html += `<div class="list-header">`;
+      html += `<div>Nombre</div><div>Rubro</div><div>Materiales</div><div>Acciones</div>`;
+      html += `</div>`;
+
+      for (const receta of recetas) {
+        const { count, error: errMat } = await window.supabaseClient
+          .from(tablaMateriales)
+          .select('*', { count: 'exact', head: true })
+          .eq('receta_id', receta.id);
+        const materialesCount = errMat ? 0 : count;
+
+        html += `<div class="list-row">`;
+        html += `<div>${receta.nombre}</div>`;
+        html += `<div>${receta.rubro}</div>`;
+        html += `<div class="count-center">${materialesCount}</div>`;
+        html += `<div>
+          <button type="button" class="btn-accion btn-ver" onclick="verReceta('${receta.id}')">👁️</button>
+          <button type="button" class="btn-accion btn-editar" onclick="editarReceta('${receta.id}')">✏️</button>
+          <button type="button" class="btn-accion btn-eliminar" onclick="eliminarReceta('${receta.id}')">🗑️</button>
+        </div>`;
+        html += `</div>`;
+      }
+      html += `</div>`;
+      contenedor.innerHTML = html;
+    }
+
+    // =====================================================
+    // 🎨 Renderizado
+    // =====================================================
+    function renderListaMateriales() {
+      const contenedor = document.getElementById('listaMaterialesReceta');
+      if (materialesReceta.length === 0) {
+        contenedor.innerHTML = '<p id="mensajeVacio">Agrega materiales a esta receta.</p>';
+        return;
+      }
+
+      let html = `<div class="materials-scroll"><table class="table-effect">`;
+      html += `<thead><tr>
+        <th class="col-material">Material</th>
+        <th class="col-cantidad">Cantidad</th>
+        <th class="col-obs">Obs.</th>
+        <th class="col-acciones"></th>
+      </tr></thead><tbody>`;
+
+      materialesReceta.forEach((item, idx) => {
+        const tipo = item.tipo || (isCaseBaseCodigo(item.material_codigo) ? 'CASE' : 'ITEM');
+        const isCase = (tipo === 'CASE') || isCaseBaseCodigo(item.material_codigo);
+        const isGrupo = (tipo === 'GRUPO') || isGrupoCodigo(item.material_codigo);
+
+        if (isGrupo) {
+          const clave = getGrupoClaveFromCodigo(item.material_codigo) || item.material_codigo;
+          const g = (gruposCatalogo || []).find(x => (x.clave || '') === clave);
+          const nombreGrupo = g ? g.nombre : clave;
+          const display = nombreGrupo;
+          html += `<tr>
+            <td>
+              <input type="text" class="input-shadow readonly-input" value="${display}" readonly />
+            </td>
+            <td class="td-center">
+              <input type="number" class="input-shadow input-shadow-sm td-center" data-idx="${idx}" min="1" value="${item.cantidad || 1}" />
+            </td>
+            <td>
+              <input type="text" class="input-shadow" data-idx="${idx}" placeholder="Opcional" value="${item.observacion || ''}" />
+            </td>
+            <td class="td-center">
+              <button type="button" class="btn-remove btn-icon" data-idx="${idx}">✕</button>
+            </td>
+          </tr>`;
+          return;
+        }
+
+        if (isCase) {
+          const base = getCaseBaseFromCodigo(item.material_codigo) || item.material_codigo;
+          const nombreCase = `CASE: ${base}`;
+          html += `<tr>
+            <td>
+              <input type="text" class="input-shadow input-readonly" value="${nombreCase}" readonly />
+            </td>
+            <td class="td-center">
+              <input type="number" class="input-shadow input-shadow-sm td-center" data-idx="${idx}" min="1" value="${item.cantidad || 1}" />
+            </td>
+            <td>
+              <input type="text" class="input-shadow" data-idx="${idx}" placeholder="Opcional" value="${item.observacion || ''}" />
+            </td>
+            <td class="td-center">
+              <button type="button" class="btn-remove btn-icon" data-idx="${idx}">✕</button>
+            </td>
+          </tr>`;
+          return;
+        }
+
+        const mat = materialesCatalogo.find(m => m.codigo === item.material_codigo);
+        const nombre = mat ? `${mat.nombre} (${mat.codigo})` : item.material_codigo;
+        html += `<tr>
+          <td>
+            <input type="text" class="input-shadow input-readonly" value="${nombre}" readonly />
+          </td>
+          <td class="td-center">
+            <input type="number" class="input-shadow input-shadow-sm td-center" data-idx="${idx}" min="1" value="${item.cantidad || 1}" />
+          </td>
+          <td>
+            <input type="text" class="input-shadow" data-idx="${idx}" placeholder="Opcional" value="${item.observacion || ''}" />
+          </td>
+          <td class="td-center">
+            <button type="button" class="btn-remove btn-icon" data-idx="${idx}">✕</button>
+          </td>
+        </tr>`;
+      });
+
+      html += `</tbody></table></div>`;
+      contenedor.innerHTML = html;
+
+      // Eventos
+      contenedor.querySelectorAll('input[type="number"][data-idx]').forEach(inp => {
+        inp.addEventListener('input', e => {
+          const idx = parseInt(e.target.dataset.idx);
+          materialesReceta[idx].cantidad = parseFloat(e.target.value) || 1;
+        });
+      });
+      contenedor.querySelectorAll('input[type="text"][data-idx]').forEach(inp => {
+        inp.addEventListener('input', e => {
+          const idx = parseInt(e.target.dataset.idx);
+          materialesReceta[idx].observacion = e.target.value;
+        });
+      });
+      contenedor.querySelectorAll('button[data-idx]').forEach(btn => {
+        btn.addEventListener('click', e => {
+          const idx = parseInt(e.target.dataset.idx);
+          materialesReceta.splice(idx, 1);
+          renderListaMateriales();
+        });
+      });
+    }
+
+    // =====================================================
+    // 🧩 Eventos
+    // =====================================================
+    document.getElementById('btnGuardarReceta').addEventListener('click', async () => {
+      const btn = document.getElementById('btnGuardarReceta');
+      if (btn.disabled) return; // Prevent multiple clicks
+      btn.disabled = true;
+      btn.textContent = isEditing ? 'Actualizando...' : 'Guardando...';
+
+      try {
+        const nombre = document.getElementById('nombreReceta').value.trim();
+        const rubro = document.getElementById('rubroReceta').value;
+        if (!nombre || !rubro) {
+          alert('⚠️ Ingrese nombre y rubro.');
+          return;
+        }
+
+        const itemsValidos = materialesReceta.filter(item => item.material_codigo);
+        if (itemsValidos.length === 0) {
+          alert('⚠️ Agregue al menos un material válido.');
+          return;
+        }
+
+        let receta;
+        const tablaRecetas = modoCreacion === 'PLANTILLAS' ? 'recetas' : 'recetas_especificas';
+        const tablaMateriales = modoCreacion === 'PLANTILLAS' ? 'recetas_materiales' : 'recetas_especificas_materiales';
+
+        if (isEditing) {
+          // Update existing
+          const { data, error } = await window.supabaseClient
+            .from(tablaRecetas)
+            .update({ nombre, rubro })
+            .eq('id', editingId)
+            .select()
+            .single();
+          if (error) {
+            console.error('Error al actualizar receta:', error);
+            alert('❌ Error al actualizar la receta.');
+            return;
+          }
+          receta = data;
+          // Delete old materials and insert new
+          await window.supabaseClient.from(tablaMateriales).delete().eq('receta_id', editingId);
+        } else {
+          // Insert new
+          const { data, error } = await window.supabaseClient
+            .from(tablaRecetas)
+            .insert({ nombre, rubro })
+            .select()
+            .single();
+          if (error) {
+            console.error('Error al guardar receta:', error);
+            alert('❌ Error al guardar la receta.');
+            return;
+          }
+          receta = data;
+        }
+
+        const materialesParaInsertar = itemsValidos.map(item => ({
+          receta_id: receta.id,
+          material_codigo: item.material_codigo,
+          cantidad: item.cantidad,
+          observacion: encodeObservacion(item.tipo || 'ITEM', item.observacion)
+        }));
+
+        const { error: errorMateriales } = await window.supabaseClient
+          .from(tablaMateriales)
+          .insert(materialesParaInsertar);
+        if (errorMateriales) {
+          console.error('Error al guardar materiales:', errorMateriales);
+          alert('❌ Error al guardar los materiales de la receta.');
+          return;
+        }
+
+        alert(isEditing ? '✅ Receta actualizada con éxito.' : '✅ Receta guardada con éxito.');
+        limpiarFormulario();
+        cargarRecetasExistentes();
+      } finally {
+        btn.disabled = false;
+        btn.textContent = isEditing ? '💾 Actualizar Receta' : '💾 Guardar Receta';
+      }
+    });
+
+    function limpiarFormulario() {
+      document.getElementById('nombreReceta').value = '';
+      document.getElementById('rubroReceta').value = '';
+      materialesReceta = [];
+      renderListaMateriales();
+      isEditing = false;
+      editingId = null;
+      const btn = document.getElementById('btnGuardarReceta');
+      btn.textContent = '💾 Guardar Receta';
+      btn.disabled = false;
+    }
+
+    document.getElementById('btnLimpiarForm').addEventListener('click', limpiarFormulario);
+
+    // =====================================================
+    // ✏️ Editar Receta
+    // =====================================================
+    window.editarReceta = async (id) => {
+      const tablaRecetas = modoCreacion === 'PLANTILLAS' ? 'recetas' : 'recetas_especificas';
+      const tablaMateriales = modoCreacion === 'PLANTILLAS' ? 'recetas_materiales' : 'recetas_especificas_materiales';
+
+      const { data: receta, error } = await window.supabaseClient
+        .from(tablaRecetas)
+        .select('*')
+        .eq('id', id)
+        .single();
+      if (error) {
+        console.error('Error al cargar receta:', error);
+        alert('❌ Error al cargar la receta.');
+        return;
+      }
+
+      const { data: materiales, error: errMat } = await window.supabaseClient
+        .from(tablaMateriales)
+        .select('*')
+        .eq('receta_id', id);
+
+      // Load into form
+      document.getElementById('nombreReceta').value = receta.nombre;
+      document.getElementById('rubroReceta').value = receta.rubro;
+      materialesReceta = materiales.map(m => ({
+        material_codigo: m.material_codigo,
+        cantidad: m.cantidad,
+        tipo: isCaseBaseCodigo(m.material_codigo) ? 'CASE' : decodeLegacyTipoFromObs(m.observacion).tipo,
+        observacion: isCaseBaseCodigo(m.material_codigo) ? (m.observacion || '') : decodeLegacyTipoFromObs(m.observacion).obs
+      }));
+      renderListaMateriales();
+
+      isEditing = true;
+      editingId = id;
+      const btn = document.getElementById('btnGuardarReceta');
+      btn.textContent = '💾 Actualizar Receta';
+    };
+
+    // =====================================================
+    // 🗑️ Eliminar Receta
+    // =====================================================
+    window.eliminarReceta = async (id) => {
+      if (!confirm('¿Estás seguro de que quieres eliminar esta receta? Esta acción no se puede deshacer.')) {
+        return;
+      }
+
+      const tablaRecetas = modoCreacion === 'PLANTILLAS' ? 'recetas' : 'recetas_especificas';
+      const tablaMateriales = modoCreacion === 'PLANTILLAS' ? 'recetas_materiales' : 'recetas_especificas_materiales';
+
+      try {
+        // Delete materials first
+        await window.supabaseClient.from(tablaMateriales).delete().eq('receta_id', id);
+        // Delete recipe
+        const { error } = await window.supabaseClient.from(tablaRecetas).delete().eq('id', id);
+        if (error) {
+          console.error('Error al eliminar receta:', error);
+          alert('❌ Error al eliminar la receta.');
+          return;
+        }
+        alert('✅ Receta eliminada con éxito.');
+        cargarRecetasExistentes();
+      } catch (err) {
+        console.error('Error:', err);
+        alert('❌ Error al eliminar la receta.');
+      }
+    };
+
+    // =====================================================
+    // 🚀 Iniciar
+    // =====================================================
+    async function init() {
+      // catálogo activo
+      setCatalogoKey(loadCatalogoKey());
+
+      // Cargar grupos/plantillas (desde tabla simplificada).
+      try {
+        const { data: gruposData, error } = await window.supabaseClient
+          .from('recetas_plantillas_materiales')
+          .select('id, nombre_plantilla, descripcion, tipo, activo, catalogos, bodega_secundaria, dimensiones')
+          .eq('activo', true)
+          .order('nombre_plantilla', { ascending: true });
+
+        if (error) throw error;
+
+        gruposCatalogo = (Array.isArray(gruposData) ? gruposData : []).map(g => {
+          let dims_text = '';
+          if (g.dimensiones) {
+            const d = g.dimensiones;
+            dims_text = [
+              d.ancho, d.largo, d.grosor,
+              d.diametro && !d.ancho ? d.diametro : null, d.largo,
+              d.alto, d.ancho, d.largo
+            ].filter(x => x).join('x');
+          }
+          return {
+            clave: 'PLANTILLA_' + g.id,
+            nombre: g.nombre_plantilla,
+            descripcion: g.descripcion,
+            tipo: g.tipo,
+            catalogo: g.catalogos ? g.catalogos.join(', ') : '',
+            bodega_secundaria: g.bodega_secundaria || [],
+            dimensiones: dims_text
+          };
+        });
+
+      } catch (err) {
+        console.warn('Error cargando plantillas:', err);
+        gruposCatalogo = [];
+      }
+
+      await cargarCatalogo();
+      poblarFiltrosSegunModo();
+      renderListaMateriales();
+      cargarRecetasExistentes();
+
+      // Evento para refrescar lista
+      document.getElementById('recetas-refresh-list').addEventListener('click', cargarRecetasExistentes);
+
+      // Eventos del panel de búsqueda
+      document.getElementById('modoCreacion').value = modoCreacion;
+      document.getElementById('modoCreacion').addEventListener('change', (e) => {
+        modoCreacion = e.target.value;
+        poblarFiltrosSegunModo();
+        renderResultadosBusquedaRecetas();
+        cargarRecetasExistentes(); // Recargar lista de recetas al cambiar modo
+      });
+      document.getElementById('buscador-nombre-recetas').addEventListener('input', renderResultadosBusquedaRecetas);
+      document.getElementById('filtro-bodega-principal-recetas').addEventListener('change', (e) => {
+        renderizarResultadosCatalogo();
+      });
+      document.getElementById('filtro-bodega-secundaria-recetas').addEventListener('change', (e) => {
+        renderResultadosBusquedaRecetas();
+      });
+      document.getElementById('btn-restablecer-filtros-recetas').addEventListener('click', () => {
+        document.getElementById('buscador-nombre-recetas').value = '';
+        document.getElementById('filtro-bodega-principal-recetas').value = 'todas';
+        document.getElementById('filtro-bodega-secundaria-recetas').value = 'todas';
+        poblarFiltrosBodega();
+        renderResultadosBusquedaRecetas();
+      });
+    }
+
+    window.verReceta = async (id) => {
+      const tablaRecetas = modoCreacion === 'PLANTILLAS' ? 'recetas' : 'recetas_especificas';
+      const tablaMateriales = modoCreacion === 'PLANTILLAS' ? 'recetas_materiales' : 'recetas_especificas_materiales';
+
+      const { data: receta } = await window.supabaseClient.from(tablaRecetas).select('*').eq('id', id).single();
+      const { data: materiales } = await window.supabaseClient
+        .from(tablaMateriales)
+        .select('*')
+        .eq('receta_id', id);
+
+      let detalles = `Receta: ${receta.nombre}\nRubro: ${receta.rubro}\n\nMateriales:\n`;
+      materiales.forEach(m => {
+        detalles += `- ${m.material_codigo}: ${m.cantidad}${m.observacion ? ' (' + m.observacion + ')' : ''}\n`;
+      });
+      alert(detalles);
+    };
+
+    // =====================================================
+    // 🎯 FUNCIONALIDAD DEL MODAL DEL CATÁLOGO
+    // =====================================================
+    const modalCatalogo = document.getElementById('modalCatalogo');
+    const btnAbrirCatalogo = document.getElementById('btnAbrirCatalogo');
+    const btnCerrarModal = document.getElementById('btnCerrarModal');
+
+    // Abrir modal
+    btnAbrirCatalogo.addEventListener('click', () => {
+      modalCatalogo.classList.add('active');
+    });
+
+    // Cerrar modal
+    btnCerrarModal.addEventListener('click', () => {
+      modalCatalogo.classList.remove('active');
+    });
+
+    // Cerrar modal al hacer clic fuera
+    modalCatalogo.addEventListener('click', (e) => {
+      if (e.target === modalCatalogo) {
+        modalCatalogo.classList.remove('active');
+      }
+    });
+
+    // Cerrar modal con tecla Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modalCatalogo.classList.contains('active')) {
+        modalCatalogo.classList.remove('active');
+      }
+    });
+
+    // =====================================================
+    // 🎯 FUNCIONALIDAD DEL SWITCH DE VISTA
+    // =====================================================
+    btnVistaLista = document.getElementById('btnVistaLista');
+    btnVistaTarjetas = document.getElementById('btnVistaTarjetas');
+    resultadosContainer = document.getElementById('resultados-busqueda-recetas');
+
+    // Función para poblar filtros según modo
+    function poblarFiltrosSegunModo() {
+      if (modoCreacion === 'PLANTILLAS') {
+        poblarFiltrosPlantillas();
+      } else {
+        poblarFiltrosBodega();
+      }
+    }
+
+    // Función para poblar filtros de bodega
+    function poblarFiltrosBodega(filtroPrincipal = 'todas', filtroSecundaria = 'todas') {
+      const selectPrincipal = document.getElementById('filtro-bodega-principal-recetas');
+      const selectSecundaria = document.getElementById('filtro-bodega-secundaria-recetas');
+
+      if (!selectPrincipal || !selectSecundaria) return;
+
+      // Obtener bodegas principales únicas
+      const bodegasPrincipales = [...new Set(materialesCatalogo.map(m => m.bodega_principal).filter(Boolean))].sort();
+      const bodegasSecundarias = [...new Set(materialesCatalogo.map(m => m.bodega_secundaria).filter(Boolean))].sort();
+
+      // Verificar si hay materiales sin bodega principal
+      const hasSinBodega = materialesCatalogo.some(m => !m.bodega_principal);
+
+      // Limpiar y agregar opción "Todas"
+      selectPrincipal.innerHTML = '<option value="todas">Todas las Bodegas</option>';
+      selectSecundaria.innerHTML = '<option value="todas">Todas las Bodegas</option>';
+
+      // Agregar opción "Sin Bodega" si aplica
+      if (hasSinBodega) {
+        selectPrincipal.innerHTML += '<option value="sin_bodega">Sin Bodega</option>';
+      }
+
+      // Agregar bodegas principales
+      bodegasPrincipales.forEach(bodega => {
+        const option = document.createElement('option');
+        option.value = bodega;
+        option.textContent = bodega;
+        selectPrincipal.appendChild(option);
+      });
+
+      // Agregar bodegas secundarias
+      bodegasSecundarias.forEach(bodega => {
+        const option = document.createElement('option');
+        option.value = bodega;
+        option.textContent = bodega;
+        selectSecundaria.appendChild(option);
+      });
+
+      // Establecer valores si se proporcionan
+      if (filtroPrincipal !== 'todas') selectPrincipal.value = filtroPrincipal;
+      if (filtroSecundaria !== 'todas') selectSecundaria.value = filtroSecundaria;
+    }
+
+    // Función para cambiar vista
+    function cambiarVista(vista) {
+      vistaActual = vista;
+      
+      // Actualizar botones
+      document.querySelectorAll('.view-option').forEach(btn => {
+        if (btn.classList) btn.classList.remove('active');
+      });
+      
+      if (vista === 'list') {
+        if (btnVistaLista && btnVistaLista.classList) btnVistaLista.classList.add('active');
+        if (resultadosContainer) resultadosContainer.className = 'results-list-modal';
+      } else {
+        if (btnVistaTarjetas && btnVistaTarjetas.classList) btnVistaTarjetas.classList.add('active');
+        if (resultadosContainer) resultadosContainer.className = 'results-grid-modal';
+      }
+      
+      // Guardar preferencia
+      localStorage.setItem('catalogoVista', vista);
+      
+      // Re-renderizar resultados si existen
+      if (window.renderizarResultadosCatalogo) {
+        window.renderizarResultadosCatalogo();
+      }
+    }
+
+    // Event listeners para el switch
+    if (btnVistaLista) btnVistaLista.addEventListener('click', () => cambiarVista('list'));
+    if (btnVistaTarjetas) btnVistaTarjetas.addEventListener('click', () => cambiarVista('cards'));
+
+    // Cargar vista guardada
+    const vistaGuardada = localStorage.getItem('catalogoVista') || 'cards';
+    cambiarVista(vistaGuardada);
+
+    // Event listeners para filtros
+    document.getElementById('buscador-nombre-recetas')?.addEventListener('input', () => {
+      renderizarResultadosCatalogo();
+    });
+
+    document.getElementById('filtro-bodega-principal-recetas')?.addEventListener('change', () => {
+      renderizarResultadosCatalogo();
+    });
+
+    document.getElementById('filtro-bodega-secundaria-recetas')?.addEventListener('change', () => {
+      renderizarResultadosCatalogo();
+    });
+
+    document.getElementById('btn-restablecer-filtros-recetas')?.addEventListener('click', () => {
+      document.getElementById('buscador-nombre-recetas').value = '';
+      document.getElementById('filtro-bodega-principal-recetas').value = 'todas';
+      document.getElementById('filtro-bodega-secundaria-recetas').value = 'todas';
+      renderizarResultadosCatalogo();
+    });
+
+    init();
+  </script>
+</body>
+</html>

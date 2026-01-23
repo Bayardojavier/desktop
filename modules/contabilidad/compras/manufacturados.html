@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+	<meta charset="UTF-8">
+	<title>Manufacturado - Contabilidad</title>
+	<link rel="stylesheet" href="../contabilidad.css">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+	<style>
+		/* Tus estilos exactos (sin cambios) */
+		.manu-container {
+			display: flex;
+			gap: 24px;
+			max-width: 1400px;
+			margin: 0 auto;
+		}
+		
+		.manu-solicitudes-panel {
+			flex: 1;
+			background: white;
+			border: 1px solid var(--border);
+			border-radius: 8px;
+			padding: 16px;
+			max-height: 80vh;
+			overflow-y: auto;
+		}
+		
+		.manu-detalle-panel {
+			flex: 2;
+			background: white;
+			border: 1px solid var(--border);
+			border-radius: 8px;
+			padding: 24px;
+			display: none;
+		}
+		
+		.manu-detalle-panel.active {
+			display: block;
+		}
+		
+		.manu-solicitud-item {
+			padding: 12px;
+			border: 1px solid #e2e8f0;
+			border-radius: 6px;
+			margin-bottom: 12px;
+			background: #f8fafc;
+		}
+		
+		.manu-solicitud-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 8px;
+		}
+		
+		.manu-solicitud-id {
+			font-weight: 700;
+			color: var(--accent);
+			font-size: 14px;
+		}
+		
+		.manu-solicitud-estado {
+			padding: 2px 8px;
+			border-radius: 12px;
+			font-size: 11px;
+			font-weight: 600;
+		}
+		
+		.manu-solicitud-estado.pendiente_aprobacion {
+			background: #fff3cd;
+			color: #854d0e;
+		}
+		
+		.manu-solicitud-estado.aprobado {
+			background: #d1fae5;
+			color: #065f46;
+		}
+		
+		.manu-solicitud-info {
+			color: #64748b;
+			font-size: 12px;
+			margin-top: 4px;
+		}
+		
+		.manu-detalle-header {
+			border-bottom: 2px solid var(--accent);
+			padding-bottom: 16px;
+			margin-bottom: 24px;
+		}
+		
+		.manu-detalle-title {
+			color: var(--accent);
+			margin: 0 0 8px 0;
+			font-size: 20px;
+		}
+		
+		.manu-invoice-table {
+			width: 100%;
+			border-collapse: collapse;
+			margin: 12px 0;
+		}
+		
+		.manu-invoice-table th,
+		.manu-invoice-table td {
+			padding: 8px;
+			text-align: left;
+			border-bottom: 1px solid var(--border);
+		}
+		
+		.manu-invoice-table th {
+			background: var(--tab-bg);
+			color: var(--tab-text);
+		}
+		
+		.manu-invoice-footer {
+			background: #f0fdf4 !important;
+		}
+		
+		.manu-actions {
+			display: flex;
+			gap: 12px;
+			margin-top: 24px;
+			justify-content: flex-end;
+		}
+		
+		.manu-mano-obra {
+			display: flex;
+			gap: 12px;
+			align-items: center;
+			margin: 16px 0;
+			padding: 16px;
+			background: #f8fafc;
+			border-radius: 8px;
+		}
+		
+		.manu-mano-obra label {
+			font-weight: 600;
+			color: var(--panel-text);
+		}
+		
+		/* Switch styles */
+		.switch {
+			position: relative;
+			display: inline-block;
+			width: 50px;
+			height: 24px;
+		}
+		
+		.switch input {
+			opacity: 0;
+			width: 0;
+			height: 0;
+		}
+		
+		.slider {
+			position: absolute;
+			cursor: pointer;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background-color: #ccc;
+			transition: .4s;
+			border-radius: 24px;
+		}
+		
+		.slider:before {
+			position: absolute;
+			content: "";
+			height: 18px;
+			width: 18px;
+			left: 3px;
+			bottom: 3px;
+			background-color: white;
+			transition: .4s;
+			border-radius: 50%;
+		}
+		
+		input:checked + .slider {
+			background-color: #2196F3;
+		}
+		
+		input:checked + .slider:before {
+			transform: translateX(26px);
+		}
+		
+		.manu-resumen-section {
+			margin: 20px 0;
+		}
+		
+		.manu-resumen-title {
+			color: var(--accent);
+			margin: 0 0 12px 0;
+			font-size: 16px;
+		}
+		
+		.empty-state {
+			text-align: center;
+			padding: 40px;
+			color: #64748b;
+		}
+	</style>
+</head>
+<body>
+	<div class="con-area-dinamica" style="padding: 24px;">
+		<div class="oc-form-wrapper" style="max-width: 1400px;">
+			<h1 class="oc-title">🏭 Ingresos por Manufactura</h1>
+			<p style="color: var(--panel-text); margin-top: -10px;">Registros provenientes de Bodega → Ingreso (tipo manufacturado). Aquí puedes registrar el costo de mano de obra.</p>
+			
+			<!-- Layout principal -->
+			<div class="manu-container">
+				<!-- Panel izquierdo: Lista de solicitudes -->
+				<div class="manu-solicitudes-panel">
+					<h3 style="margin: 0 0 16px 0; color: var(--accent);">Solicitudes Pendientes</h3>
+					<div id="manu-solicitudes-list">
+						<div class="empty-state">Cargando solicitudes...</div>
+					</div>
+				</div>
+				
+				<!-- Panel izquierdo: Lista de aprobadas -->
+				<div class="manu-solicitudes-panel">
+					<h3 style="margin: 0 0 16px 0; color: var(--accent);">Solicitudes Aprobadas</h3>
+					<div id="manu-aprobadas-list">
+						<div class="empty-state">Cargando solicitudes...</div>
+					</div>
+				</div>
+				
+				<!-- Panel derecho: Detalle de la solicitud -->
+				<div class="manu-detalle-panel" id="manu-detalle-panel">
+					<div class="manu-detalle-header">
+						<h2 class="manu-detalle-title" id="manu-detalle-titulo">Solicitud de Fabricación</h2>
+						<p id="manu-detalle-info" style="color: #64748b; margin: 0;"></p>
+					</div>
+					
+					<!-- Materiales Consumidos -->
+					<div id="manu-consumidos-section" class="manu-resumen-section" style="display: none;">
+						<h3 class="manu-resumen-title">Materiales Consumidos (Dar de Baja)</h3>
+						<table class="manu-invoice-table">
+							<thead>
+								<tr>
+									<th>Código</th>
+									<th>Nombre</th>
+									<th style="text-align:center;">Cantidad</th>
+									<th style="text-align:right;">Precio Unitario (USD)</th>
+									<th style="text-align:right;">Subtotal (USD)</th>
+									<th>Observación</th>
+								</tr>
+							</thead>
+							<tbody id="manu-consumidos-body"></tbody>
+						</table>
+					</div>
+					
+					<!-- Materiales Producidos -->
+					<div id="manu-producidos-section" class="manu-resumen-section" style="display: none;">
+						<h3 class="manu-resumen-title">Materiales Producidos (Nuevo Inventario)</h3>
+						<table class="manu-invoice-table">
+							<thead>
+								<tr>
+									<th>Código</th>
+									<th>Nombre</th>
+									<th>Bodega</th>
+									<th style="text-align:center;">Cantidad</th>
+									<th style="text-align:right;">P.U. (USD)</th>
+									<th>Observación</th>
+								</tr>
+							</thead>
+							<tbody id="manu-producidos-body"></tbody>
+						</table>
+					</div>
+					
+					<!-- Mano de obra -->
+					<div class="manu-mano-obra">
+						<div style="display: flex; align-items: center; gap: 12px;">
+							<label for="manu-incluye-mano-obra" style="font-weight: 600; color: var(--panel-text);">Incluye Mano de Obra:</label>
+							<label class="switch">
+								<input type="checkbox" id="manu-incluye-mano-obra">
+								<span class="slider round"></span>
+							</label>
+						</div>
+						<div style="display: flex; align-items: center; gap: 12px;">
+							<label for="manu-mano-obra-input">Costo de Mano de Obra (USD):</label>
+							<input type="number" id="manu-mano-obra-input" class="oc-input" min="0" step="0.01" value="0.00" style="width: 150px;" disabled>
+						</div>
+					</div>
+					
+					<!-- Acciones -->
+					<div class="manu-actions">
+						<button id="btn-guardar-mano-obra" class="oc-btn-save">Guardar Mano de Obra</button>
+						<button id="btn-exportar-detalle" class="oc-orden-btn manu-export-btn">Exportar PDF</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		setTimeout(() => {
+			const currency = (v) => {
+				const n = Number(v) || 0;
+				return `$${n.toFixed(2)}`;
+			};
+
+			let solicitudActual = null;
+
+			// =============================================================================
+			// 🔹 OBTENER METADATOS DE MATERIALES (catálogo y precios)
+			// =============================================================================
+			async function getMetaMap(codigos) {
+				let metaMap = new Map();
+				if (codigos.length > 0) {
+					// Consultar catálogo para nombre y bodegas
+					const { data: catalogoData, error: catError } = await window.supabaseClient
+						.from('catalogo')
+						.select('codigo, nombre, bodega_principal, bodega_secundaria')
+						.eq('es_contenedor', false)
+						.in('codigo', codigos);
+					if (catError) {
+						console.error('Error al consultar catálogo:', catError);
+						throw catError;
+					}
+
+					// Consultar vista para precios
+					const { data: precioData, error: precioError } = await window.supabaseClient
+						.from('stock_actual_con_precio')
+						.select('material_codigo, precio_promedio')
+						.in('material_codigo', codigos);
+					if (precioError) {
+						console.error('Error al consultar precios:', precioError);
+						throw precioError;
+					}
+
+					// Crear mapa combinado
+					const catalogoMap = new Map((catalogoData || []).map(item => [item.codigo, item]));
+					const precioMap = new Map((precioData || []).map(item => [item.material_codigo, item]));
+
+					codigos.forEach(codigo => {
+						const cat = catalogoMap.get(codigo) || {};
+						const prec = precioMap.get(codigo) || {};
+						metaMap.set(codigo, {
+							material_nombre: cat.nombre || codigo,
+							bodega_principal: cat.bodega_principal || 'Sin bodega',
+							bodega_secundaria: cat.bodega_secundaria || 'Sin bodega',
+							precio_promedio: prec.precio_promedio || 0
+						});
+					});
+				}
+				return metaMap;
+			}
+
+
+
+			// =============================================================================
+			// 🔹 CARGAR SOLICITUDES PENDIENTES
+			// =============================================================================
+			async function cargarSolicitudesPendientes() {
+				try {
+					const { data, error } = await window.supabaseClient
+						.from('solicitudes_fabricacion')
+						.select('id, numero_solicitud, responsable, fecha, estado, costo_mano_obra')
+						.eq('estado', 'pendiente_aprobacion')
+						.order('fecha', { ascending: false });
+					if (error) throw error;
+					return data || [];
+				} catch (err) {
+					console.error('Error al cargar solicitudes:', err);
+					alert('❌ Error al cargar solicitudes: ' + err.message);
+					return [];
+				}
+			}
+
+			// =============================================================================
+			// 🔹 CARGAR SOLICITUDES APROBADAS
+			// =============================================================================
+			async function cargarSolicitudesAprobadas() {
+				try {
+					const { data: solicitudes, error } = await window.supabaseClient
+						.from('solicitudes_fabricacion')
+						.select('id, numero_solicitud, responsable, fecha, estado, costo_mano_obra')
+						.eq('estado', 'aprobada')
+						.order('fecha', { ascending: false });
+					if (error) throw error;
+
+					// Cargar conteos de materiales para cada solicitud
+					for (let s of solicitudes || []) {
+						const { data: consumidos } = await window.supabaseClient
+							.from('materiales_consumidos_fabricacion')
+							.select('id')
+							.eq('solicitud_id', s.id);
+						const { data: producidos } = await window.supabaseClient
+							.from('materiales_producidos_fabricacion')
+							.select('id')
+							.eq('solicitud_id', s.id);
+						s.materialesConsumidos = consumidos || [];
+						s.materialesProducidos = producidos || [];
+					}
+
+					return solicitudes || [];
+				} catch (err) {
+					console.error('Error al cargar solicitudes aprobadas:', err);
+					alert('❌ Error al cargar solicitudes aprobadas: ' + err.message);
+					return [];
+				}
+			}
+
+			// =============================================================================
+			// 🔹 CARGAR DETALLES DE UNA SOLICITUD
+			// =============================================================================
+			async function cargarSolicitudCompleta(id) {
+				try {
+					const { data: solicitud, error: errSol } = await window.supabaseClient
+						.from('solicitudes_fabricacion')
+						.select('*')
+						.eq('id', id)
+						.single();
+					if (errSol) throw errSol;
+
+					const { data: consumidos, error: errCons } = await window.supabaseClient
+						.from('materiales_consumidos_fabricacion')
+						.select('*')
+						.eq('solicitud_id', id);
+					if (errCons) throw errCons;
+
+					const { data: producidos, error: errProd } = await window.supabaseClient
+						.from('materiales_producidos_fabricacion')
+						.select('*')
+						.eq('solicitud_id', id);
+					if (errProd) throw errProd;
+
+					// Obtener precios y metadatos
+					const codigos = Array.from(new Set([
+						...(consumidos || []).map(i => i.material_codigo),
+						...(producidos || []).map(i => i.material_codigo)
+					].filter(Boolean)));
+					const metaMap = await getMetaMap(codigos);
+
+					// Asignar precios y nombres a consumidos
+					(consumidos || []).forEach(item => {
+						const meta = metaMap.get(item.material_codigo);
+						item.precio = meta ? meta.precio_promedio : 0;
+						item.nombre = meta ? meta.material_nombre : item.material_codigo;
+					});
+
+					// Asignar precios a producidos (aunque no se use, por consistencia)
+					(producidos || []).forEach(item => {
+						const meta = metaMap.get(item.material_codigo);
+						item.precio = meta ? meta.precio_promedio : 0;
+					});
+
+					return { ...solicitud, materialesConsumidos: consumidos, materialesProducidos: producidos };
+				} catch (err) {
+					console.error('Error al cargar solicitud completa:', err);
+					alert('❌ Error al cargar solicitud: ' + err.message);
+					return null;
+				}
+			}
+
+			// =============================================================================
+			// 🔹 ACTUALIZAR INVENTARIO EN movimientos_bodega
+			// =============================================================================
+			async function actualizarInventarioEnMovimientos(solicitud) {
+				const movimientos = [];
+
+				// Traer metadatos desde catálogo y vista de precios
+				const codigos = Array.from(new Set([...
+					(solicitud.materialesConsumidos || []).map(i => i.material_codigo),
+					(solicitud.materialesProducidos || []).map(i => i.material_codigo)
+				].filter(Boolean)));
+
+				const metaMap = await getMetaMap(codigos);
+
+				const hoy = new Date().toISOString().split('T')[0];
+				const bodegaFallback = 'Sin bodega';
+
+				// 1. Dar de baja materiales consumidos
+				(solicitud.materialesConsumidos || []).forEach(item => {
+					const meta = metaMap.get(item.material_codigo) || {};
+					movimientos.push({
+						material_codigo: item.material_codigo,
+						material_nombre: meta.material_nombre || item.material_codigo,
+						bodega_principal: meta.bodega_principal || meta.bodega || bodegaFallback,
+						bodega_secundaria: meta.bodega || meta.bodega_principal || bodegaFallback,
+						tipo_movimiento: 'manufacturado_consumo',
+						cantidad: item.cantidad,
+						signo: -1,
+						referencia_documento: solicitud.numero_solicitud,
+						referencia_tipo: 'manufacturado',
+						responsable: solicitud.responsable,
+						fecha_movimiento: hoy,
+						observaciones: `Consumido en fabricación ${solicitud.numero_solicitud}. ${item.observacion || ''}`,
+						precio_unitario: meta.precio_promedio || 0
+					});
+				});
+
+				// Calcular costo total de producción
+				const costoMateriales = movimientos.filter(m => m.signo === -1).reduce((sum, m) => sum + (m.cantidad * m.precio_unitario), 0);
+				const costoManoObra = solicitud.costo_mano_obra || 0;
+				const costoTotal = costoMateriales + costoManoObra;
+				const totalCantidadProducida = (solicitud.materialesProducidos || []).reduce((sum, item) => sum + item.cantidad, 0);
+				const precioUnitarioProduccion = totalCantidadProducida > 0 ? costoTotal / totalCantidadProducida : 0;
+
+				// 2. Dar de alta materiales producidos
+				(solicitud.materialesProducidos || []).forEach(item => {
+					const meta = metaMap.get(item.material_codigo) || {};
+					const bodegaAsignada = item.bodega || meta.bodega || meta.bodega_principal || bodegaFallback;
+					movimientos.push({
+						material_codigo: item.material_codigo,
+						material_nombre: item.nombre || meta.material_nombre || item.material_codigo,
+						bodega_principal: bodegaAsignada,
+						bodega_secundaria: bodegaAsignada,
+						tipo_movimiento: 'manufacturado_produccion',
+						cantidad: item.cantidad,
+						signo: 1,
+						referencia_documento: solicitud.numero_solicitud,
+						referencia_tipo: 'manufacturado',
+						responsable: solicitud.responsable,
+						fecha_movimiento: hoy,
+						observaciones: `Producido en fabricación ${solicitud.numero_solicitud}. ${item.observacion || ''}`,
+						precio_unitario: precioUnitarioProduccion
+					});
+				});
+
+				if (movimientos.length > 0) {
+					const { error } = await window.supabaseClient
+						.from('movimientos_bodega')
+						.insert(movimientos);
+					if (error) throw error;
+				}
+			}
+
+			// =============================================================================
+			// 🔹 RENDERIZADO
+			// =============================================================================
+			async function renderSolicitudesList() {
+				const cont = document.getElementById('manu-solicitudes-list');
+				const solicitudes = await cargarSolicitudesPendientes();
+				if (!solicitudes.length) {
+					cont.innerHTML = '<div class="empty-state">No hay solicitudes pendientes.</div>';
+					return;
+				}
+
+				cont.innerHTML = solicitudes.map(s => {
+					const totalCant = (s.materialesConsumidos?.length || 0) + (s.materialesProducidos?.length || 0);
+					return `
+						<div class="manu-solicitud-item">
+							<div class="manu-solicitud-header">
+								<div class="manu-solicitud-id">${s.numero_solicitud}</div>
+								<span class="manu-solicitud-estado pendiente_aprobacion">Pendiente</span>
+							</div>
+							<div class="manu-solicitud-info">
+								<strong>Solicitante:</strong> ${s.responsable || 'No definido'}<br>
+								<strong>Fecha:</strong> ${s.fecha}<br>
+								<strong>Ítems:</strong> ${totalCant}
+							</div>
+							<button class="oc-orden-btn oc-orden-edit manu-btn-revisar" data-id="${s.id}">
+								👁️ Revisar Solicitud
+							</button>
+						</div>
+					`;
+				}).join('');
+
+				cont.querySelectorAll('.manu-btn-revisar').forEach(btn => {
+					btn.addEventListener('click', async (e) => {
+						const id = e.currentTarget.dataset.id;
+						const solicitud = await cargarSolicitudCompleta(id);
+						if (solicitud) {
+							solicitudActual = solicitud;
+							cargarSolicitudEnDetalle(solicitud);
+						}
+					});
+				});
+			}
+
+			async function renderSolicitudesAprobadas() {
+				const cont = document.getElementById('manu-aprobadas-list');
+				const solicitudes = await cargarSolicitudesAprobadas();
+				if (!solicitudes.length) {
+					cont.innerHTML = '<div class="empty-state">No hay solicitudes aprobadas.</div>';
+					return;
+				}
+
+				cont.innerHTML = solicitudes.map(s => {
+					const totalCant = (s.materialesConsumidos?.length || 0) + (s.materialesProducidos?.length || 0);
+					return `
+						<div class="manu-solicitud-item">
+							<div class="manu-solicitud-header">
+								<div class="manu-solicitud-id">${s.numero_solicitud}</div>
+								<span class="manu-solicitud-estado aprobado">Aprobada</span>
+							</div>
+							<div class="manu-solicitud-info">
+								<strong>Solicitante:</strong> ${s.responsable || 'No definido'}<br>
+								<strong>Fecha:</strong> ${s.fecha}<br>
+								<strong>Mano de Obra:</strong> ${currency(s.costo_mano_obra || 0)}
+							</div>
+							<button class="oc-orden-btn manu-btn-exportar" data-id="${s.id}">
+								📄 Exportar PDF
+							</button>
+						</div>
+					`;
+				}).join('');
+
+				cont.querySelectorAll('.manu-btn-exportar').forEach(btn => {
+					btn.addEventListener('click', async (e) => {
+						const id = e.currentTarget.dataset.id;
+						const solicitud = await cargarSolicitudCompleta(id);
+						if (solicitud) {
+							solicitudActual = solicitud;
+							await exportarDetallePDF();
+						}
+					});
+				});
+			}
+
+			function cargarSolicitudEnDetalle(solicitud) {
+				document.getElementById('manu-detalle-titulo').textContent = `Solicitud de Fabricación - ${solicitud.numero_solicitud}`;
+				document.getElementById('manu-detalle-info').textContent = 
+					`Solicitante: ${solicitud.responsable} • Fecha: ${solicitud.fecha}`;
+
+				// Consumidos
+				const consumidos = solicitud.materialesConsumidos || [];
+				const consumidosSection = document.getElementById('manu-consumidos-section');
+				if (consumidos.length > 0) {
+					consumidosSection.style.display = 'block';
+					let totalMat = 0;
+					const html = consumidos.map(it => {
+						const precio = it.precio || 0;
+						const cantidad = parseFloat(it.cantidad) || 0;
+						const subtotal = precio * cantidad;
+						totalMat += subtotal;
+						return `
+							<tr>
+								<td>${it.material_codigo}</td>
+								<td>${it.nombre || it.material_codigo}</td>
+								<td style="text-align:center;">${cantidad}</td>
+								<td style="text-align:right;">${currency(precio)}</td>
+								<td style="text-align:right;">${currency(subtotal)}</td>
+								<td>${it.observacion || ''}</td>
+							</tr>
+						`;
+					}).join('') + `
+						<tr class="manu-invoice-footer">
+							<td colspan="4" style="text-align:right; font-weight:700;">Total materiales</td>
+							<td style="text-align:right; font-weight:800;">${currency(totalMat)}</td>
+							<td></td>
+						</tr>
+					`;
+					document.getElementById('manu-consumidos-body').innerHTML = html;
+				} else {
+					consumidosSection.style.display = 'none';
+				}
+
+				// Producidos
+				const producidos = solicitud.materialesProducidos || [];
+				const producidosSection = document.getElementById('manu-producidos-section');
+				if (producidos.length > 0) {
+					producidosSection.style.display = 'block';
+					// Calcular precio unitario de producción
+					const costoManoObra = solicitud.costo_mano_obra || 0;
+					let costoMateriales = 0;
+					consumidos.forEach(item => {
+						costoMateriales += (item.precio || 0) * (parseFloat(item.cantidad) || 0);
+					});
+					const costoTotal = costoMateriales + costoManoObra;
+					const totalCantidadProducida = producidos.reduce((sum, item) => sum + (parseFloat(item.cantidad) || 0), 0);
+					const precioUnitarioProduccion = totalCantidadProducida > 0 ? costoTotal / totalCantidadProducida : 0;
+					
+					document.getElementById('manu-producidos-body').innerHTML = producidos.map(it => `
+						<tr>
+							<td>${it.material_codigo}</td>
+							<td>${it.nombre}</td>
+							<td>${it.bodega}</td>
+							<td style="text-align:center;">${it.cantidad}</td>
+							<td style="text-align:right;">${currency(precioUnitarioProduccion)}</td>
+							<td>${it.observacion || ''}</td>
+						</tr>
+					`).join('');
+				} else {
+					producidosSection.style.display = 'none';
+				}
+
+				// Mano de obra
+				const costoManoObra = solicitud.costo_mano_obra || 0;
+				document.getElementById('manu-incluye-mano-obra').checked = costoManoObra > 0;
+				document.getElementById('manu-mano-obra-input').value = costoManoObra.toFixed(2);
+				document.getElementById('manu-mano-obra-input').disabled = costoManoObra === 0;
+				document.getElementById('manu-detalle-panel').classList.add('active');
+			}
+
+			// =============================================================================
+			// 🔹 GUARDAR Y APROBAR
+			// =============================================================================
+			async function guardarManoObra() {
+				if (!solicitudActual) return;
+				const manoObra = parseFloat(document.getElementById('manu-mano-obra-input').value) || 0;
+
+				try {
+					// Actualizar solicitud
+					await window.supabaseClient
+						.from('solicitudes_fabricacion')
+						.update({
+							estado: 'aprobada',
+							costo_mano_obra: manoObra
+						})
+						.eq('id', solicitudActual.id);
+
+					// Actualizar inventario
+					await actualizarInventarioEnMovimientos(solicitudActual);
+
+					// Exportar PDF automáticamente
+					await exportarDetallePDF();
+
+					renderSolicitudesList();
+					renderSolicitudesAprobadas();
+					document.getElementById('manu-detalle-panel').classList.remove('active');
+				} catch (err) {
+					console.error('Error al aprobar:', err);
+					alert('❌ Error al aprobar: ' + err.message);
+				}
+			}
+
+			// =============================================================================
+			// 🔹 EXPORTAR PDF (igual que antes, pero con datos reales)
+			// =============================================================================
+			async function exportarDetallePDF() {
+				if (!solicitudActual) {
+					alert('Seleccione una solicitud para exportar.');
+					return;
+				}
+
+				const consumidos = solicitudActual.materialesConsumidos || [];
+				const producidos = solicitudActual.materialesProducidos || [];
+				const manoObra = parseFloat(solicitudActual.costo_mano_obra) || 0;
+
+				// Usar precios ya asignados
+				let subtotalMateriales = 0;
+				consumidos.forEach(item => {
+					subtotalMateriales += (item.precio || 0) * (parseFloat(item.cantidad) || 0);
+				});
+				const totalGeneral = subtotalMateriales + manoObra;
+				const totalCantidadProducida = producidos.reduce((sum, item) => sum + (parseFloat(item.cantidad) || 0), 0);
+				const precioUnitarioProduccion = totalCantidadProducida > 0 ? totalGeneral / totalCantidadProducida : 0;
+
+				const contenido = `
+					<div style="width: 180mm; font-family: Arial, sans-serif; color: #333; font-size: 10pt;">
+						<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10pt; border-bottom: 2px solid #c2410c; padding-bottom: 6pt;">
+							<img src="assets/logo.png" alt="Logo" style="height: 20mm; margin-right: 8mm;">
+							<div style="text-align: center; flex: 1;">
+								<h1 style="color: #c2410c; margin: 0; font-size: 16pt;">FACTURA DE FABRICACIÓN</h1>
+								<p style="margin: 3pt 0 0 0; color: #555; font-size: 9pt;">Solicitud de Manufacturado Aprobada</p>
+							</div>
+							<div style="text-align: right;">
+								<div style="font-size: 24pt; font-weight: bold; color: #c2410c; letter-spacing: 1px;">${solicitudActual.numero_solicitud}</div>
+								<div style="font-size: 9pt; color: #777;">Fecha: ${solicitudActual.fecha}</div>
+							</div>
+						</div>
+						
+						<div style="background: #fff3cd; padding: 8pt; border-radius: 4pt; margin-bottom: 12pt; font-size: 9pt; border: 1px solid #fde047;">
+							<p><strong>Solicitante:</strong> ${solicitudActual.responsable}</p>
+							<p><strong>Aprobado por:</strong> Contabilidad</p>
+							<p><strong>Estado:</strong> Aprobado</p>
+						</div>
+						
+						${consumidos.length > 0 ? `
+						<h3 style="color: #dc2626; margin: 12pt 0 6pt 0; font-size: 12pt; border-bottom: 1px solid #ccc; padding-bottom: 3pt;">Materiales Consumidos (Costo de Producción)</h3>
+						<table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
+							<thead>
+								<tr style="background: #dc2626; color: white;">
+									<th style="padding: 6pt; border: 1px solid #ddd; text-align: left;">Código</th>
+									<th style="padding: 6pt; border: 1px solid #ddd; text-align: left;">Nombre</th>
+									<th style="padding: 6pt; border: 1px solid #ddd; text-align: center;">Cantidad</th>
+									<th style="padding: 6pt; border: 1px solid #ddd; text-align: right;">P.U. (USD)</th>
+									<th style="padding: 6pt; border: 1px solid #ddd; text-align: right;">Subtotal (USD)</th>
+									<th style="padding: 6pt; border: 1px solid #ddd; text-align: left;">Observación</th>
+								</tr>
+							</thead>
+							<tbody>
+								${consumidos.map(item => {
+									const precio = item.precio || 0;
+									const cantidad = parseFloat(item.cantidad) || 0;
+									const subtotal = precio * cantidad;
+									return `
+									<tr style="font-size: 9pt;">
+										<td style="padding: 6pt; border: 1px solid #ddd;">${item.material_codigo}</td>
+										<td style="padding: 6pt; border: 1px solid #ddd;">${item.material_codigo}</td>
+										<td style="padding: 6pt; border: 1px solid #ddd; text-align: center;">${cantidad}</td>
+										<td style="padding: 6pt; border: 1px solid #ddd; text-align: right;">${currency(precio)}</td>
+										<td style="padding: 6pt; border: 1px solid #ddd; text-align: right;">${currency(subtotal)}</td>
+										<td style="padding: 6pt; border: 1px solid #ddd;">${item.observacion || ''}</td>
+									</tr>
+									`;
+								}).join('')}
+								<tr style="background: #fee2e2;">
+									<td colspan="4" style="padding: 6pt; border: 1px solid #ddd; text-align: right; font-weight: bold;">SUBTOTAL MATERIALES</td>
+									<td style="padding: 6pt; border: 1px solid #ddd; text-align: right; font-weight: bold; color: #dc2626;">${currency(subtotalMateriales)}</td>
+									<td style="padding: 6pt; border: 1px solid #ddd;"></td>
+								</tr>
+							</tbody>
+						</table>
+						` : ''}
+						
+						${producidos.length > 0 ? `
+						<h3 style="color: #059669; margin: 12pt 0 6pt 0; font-size: 12pt; border-bottom: 1px solid #ccc; padding-bottom: 3pt; margin-top: 20pt;">Materiales Producidos (Inventario Generado)</h3>
+						<table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
+							<thead>
+								<tr style="background: #059669; color: white;">
+									<th style="padding: 6pt; border: 1px solid #ddd; text-align: left;">Código</th>
+									<th style="padding: 6pt; border: 1px solid #ddd; text-align: left;">Nombre</th>
+									<th style="padding: 6pt; border: 1px solid #ddd; text-align: left;">Bodega</th>
+									<th style="padding: 6pt; border: 1px solid #ddd; text-align: center;">Cantidad</th>
+									<th style="padding: 6pt; border: 1px solid #ddd; text-align: right;">P.U. (USD)</th>
+									<th style="padding: 6pt; border: 1px solid #ddd; text-align: left;">Observación</th>
+								</tr>
+							</thead>
+							<tbody>
+								${producidos.map(item => `
+								<tr style="font-size: 9pt;">
+									<td style="padding: 6pt; border: 1px solid #ddd;">${item.material_codigo}</td>
+									<td style="padding: 6pt; border: 1px solid #ddd;">${item.nombre}</td>
+									<td style="padding: 6pt; border: 1px solid #ddd;">${item.bodega}</td>
+									<td style="padding: 6pt; border: 1px solid #ddd; text-align: center;">${item.cantidad}</td>
+									<td style="padding: 6pt; border: 1px solid #ddd; text-align: right;">${currency(precioUnitarioProduccion)}</td>
+									<td style="padding: 6pt; border: 1px solid #ddd;">${item.observacion || ''}</td>
+								</tr>
+								`).join('')}
+							</tbody>
+						</table>
+						` : ''}
+						
+						<div style="margin-top: 20pt; background: #f8fafc; padding: 12pt; border-radius: 8px; border: 1px solid #e2e8f0;">
+							<div style="display: flex; justify-content: space-between; margin-bottom: 8pt;">
+								<span style="font-weight: bold; color: #64748b;">Subtotal Materiales:</span>
+								<span style="font-weight: bold; color: #dc2626;">${currency(subtotalMateriales)}</span>
+							</div>
+							<div style="display: flex; justify-content: space-between; margin-bottom: 8pt;">
+								<span style="font-weight: bold; color: #64748b;">Mano de Obra:</span>
+								<span style="font-weight: bold; color: #c2410c;">${currency(manoObra)}</span>
+							</div>
+							<div style="display: flex; justify-content: space-between; margin-top: 12pt; padding-top: 12pt; border-top: 2px solid #c2410c;">
+								<span style="font-size: 14pt; font-weight: 800; color: #c2410c;">TOTAL FACTURA:</span>
+								<span style="font-size: 16pt; font-weight: 800; color: #c2410c;">${currency(totalGeneral)}</span>
+							</div>
+						</div>
+						
+						<div style="margin-top: 20mm; display: flex; justify-content: space-around;">
+							<div style="text-align: center; width: 45%;">
+								<div style="border-top: 1px solid black; padding-top: 5pt; font-weight: bold;">${solicitudActual.responsable}</div>
+								<p style="margin: 5pt 0 0 0; font-size: 8pt;">Responsable de Manufactura</p>
+							</div>
+							<div style="text-align: center; width: 45%;">
+								<div style="border-top: 1px solid black; padding-top: 5pt; font-weight: bold;">Contabilidad</div>
+								<p style="margin: 5pt 0 0 0; font-size: 8pt;">Aprobación y Registro</p>
+							</div>
+						</div>
+						
+						<div style="margin-top: 10mm; text-align: center; font-size: 9pt; color: #666; border-top: 1px solid #eee; padding-top: 4pt;">
+							Original – Contabilidad
+						</div>
+						<div style="background: #dcfce7; color: #166534; padding: 4pt; font-size: 9pt; text-align: center; border: 1px solid #bbf7d0; margin-top: 8pt;">
+							✅ FABRICACIÓN APROBADA – INVENTARIO ACTUALIZADO
+						</div>
+					</div>
+				`;
+
+				window.html2pdf().from(contenido).set({
+					margin: [15, 15, 15, 15],
+					filename: `Factura_Fabricacion_${solicitudActual.numero_solicitud}.pdf`,
+					html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+					jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+				}).save();
+			}
+
+			// =============================================================================
+			// 🔹 GUARDAR MANO DE OBRA
+			// =============================================================================
+			async function guardarManoObra() {
+				if (!solicitudActual) {
+					alert('Seleccione una solicitud primero.');
+					return;
+				}
+
+				const incluyeManoObra = document.getElementById('manu-incluye-mano-obra').checked;
+				const costoManoObra = parseFloat(document.getElementById('manu-mano-obra-input').value) || 0;
+
+				if (incluyeManoObra && costoManoObra <= 0) {
+					alert('Si incluye mano de obra, debe especificar un costo mayor a 0.');
+					return;
+				}
+
+				const costoFinal = incluyeManoObra ? costoManoObra : 0;
+
+				try {
+					// Actualizar la solicitud con el costo de mano de obra
+					const { error } = await window.supabaseClient
+						.from('solicitudes_fabricacion')
+						.update({
+							costo_mano_obra: costoFinal,
+							estado: 'aprobada'
+						})
+						.eq('id', solicitudActual.id);
+
+					if (error) throw error;
+
+					// Actualizar objeto local antes de procesar inventario
+					solicitudActual.costo_mano_obra = costoFinal;
+
+					// Actualizar inventario
+					await actualizarInventarioEnMovimientos(solicitudActual);
+
+					alert('✅ Mano de obra guardada y fabricación aprobada.');
+					solicitudActual.estado = 'aprobada';
+					renderSolicitudesList();
+					renderSolicitudesAprobadas();
+
+					// Cambiar botones después de guardar
+					document.querySelector('.manu-actions').innerHTML = `
+						<button id="btn-exportar-detalle" class="oc-orden-btn manu-export-btn">Exportar PDF</button>
+						<button id="btn-salir-detalle" class="oc-btn-cancel">Salir</button>
+					`;
+					// Re-agregar event listener para exportar (por si acaso)
+					document.getElementById('btn-exportar-detalle').addEventListener('click', exportarDetallePDF);
+					// Agregar event listener para salir
+					document.getElementById('btn-salir-detalle').addEventListener('click', () => {
+						document.getElementById('manu-detalle-panel').classList.remove('active');
+					});
+				} catch (err) {
+					console.error('Error al guardar mano de obra:', err);
+					alert('❌ Error al guardar: ' + err.message);
+				}
+			}
+
+			// =============================================================================
+			// 🔹 INICIALIZACIÓN
+			// =============================================================================
+			function initManufacturado() {
+				document.getElementById('btn-guardar-mano-obra').addEventListener('click', guardarManoObra);
+				document.getElementById('btn-exportar-detalle').addEventListener('click', exportarDetallePDF);
+				
+				// Event listener para el switch de mano de obra
+				document.getElementById('manu-incluye-mano-obra').addEventListener('change', (e) => {
+					const input = document.getElementById('manu-mano-obra-input');
+					input.disabled = !e.target.checked;
+					if (!e.target.checked) {
+						input.value = '0.00';
+					}
+				});
+				
+				renderSolicitudesList();
+				renderSolicitudesAprobadas();
+			}
+
+			initManufacturado();
+		}, 50);
+	</script>
+</body>
+</html>

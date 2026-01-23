@@ -1,0 +1,29 @@
+<!-- desktop/modules/rrhh/rrhh.html -->
+<div class="rrhh-container">
+  <!-- Menú lateral -->
+  <div class="rrhh-menu-lateral">
+    <h3 style="color: white; margin-bottom: 20px; font-size: 18px;">👥 Personal</h3>
+    <button class="rrhh-submenu-btn" data-vista="personal-crear">✅ Crear Empleado</button>
+    <button class="rrhh-submenu-btn" data-vista="personal-modificar">✏️ Modificar Empleado</button>
+    <button class="rrhh-submenu-btn" data-vista="personal-tarjeta">📇 Tarjeta de Empleado</button>
+
+    <h3 style="color: white; margin: 25px 0 15px; font-size: 18px;">📆 Asistencia</h3>
+    <button class="rrhh-submenu-btn" data-vista="asistencia-entrada">🚪 Registrar Entrada</button>
+    <button class="rrhh-submenu-btn" data-vista="asistencia-salida">🚶 Registrar Salida</button>
+    <button class="rrhh-submenu-btn" data-vista="asistencia-verificar">🔍 Verificar Asistencia</button>
+   <button class="rrhh-submenu-btn" data-vista="asistencia-solicitudpagovacaciones">📄 Solicitud de Pago</button>
+
+    <h3 style="color: white; margin: 25px 0 15px; font-size: 18px;">📊 Reportes</h3>
+    <button class="rrhh-submenu-btn" data-vista="reportes-vacaciones">🏖️ Reporte de Vacaciones</button>
+    <button class="rrhh-submenu-btn" data-vista="reportes-planilla">🧾 Planillas por Período</button>
+    <button class="rrhh-submenu-btn" data-vista="reportes-asistencia">📈 Asistencia por Empleado</button>
+
+    <h3 style="color: white; margin: 25px 0 15px; font-size: 18px;">📊 Exportar Datos</h3>
+    <button class="rrhh-submenu-btn" onclick="exportarRRHHAExcel()">📊 Exportar RRHH a Excel</button>
+  </div>
+
+  <!-- Área dinámica -->
+  <div class="rrhh-area-dinamica">
+    <p style="color: #666; font-size: 18px;">Selecciona una opción del menú para comenzar.</p>
+  </div>
+</div>

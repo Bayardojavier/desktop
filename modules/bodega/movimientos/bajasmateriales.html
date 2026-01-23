@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Solicitudes de Baja</title>
+</head>
+<body>
+  <div class="movimientos-view">
+  <div class="mov-form-container">
+    <div class="mov-form-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div>
+          <h1 class="mov-form-title">📋 Solicitud de Baja de Materiales</h1>
+          <p class="mov-form-subtitle">Registra y envía solicitudes de baja de materiales para aprobación de contabilidad</p>
+        </div>
+        <button id="btnMostrarPanel" class="mov-btn mov-btn-secondary" style="padding: 10px 16px;">
+          📋 Ver Solicitudes
+        </button>
+      </div>
+
+      <div class="mov-form-section">
+        <div class="mov-form-row">
+          <div class="mov-form-col">
+            <label class="mov-form-label">Personal que Solicita</label>
+            <select id="personalEntrega" class="mov-form-select" required>
+              <option value="">Seleccione un empleado...</option>
+            </select>
+          </div>
+          <div class="mov-form-col">
+            <label class="mov-form-label">Fecha</label>
+            <input type="date" id="fechaSalida" class="mov-form-input" required />
+          </div>
+        </div>
+      </div>
+
+      <div class="mov-form-section">
+        <div class="mov-form-row" style="margin-top: 16px;">
+          <div class="mov-form-col">
+            <label class="mov-form-label">Motivo General</label>
+            <select id="motivoBajaGeneral" class="mov-form-select" required>
+              <option value="">Seleccione motivo...</option>
+              <option value="Daño Irreversible">Daño Irreversible</option>
+              <option value="Obsolescencia">Obsolescencia</option>
+              <option value="Pérdida">Pérdida</option>
+              <option value="Robo">Robo</option>
+            </select>
+          </div>
+          <div class="mov-form-col">
+            <label class="mov-form-label">Observación General</label>
+            <input type="text" id="obsBajaGeneral" class="mov-form-input" placeholder="Detalles adicionales" />
+          </div>
+        </div>
+
+        <div class="mov-form-section" style="margin-top: 24px;">
+          <h3 class="mov-form-section-title">Materiales a Dar de Baja</h3>
+          <div id="tablaBaja"></div>
+          <button id="btnAgregarBaja" class="mov-btn mov-btn-secondary" style="margin-top: 16px; width: auto;">➕ Seleccionar Material</button>
+        </div>
+      </div>
+
+      <div class="mov-form-actions">
+        <button id="btnGuardar" class="mov-btn mov-btn-primary">📤 Enviar Solicitud a Contabilidad</button>
+        <button id="btnLimpiar" class="mov-btn mov-btn-secondary">Limpiar</button>
+        <button id="btnImprimir" class="mov-btn mov-btn-secondary" style="display: none;">🖨️ Imprimir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel lateral derecho para lista de solicitudes -->
+  <div id="panelSolicitudes" class="panel-lateral">
+    <div class="panel-header">
+      <h3 class="panel-title">📋 Solicitudes de Baja</h3>
+      <button id="btnCerrarPanel" class="panel-close-btn">✕</button>
+    </div>
+    <div class="panel-content">
+      <div id="listaSolicitudes">
+        <!-- Las solicitudes se cargarán aquí -->
+      </div>
+    </div>
+  </div>
+
+  <div id="modalImprimir" class="mov-modal-overlay" style="display: none;">
+    <div class="mov-modal-content">
+      <h2 class="mov-modal-title">Solicitud Enviada</h2>
+      <p class="mov-modal-text">La solicitud de baja ha sido enviada exitosamente a contabilidad para su aprobación. ¿Desea imprimir el comprobante?</p>
+      <div class="mov-modal-buttons">
+        <button id="btnNoImprimir" class="mov-btn mov-btn-secondary">No</button>
+        <button id="btnSiImprimir" class="mov-btn mov-btn-primary">Sí, Imprimir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para seleccionar materiales -->
+  <div id="modalMateriales" class="mov-modal-overlay" style="display: none;">
+    <div class="mov-modal-content" style="max-width: 1000px; width: 95%; max-height: 700px; overflow: auto;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #e5e7eb;">
+        <h2 class="mov-modal-title" style="margin: 0; color: #1f2937; font-size: 24px; font-weight: 700;">🔍 Seleccionar Materiales para Baja</h2>
+        <button id="btnCerrarModalMateriales" class="mov-btn mov-btn-secondary" style="padding: 10px 16px; border-radius: 8px; font-size: 16px;">✕</button>
+      </div>
+
+      <div style="margin-bottom: 24px;">
+        <input type="text" id="buscarMaterial" class="mov-form-input" placeholder="🔎 Buscar material por nombre o código..." style="width: 100%; padding: 12px 16px; border-radius: 8px; border: 2px solid #e5e7eb; font-size: 14px;">
+      </div>
+
+      <div id="listaMateriales">
+        <!-- Los materiales se cargarán aquí dinámicamente -->
+      </div>
+
+      <div class="mov-modal-buttons" style="margin-top: 24px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+        <button id="btnCancelarSeleccion" class="mov-btn mov-btn-secondary" style="padding: 12px 24px; border-radius: 8px; font-weight: 600;">❌ Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../../src/config/supabaseClient.js"></script>
+  <script>
+    // =============================================================================
+    // 🔹 CARGAR DATOS REALES DE SUPABASE
+    // =============================================================================
+    window.empleados = [];
+    window.materialesCatalogo = [];
+    window.estado = { itemsSolicitudBaja: [], pdfData: null };
+    window.modoEdicion = false;
+    window.idSolicitudEdicion = null;
+
+    async function cargarEmpleados() {
+      try {
+        const { data, error } = await window.supabaseClient
+          .from('empleados')
+          .select('id, codigo_empleado, nombres, apellidos, puesto, estatus_general')
+          .eq('estatus_general', 'Activo')
+          .order('nombres');
+
+        if (error) {
+          console.error('Error cargando empleados:', error);
+          return;
+        }
+
+        window.empleados = data || [];
+      } catch (error) {
+        console.error('Error en cargarEmpleados:', error);
+      }
+    }
+
+    async function cargarMateriales() {
+      try {
+        const { data, error } = await window.supabaseClient
+          .from('stock_actual_con_precio')
+          .select('material_codigo, material_nombre, existencia, bodega_principal')
+          .gt('existencia', 0) // Solo materiales con stock disponible
+          .order('material_nombre');
+
+        if (error) {
+          console.error('Error cargando materiales:', error);
+          return;
+        }
+
+        window.materialesCatalogo = data || [];
+      } catch (error) {
+        console.error('Error en cargarMateriales:', error);
+      }
+    }
+
+    // =============================================================================
+    // 🔹 GENERAR CORRELATIVO PARA BAJAS
+    // =============================================================================
+    async function generarNumeroBaja() {
+      try {
+        // Obtener el último número de baja desde Supabase
+        const { data: bajas, error } = await window.supabaseClient
+          .from('bajas_logistica')
+          .select('numero_baja')
+          .order('creado_en', { ascending: false })
+          .limit(1);
+
+        let ultimoNumero = 0;
+        if (!error && bajas && bajas.length > 0) {
+          // Extraer el número del formato "BAJ-XXXXX"
+          const match = bajas[0].numero_baja.match(/BAJ-(\d+)/);
+          if (match) {
+            ultimoNumero = parseInt(match[1]);
+          }
+        }
+
+        const nuevoNumero = ultimoNumero + 1;
+        return "BAJ-" + nuevoNumero.toString().padStart(5, '0');
+      } catch (error) {
+        console.error('Error al generar correlativo de baja:', error);
+        // Fallback a localStorage
+        let ultimo = parseInt(localStorage.getItem('ultimo_correlativo_baja') || "0");
+        let nuevo = ultimo + 1;
+        localStorage.setItem('ultimo_correlativo_baja', nuevo.toString());
+        return "BAJ-" + nuevo.toString().padStart(5, '0');
+      }
+    }
+
+    function formatDate(dateString) {
+      return new Date(dateString).toLocaleDateString("es-ES");
+    }
+
+    // =============================================================================
+    // 🔹 RENDERIZADO
+    // =============================================================================
+    function renderPersonalYFecha() {
+      var hoy = new Date().toISOString().split("T")[0];
+      document.getElementById("fechaSalida").value = hoy;
+      var select = document.getElementById("personalEntrega");
+      // Limpiar opciones existentes
+      select.innerHTML = '<option value="">Seleccione un empleado...</option>';
+      window.empleados.forEach(function(empleado) {
+        var nombre = (empleado.nombres || '') + ' ' + (empleado.apellidos || '');
+        if (nombre.trim()) {
+          var opt = document.createElement("option");
+          opt.value = nombre;
+          opt.textContent = nombre;
+          select.appendChild(opt);
+        }
+      });
+    }
+
+    function renderTablaBaja() {
+      var tabla = document.getElementById("tablaBaja");
+      if (!tabla) return;
+
+      if (!window.estado.itemsSolicitudBaja || window.estado.itemsSolicitudBaja.length === 0) {
+        tabla.innerHTML = '<p class="mov-empty">No hay materiales seleccionados para la baja.</p>';
+        return;
+      }
+
+      var filas = window.estado.itemsSolicitudBaja.map(function(item, idx) {
+        var materialInfo = window.materialesCatalogo.find(m => m.material_codigo === item.materialId);
+        var nombreMaterial = materialInfo ? `${materialInfo.material_codigo} – ${materialInfo.material_nombre}` : 'Material no encontrado';
+        var stockDisponible = materialInfo ? materialInfo.existencia : 0;
+
+        var cantidad = item.cantidad || '';
+        var obs = (item.observacion || '').toString().replace(/"/g, '&quot;');
+
+        return `<tr>
+            <td style="width: 35%; font-weight: 500;">${nombreMaterial}</td>
+            <td style="width: 15%; text-align:center;">
+              <input type="number" class="mov-form-input" data-tipo="cantidad" data-idx="${idx}" min="1" max="${stockDisponible}" value="${cantidad}" placeholder="Cant." />
+              <small style="color: #666; display: block;">Stock: ${stockDisponible}</small>
+            </td>
+            <td style="width: 35%;">
+              <input type="text" class="mov-form-input" data-tipo="obs" data-idx="${idx}" placeholder="Observación específica" value="${obs}" />
+            </td>
+            <td style="width: 15%; text-align:center;">
+              <button type="button" class="mov-btn mov-btn-secondary" data-tipo="eliminar" data-idx="${idx}" style="padding: 6px 10px;">🗑️</button>
+            </td>
+          </tr>`;
+      }).join('');
+
+      tabla.innerHTML = `<table class="mov-table">
+          <thead>
+            <tr>
+              <th style="width:35%;">Material</th>
+              <th style="width:15%;">Cantidad</th>
+              <th style="width:35%;">Observación</th>
+              <th style="width:15%;">Acción</th>
+            </tr>
+          </thead>
+          <tbody>${filas}</tbody>
+        </table>`;
+
+      // Event listeners para cantidad y observación
+      tabla.querySelectorAll('input[data-tipo="cantidad"]').forEach(function(inp) {
+        inp.addEventListener('input', function(e) {
+          var i = parseInt(e.target.dataset.idx, 10);
+          var val = parseFloat(e.target.value) || 0;
+          if (!isNaN(i) && window.estado.itemsSolicitudBaja[i]) {
+            window.estado.itemsSolicitudBaja[i].cantidad = val;
+          }
+        });
+      });
+
+      tabla.querySelectorAll('input[data-tipo="obs"]').forEach(function(inp) {
+        inp.addEventListener('input', function(e) {
+          var i = parseInt(e.target.dataset.idx, 10);
+          if (!isNaN(i) && window.estado.itemsSolicitudBaja[i]) {
+            window.estado.itemsSolicitudBaja[i].observacion = e.target.value;
+          }
+        });
+      });
+
+      tabla.querySelectorAll('button[data-tipo="eliminar"]').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+          var i = parseInt(e.target.dataset.idx, 10);
+          if (!isNaN(i)) {
+            window.estado.itemsSolicitudBaja.splice(i, 1);
+            renderTablaBaja();
+          }
+        });
+      });
+    }
+
+    // =============================================================================
+    // 🔹 FUNCIONES DEL PANEL LATERAL
+    // =============================================================================
+    async function cargarSolicitudes() {
+      try {
+        const { data: solicitudes, error } = await window.supabaseClient
+          .from('bajas_logistica')
+          .select(`
+            id,
+            numero_baja,
+            fecha_baja,
+            estado,
+            procesado_por,
+            observaciones,
+            items_baja_logistica (
+              id,
+              codigo_material,
+              nombre_material,
+              cantidad_solicitada
+            )
+          `)
+          .order('creado_en', { ascending: false })
+          .limit(50);
+
+        if (error) {
+          console.error('Error cargando solicitudes:', error);
+          return;
+        }
+
+        renderSolicitudes(solicitudes || []);
+      } catch (error) {
+        console.error('Error en cargarSolicitudes:', error);
+      }
+    }
+
+    function renderSolicitudes(solicitudes) {
+      var lista = document.getElementById("listaSolicitudes");
+      if (!lista) return;
+
+      if (!solicitudes || solicitudes.length === 0) {
+        lista.innerHTML = '<div class="solicitud-empty">No hay solicitudes registradas</div>';
+        return;
+      }
+
+      lista.innerHTML = solicitudes.map(function(solicitud) {
+        var fechaFormateada = new Date(solicitud.fecha_baja).toLocaleDateString("es-ES");
+        var estadoClass = solicitud.estado === 'aprobada' ? 'aprobada' : 'pendiente';
+        var estadoTexto = solicitud.estado === 'aprobada' ? 'Aprobada' : 'Pendiente';
+        var totalItems = solicitud.items_baja_logistica ? solicitud.items_baja_logistica.length : 0;
+
+        var accionesHTML = '<button class="solicitud-btn exportar" data-id="' + solicitud.id + '" title="Exportar PDF">📄</button>';
+
+        if (solicitud.estado !== 'aprobada') {
+          accionesHTML += '<button class="solicitud-btn editar" data-id="' + solicitud.id + '" title="Editar">✏️</button>';
+          accionesHTML += '<button class="solicitud-btn eliminar" data-id="' + solicitud.id + '" title="Eliminar">🗑️</button>';
+        }
+
+        return '<div class="solicitud-item">' +
+          '<div class="solicitud-header">' +
+            '<div class="solicitud-numero">' + solicitud.numero_baja + '</div>' +
+            '<div class="solicitud-estado ' + estadoClass + '">' + estadoTexto + '</div>' +
+          '</div>' +
+          '<div class="solicitud-fecha">📅 ' + fechaFormateada + '</div>' +
+          '<div class="solicitud-personal">👤 ' + (solicitud.procesado_por || 'Sin asignar') + '</div>' +
+          '<div style="color: #6b7280; font-size: 12px; margin-bottom: 8px;">📦 ' + totalItems + ' material(es)</div>' +
+          '<div class="solicitud-acciones">' + accionesHTML + '</div>' +
+        '</div>';
+      }).join('');
+
+      // Event listeners para las acciones
+      lista.querySelectorAll('.solicitud-btn.exportar').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+          var id = e.target.dataset.id;
+          exportarSolicitud(id);
+        });
+      });
+
+      lista.querySelectorAll('.solicitud-btn.editar').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+          var id = e.target.dataset.id;
+          editarSolicitud(id);
+        });
+      });
+
+      lista.querySelectorAll('.solicitud-btn.eliminar').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+          var id = e.target.dataset.id;
+          eliminarSolicitud(id);
+        });
+      });
+    }
+
+    async function exportarSolicitud(id) {
+      try {
+        // Cargar datos completos de la solicitud
+        const { data: solicitud, error } = await window.supabaseClient
+          .from('bajas_logistica')
+          .select(`
+            *,
+            items_baja_logistica (*)
+          `)
+          .eq('id', id)
+          .single();
+
+        if (error) {
+          console.error('Error cargando solicitud:', error);
+          alert('Error al cargar la solicitud');
+          return;
+        }
+
+        // Preparar datos para PDF
+        var pdfData = {
+          esBaja: true,
+          numeroRegistro: solicitud.numero_baja.split('-')[1],
+          numeroBaja: solicitud.numero_baja,
+          motivoGeneral: solicitud.observaciones || '',
+          obsGeneral: '',
+          personal: solicitud.procesado_por || '',
+          fecha: formatDate(solicitud.fecha_baja),
+          itemsBaja: solicitud.items_baja_logistica.map(item => ({
+            materialId: item.codigo_material,
+            cantidad: item.cantidad_solicitada,
+            observacion: item.observacion || ''
+          }))
+        };
+
+        generarDocumentoPDF(pdfData);
+      } catch (error) {
+        console.error('Error en exportarSolicitud:', error);
+        alert('Error al exportar la solicitud');
+      }
+    }
+
+    async function editarSolicitud(id) {
+      try {
+        // Cargar datos de la solicitud
+        const { data: solicitud, error } = await window.supabaseClient
+          .from('bajas_logistica')
+          .select(`
+            *,
+            items_baja_logistica (*)
+          `)
+          .eq('id', id)
+          .single();
+
+        if (error) {
+          console.error('Error cargando solicitud:', error);
+          alert('Error al cargar la solicitud');
+          return;
+        }
+
+        // Cargar datos en el formulario
+        document.getElementById("personalEntrega").value = solicitud.procesado_por || '';
+        document.getElementById("fechaSalida").value = solicitud.fecha_baja.split('T')[0];
+        document.getElementById("obsBajaGeneral").value = solicitud.observaciones || '';
+
+        // Cargar items
+        window.estado.itemsSolicitudBaja = solicitud.items_baja_logistica.map(item => ({
+          materialId: item.codigo_material,
+          cantidad: item.cantidad_solicitada,
+          observacion: item.observacion || ''
+        }));
+
+        renderTablaBaja();
+
+        // Cerrar panel
+        document.getElementById("panelSolicitudes").classList.remove("open");
+
+        // Cambiar modo a edición
+        window.modoEdicion = true;
+        window.idSolicitudEdicion = id;
+
+        // Cambiar texto del botón
+        document.getElementById("btnGuardar").textContent = "💾 Actualizar Solicitud";
+
+        alert('Solicitud cargada para edición. Realice los cambios necesarios y guarde.');
+      } catch (error) {
+        console.error('Error en editarSolicitud:', error);
+        alert('Error al cargar la solicitud para edición');
+      }
+    }
+
+    async function eliminarSolicitud(id) {
+      if (!confirm('¿Está seguro de que desea eliminar esta solicitud? Esta acción no se puede deshacer.')) {
+        return;
+      }
+
+      try {
+        // Primero eliminar items
+        const { error: errorItems } = await window.supabaseClient
+          .from('items_baja_logistica')
+          .delete()
+          .eq('baja_id', id);
+
+        if (errorItems) {
+          console.error('Error eliminando items:', errorItems);
+          alert('Error al eliminar los items de la solicitud');
+          return;
+        }
+
+        // Luego eliminar la solicitud principal
+        const { error: errorSolicitud } = await window.supabaseClient
+          .from('bajas_logistica')
+          .delete()
+          .eq('id', id);
+
+        if (errorSolicitud) {
+          console.error('Error eliminando solicitud:', errorSolicitud);
+          alert('Error al eliminar la solicitud');
+          return;
+        }
+
+        alert('✅ Solicitud eliminada exitosamente');
+        cargarSolicitudes(); // Recargar lista
+      } catch (error) {
+        console.error('Error en eliminarSolicitud:', error);
+        alert('Error al eliminar la solicitud');
+      }
+    }
+    function renderModalMateriales(materialesFiltrados) {
+      var lista = document.getElementById("listaMateriales");
+      if (!lista) return;
+
+      if (!materialesFiltrados || materialesFiltrados.length === 0) {
+        lista.innerHTML = '<p class="mov-empty">No se encontraron materiales disponibles.</p>';
+        return;
+      }
+
+      lista.innerHTML = materialesFiltrados.map(function(mat) {
+        var yaSeleccionado = window.estado.itemsSolicitudBaja.some(item => item.materialId === mat.material_codigo);
+        var claseSeleccionado = yaSeleccionado ? 'style="opacity: 0.5; pointer-events: none;"' : '';
+
+        return `<div class="tarjeta-material-baja ${yaSeleccionado ? 'seleccionado' : ''}" data-codigo="${mat.material_codigo}">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+              <div style="flex: 1;">
+                <h4 style="margin: 0 0 8px 0; color: #08278a; font-size: 16px; font-weight: 700; line-height: 1.3;">${mat.material_nombre}</h4>
+                <p style="margin: 0; color: #08278a; font-size: 13px; font-weight: 500;">Código: <span style="color:#09ed2f; font-family: 'Courier New', monospace; font-weight: 700;">${mat.material_codigo}</span></p>
+              </div>
+              <div style="text-align: right;">
+                <div style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; display: inline-block; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);">
+                  📦 ${mat.existencia} disponibles
+                </div>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; padding: 4px 10px; border-radius: 16px; font-size: 11px; font-weight: 600; box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);">
+                  🏭 ${mat.bodega_principal || 'Principal'}
+                </span>
+              </div>
+              <button class="mov-btn mov-btn-primary" style="padding: 10px 20px; border-radius: 8px; font-weight: 600; transition: all 0.2s;" ${yaSeleccionado ? 'disabled' : ''}>
+                ${yaSeleccionado ? '✅ Seleccionado' : '➕ Seleccionar'}
+              </button>
+            </div>
+          </div>`;
+      }).join('');
+
+      // Event listeners para seleccionar materiales
+      lista.querySelectorAll('.tarjeta-material-baja button:not([disabled])').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+          var card = e.target.closest('.tarjeta-material-baja');
+          var codigo = card.dataset.codigo;
+
+          // Agregar material a la lista
+          window.estado.itemsSolicitudBaja.push({
+            materialId: codigo,
+            cantidad: 1,
+            observacion: ''
+          });
+
+          // Cerrar modal y actualizar tabla
+          document.getElementById("modalMateriales").style.display = "none";
+          renderTablaBaja();
+        });
+      });
+    }
+
+    function filtrarMateriales(termino) {
+      if (!termino || termino.trim() === '') {
+        return window.materialesCatalogo;
+      }
+
+      var terminoLower = termino.toLowerCase();
+      return window.materialesCatalogo.filter(function(mat) {
+        return mat.material_codigo.toLowerCase().includes(terminoLower) ||
+               mat.material_nombre.toLowerCase().includes(terminoLower);
+      });
+    }
+
+    // =============================================================================
+    // 🔹 GUARDAR/ACTUALIZAR SOLICITUD DE BAJA EN SUPABASE
+    // =============================================================================
+    async function guardarBajaDirecta(baja) {
+      try {
+        if (window.modoEdicion && window.idSolicitudEdicion) {
+          // MODO EDICIÓN
+          return await actualizarSolicitudBaja(window.idSolicitudEdicion, baja);
+        } else {
+          // MODO CREACIÓN
+          return await crearSolicitudBaja(baja);
+        }
+      } catch (error) {
+        console.error('Error en guardarBajaDirecta:', error);
+        alert('❌ Error al procesar la solicitud.');
+        return false;
+      }
+    }
+
+    async function crearSolicitudBaja(baja) {
+      // Generar número de baja
+      const numeroBaja = await generarNumeroBaja();
+
+      // Crear registro principal de baja como solicitud pendiente
+      const bajaData = {
+        numero_baja: numeroBaja,
+        fecha_baja: new Date().toISOString(),
+        estado: 'pendiente', // Cambiado a pendiente para aprobación
+        observaciones: baja.obsGeneral || null,
+        procesado_por: baja.personal
+      };
+
+      const { data: bajaCreada, error: errorBaja } = await window.supabaseClient
+        .from('bajas_logistica')
+        .insert(bajaData)
+        .select('id')
+        .single();
+
+      if (errorBaja) {
+        console.error('Error al crear baja:', errorBaja);
+        alert('❌ Error al registrar la solicitud en el sistema.');
+        return false;
+      }
+
+      // Crear items de la solicitud de baja
+      const itemsData = baja.materiales.map(item => ({
+        baja_id: bajaCreada.id,
+        codigo_material: item.materialId,
+        nombre_material: window.materialesCatalogo.find(m => m.material_codigo === item.materialId)?.material_nombre || 'Desconocido',
+        cantidad_solicitada: item.cantidad,
+        cantidad_bajada: 0, // Aún no se ha bajado
+        estado: 'pendiente', // Cambiado a pendiente
+        observacion: item.observacion || null
+      }));
+
+      const { error: errorItems } = await window.supabaseClient
+        .from('items_baja_logistica')
+        .insert(itemsData);
+
+      if (errorItems) {
+        console.error('Error al crear items de solicitud:', errorItems);
+        alert('❌ Error al registrar los materiales de la solicitud.');
+        return false;
+      }
+
+      return { numeroBaja, bajaCreada };
+    }
+
+    async function actualizarSolicitudBaja(id, baja) {
+      // Actualizar registro principal
+      const bajaData = {
+        fecha_baja: new Date().toISOString(),
+        observaciones: baja.obsGeneral || null,
+        procesado_por: baja.personal
+      };
+
+      const { error: errorBaja } = await window.supabaseClient
+        .from('bajas_logistica')
+        .update(bajaData)
+        .eq('id', id);
+
+      if (errorBaja) {
+        console.error('Error al actualizar baja:', errorBaja);
+        alert('❌ Error al actualizar la solicitud.');
+        return false;
+      }
+
+      // Eliminar items existentes
+      const { error: errorDelete } = await window.supabaseClient
+        .from('items_baja_logistica')
+        .delete()
+        .eq('baja_id', id);
+
+      if (errorDelete) {
+        console.error('Error eliminando items existentes:', errorDelete);
+        alert('❌ Error al actualizar los materiales.');
+        return false;
+      }
+
+      // Crear nuevos items
+      const itemsData = baja.materiales.map(item => ({
+        baja_id: id,
+        codigo_material: item.materialId,
+        nombre_material: window.materialesCatalogo.find(m => m.material_codigo === item.materialId)?.material_nombre || 'Desconocido',
+        cantidad_solicitada: item.cantidad,
+        cantidad_bajada: 0,
+        estado: 'pendiente',
+        observacion: item.observacion || null
+      }));
+
+      const { error: errorItems } = await window.supabaseClient
+        .from('items_baja_logistica')
+        .insert(itemsData);
+
+      if (errorItems) {
+        console.error('Error al actualizar items:', errorItems);
+        alert('❌ Error al actualizar los materiales.');
+        return false;
+      }
+
+      return { id };
+    }
+
+    // =============================================================================
+    // 🔹 PDF GENERATION
+    // =============================================================================
+    function generarDocumentoPDF(data) {
+      if (!window.html2pdf) {
+        alert("html2pdf no está cargado.");
+        return;
+      }
+      var copias = [
+        { leyenda: "Original – Contabilidad" },
+        { leyenda: "Copia – Bodega" },
+        { leyenda: "Copia – Gerencia" },
+        { leyenda: "Copia – Archivo" }
+      ];
+      var contenidoCompleto = "";
+      copias.forEach(function(copia) {
+        var titulo = "SOLICITUD DE BAJA DE MATERIALES";
+        var numeroRegistro = data.numeroBaja;
+        var colorHeader = "#dc2626";
+        var contenidoDetalles = '\
+          <p><strong>Motivo General:</strong> ' + data.motivoGeneral + '</p>\
+          <p><strong>Observación General:</strong> ' + (data.obsGeneral || "") + '</p>\
+          <p><strong>Estado:</strong> <span style="color: #f59e0b; font-weight: bold;">SOLICITUD PENDIENTE DE APROBACIÓN</span></p>\
+          <p><strong>Fecha de Solicitud:</strong> ' + data.fecha + '</p>\
+        ';
+        var tablaFilasBaja = data.itemsBaja.map(function(item) {
+          var mat = window.materialesCatalogo.find(function(m) { return m.material_codigo === item.materialId; });
+          return '\
+            <tr style="font-size: 9pt;">\
+              <td style="padding: 6pt; border: 1px solid #ddd;">' + (mat ? mat.material_codigo + ' – ' + mat.material_nombre : "Desconocido") + '</td>\
+              <td style="padding: 6pt; border: 1px solid #ddd; text-align: center;">' + item.cantidad + '</td>\
+              <td style="padding: 6pt; border: 1px solid #ddd;">' + (item.observacion || "") + '</td>\
+            </tr>\
+          ';
+        }).join("");
+        contenidoDetalles += '\
+          <h3 style="color: ' + colorHeader + '; margin: 12pt 0 6pt 0; font-size: 12pt; border-bottom: 1px solid #ccc; padding-bottom: 3pt;">Materiales Solicitados para Baja</h3>\
+          <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">\
+            <thead>\
+              <tr style="background-color: ' + colorHeader + '; color: white;">\
+                <th style="padding: 6pt; border: 1px solid #ddd;">Material</th>\
+                <th style="padding: 6pt; border: 1px solid #ddd;">Cantidad Solicitada</th>\
+                <th style="padding: 6pt; border: 1px solid #ddd;">Observación</th>\
+              </tr>\
+            </thead>\
+            <tbody>' + tablaFilasBaja + '</tbody>\
+          </table>\
+        ';
+        contenidoCompleto += '\
+        <div style="width: 185mm; font-family: Arial, sans-serif; color: #333; line-height: 1.3; font-size: 10pt; page-break-after: always;">\
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10pt; border-bottom: 2px solid ' + colorHeader + '; padding-bottom: 6pt;">\
+            <img src="assets/logo.png" alt="Logo" style="height: 20mm; margin-right: 8mm;">\
+            <div style="text-align: center; flex: 1;">\
+              <h1 style="color: ' + colorHeader + '; margin: 0; font-size: 16pt;">' + titulo + '</h1>\
+              <p style="margin: 3pt 0 0 0; color: #555; font-size: 9pt;">\
+                Fecha: ' + data.fecha + '\
+              </p>\
+            </div>\
+            <div style="text-align: right;">\
+              <div style="font-size: 24pt; font-weight: bold; color: ' + colorHeader + '; letter-spacing: 1px;">' + numeroRegistro + '</div>\
+            </div>\
+          </div>\
+          <div style="background: #f8fafc; padding: 6pt; border-radius: 4pt; margin: 8pt 0; font-size: 9pt;">\
+            <p><strong>Personal que Solicita:</strong> ' + data.personal + '</p>\
+            ' + contenidoDetalles + '\
+          </div>';
+        // Firmas
+        contenidoCompleto += '\
+          <div style="display: flex; justify-content: space-around; margin-top: 20mm;">\
+            <div style="text-align: center; width: 45%;">\
+              <div style="border-top: 1px solid black; padding-top: 5pt; font-weight: bold;">Bodega</div>\
+              <p style="margin: 5pt 0 0 0; font-size: 8pt;">Solicita</p>\
+            </div>\
+            <div style="text-align: center; width: 45%;">\
+              <div style="border-top: 1px solid black; padding-top: 5pt; font-weight: bold;">Contabilidad / Gerencia</div>\
+              <p style="margin: 5pt 0 0 0; font-size: 8pt;">Aprueba</p>\
+            </div>\
+          </div>';
+        contenidoCompleto += '\
+          <div style="margin-top: 10mm; text-align: center; font-size: 9pt; color: #666; border-top: 1px solid #eee; padding-top: 4pt;">\
+            ' + copia.leyenda + '\
+          </div>\
+          <div style="background: #fff3cd; color: #856404; padding: 4pt; font-size: 9pt; text-align: center; border: 1px dashed #ffeaa7; margin-top: 8pt;">\
+            ⚠️ SOLICITUD DE BAJA – PENDIENTE DE APROBACIÓN POR CONTABILIDAD\
+          </div>\
+        </div>';
+      });
+      if (contenidoCompleto.endsWith('page-break-after: always;">')) {
+        contenidoCompleto = contenidoCompleto.slice(0, -'page-break-after: always;">'.length) + '">';
+      }
+      var options = {
+        margin: [15, 15, 15, 15],
+        filename: 'SolicitudBaja_' + data.numeroRegistro + '.pdf',
+        image: { type: 'jpeg', quality: 0.95 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+        jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
+      };
+      html2pdf().from(contenidoCompleto).set(options).save();
+    }
+
+    // =============================================================================
+    // 🔹 LÓGICA PRINCIPAL
+    // =============================================================================
+    function inicializarEventos() {
+      document.getElementById("btnAgregarBaja").addEventListener("click", function() {
+        // Verificar que los materiales estén cargados
+        if (!window.materialesCatalogo || window.materialesCatalogo.length === 0) {
+          alert("Cargando catálogo de materiales, por favor espere...");
+          return;
+        }
+        // Mostrar modal de selección de materiales
+        renderModalMateriales(window.materialesCatalogo);
+        document.getElementById("modalMateriales").style.display = "flex";
+        document.getElementById("buscarMaterial").value = "";
+      });
+
+      // Event handlers del modal de materiales
+      document.getElementById("btnCerrarModalMateriales").addEventListener("click", function() {
+        document.getElementById("modalMateriales").style.display = "none";
+      });
+
+      document.getElementById("btnCancelarSeleccion").addEventListener("click", function() {
+        document.getElementById("modalMateriales").style.display = "none";
+      });
+
+      document.getElementById("buscarMaterial").addEventListener("input", function(e) {
+        var termino = e.target.value;
+        var materialesFiltrados = filtrarMateriales(termino);
+        renderModalMateriales(materialesFiltrados);
+      });
+
+      // Cerrar modal al hacer click fuera
+      document.getElementById("modalMateriales").addEventListener("click", function(e) {
+        if (e.target === this) {
+          this.style.display = "none";
+        }
+      });
+
+      document.getElementById("btnGuardar").addEventListener("click", async function() {
+        var personal = document.getElementById("personalEntrega").value;
+        var fecha = document.getElementById("fechaSalida").value;
+        var motivoGeneral = document.getElementById("motivoBajaGeneral").value;
+        if (!personal || !fecha || !motivoGeneral) {
+          alert("Complete todos los campos obligatorios.");
+          return;
+        }
+        var itemsValidos = window.estado.itemsSolicitudBaja.filter(function(item) {
+          return item.materialId && item.cantidad > 0;
+        });
+        if (itemsValidos.length === 0) {
+          alert("Agregue al menos un material para solicitar la baja.");
+          return;
+        }
+
+        // Deshabilitar botón y mostrar indicador de carga
+        var btnGuardar = document.getElementById("btnGuardar");
+        var textoOriginal = btnGuardar.textContent;
+        btnGuardar.disabled = true;
+        btnGuardar.textContent = "⏳ Enviando solicitud...";
+        btnGuardar.style.opacity = "0.7";
+
+        var baja = {
+          motivoGeneral: motivoGeneral,
+          obsGeneral: document.getElementById("obsBajaGeneral").value,
+          personal: personal,
+          fecha: fecha,
+          fechaRegistro: new Date().toISOString(),
+          materiales: itemsValidos
+        };
+
+        try {
+          // Guardar baja directa en Supabase
+          const resultado = await guardarBajaDirecta(baja);
+          if (!resultado) {
+            return; // Error ya mostrado en la función
+          }
+
+          window.estado.pdfData = {
+            esBaja: true,
+            numeroRegistro: resultado.numeroBaja.split('-')[1],
+            numeroBaja: resultado.numeroBaja,
+            motivoGeneral: motivoGeneral,
+            obsGeneral: baja.obsGeneral,
+            personal: personal,
+            fecha: formatDate(fecha),
+            itemsBaja: itemsValidos
+          };
+
+          // Limpiar formulario después de éxito
+          window.estado = { itemsSolicitudBaja: [], pdfData: null };
+          document.getElementById("tablaBaja").innerHTML = "";
+          document.getElementById("motivoBajaGeneral").value = "";
+          document.getElementById("obsBajaGeneral").value = "";
+          document.getElementById("btnImprimir").style.display = "none";
+
+          // Resetear modo edición
+          window.modoEdicion = false;
+          window.idSolicitudEdicion = null;
+          document.getElementById("btnGuardar").textContent = "📤 Enviar Solicitud a Contabilidad";
+
+          document.getElementById("modalImprimir").style.display = "flex";
+          alert(window.modoEdicion ? "✅ Solicitud actualizada exitosamente." : "✅ Solicitud de baja enviada exitosamente a contabilidad.");
+        } catch (error) {
+          console.error("Error al enviar solicitud:", error);
+          alert("❌ Error al enviar la solicitud. Intente nuevamente.");
+        } finally {
+          // Rehabilitar botón
+          btnGuardar.disabled = false;
+          btnGuardar.textContent = textoOriginal;
+          btnGuardar.style.opacity = "1";
+        }
+      });
+
+      document.getElementById("btnSiImprimir").addEventListener("click", function() {
+        if (window.estado.pdfData) {
+          generarDocumentoPDF(window.estado.pdfData);
+          document.getElementById("modalImprimir").style.display = "none";
+          document.getElementById("btnImprimir").style.display = "inline-block";
+        }
+      });
+
+      document.getElementById("btnNoImprimir").addEventListener("click", function() {
+        document.getElementById("modalImprimir").style.display = "none";
+      });
+
+      document.getElementById("btnLimpiar").addEventListener("click", function() {
+        window.estado = { itemsSolicitudBaja: [], pdfData: null };
+        document.getElementById("tablaBaja").innerHTML = "";
+        document.getElementById("motivoBajaGeneral").value = "";
+        document.getElementById("obsBajaGeneral").value = "";
+        document.getElementById("btnImprimir").style.display = "none";
+
+        // Resetear modo edición
+        window.modoEdicion = false;
+        window.idSolicitudEdicion = null;
+        document.getElementById("btnGuardar").textContent = "📤 Enviar Solicitud a Contabilidad";
+      });
+
+      // Event listeners del panel lateral
+      document.getElementById("btnMostrarPanel").addEventListener("click", function() {
+        document.getElementById("panelSolicitudes").classList.add("open");
+        cargarSolicitudes();
+      });
+
+      document.getElementById("btnCerrarPanel").addEventListener("click", function() {
+        document.getElementById("panelSolicitudes").classList.remove("open");
+      });
+
+      // Cerrar panel al hacer click fuera
+      document.getElementById("panelSolicitudes").addEventListener("click", function(e) {
+        if (e.target === this) {
+          this.classList.remove("open");
+        }
+      });
+    }
+
+    // =============================================================================
+    // 🔹 INICIO
+    // =============================================================================
+    setTimeout(async function() {
+      try {
+        await cargarEmpleados();
+        await cargarMateriales();
+        renderPersonalYFecha();
+        inicializarEventos();
+        // Cargar solicitudes para el panel lateral
+        cargarSolicitudes();
+      } catch (e) {
+        console.error("Error al inicializar bajasmateriales.html:", e);
+        alert("Error al cargar el módulo.");
+      }
+    }, 50);
+  </script>
+  </div>
+</body>
+</html>

@@ -1,0 +1,337 @@
+<!-- desktop/modules/bodega/dashboard/xproveedor.html -->
+<div style="display:flex; gap:20px; height:100%;">
+
+  <div style="flex:1; display:flex; flex-direction:column; gap:20px;">
+
+    <!-- KPIs / RESUMEN -->
+    <div style="display:flex; gap:20px;">
+      <div class="bodega-resumen-card">
+        <div>Ingresos</div>
+        <div class="valor" id="kpi-ingresos">–</div>
+      </div>
+      <div class="bodega-resumen-card">
+        <div>Ítems Únicos</div>
+        <div class="valor" id="kpi-items">–</div>
+      </div>
+      <div class="bodega-resumen-card">
+        <div>Total Unidades</div>
+        <div class="valor" id="kpi-unidades">–</div>
+      </div>
+      <div class="bodega-resumen-card">
+        <div>Facturas</div>
+        <div class="valor" id="kpi-facturas">–</div>
+      </div>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="bodega-filtros">
+      <div class="bodega-filtro-grupo">
+        <label for="filtro-proveedor">Proveedor</label>
+        <select id="filtro-proveedor" class="dashboard-select">
+          <option value="">Seleccione un proveedor...</option>
+        </select>
+      </div>
+
+      <div class="bodega-filtro-grupo">
+        <label for="filtro-factura">Factura</label>
+        <select id="filtro-factura" class="dashboard-select">
+          <option value="todas">Todas las facturas</option>
+        </select>
+      </div>
+
+      <button id="btn-exportar-xproveedor" class="bodega-export-pdf-btn">
+        📄 Exportar Consolidado
+      </button>
+    </div>
+
+    <!-- TABLA -->
+    <div id="tabla-movimientos-proveedor" style="flex:1; overflow:auto;">
+      <p style="color:#cbd5e1; text-align:center; margin-top:40px;">
+        Seleccione un proveedor para ver sus movimientos de ingreso.
+      </p>
+    </div>
+
+  </div>
+</div>
+
+<style>
+.bodega-resumen-card{
+  background: rgba(20,30,60,.6);
+  border: 1px solid rgba(99,102,241,.2);
+  border-radius: 8px;
+  padding: 12px;
+  min-width: 160px;
+  text-align: center;
+  color: #cbd5e1;
+}
+.bodega-resumen-card .valor{
+  font-size: 24px;
+  font-weight: bold;
+  color: #64b5f6;
+}
+</style>
+
+<script>
+(function(){
+
+  const supa = window.supabaseClient;
+  if (!supa) {
+    console.error('❌ Supabase no está inicializado (window.supabaseClient).');
+  }
+
+  const estado = {
+    movimientos: []
+  };
+
+  function fmtFecha(iso) {
+    if (!iso) return '–';
+    const d = new Date(iso);
+    return isNaN(d.getTime()) ? String(iso) : d.toLocaleDateString('es-NI');
+  }
+
+  // Existencia anterior/posterior calculada como acumulado solo de los ingresos visibles
+  function calcularExistenciaAntesAcumulada(movsOrdenados, idx, codigoItem) {
+    let existencia = 0;
+    for (let i = 0; i < idx; i++) {
+      if (movsOrdenados[i].material_codigo === codigoItem) {
+        existencia += Number(movsOrdenados[i].cantidad) || 0;
+      }
+    }
+    return existencia;
+  }
+
+  async function cargarMovimientosIngreso() {
+    if (!supa) return;
+    const cont = document.getElementById('tabla-movimientos-proveedor');
+    cont.innerHTML = '<p style="color:#cbd5e1; text-align:center; margin-top:40px;">Cargando ingresos…</p>';
+
+    const { data, error } = await supa
+      .from('movimientos_bodega')
+      .select('fecha_movimiento, referencia_documento, proveedor, numero_factura, material_codigo, material_nombre, cantidad')
+      .eq('tipo_movimiento', 'ingreso')
+      .not('proveedor', 'is', null)
+      .order('fecha_movimiento', { ascending: true });
+
+    if (error) {
+      console.error('Error cargando movimientos_bodega (ingresos):', error);
+      cont.innerHTML = `<p style="color:#ef4444; text-align:center; margin-top:40px;">Error: ${error.message}</p>`;
+      return;
+    }
+
+    estado.movimientos = data || [];
+    poblarSelects();
+    cont.innerHTML = '<p style="color:#cbd5e1; text-align:center; margin-top:40px;">Seleccione un proveedor para ver sus movimientos de ingreso.</p>';
+  }
+
+  function poblarSelects() {
+    const selectProv = document.getElementById('filtro-proveedor');
+    const selectFac = document.getElementById('filtro-factura');
+
+    const proveedores = Array.from(new Set((estado.movimientos || []).map(m => (m.proveedor || '').toString().trim()).filter(Boolean))).sort();
+    const facturas = Array.from(new Set((estado.movimientos || []).map(m => (m.numero_factura || '').toString().trim()).filter(Boolean))).sort();
+
+    selectProv.innerHTML = ['<option value="">Seleccione un proveedor...</option>', ...proveedores.map(p => `<option value="${p.replace(/"/g, '&quot;')}">${p}</option>`)].join('');
+    selectFac.innerHTML = ['<option value="todas">Todas las facturas</option>', ...facturas.map(f => `<option value="${f.replace(/"/g, '&quot;')}">${f}</option>`)].join('');
+  }
+
+  // === FUNCIÓN PARA GENERAR LA TABLA ===
+  function renderizar(proveedor, factura='todas'){
+    const cont = document.getElementById('tabla-movimientos-proveedor');
+
+    if(!proveedor){
+      cont.innerHTML = `<p style="color:#cbd5e1;text-align:center;margin-top:40px;">Seleccione un proveedor</p>`;
+      ['kpi-ingresos','kpi-items','kpi-unidades','kpi-facturas']
+        .forEach(id=>document.getElementById(id).textContent='–');
+      return;
+    }
+
+    const provSel = (proveedor || '').toString().trim();
+    const facSel = (factura || 'todas').toString().trim();
+    let movs = (estado.movimientos || []).filter(m => (m.proveedor || '').toString().trim() === provSel);
+    if (factura !== 'todas') {
+      movs = movs.filter(m => (m.numero_factura || '').toString().trim() === facSel);
+    }
+
+    if(!movs.length){
+      cont.innerHTML = `<p style="text-align:center;color:#aaa;margin-top:40px;">Sin registros</p>`;
+      document.getElementById('kpi-ingresos').textContent = '0';
+      document.getElementById('kpi-items').textContent = '0';
+      document.getElementById('kpi-unidades').textContent = '0';
+      document.getElementById('kpi-facturas').textContent = '0';
+      return;
+    }
+
+    const facturas = new Set();
+    const items = new Set();
+    let unidades = 0;
+
+    const movsOrdenados = [...movs].sort((a, b) => new Date(a.fecha_movimiento) - new Date(b.fecha_movimiento));
+    movsOrdenados.forEach(m => {
+      if (m.numero_factura) facturas.add(m.numero_factura);
+      items.add(m.material_codigo);
+      unidades += Number(m.cantidad) || 0;
+    });
+
+    const ingresosDocs = new Set(movsOrdenados.map(m => m.referencia_documento).filter(Boolean));
+    document.getElementById('kpi-ingresos').textContent = ingresosDocs.size;
+    document.getElementById('kpi-items').textContent = items.size;
+    document.getElementById('kpi-unidades').textContent = unidades;
+    document.getElementById('kpi-facturas').textContent = facturas.size;
+
+    // === CONSTRUIR FILAS CON EXISTENCIAS ===
+    let filas = '';
+    movsOrdenados.forEach((m, idx) => {
+      const codigo = m.material_codigo;
+      const existenciaAntes = calcularExistenciaAntesAcumulada(movsOrdenados, idx, codigo);
+      const qty = Number(m.cantidad) || 0;
+      const existenciaDespues = existenciaAntes + qty;
+      filas += `
+        <tr>
+          <td>${fmtFecha(m.fecha_movimiento)}</td>
+          <td>${m.referencia_documento || '–'}</td>
+          <td>${m.numero_factura || '–'}</td>
+          <td>${codigo}</td>
+          <td>${m.material_nombre || '–'}</td>
+          <td>${qty}</td>
+          <td>${existenciaAntes}</td>
+          <td>${existenciaDespues}</td>
+        </tr>`;
+    });
+
+    cont.innerHTML = `
+      <table class="bodega-table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Documento</th>
+            <th>Factura</th>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Cantidad</th>
+            <th>Exist. Anterior</th>
+            <th>Exist. Posterior</th>
+          </tr>
+        </thead>
+        <tbody>${filas}</tbody>
+      </table>`;
+  }
+
+  document.getElementById('filtro-proveedor')
+    .addEventListener('change',e=>{
+      renderizar(e.target.value, document.getElementById('filtro-factura').value);
+    });
+
+  document.getElementById('filtro-factura')
+    .addEventListener('change',e=>{
+      renderizar(document.getElementById('filtro-proveedor').value, e.target.value);
+    });
+
+  // === FUNCIÓN DE EXPORTACIÓN A PDF COMPLETA ===
+  document.getElementById('btn-exportar-xproveedor').addEventListener('click', () => {
+    if (typeof html2pdf === 'undefined') {
+      alert('html2pdf no está cargado.');
+      return;
+    }
+
+    const proveedor = document.getElementById('filtro-proveedor').value;
+    if (!proveedor) {
+      alert('Por favor, seleccione un proveedor primero.');
+      return;
+    }
+
+    const factura = document.getElementById('filtro-factura').value;
+    let movs = (estado.movimientos || []).filter(m => (m.proveedor || '') === proveedor);
+    if (factura !== 'todas') {
+      movs = movs.filter(m => (m.numero_factura || '') === factura);
+    }
+
+    if (!movs.length) {
+      alert('No hay movimientos para exportar.');
+      return;
+    }
+
+    // === CONSTRUIR FILAS PARA EL PDF ===
+    let filasPDF = '';
+    const movsOrdenados = [...movs].sort((a, b) => new Date(a.fecha_movimiento) - new Date(b.fecha_movimiento));
+    movsOrdenados.forEach((m, idx) => {
+      const codigo = m.material_codigo;
+      const existenciaAntes = calcularExistenciaAntesAcumulada(movsOrdenados, idx, codigo);
+      const qty = Number(m.cantidad) || 0;
+      const existenciaDespues = existenciaAntes + qty;
+      filasPDF += `
+        <tr>
+          <td>${fmtFecha(m.fecha_movimiento)}</td>
+          <td>${m.referencia_documento || '–'}</td>
+          <td>${m.numero_factura || '–'}</td>
+          <td>${codigo}</td>
+          <td>${m.material_nombre || '–'}</td>
+          <td>${qty}</td>
+          <td>${existenciaAntes}</td>
+          <td>${existenciaDespues}</td>
+        </tr>`;
+    });
+
+    const tituloFactura = factura === 'todas' ? 'Todas las facturas' : factura;
+    const fechaReporte = new Date().toLocaleDateString('es-NI');
+
+    const htmlPDF = `
+      <div style="font-family: Arial, sans-serif; padding: 20px; color: #000; width: 100%;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <img src="assets/logo.png" style="height: 60px; margin-bottom: 16px;">
+          <h2 style="color: #1e40af; margin: 0; font-size: 22px;">Consolidado de Ingresos por Proveedor</h2>
+          <p style="margin: 8px 0 0 0; color: #333; font-size: 14px;">
+            <strong>Proveedor:</strong> ${proveedor}<br>
+            <strong>Factura:</strong> ${tituloFactura}<br>
+            <strong>Fecha de Reporte:</strong> ${fechaReporte}
+          </p>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 11px;">
+          <thead>
+            <tr style="background-color: #f1f5f9; border-bottom: 2px solid #cbd5e1;">
+              <th style="padding: 8px; text-align: left; border-right: 1px solid #e2e8f0;">Fecha</th>
+              <th style="padding: 8px; text-align: left; border-right: 1px solid #e2e8f0;">Documento</th>
+              <th style="padding: 8px; text-align: left; border-right: 1px solid #e2e8f0;">Factura</th>
+              <th style="padding: 8px; text-align: left; border-right: 1px solid #e2e8f0;">Código</th>
+              <th style="padding: 8px; text-align: left; border-right: 1px solid #e2e8f0;">Nombre</th>
+              <th style="padding: 8px; text-align: left; border-right: 1px solid #e2e8f0;">Cantidad</th>
+              <th style="padding: 8px; text-align: left; border-right: 1px solid #e2e8f0;">Exist. Anterior</th>
+              <th style="padding: 8px; text-align: left;">Exist. Posterior</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filasPDF}
+          </tbody>
+        </table>
+
+        <div style="margin-top: 40px; text-align: center; font-size: 11px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 16px;">
+          <p>Documento generado por Absolute de Nicaragua</p>
+          <p>Original Bodega • Copia Caceta y Seguridad • Copia Encargado</p>
+        </div>
+      </div>
+    `;
+
+    html2pdf().from(htmlPDF).set({
+      margin: 15,
+      filename: `Ingresos_Proveedor_${proveedor.replace(/ /g, '_')}_${tituloFactura.replace(/ /g, '_')}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { 
+        scale: 2, 
+        useCORS: true,
+        backgroundColor: '#ffffff'
+      },
+      jsPDF: { 
+        unit: 'mm', 
+        format: 'letter', 
+        orientation: 'landscape' 
+      }
+    }).save();
+  });
+
+  // === INICIALIZAR ===
+  (async function init(){
+    await cargarMovimientosIngreso();
+  })();
+
+})();
+</script>

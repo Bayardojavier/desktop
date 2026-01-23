@@ -1,0 +1,749 @@
+<!-- desktop/modules/bodega/universal/modificar_consumible.html -->
+<link rel="stylesheet" href="./catalogo.css">
+<style>
+  .secundaria-selected { border-color: rgba(99,102,241,0.9) !important; background: rgba(99,102,241,0.22) !important; outline: 2px solid rgba(255,255,255,0.85); }
+</style>
+
+<div style="display:flex; gap:16px; height:100%;">
+  <!-- Panel izquierda -->
+  <div style="width: 340px; background: rgba(20, 30, 60, 0.45); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; padding: 12px; overflow:auto;">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px;">
+      <div style="font-weight:800; color:#cbd5e1;">Consumibles</div>
+      <div style="color:#94a3b8; font-size:12px;">Modificar</div>
+    </div>
+
+    <div style="border-top:1px solid rgba(148,163,184,0.15); padding-top:10px;">
+      <div style="font-weight:700; color:#cbd5e1;">Principal</div>
+      <div id="principal-nombre" style="color:#94a3b8; font-size:14px;">(cargando...)</div>
+    </div>
+
+    <div style="border-top:1px solid rgba(148,163,184,0.15); padding-top:10px; margin-top:10px;">
+      <div style="font-weight:700; color:#cbd5e1;">Secundaria</div>
+      <div id="secundarias-container" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;"></div>
+    </div>
+
+    <div style="border-top:1px solid rgba(148,163,184,0.15); padding-top:10px; margin-top:10px;">
+      <div style="font-weight:700; color:#cbd5e1;">Contenedor</div>
+      <select id="contenedor-select" class="audiovisual-input" style="width:100%;"></select>
+
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <button type="button" id="btn-refrescar" class="bodega-export-pdf-btn" style="padding:8px 10px;">Refrescar</button>
+        <button type="button" id="btn-limpiar" class="bodega-export-pdf-btn" style="padding:8px 10px;">Limpiar</button>
+      </div>
+    </div>
+
+    <div style="border-top:1px solid rgba(148,163,184,0.15); padding-top:10px; margin-top:10px;">
+      <div style="font-weight:800; color:#cbd5e1; margin-bottom:6px;">Mover/Sacar seleccionados</div>
+      <select id="mover-destino" class="audiovisual-input" style="width:100%;"></select>
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <button type="button" id="btn-mover" class="audiovisual-boton audiovisual-save" style="padding:8px 10px;">Mover</button>
+        <button type="button" id="btn-sacar" class="bodega-export-pdf-btn" style="padding:8px 10px;">Sacar</button>
+      </div>
+      <div style="color:#94a3b8; font-size:12px; margin-top:6px;">Mover/Sacar actualiza el vínculo en <code>campos_personalizados</code>.</div>
+    </div>
+  </div>
+
+  <!-- Panel principal -->
+  <div style="flex:1; min-width: 420px; overflow:auto;">
+    <div class="bodega-encabezado" style="margin-bottom: 12px;">
+      <h1 class="bodega-titulo" style="margin:0;">✏️ Modificar – Consumibles</h1>
+      <p class="bodega-subtitulo" style="margin:6px 0 0 0;">Selecciona Secundaria + Contenedor para ver materiales.</p>
+    </div>
+
+    <div style="display:flex; gap:16px; flex-wrap:wrap;">
+      <div style="flex: 1; min-width: 360px; max-width: 520px;">
+        <div style="font-weight:800; color:#cbd5e1; margin-bottom:8px;">Materiales en contenedor</div>
+        <div id="materiales-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+      </div>
+
+      <div style="flex: 1; min-width: 360px; max-width: 520px;">
+        <div style="font-weight:800; color:#cbd5e1; margin-bottom:8px;">Editar material</div>
+
+        <div style="background: rgba(15,23,42,0.22); border: 1px solid rgba(148,163,184,0.15); border-radius: 10px; padding: 10px; display:flex; flex-direction:column; gap:10px;">
+          <div style="display:flex; gap:10px; align-items:flex-start;">
+            <div style="flex:1;">
+              <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Nombre</label>
+              <input id="mat-nombre" class="audiovisual-input" />
+            </div>
+            <div style="width: 220px;">
+              <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Código (solo lectura)</label>
+              <input id="mat-codigo" class="audiovisual-input" readonly style="background:#11182755; color:#94a3b8;" />
+            </div>
+          </div>
+
+          <div style="display:flex; gap:10px;">
+            <div style="flex:1;">
+              <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Tipo uso</label>
+              <input id="mat-tipo-uso" class="audiovisual-input" />
+            </div>
+            <div style="flex:1;">
+              <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Tipo material</label>
+              <input id="mat-tipo-material" class="audiovisual-input" />
+            </div>
+          </div>
+
+          <div style="display:flex; gap:10px;">
+            <div style="flex:1;">
+              <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Marca</label>
+              <input id="mat-marca" class="audiovisual-input" />
+            </div>
+            <div style="flex:1;">
+              <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Modelo</label>
+              <input id="mat-modelo" class="audiovisual-input" />
+            </div>
+          </div>
+
+          <div style="display:flex; gap:10px;">
+            <div style="flex:1;">
+              <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Unidad</label>
+              <select id="mat-unidad" class="audiovisual-input">
+                <option value="UND">UND</option>
+                <option value="PAR">PAR</option>
+                <option value="CAJ">CAJ</option>
+                <option value="SIN">SIN</option>
+              </select>
+            </div>
+            <div style="flex:1;">
+              <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Color</label>
+              <input id="mat-color" class="audiovisual-input" placeholder="#RRGGBB o texto" />
+            </div>
+          </div>
+
+          <div style="display:flex; gap:10px;">
+            <div style="flex:1;">
+              <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Cantidad por unidad</label>
+              <input id="mat-cantidad-unidad" type="number" step="0.01" class="audiovisual-input" />
+            </div>
+            <div style="flex:1;">
+              <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Precio unitario</label>
+              <input id="mat-precio" type="number" step="0.01" class="audiovisual-input" />
+            </div>
+          </div>
+
+          <label style="display:inline-flex; gap:8px; align-items:center; color:#cbd5e1;"><input id="mat-hechizo" type="checkbox" /> Hechizo</label>
+
+          <div>
+            <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Notas</label>
+            <textarea id="mat-notas" rows="3" class="audiovisual-input"></textarea>
+          </div>
+
+          <div>
+            <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Foto (opcional)</label>
+            <div style="display:flex; align-items:flex-start; gap:12px;">
+              <div id="photo-preview" style="width: 110px; height: 110px; border: 2px dashed rgba(148,163,184,0.35); border-radius: 10px; display:flex; align-items:center; justify-content:center; color:#94a3b8; font-size: 14px; background: rgba(15, 23, 42, 0.35);">Sin foto</div>
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <button type="button" id="select-photo-btn" class="audiovisual-boton audiovisual-new" style="padding: 8px 14px;">Seleccionar Foto</button>
+                <input type="file" id="photo-input" accept="image/*" style="display:none;" />
+                <small style="color:#94a3b8;">Se sube a Supabase Storage si está configurado.</small>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:10px;">
+            <button type="button" id="btn-guardar-material" class="audiovisual-boton audiovisual-save" style="padding:10px 14px;">Guardar cambios</button>
+            <div id="material-status" style="color:#94a3b8; padding-top:10px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function() {
+  const supa = window.supabaseClient;
+  if (!supa) {
+    alert('Supabase no inicializado');
+    return;
+  }
+
+  const UA_CTX = window.__UA_CONTEXT || null;
+  const principalCandidates = (UA_CTX && Array.isArray(UA_CTX.principalCandidates) && UA_CTX.principalCandidates.length)
+    ? UA_CTX.principalCandidates
+    : ['Consumibles', 'Herramientas y consumibles', 'Ferretería', 'Ferreteria'];
+
+  const STORAGE_BUCKET = 'materiales-fotos';
+  const TABLE_CATALOGO = (UA_CTX && UA_CTX.tableOverrides && UA_CTX.tableOverrides.catalogo) ? UA_CTX.tableOverrides.catalogo : 'catalogo_consumibles';
+
+  const state = {
+    principalId: null,
+    principalNombre: null,
+    secundariaId: null,
+    secundariaNombre: null,
+
+    contenedorCodigo: null,
+    contenedorNombre: null,
+    contenedoresCache: [],
+
+    materialesCache: [],
+    materialCodigo: null,
+    materialRow: null,
+
+    fotoFile: null,
+    fotoUrlCurrent: null,
+    fotoObjectUrl: null
+  };
+
+  bind();
+  loadBodegas();
+
+  function bind() {
+    document.getElementById('btn-refrescar')?.addEventListener('click', refreshAll);
+    document.getElementById('btn-limpiar')?.addEventListener('click', clearAll);
+
+    document.getElementById('contenedor-select')?.addEventListener('change', () => {
+      const code = (document.getElementById('contenedor-select').value || '').trim();
+      const row = state.contenedoresCache.find(r => String(r.codigo) === String(code));
+      state.contenedorCodigo = row ? row.codigo : null;
+      state.contenedorNombre = row ? (row.nombre || row.contenedor || row.codigo) : null;
+      clearMaterialForm();
+      loadMateriales();
+      refreshDestinoMover();
+    });
+
+    document.getElementById('btn-mover')?.addEventListener('click', moverSeleccionados);
+    document.getElementById('btn-sacar')?.addEventListener('click', sacarSeleccionados);
+
+    const photoBtn = document.getElementById('select-photo-btn');
+    const photoInput = document.getElementById('photo-input');
+    if (photoBtn && photoInput) {
+      photoBtn.addEventListener('click', () => photoInput.click());
+      photoInput.addEventListener('change', () => {
+        const f = photoInput.files && photoInput.files[0];
+        state.fotoFile = f || null;
+        if (state.fotoObjectUrl) {
+          try { URL.revokeObjectURL(state.fotoObjectUrl); } catch (_) {}
+          state.fotoObjectUrl = null;
+        }
+        if (f) {
+          state.fotoObjectUrl = URL.createObjectURL(f);
+          setPhotoPreview(state.fotoObjectUrl);
+        } else {
+          setPhotoPreview(state.fotoUrlCurrent);
+        }
+      });
+    }
+
+    document.getElementById('btn-guardar-material')?.addEventListener('click', guardarMaterial);
+  }
+
+  async function refreshAll() {
+    await loadContenedores();
+    await loadMateriales();
+    refreshDestinoMover();
+  }
+
+  function clearAll() {
+    state.secundariaId = null;
+    state.secundariaNombre = null;
+    state.contenedorCodigo = null;
+    state.contenedorNombre = null;
+    state.contenedoresCache = [];
+    state.materialesCache = [];
+    clearMaterialForm();
+    document.querySelectorAll('.secundaria-btn').forEach(b => b.classList.remove('secundaria-selected'));
+    document.getElementById('contenedor-select').innerHTML = '';
+    document.getElementById('mover-destino').innerHTML = '';
+    document.getElementById('materiales-list').innerHTML = '';
+  }
+
+  function setMaterialStatus(msg) {
+    const el = document.getElementById('material-status');
+    if (el) el.textContent = msg || '';
+  }
+
+  function clearMaterialForm() {
+    state.materialCodigo = null;
+    state.materialRow = null;
+    state.fotoFile = null;
+    state.fotoUrlCurrent = null;
+    if (state.fotoObjectUrl) {
+      try { URL.revokeObjectURL(state.fotoObjectUrl); } catch (_) {}
+      state.fotoObjectUrl = null;
+    }
+
+    document.getElementById('mat-codigo').value = '';
+    document.getElementById('mat-nombre').value = '';
+    document.getElementById('mat-tipo-uso').value = '';
+    document.getElementById('mat-tipo-material').value = '';
+    document.getElementById('mat-marca').value = '';
+    document.getElementById('mat-modelo').value = '';
+    document.getElementById('mat-unidad').value = 'UND';
+    document.getElementById('mat-color').value = '';
+    document.getElementById('mat-cantidad-unidad').value = '';
+    document.getElementById('mat-precio').value = '';
+    document.getElementById('mat-hechizo').checked = false;
+    document.getElementById('mat-notas').value = '';
+
+    setPhotoPreview(null);
+
+    setMaterialStatus('');
+  }
+
+  function setPhotoPreview(url) {
+    const preview = document.getElementById('photo-preview');
+    if (!preview) return;
+    preview.style.backgroundSize = 'cover';
+    preview.style.backgroundPosition = 'center';
+    preview.style.backgroundRepeat = 'no-repeat';
+    if (url) {
+      preview.style.backgroundImage = `url("${String(url).replace(/\"/g, '')}")`;
+      preview.textContent = '';
+    } else {
+      preview.style.backgroundImage = '';
+      preview.textContent = 'Sin foto';
+    }
+  }
+
+  async function compressImageFile(file, opts = {}) {
+    if (!file) return null;
+    const type = String(file.type || '');
+    if (!type.startsWith('image/')) {
+      return { blob: file, contentType: type || 'application/octet-stream', ext: (String(file.name || 'bin').split('.').pop() || 'bin') };
+    }
+
+    const maxDim = Number.isFinite(opts.maxDim) ? opts.maxDim : 1600;
+    const quality = Number.isFinite(opts.quality) ? opts.quality : 0.82;
+    if (file.size && file.size < 250 * 1024) {
+      return { blob: file, contentType: type, ext: (String(file.name || 'jpg').split('.').pop() || 'jpg') };
+    }
+
+    try {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      await new Promise((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error('No se pudo cargar la imagen para comprimir'));
+        img.src = url;
+      });
+      try { URL.revokeObjectURL(url); } catch (_) {}
+
+      const w = img.naturalWidth || img.width;
+      const h = img.naturalHeight || img.height;
+      if (!w || !h) throw new Error('Dimensiones inválidas');
+
+      const scale = Math.min(1, maxDim / Math.max(w, h));
+      const tw = Math.max(1, Math.round(w * scale));
+      const th = Math.max(1, Math.round(h * scale));
+
+      const canvas = document.createElement('canvas');
+      canvas.width = tw;
+      canvas.height = th;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Canvas no disponible');
+      ctx.drawImage(img, 0, 0, tw, th);
+
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
+      if (!blob) throw new Error('toBlob devolvió null');
+      return { blob, contentType: 'image/jpeg', ext: 'jpg' };
+    } catch (e) {
+      console.warn('Compresión falló, subo original', e);
+      return { blob: file, contentType: type || 'application/octet-stream', ext: (String(file.name || 'bin').split('.').pop() || 'bin') };
+    }
+  }
+
+  function abrev(txt) {
+    const raw = (txt || '').toString().trim().toUpperCase();
+    return raw.replace(/[^A-Z0-9]/g, '').slice(0, 4) || 'GEN';
+  }
+
+  function numValFromInput(id) {
+    const v = String(document.getElementById(id)?.value || '').trim();
+    if (!v) return null;
+    const n = parseFloat(v);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  async function insertConFallback(table, payload) {
+    let attempt = { ...payload };
+    let guard = 0;
+    while (true) {
+      guard++;
+      if (guard > 30) return { ok: false, error: 'Demasiados reintentos al insertar (posible schema mismatch).' };
+      const { error } = await supa.from(table).insert([attempt]);
+      if (!error) return { ok: true };
+      const msg = String((error.message || '') + ' ' + (error.details || '') + ' ' + (error.hint || '')).trim();
+      let colName = null;
+      let m = msg.match(/Could not find the '([^']+)' column/i);
+      if (m) colName = m[1];
+      if (!colName) {
+        m = msg.match(/column\s+\"?([a-zA-Z0-9_]+)\"?/i);
+        if (m) colName = m[1];
+      }
+      if (colName && colName in attempt) { delete attempt[colName]; continue; }
+      return { ok: false, error: error.message || JSON.stringify(error) };
+    }
+  }
+
+  async function updateWithFallback(table, keyCol, keyVal, payload) {
+    let attempt = { ...payload };
+    let guard = 0;
+    while (true) {
+      guard++;
+      if (guard > 30) return { ok: false, error: 'Demasiados reintentos al actualizar (posible schema mismatch).' };
+      const { error } = await supa.from(table).update(attempt).eq(keyCol, keyVal);
+      if (!error) return { ok: true };
+      const msg = String((error.message || '') + ' ' + (error.details || '') + ' ' + (error.hint || '')).trim();
+      let colName = null;
+      let m = msg.match(/Could not find the '([^']+)' column/i);
+      if (m) colName = m[1];
+      if (!colName) {
+        m = msg.match(/column\s+\"?([a-zA-Z0-9_]+)\"?/i);
+        if (m) colName = m[1];
+      }
+      if (colName && colName in attempt) { delete attempt[colName]; continue; }
+      return { ok: false, error: error.message || JSON.stringify(error) };
+    }
+  }
+
+  async function uploadFotoIfNeeded() {
+    if (!state.fotoFile) return null;
+    try {
+      const compressed = await compressImageFile(state.fotoFile);
+      if (!compressed) return null;
+      const ext = compressed.ext || 'jpg';
+      const p = `consumibles/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error } = await supa.storage.from(STORAGE_BUCKET).upload(p, compressed.blob, { upsert: true, contentType: compressed.contentType });
+      if (error) throw error;
+      const { data } = supa.storage.from(STORAGE_BUCKET).getPublicUrl(p);
+      return data?.publicUrl || null;
+    } catch (e) {
+      console.warn('No se pudo subir la foto', e);
+      return null;
+    }
+  }
+
+  function selectSecundaria(id, nombre, btn) {
+    state.secundariaId = id;
+    state.secundariaNombre = nombre;
+    document.querySelectorAll('.secundaria-btn').forEach(b => b.classList.remove('secundaria-selected'));
+    if (btn) btn.classList.add('secundaria-selected');
+
+    state.contenedorCodigo = null;
+    state.contenedorNombre = null;
+    state.contenedoresCache = [];
+    clearMaterialForm();
+
+    loadContenedores();
+  }
+
+  async function loadBodegas() {
+    try {
+      let principal = null;
+      for (const name of principalCandidates) {
+        const { data } = await supa
+          .from('inv2_bodegas_principales')
+          .select('id, nombre')
+          .eq('nombre', name)
+          .maybeSingle();
+        if (data && data.id) { principal = data; break; }
+      }
+      if (!principal) {
+        const { data } = await supa
+          .from('inv2_bodegas_principales')
+          .select('id, nombre')
+          .or('nombre.ilike.%consum%,nombre.ilike.%herramient%')
+          .limit(1);
+        if (data && data.length) principal = data[0];
+      }
+      if (!principal || !principal.id) {
+        const el = document.getElementById('principal-nombre');
+        if (el) el.textContent = '(no encontrada)';
+        return;
+      }
+      state.principalId = principal.id;
+      state.principalNombre = principal.nombre;
+      const el = document.getElementById('principal-nombre');
+      if (el) el.textContent = principal.nombre;
+
+      const { data: secundarias, error } = await supa
+        .from('inv2_bodegas_secundarias')
+        .select('id, nombre')
+        .eq('principal_id', state.principalId)
+        .eq('activa', true);
+      if (error) {
+        console.warn('Error cargando secundarias', error);
+        return;
+      }
+      const host = document.getElementById('secundarias-container');
+      if (!host) return;
+      host.innerHTML = '';
+      (secundarias || []).forEach(s => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = s.nombre;
+        btn.className = 'audiovisual-boton secundaria-btn';
+        btn.addEventListener('click', () => selectSecundaria(s.id, s.nombre, btn));
+        host.appendChild(btn);
+      });
+    } catch (e) {
+      console.warn('Error en loadBodegas', e);
+    }
+  }
+
+  async function loadContenedores() {
+    if (!state.secundariaNombre) return;
+
+    const sel = document.getElementById('contenedor-select');
+    const moverSel = document.getElementById('mover-destino');
+    sel.innerHTML = '';
+    moverSel.innerHTML = '';
+
+    const opt0 = document.createElement('option');
+    opt0.value = '';
+    opt0.textContent = 'Seleccione...';
+    sel.appendChild(opt0);
+
+    const optM0 = document.createElement('option');
+    optM0.value = '';
+    optM0.textContent = 'Destino...';
+    moverSel.appendChild(optM0);
+
+    const { data, error } = await supa
+      .from(TABLE_CATALOGO)
+      .select('*')
+      .eq('bodega_secundaria', state.secundariaNombre)
+      .eq('es_contenedor', true)
+      .order('nombre');
+
+    if (error) {
+      alert('Error cargando contenedores: ' + error.message);
+      return;
+    }
+
+    state.contenedoresCache = (data || []).filter(r => r && r.codigo);
+
+    state.contenedoresCache.forEach(r => {
+      const name = r.nombre || r.contenedor || r.codigo;
+      const o = document.createElement('option');
+      o.value = String(r.codigo);
+      o.textContent = name;
+      sel.appendChild(o);
+
+      const o2 = document.createElement('option');
+      o2.value = String(r.codigo);
+      o2.textContent = name;
+      moverSel.appendChild(o2);
+    });
+  }
+
+  async function loadMateriales() {
+    const host = document.getElementById('materiales-list');
+    host.innerHTML = '';
+    state.materialesCache = [];
+
+    if (!state.secundariaNombre || !state.contenedorCodigo) return;
+
+    // Vínculo: campos_personalizados.contenedor_codigo
+    const { data, error } = await supa
+      .from(TABLE_CATALOGO)
+      .select('*')
+      .eq('bodega_secundaria', state.secundariaNombre)
+      .eq('es_contenedor', false)
+      .contains('campos_personalizados', { contenedor_codigo: state.contenedorCodigo })
+      .order('codigo');
+
+    if (error) {
+      host.textContent = 'Error cargando materiales: ' + error.message;
+      return;
+    }
+
+    state.materialesCache = (data || []).filter(r => r && r.codigo);
+
+    state.materialesCache.forEach(r => {
+      const row = document.createElement('div');
+      row.style.display = 'flex';
+      row.style.alignItems = 'flex-start';
+      row.style.justifyContent = 'space-between';
+      row.style.gap = '10px';
+      row.style.padding = '10px';
+      row.style.border = '1px solid rgba(148,163,184,0.15)';
+      row.style.borderRadius = '10px';
+      row.style.background = 'rgba(15,23,42,0.22)';
+
+      const left = document.createElement('div');
+      left.style.display = 'flex';
+      left.style.gap = '10px';
+      left.style.alignItems = 'flex-start';
+
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.dataset.codigo = String(r.codigo);
+
+      const meta = document.createElement('div');
+      meta.innerHTML = `
+        <div style="color:#cbd5e1; font-weight:800;">${escapeHtml(r.nombre || '')}</div>
+        <div style="color:#94a3b8; font-size:12px;">${escapeHtml(r.codigo || '')}</div>
+      `;
+
+      left.appendChild(cb);
+      left.appendChild(meta);
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = 'Editar';
+      btn.className = 'audiovisual-boton';
+      btn.style.padding = '8px 10px';
+      btn.addEventListener('click', () => selectMaterial(r));
+
+      row.appendChild(left);
+      row.appendChild(btn);
+      host.appendChild(row);
+    });
+  }
+
+  function refreshDestinoMover() {
+    const sel = document.getElementById('mover-destino');
+    if (!sel) return;
+    // ya se llena en loadContenedores; aquí solo quitamos el actual
+    Array.from(sel.querySelectorAll('option')).forEach(o => {
+      if (state.contenedorCodigo && o.value && String(o.value) === String(state.contenedorCodigo)) {
+        o.disabled = true;
+      } else {
+        o.disabled = false;
+      }
+    });
+  }
+
+  function escapeHtml(str) {
+    return String(str || '').replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[s]));
+  }
+
+  function selectMaterial(row) {
+    state.materialRow = row;
+    state.materialCodigo = row.codigo;
+
+    document.getElementById('mat-codigo').value = String(row.codigo || '');
+    document.getElementById('mat-nombre').value = row.nombre || '';
+    document.getElementById('mat-tipo-uso').value = row.tipo_uso || '';
+    document.getElementById('mat-tipo-material').value = row.tipo_material || '';
+    document.getElementById('mat-marca').value = row.marca || '';
+    document.getElementById('mat-modelo').value = row.modelo || '';
+    document.getElementById('mat-unidad').value = row.unidad_medida || 'UND';
+    document.getElementById('mat-color').value = row.color || '';
+    document.getElementById('mat-hechizo').checked = !!row.es_hechizo;
+
+    // Campos extra en campos_personalizados
+    const cp = (row.campos_personalizados && typeof row.campos_personalizados === 'object') ? row.campos_personalizados : {};
+    document.getElementById('mat-notas').value = cp.notas || '';
+    document.getElementById('mat-cantidad-unidad').value = (cp.cantidad_unidad !== undefined && cp.cantidad_unidad !== null) ? String(cp.cantidad_unidad) : '';
+    document.getElementById('mat-precio').value = (cp.precio_unitario !== undefined && cp.precio_unitario !== null) ? String(cp.precio_unitario) : '';
+
+    state.fotoUrlCurrent = row.foto_url || null;
+    setPhotoPreview(state.fotoUrlCurrent);
+
+    setMaterialStatus('Material seleccionado.');
+  }
+
+  function getSelectedCodigos() {
+    return Array.from(document.querySelectorAll('#materiales-list input[type="checkbox"]'))
+      .filter(cb => cb.checked)
+      .map(cb => cb.dataset.codigo)
+      .filter(Boolean);
+  }
+
+  async function moverSeleccionados() {
+    const codigos = getSelectedCodigos();
+    if (!codigos.length) { alert('Selecciona al menos 1 material'); return; }
+
+    const destCodigo = (document.getElementById('mover-destino').value || '').trim();
+    if (!destCodigo) { alert('Selecciona un destino'); return; }
+    if (state.contenedorCodigo && String(destCodigo) === String(state.contenedorCodigo)) { alert('El destino no puede ser el mismo contenedor'); return; }
+
+    const dest = state.contenedoresCache.find(c => String(c.codigo) === String(destCodigo));
+    if (!dest) { alert('Destino inválido'); return; }
+
+    // Update por material para preservar campos_personalizados
+    for (const codigo of codigos) {
+      const row = state.materialesCache.find(r => String(r.codigo) === String(codigo));
+      const cp = (row && row.campos_personalizados && typeof row.campos_personalizados === 'object') ? { ...row.campos_personalizados } : {};
+      cp.contenedor_codigo = destCodigo;
+      cp.contenedor_nombre = dest.nombre || dest.contenedor || dest.codigo;
+      const res = await updateWithFallback(TABLE_CATALOGO, 'codigo', codigo, { campos_personalizados: cp });
+      if (!res.ok) {
+        alert('Error moviendo ' + codigo + ': ' + res.error);
+        return;
+      }
+    }
+
+    await loadMateriales();
+    alert('Movidos: ' + codigos.length);
+  }
+
+  async function sacarSeleccionados() {
+    const codigos = getSelectedCodigos();
+    if (!codigos.length) { alert('Selecciona al menos 1 material'); return; }
+
+    for (const codigo of codigos) {
+      const row = state.materialesCache.find(r => String(r.codigo) === String(codigo));
+      const cp = (row && row.campos_personalizados && typeof row.campos_personalizados === 'object') ? { ...row.campos_personalizados } : {};
+      delete cp.contenedor_codigo;
+      delete cp.contenedor_nombre;
+      const res = await updateWithFallback(TABLE_CATALOGO, 'codigo', codigo, { campos_personalizados: Object.keys(cp).length ? cp : null });
+      if (!res.ok) {
+        alert('Error sacando ' + codigo + ': ' + res.error);
+        return;
+      }
+    }
+
+    await loadMateriales();
+    alert('Sacados: ' + codigos.length);
+  }
+
+  async function guardarMaterial() {
+    if (!state.materialCodigo || !state.materialRow) { alert('Selecciona un material (Editar)'); return; }
+
+    setMaterialStatus('Guardando...');
+
+    const fotoUrl = await uploadFotoIfNeeded();
+
+    const nombre = (document.getElementById('mat-nombre').value || '').trim();
+    if (!nombre) { alert('Nombre requerido'); setMaterialStatus(''); return; }
+
+    const payload = {
+      nombre,
+      tipo_uso: (document.getElementById('mat-tipo-uso').value || '').trim() || null,
+      tipo_material: (document.getElementById('mat-tipo-material').value || '').trim() || null,
+      marca: (document.getElementById('mat-marca').value || '').trim() || null,
+      modelo: (document.getElementById('mat-modelo').value || '').trim() || null,
+      unidad_medida: (document.getElementById('mat-unidad').value || '').trim() || null,
+      color: (document.getElementById('mat-color').value || '').trim() || null,
+      es_hechizo: !!document.getElementById('mat-hechizo').checked
+    };
+
+    if (fotoUrl) payload.foto_url = fotoUrl;
+
+    // Merge campos_personalizados
+    const oldCp = (state.materialRow.campos_personalizados && typeof state.materialRow.campos_personalizados === 'object') ? { ...state.materialRow.campos_personalizados } : {};
+    const notas = (document.getElementById('mat-notas').value || '').trim();
+    if (notas) oldCp.notas = notas; else delete oldCp.notas;
+
+    const cu = numValFromInput('mat-cantidad-unidad');
+    if (cu !== null) oldCp.cantidad_unidad = cu; else delete oldCp.cantidad_unidad;
+
+    const pr = numValFromInput('mat-precio');
+    if (pr !== null) oldCp.precio_unitario = pr; else delete oldCp.precio_unitario;
+
+    // preservar vínculo contenedor
+    if (state.contenedorCodigo) {
+      oldCp.contenedor_codigo = state.contenedorCodigo;
+      oldCp.contenedor_nombre = state.contenedorNombre;
+    }
+
+    payload.campos_personalizados = Object.keys(oldCp).length ? oldCp : null;
+
+    const res = await updateWithFallback(TABLE_CATALOGO, 'codigo', state.materialCodigo, payload);
+    if (!res.ok) {
+      setMaterialStatus('Error: ' + res.error);
+      alert('Error guardando material: ' + res.error);
+      return;
+    }
+
+    setMaterialStatus('Guardado.');
+    state.fotoFile = null;
+    await loadMateriales();
+  }
+
+})();
+</script>

@@ -1,0 +1,24 @@
+﻿CODE_FILES: 8685
+SQL_FILES: 7
+USED_TABLES_OR_VIEWS_COUNT: 10
+USED_RPCS_COUNT: 0
+DEFINED_IN_SQL_COUNT: 0
+IN_SQL_NOT_IN_CODE_COUNT: 0
+
+=== USED TABLES / VIEWS (sorted) ===
+- catalogo_audiovisual
+- catalogo_consumibles
+- catalogo_hierros
+- items_solicitud_logistica
+- movimientos_bodega_audiovisual
+- movimientos_bodega_consumibles
+- movimientos_bodega_hierros
+- recetas
+- recetas_materiales
+- stock_actual_con_precio
+
+=== USED RPCs (sorted) ===
+
+=== DEFINED IN SQL (create table/view) ===
+
+=== IN SQL BUT NOT REFERENCED IN CODE (candidates) ===

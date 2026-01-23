@@ -1,0 +1,387 @@
+/* =============================================================================
+   INVENTARIO.CSS - Estilos modernos y consistentes para el módulo de Inventario
+   ============================================================================= */
+
+/* Layout Principal */
+.inventario-layout-principal {
+  display: flex;
+  gap: 24px;
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  align-items: flex-start;
+}
+
+.inventario-panel-izquierdo {
+  width: 320px;
+  flex-shrink: 0;
+}
+
+.inventario-contenedor-principal {
+  flex: 1;
+}
+
+/* Panel Izquierdo */
+.inventario-pendientes-contenedor {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.9));
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.inventario-pendientes-titulo {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 8px 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.inventario-pendientes-subtitulo {
+  font-size: 14px;
+  color: #e2e8f0;
+  margin: 0 0 20px 0;
+  line-height: 1.4;
+  opacity: 0.9;
+}
+
+/* Sección Principal */
+.inventario-section {
+  margin-top: 32px;
+  padding: 32px;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(51, 65, 85, 0.8));
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(15px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  position: relative;
+  overflow: hidden;
+}
+
+.inventario-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #f59e0b, #d97706, #b45309);
+  border-radius: 20px 20px 0 0;
+}
+
+.inventario-section-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 20px 0;
+  padding-bottom: 16px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+.inventario-section-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, #f59e0b, #d97706);
+  border-radius: 2px;
+}
+
+/* Tarjeta Principal */
+.inventario-card {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.9));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 40px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  margin-bottom: 24px;
+  backdrop-filter: blur(20px);
+  position: relative;
+  overflow: hidden;
+}
+
+.inventario-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #f59e0b, #d97706, #b45309, #92400e);
+  border-radius: 24px 24px 0 0;
+}
+
+.inventario-title {
+  font-size: 36px;
+  font-weight: 900;
+  color: #ffffff;
+  margin: 0 0 16px 0;
+  background: linear-gradient(135deg, #ffffff, #e2e8f0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  letter-spacing: -0.5px;
+}
+
+.inventario-subtitle {
+  font-size: 18px;
+  color: #cbd5e1;
+  margin: 0 0 40px 0;
+  line-height: 1.7;
+  font-weight: 400;
+  opacity: 0.9;
+}
+
+/* Layout y Secciones */
+.inventario-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.inventario-col {
+  flex: 1;
+  min-width: 200px;
+}
+
+.inventario-label {
+  display: block;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin-bottom: 8px;
+  font-size: 14px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Inputs y Selects Modernos */
+.inventario-input, .inventario-select {
+  width: 100%;
+  padding: 14px 18px;
+  border: 2px solid rgba(156, 163, 175, 0.3);
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #ffffff;
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.8), rgba(31, 41, 55, 0.6));
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  position: relative;
+  backdrop-filter: blur(10px);
+}
+
+.inventario-input:focus, .inventario-select:focus {
+  outline: none;
+  border-color: #f59e0b;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05));
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2), 0 8px 25px rgba(245, 158, 11, 0.3);
+  transform: translateY(-2px);
+}
+
+.inventario-input::placeholder {
+  color: #9ca3af;
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+.inventario-select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23e2e8f0' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 16px center;
+  background-repeat: no-repeat;
+  background-size: 18px;
+  padding-right: 48px;
+}
+
+.inventario-select:hover {
+  border-color: rgba(245, 158, 11, 0.5);
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.9), rgba(31, 41, 55, 0.7));
+}
+
+/* Tabla de Inventario */
+.inventario-table-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+  align-items: flex-start;
+}
+
+.inventario-table-col {
+  flex: 1;
+  min-width: 120px;
+}
+
+.inventario-table-col .inventario-input,
+.inventario-table-col .inventario-select {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Botones Modernos */
+.inventario-layout-principal .inventario-boton-primario {
+  background: linear-gradient(135deg, #f59e0b, #d97706, #b45309) !important;
+  color: white !important;
+  border: none !important;
+  padding: 16px 32px !important;
+  border-radius: 16px !important;
+  font-weight: 700 !important;
+  font-size: 15px !important;
+  cursor: pointer !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4) !important;
+  position: relative !important;
+  overflow: hidden !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  border: 2px solid transparent !important;
+  background-clip: padding-box !important;
+}
+
+.inventario-layout-principal .inventario-boton-primario::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: -100% !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent) !important;
+  transition: left 0.6s ease !important;
+}
+
+.inventario-layout-principal .inventario-boton-primario:hover::before {
+  left: 100% !important;
+}
+
+.inventario-layout-principal .inventario-boton-primario:hover {
+  background: linear-gradient(135deg, #d97706, #b45309, #92400e) !important;
+  transform: translateY(-4px) scale(1.05) !important;
+  box-shadow: 0 15px 35px rgba(245, 158, 11, 0.6) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.inventario-layout-principal .inventario-boton-primario:active {
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 8px 20px rgba(245, 158, 11, 0.5) !important;
+}
+
+.inventario-layout-principal .inventario-boton-secundario {
+  background: linear-gradient(135deg, rgba(75, 85, 99, 0.9), rgba(55, 65, 81, 0.8)) !important;
+  color: #e5e7eb !important;
+  border: 2px solid rgba(156, 163, 175, 0.3) !important;
+  padding: 16px 32px !important;
+  border-radius: 16px !important;
+  font-weight: 700 !important;
+  font-size: 15px !important;
+  cursor: pointer !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2) !important;
+  position: relative !important;
+  overflow: hidden !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+.inventario-layout-principal .inventario-boton-secundario::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: -100% !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent) !important;
+  transition: left 0.8s ease !important;
+}
+
+.inventario-layout-principal .inventario-boton-secundario:hover::before {
+  left: 100% !important;
+}
+
+.inventario-layout-principal .inventario-boton-secundario:hover {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.95), rgba(31, 41, 55, 0.9)) !important;
+  border-color: rgba(245, 158, 11, 0.5) !important;
+  color: #ffffff !important;
+  transform: translateY(-4px) scale(1.05) !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3) !important;
+}
+
+.inventario-layout-principal .inventario-boton-secundario:active {
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Scrollbar Personalizado */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #d97706, #b45309);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .inventario-layout-principal {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .inventario-panel-izquierdo {
+    width: 100%;
+    order: -1;
+  }
+}
+
+/* Animación de entrada */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.inventario-card, .inventario-section {
+  animation: slideInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}

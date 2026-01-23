@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Generar Orden de Compra</title>
+  <link rel="stylesheet" href="../contabilidad.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+  <div class="con-area-dinamica">
+    <div class="oc-form-wrapper">
+      <h1 class="oc-title">📝 Generar Orden de Compra</h1>
+
+      <div class="oc-layout">
+        <div class="oc-main-content">
+          <!-- Encabezado - PRIMERA FILA -->
+          <div class="oc-row">
+            <div class="oc-col">
+              <label class="oc-label">Número de Orden</label>
+              <input type="text" id="oc-numero" class="oc-input" readonly>
+            </div>
+            <div class="oc-col">
+              <label class="oc-label">Proveedor</label>
+              <select id="oc-proveedor-nombre" class="oc-select">
+                <option value="">Seleccione Proveedor...</option>
+              </select>
+            </div>
+            <div class="oc-col">
+              <label class="oc-label">RUC</label>
+              <input type="text" id="oc-proveedor-ruc" class="oc-input" placeholder="Número RUC">
+            </div>
+          </div>
+          
+          <!-- SEGUNDA FILA: Solicitado por -->
+          <div class="oc-row">
+            <div class="oc-col" style="flex: 2;">
+              <label class="oc-label">Solicitado por</label>
+              <select id="oc-solicitante" class="oc-select">
+                <option value="">Seleccione...</option>
+              </select>
+            </div>
+            <div class="oc-col" style="flex: 1;">
+              <label class="oc-label">Moneda</label>
+              <div class="oc-toggle-group">
+                <button type="button" class="oc-toggle-btn active" data-moneda="USD">USD ($)</button>
+                <button type="button" class="oc-toggle-btn" data-moneda="NIO">NIO (C$)</button>
+              </div>
+            </div>
+            <div class="oc-col" style="flex: 1;">
+              <label class="oc-label">Fecha</label>
+              <input type="date" id="oc-fecha" class="oc-input">
+            </div>
+          </div>
+
+          <!-- Tabla de materiales -->
+          <div class="oc-table-container">
+            <table class="oc-table">
+              <thead>
+                <tr>
+                  <th style="width: 45%;">Material</th>
+                  <th style="text-align: center;">Cant.</th>
+                  <th style="text-align: center;">P. Unit.</th>
+                  <th style="text-align: center;">Subtotal</th>
+                  <th style="width: 50px;"></th>
+                </tr>
+              </thead>
+              <tbody id="oc-items-body"></tbody>
+            </table>
+          </div>
+          
+          <button id="oc-btn-agregar" class="oc-btn-add" style="width: 160px;">🔍 Buscar Materiales</button>
+
+          <!-- Totales -->
+          <div class="oc-summary">
+            <div class="oc-total-row">Subtotal: <span class="moneda-simbolo">$</span><span id="oc-subtotal-bruto">0.00</span></div>
+            <div class="oc-total-row">
+              <label class="oc-label" style="margin: 0; font-weight: normal;">Descuento:</label>
+              <input type="number" id="oc-descuento" class="oc-input" style="width: 100px; text-align: right;" value="0.00" min="0" step="0.01">
+            </div>
+            <div class="oc-total-row">
+              <label class="oc-label" style="margin: 0; font-weight: normal;">¿Aplicar IVA (15%)?</label>
+              <div class="oc-toggle-group">
+                <button type="button" class="oc-toggle-btn active" data-iva="true">SI</button>
+                <button type="button" class="oc-toggle-btn" data-iva="false">NO</button>
+              </div>
+              <span style="font-weight: bold; min-width: 80px; text-align: right;">
+                <span class="moneda-simbolo">$</span><span id="oc-iva-valor">0.00</span>
+              </span>
+            </div>
+            <div class="oc-total-big">
+              TOTAL: <span class="moneda-simbolo">$</span><span id="oc-total">0.00</span>
+            </div>
+          </div>
+
+          <button id="oc-btn-guardar" class="oc-btn-save">Guardar e Imprimir</button>
+        </div>
+
+        <!-- Panel de órdenes -->
+        <div class="oc-ordenes-panel">
+          <div class="oc-ordenes-header">
+            <h3 class="oc-ordenes-title">Órdenes de Compra</h3>
+            <button id="oc-refresh-list" class="oc-refresh-btn">Actualizar</button>
+          </div>
+          <div id="oc-side-list">
+            <div class="oc-empty-list">No hay órdenes registradas aún.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de impresión -->
+  <div id="modal-imprimir" class="modal-oc">
+    <div class="modal-content-oc">
+      <h2>✅ Orden Registrada</h2>
+      <p>¿Desea descargar el documento PDF ahora?</p>
+      <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+        <button id="btn-confirmar-print" class="btn-pdf-naranja">Descargar PDF</button>
+        <button id="btn-cerrar-modal" class="btn-cerrar-modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de búsqueda de materiales -->
+  <div id="oc-modal-material" class="oc-modal-material-overlay" style="display: none;">
+    <div class="oc-modal-material-content">
+      <div class="oc-modal-material-header">
+        <h2>Agregar Materiales a la Orden</h2>
+        <button id="oc-modal-material-close" class="oc-modal-material-close">&times;</button>
+      </div>
+      <div class="oc-modal-material-body">
+        <div class="oc-modal-material-filtros">
+          <div class="oc-modal-material-busqueda">
+            <input type="text" id="oc-modal-material-search" placeholder="Buscar por nombre, código o descripción...">
+            <span class="oc-modal-material-busqueda-icon">🔍</span>
+          </div>
+          <div class="oc-modal-material-filtro-bodega">
+            <select id="oc-modal-material-bodega">
+              <option value="">Todas las bodegas</option>
+            </select>
+          </div>
+        </div>
+        <div class="oc-modal-material-resultados">
+          <ul id="oc-modal-material-lista" class="oc-modal-material-lista">
+            <li class="oc-modal-material-no-resultados">Escriba para buscar materiales...</li>
+          </ul>
+        </div>
+      </div>
+      <div class="oc-modal-material-footer">
+        <div style="font-size: 12px; color: #9ca3af; flex: 1;">
+          Haz clic en los materiales para agregarlos automáticamente
+        </div>
+        <button id="oc-modal-material-cerrar" class="oc-modal-material-btn oc-modal-material-btn-cancelar">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../../../src/config/supabaseClient.js"></script>
+
+  <script>
+    setTimeout(() => {
+      // =============================================================================
+      // 🔹 CARGA SEGURA DE LIBRERÍAS EXTERNAS
+      // =============================================================================
+      function loadScriptOnce(src, globalCheck) {
+        return new Promise((resolve, reject) => {
+          if (globalCheck && typeof globalCheck === 'function' && globalCheck()) return resolve();
+          if (document.querySelector(`script[data-dynamic-src="${src}"]`)) {
+            const existing = document.querySelector(`script[data-dynamic-src="${src}"]`);
+            if (existing.getAttribute('data-loaded') === 'true') return resolve();
+            existing.addEventListener('load', () => resolve());
+            existing.addEventListener('error', (e) => reject(e));
+            return;
+          }
+          const s = document.createElement('script');
+          s.src = src;
+          s.async = true;
+          s.setAttribute('data-dynamic-src', src);
+          s.addEventListener('load', () => { s.setAttribute('data-loaded', 'true'); resolve(); });
+          s.addEventListener('error', (e) => reject(e));
+          document.head.appendChild(s);
+        });
+      }
+
+      // =============================================================================
+      // 🔹 VARIABLES GLOBALES
+      // =============================================================================
+      let materiales = [];
+      let empleados = [];
+      let proveedoresHistorial = [];
+      let proveedores = [];
+      let itemsOrden = [];
+      let moneda = "USD";
+      let aplicaIVA = true;
+      let docData = null;
+      let saving = false;
+      let editingId = null; // when not null we are editing an existing orden
+      let editingEstado = null;
+
+      // =============================================================================
+      // 🔹 FUNCIONES DE UTILIDAD
+      // =============================================================================
+      function fmt(n) {
+        const num = Number(n) || 0;
+        return num.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+
+      async function getNextOCNumber() {
+        try {
+          const { data, error } = await window.supabaseClient
+            .from('ordenes_compra')
+            .select('numero', { count: 'exact' })
+            .order('numero', { ascending: false })
+            .limit(1);
+
+          if (error) throw error;
+          if (!data || data.length === 0) return 'OC-0001';
+
+          const ultimo = data[0].numero;
+          const match = ultimo.match(/OC-(\d+)$/);
+          if (match) {
+            const num = parseInt(match[1], 10) + 1;
+            return `OC-${String(num).padStart(4, '0')}`;
+          }
+          return 'OC-0001';
+        } catch (e) {
+          console.warn('Error al obtener número de OC:', e);
+          return 'OC-0001';
+        }
+      }
+
+      function showNotification(msg, timeout = 3000) {
+        const elId = 'oc-notify';
+        let el = document.getElementById(elId);
+        if (!el) {
+          el = document.createElement('div');
+          el.id = elId;
+          el.style.cssText = `
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            background: #0f172a;
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: 8px;
+            z-index: 1300;
+          `;
+          document.body.appendChild(el);
+        }
+        el.textContent = msg;
+        el.style.display = 'block';
+        clearTimeout(el._t);
+        el._t = setTimeout(() => { el.style.display = 'none'; }, timeout);
+      }
+
+      // =============================================================================
+      // 🔹 CARGAR DATOS DE SUPABASE
+      // =============================================================================
+      async function cargarDatos() {
+        try {
+          // Materiales
+          const { data: mats, error: errMats } = await window.supabaseClient
+            .from('catalogo')
+            .select('codigo, nombre, bodega_principal')
+            .eq('es_contenedor', false)
+            .order('nombre', { ascending: true });
+          if (errMats) throw errMats;
+          materiales = mats || [];
+          // Renombrar bodega_principal a bodega para consistencia
+          materiales = materiales.map(m => ({ ...m, bodega: m.bodega_principal }));
+
+          // Empleados
+          const { data: emps, error: errEmps } = await window.supabaseClient
+            .from('empleados')
+            .select('nombres, apellidos')
+            .order('nombres', { ascending: true });
+          if (errEmps) throw errEmps;
+          empleados = emps || [];
+
+          // Proveedores (histórico)
+          const { data: ocList, error: errOC } = await window.supabaseClient
+            .from('ordenes_compra')
+            .select('proveedor, ruc')
+            .order('creado_en', { ascending: false });
+          if (errOC) throw errOC;
+          const proveedorSet = new Set();
+          proveedoresHistorial = ocList
+            .filter(oc => oc.proveedor && !proveedorSet.has(oc.proveedor) && (proveedorSet.add(oc.proveedor) || true))
+            .map(oc => ({ nombre: oc.proveedor, ruc: oc.ruc }));
+
+          // Proveedores de tabla proveedores
+          const { data: provs, error: errProvs } = await window.supabaseClient
+            .from('proveedores')
+            .select('id, nombre, ruc_id')
+            .eq('estado', 'activo')
+            .order('nombre', { ascending: true });
+          if (errProvs) throw errProvs;
+          proveedores = provs || [];
+
+          cargarBodegasDisponibles();
+          renderOrdenesList();
+          renderEmpleados();
+          renderProveedoresSelect();
+        } catch (err) {
+          console.error('Error al cargar datos:', err);
+          alert('❌ Error al cargar datos: ' + err.message);
+        }
+      }
+
+      function renderEmpleados() {
+        const sel = document.getElementById('oc-solicitante');
+        sel.innerHTML = '<option value="">Seleccione...</option>';
+        empleados.forEach(e => {
+          const nombre = `${e.nombres || ''} ${e.apellidos || ''}`.trim();
+          if (nombre) {
+            const opt = document.createElement('option');
+            opt.value = nombre;
+            opt.textContent = nombre;
+            sel.appendChild(opt);
+          }
+        });
+      }
+
+      function renderProveedoresSelect() {
+        const selectProveedor = document.getElementById('oc-proveedor-nombre');
+        selectProveedor.innerHTML = '<option value="">Seleccione Proveedor...</option>';
+        proveedores.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.nombre;
+          opt.textContent = p.nombre;
+          opt.dataset.ruc = p.ruc_id || '';
+          selectProveedor.appendChild(opt);
+        });
+
+        selectProveedor.addEventListener('change', () => {
+          const selectedOption = selectProveedor.options[selectProveedor.selectedIndex];
+          const ruc = selectedOption ? selectedOption.dataset.ruc : '';
+          document.getElementById('oc-proveedor-ruc').value = ruc;
+        });
+      }
+
+      // =============================================================================
+      // 🔹 FUNCIONES DE RENDER Y CÁLCULO
+      // =============================================================================
+      async function initOC() {
+        const numero = await getNextOCNumber();
+        document.getElementById('oc-numero').value = numero;
+        document.getElementById('oc-fecha').value = new Date().toISOString().split('T')[0];
+        itemsOrden = [];
+        editingId = null;
+        editingEstado = null;
+        // No agregar fila inicial - ahora se agregan desde el modal
+      }
+
+      function agregarFila() {
+        itemsOrden.push({ codigo: "", nombre: "", cant: 1, precio: 0 });
+        render();
+      }
+
+      function setVal(index, key, value) {
+        if (!itemsOrden[index]) return;
+        if (key === 'codigo') {
+          const mat = materiales.find(m => m.codigo === value);
+          itemsOrden[index].codigo = value;
+          itemsOrden[index].nombre = mat ? mat.nombre : "";
+          render();
+          return;
+        } else {
+          itemsOrden[index][key] = parseFloat(value) || 0;
+          const rowEl = document.getElementById('oc-items-body').children[index];
+          if (rowEl) {
+            const subCell = rowEl.querySelector('.oc-subtotal-cell');
+            const lSub = (itemsOrden[index].cant || 0) * (itemsOrden[index].precio || 0);
+            if (subCell) subCell.textContent = lSub.toFixed(2);
+          }
+          recalcTotals();
+        }
+      }
+
+      let materialesFiltrados = [];
+      let bodegasDisponibles = [];
+      let filaSeleccionadaIndex = null;
+
+      function render() {
+        const tbody = document.getElementById('oc-items-body');
+        tbody.innerHTML = "";
+        let subtotal = 0;
+
+        if (itemsOrden.length === 0) {
+          // Mostrar mensaje cuando no hay materiales
+          const emptyRow = document.createElement('tr');
+          emptyRow.innerHTML = `
+            <td colspan="5" style="text-align: center; padding: 40px; color: #9ca3af; font-style: italic;">
+              No hay materiales en la orden.<br>
+              Use el botón "🔍 Buscar Materiales" para agregar el primero.
+            </td>
+          `;
+          tbody.appendChild(emptyRow);
+          recalcTotals(0);
+          return;
+        }
+
+        itemsOrden.forEach((item, index) => {
+          const lSub = item.cant * item.precio;
+          subtotal += lSub;
+
+          const materialSeleccionado = materiales.find(m => m.codigo === item.codigo);
+          const nombreMaterial = materialSeleccionado ? `${materialSeleccionado.codigo} - ${materialSeleccionado.nombre}` : 'Seleccionar material...';
+
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>
+              <button class="oc-btn-seleccionar-material" data-index="${index}" style="width: 100%; padding: 8px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 4px; color: var(--input-text); text-align: left; cursor: pointer; font-size: 13px;">
+                ${nombreMaterial}
+              </button>
+            </td>
+            <td><input type="number" class="input-cant" min="1" value="${item.cant}"></td>
+            <td><input type="number" class="input-precio" min="0" step="0.01" value="${item.precio}"></td>
+            <td class="oc-subtotal-cell" style="text-align:center; font-weight:bold; color:var(--accent)">${lSub.toFixed(2)}</td>
+            <td><button class="oc-remove-btn" data-index="${index}">❌</button></td>
+          `;
+
+          const selectBtn = row.querySelector('.oc-btn-seleccionar-material');
+          selectBtn.addEventListener('click', () => abrirModalMaterial(index));
+
+          const cantInput = row.querySelector('.input-cant');
+          cantInput.addEventListener('input', (e) => setVal(index, 'cant', e.target.value));
+
+          const precioInput = row.querySelector('.input-precio');
+          precioInput.addEventListener('input', (e) => setVal(index, 'precio', e.target.value));
+
+          const removeBtn = row.querySelector('.oc-remove-btn');
+          removeBtn.addEventListener('click', () => {
+            itemsOrden.splice(index, 1);
+            render();
+          });
+
+          tbody.appendChild(row);
+        });
+
+        recalcTotals(subtotal);
+      }
+
+      function recalcTotals(currentSubtotal = null) {
+        let subtotal = currentSubtotal;
+        if (subtotal === null) {
+          subtotal = itemsOrden.reduce((acc, it) => acc + ((parseFloat(it.cant) || 0) * (parseFloat(it.precio) || 0)), 0);
+        }
+        const desc = parseFloat(document.getElementById('oc-descuento').value) || 0;
+        const neto = Math.max(0, subtotal - desc);
+        const iva = aplicaIVA ? neto * 0.15 : 0;
+        const total = neto + iva;
+        const symbol = moneda === "USD" ? "$" : "C$";
+
+        document.getElementById('oc-subtotal-bruto').textContent = subtotal.toFixed(2);
+        document.getElementById('oc-iva-valor').textContent = iva.toFixed(2);
+        document.getElementById('oc-total').textContent = total.toFixed(2);
+        document.querySelectorAll('.moneda-simbolo').forEach(s => s.textContent = symbol);
+      }
+
+      // =============================================================================
+      // 🔹 FUNCIONES DEL MODAL DE MATERIALES
+      // =============================================================================
+      function abrirModalMaterial(index = null) {
+        filaSeleccionadaIndex = index; // Puede ser null para agregar múltiples
+        document.getElementById('oc-modal-material').style.display = 'flex';
+
+        // Cambiar el título e instrucciones según el contexto
+        const titulo = document.querySelector('.oc-modal-material-header h2');
+        const instrucciones = document.querySelector('.oc-modal-material-footer div');
+
+        if (filaSeleccionadaIndex !== null) {
+          titulo.textContent = 'Seleccionar Material para Reemplazar';
+          instrucciones.textContent = 'Selecciona el material que reemplazará al actual';
+        } else {
+          titulo.textContent = 'Agregar Materiales a la Orden';
+          instrucciones.textContent = 'Haz clic en los materiales para agregarlos automáticamente';
+        }
+
+        document.getElementById('oc-modal-material-search').value = '';
+        document.getElementById('oc-modal-material-bodega').value = '';
+        filtrarMateriales();
+        document.getElementById('oc-modal-material-search').focus();
+      }
+
+      function cerrarModalMaterial() {
+        document.getElementById('oc-modal-material').style.display = 'none';
+        filaSeleccionadaIndex = null;
+      }
+
+      function filtrarMateriales() {
+        const searchTerm = document.getElementById('oc-modal-material-search').value.toLowerCase();
+        const bodegaFilter = document.getElementById('oc-modal-material-bodega').value;
+
+        materialesFiltrados = materiales.filter(material => {
+          const matchesSearch = !searchTerm ||
+            material.nombre.toLowerCase().includes(searchTerm) ||
+            material.codigo.toLowerCase().includes(searchTerm);
+
+          const matchesBodega = !bodegaFilter || material.bodega === bodegaFilter;
+
+          return matchesSearch && matchesBodega;
+        });
+
+        renderMaterialesLista();
+      }
+
+      function renderMaterialesLista() {
+        const lista = document.getElementById('oc-modal-material-lista');
+        lista.innerHTML = '';
+
+        if (materialesFiltrados.length === 0) {
+          lista.innerHTML = '<li class="oc-modal-material-no-resultados">No se encontraron materiales...</li>';
+          return;
+        }
+
+        materialesFiltrados.forEach(material => {
+          const li = document.createElement('li');
+          li.className = 'oc-modal-material-item';
+          li.innerHTML = `
+            <div class="oc-modal-material-item-content">
+              <div class="oc-modal-material-item-info">
+                <h4>${material.codigo} - ${material.nombre}</h4>
+                <p>Código: ${material.codigo}</p>
+              </div>
+              <div class="oc-modal-material-item-bodega">${material.bodega || 'Sin bodega'}</div>
+            </div>
+          `;
+          li.addEventListener('click', (e) => {
+            agregarMaterialDesdeModal(material);
+            // Agregar clase selected temporal
+            document.querySelectorAll('.oc-modal-material-item').forEach(item => item.classList.remove('selected'));
+            const clickedItem = e.currentTarget;
+            clickedItem.classList.add('selected');
+            // Remover selección después de un breve delay
+            setTimeout(() => {
+              if (clickedItem && clickedItem.classList) {
+                clickedItem.classList.remove('selected');
+              }
+            }, 300);
+          });
+          lista.appendChild(li);
+        });
+      }
+
+      function agregarMaterialDesdeModal(material) {
+        // Si se abrió el modal desde una fila específica, reemplazar ese material
+        if (filaSeleccionadaIndex !== null) {
+          // Verificar si el material ya existe en otra fila (excluyendo la fila actual)
+          const materialExistente = itemsOrden.find((item, idx) => idx !== filaSeleccionadaIndex && item.codigo === material.codigo);
+          if (materialExistente) {
+            showNotification(`El material "${material.nombre}" ya está en la orden`, 2000);
+            cerrarModalMaterial();
+            return;
+          }
+
+          // Reemplazar el material en la fila seleccionada
+          setVal(filaSeleccionadaIndex, 'codigo', material.codigo);
+          showNotification(`Material "${material.nombre}" actualizado en la orden`);
+          cerrarModalMaterial();
+          return;
+        }
+
+        // Si no hay fila seleccionada, agregar nuevo material (desde el botón principal)
+        // Verificar si el material ya existe en la orden
+        const materialExistente = itemsOrden.find(item => item.codigo === material.codigo);
+        if (materialExistente) {
+          showNotification(`El material "${material.nombre}" ya está en la orden`, 2000);
+          return;
+        }
+
+        // Agregar nueva fila con el material seleccionado
+        itemsOrden.push({
+          codigo: material.codigo,
+          nombre: material.nombre,
+          cant: 1,
+          precio: 0
+        });
+        render();
+        showNotification(`Material "${material.nombre}" agregado a la orden`);
+      }
+
+      function seleccionarMaterial(material) {
+        if (filaSeleccionadaIndex !== null) {
+          setVal(filaSeleccionadaIndex, 'codigo', material.codigo);
+          document.getElementById('oc-modal-material-seleccionar').disabled = false;
+        }
+      }
+
+      function confirmarSeleccionMaterial() {
+        cerrarModalMaterial();
+      }
+
+      function cargarBodegasDisponibles() {
+        const bodegasSet = new Set();
+        materiales.forEach(material => {
+          if (material.bodega) {
+            bodegasSet.add(material.bodega);
+          }
+        });
+        bodegasDisponibles = Array.from(bodegasSet).sort();
+
+        const selectBodega = document.getElementById('oc-modal-material-bodega');
+        selectBodega.innerHTML = '<option value="">Todas las bodegas</option>';
+        bodegasDisponibles.forEach(bodega => {
+          const option = document.createElement('option');
+          option.value = bodega;
+          option.textContent = bodega;
+          selectBodega.appendChild(option);
+        });
+      }
+
+      // =============================================================================
+      // 🔹 GUARDAR EN SUPABASE
+      // =============================================================================
+      async function guardarOrden() {
+        // ... (misma lógica de validación y guardado que antes, usando window.supabaseClient) ...
+        const prov = document.getElementById('oc-proveedor-nombre').value.trim();
+        const solicitadoPor = document.getElementById('oc-solicitante').value.trim();
+        const fechaVal = document.getElementById('oc-fecha').value.trim();
+
+        const missing = [];
+        if (!prov) missing.push('Proveedor');
+        if (!solicitadoPor) missing.push('Solicitado por');
+        if (!fechaVal) missing.push('Fecha');
+        else {
+          const fechaObj = new Date(fechaVal);
+          if (isNaN(fechaObj.getTime())) missing.push('Fecha inválida');
+        }
+        const hasValidItem = itemsOrden.some(it => it.codigo && (parseFloat(it.cant) > 0));
+        if (!hasValidItem) missing.push('Al menos un ítem con material y cantidad > 0');
+        if (missing.length) {
+          alert('No se puede guardar. Faltan: ' + missing.join(', '));
+          return;
+        }
+
+        saving = true;
+        const btn = document.getElementById('oc-btn-guardar');
+        const prevText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'Guardando...';
+
+        try {
+          let numeroActual = document.getElementById('oc-numero').value;
+          if (!numeroActual || numeroActual === 'OC-0000') {
+            numeroActual = await getNextOCNumber();
+            document.getElementById('oc-numero').value = numeroActual;
+          }
+
+          let targetId = editingId;
+
+          if (editingId) {
+            const { error: updErr } = await window.supabaseClient
+              .from('ordenes_compra')
+              .update({
+                numero: numeroActual,
+                proveedor: prov,
+                ruc: document.getElementById('oc-proveedor-ruc').value,
+                solicitado_por: solicitadoPor,
+                fecha: fechaVal,
+                moneda: moneda,
+                subtotal: parseFloat(document.getElementById('oc-subtotal-bruto').textContent) || 0,
+                descuento: parseFloat(document.getElementById('oc-descuento').value) || 0,
+                iva: parseFloat(document.getElementById('oc-iva-valor').textContent) || 0,
+                total: parseFloat(document.getElementById('oc-total').textContent) || 0,
+                estado: editingEstado || 'pendiente'
+              })
+              .eq('id', editingId);
+            if (updErr) throw updErr;
+          } else {
+            const { data: ordenData, error: ordenError } = await window.supabaseClient
+              .from('ordenes_compra')
+              .insert([{
+                numero: numeroActual,
+                proveedor: prov,
+                ruc: document.getElementById('oc-proveedor-ruc').value,
+                solicitado_por: solicitadoPor,
+                fecha: fechaVal,
+                moneda: moneda,
+                subtotal: parseFloat(document.getElementById('oc-subtotal-bruto').textContent) || 0,
+                descuento: parseFloat(document.getElementById('oc-descuento').value) || 0,
+                iva: parseFloat(document.getElementById('oc-iva-valor').textContent) || 0,
+                total: parseFloat(document.getElementById('oc-total').textContent) || 0,
+                estado: 'pendiente'
+              }])
+              .select('id');
+
+            if (ordenError) throw ordenError;
+            targetId = ordenData[0].id;
+          }
+
+          const items = itemsOrden
+            .filter(it => it.codigo && (it.cant > 0))
+            .map(it => ({
+              orden_compra_id: targetId,
+              material_codigo: it.codigo,
+              cantidad: parseFloat(it.cant) || 0,
+              precio_unitario: parseFloat(it.precio) || 0,
+              subtotal: (parseFloat(it.cant) || 0) * (parseFloat(it.precio) || 0)
+            }));
+
+          if (items.length > 0) {
+            if (editingId) {
+              await window.supabaseClient
+                .from('items_orden_compra')
+                .delete()
+                .eq('orden_compra_id', editingId);
+            }
+
+            const { error: itemsError } = await window.supabaseClient
+              .from('items_orden_compra')
+              .insert(items);
+            if (itemsError) throw itemsError;
+          }
+
+          docData = {
+            numero: numeroActual,
+            proveedor: prov,
+            ruc: document.getElementById('oc-proveedor-ruc').value,
+            solicitadoPor: solicitadoPor,
+            fecha: fechaVal,
+            simboloMoneda: moneda === "USD" ? "$" : "C$",
+            items: itemsOrden.filter(it => it.codigo).map(it => ({
+              codigo: it.codigo,
+              nombre: it.nombre,
+              cantidad: it.cant,
+              precioUnitario: it.precio
+            })),
+            subtotal: parseFloat(document.getElementById('oc-subtotal-bruto').textContent) || 0,
+            descuento: parseFloat(document.getElementById('oc-descuento').value) || 0,
+            iva: parseFloat(document.getElementById('oc-iva-valor').textContent) || 0,
+            total: parseFloat(document.getElementById('oc-total').textContent) || 0
+          };
+
+          if (!proveedoresHistorial.some(p => p.nombre === prov)) {
+            proveedoresHistorial.unshift({ nombre: prov, ruc: docData.ruc });
+            renderProveedoresSelect();
+          }
+
+          document.getElementById('modal-imprimir').style.display = 'flex';
+          renderOrdenesList();
+
+        } catch (e) {
+          console.error('Error guardando orden:', e);
+          alert('Error al guardar la orden: ' + (e.message || e));
+        } finally {
+          saving = false;
+          btn.disabled = false;
+          btn.textContent = prevText;
+        }
+      }
+
+      // =============================================================================
+// 🔹 EXPORTACIÓN PDF (CON ESTILO CORPORATIVO Y LOGO)
+// =============================================================================
+async function generarOCPDF() {
+  if (!docData) {
+    alert('No hay datos de la orden para imprimir.');
+    return;
+  }
+
+  try {
+    await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js', () => typeof window.html2pdf !== 'undefined');
+    
+    const cont = document.createElement('div');
+    cont.style.cssText = `
+      padding: 24px;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: white;
+      color: #1e293b;
+      max-width: 800px;
+      margin: 0 auto;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      border-radius: 8px;
+    `;
+    
+    const symbol = docData.simboloMoneda || '$';
+    const rows = (docData.items || []).map(it => {
+      const qty = Number(it.cantidad) || 0;
+      const pu = Number(it.precioUnitario) || 0;
+      const st = qty * pu;
+      return `
+        <tr>
+          <td style="padding:10px; text-align:center; border-bottom:1px solid #e2e8f0;">${qty}</td>
+          <td style="padding:10px; border-bottom:1px solid #e2e8f0;">${it.nombre || ''}</td>
+          <td style="padding:10px; text-align:right; border-bottom:1px solid #e2e8f0;">${symbol} ${fmt(pu)}</td>
+          <td style="padding:10px; text-align:right; font-weight:600; border-bottom:1px solid #e2e8f0;">${symbol} ${fmt(st)}</td>
+        </tr>
+      `;
+    }).join('');
+
+    cont.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 3px solid #2b6cb0;">
+        <div>
+          <img src="../desktop/assets/logo.png" alt="Logo Absolute" style="height: 50px; margin-bottom: 8px;">
+          <h1 style="margin: 0; color: #1e3a8a; font-size: 24px; font-weight: 800;">Orden de Compra</h1>
+          <p style="margin: 4px 0 0 0; color: #4b5563; font-size: 13px;">Documentación Interna – Absolute</p>
+        </div>
+        <div style="text-align: right; background: #dbeafe; padding: 12px; border-radius: 8px; border: 2px solid #93c5fd;">
+          <div style="font-size: 11px; color: #1e40af; text-transform: uppercase; letter-spacing: 0.5px;">NÚMERO</div>
+          <div style="font-size: 20px; font-weight: 800; color: #1e40af; letter-spacing: 1px;">${docData.numero}</div>
+        </div>
+      </div>
+
+      <div style="background: #f8fafc; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-size: 13px;">
+          <div>
+            <div style="color: #4b5563; margin-bottom: 4px; font-weight: 600;">Proveedor</div>
+            <div style="color: #1e293b; font-weight: 600;">${docData.proveedor || '—'}</div>
+          </div>
+          <div>
+            <div style="color: #4b5563; margin-bottom: 4px; font-weight: 600;">RUC</div>
+            <div style="color: #1e293b; font-weight: 600;">${docData.ruc || '—'}</div>
+          </div>
+          <div>
+            <div style="color: #4b5563; margin-bottom: 4px; font-weight: 600;">Solicitado por</div>
+            <div style="color: #1e293b; font-weight: 600;">${docData.solicitadoPor || '—'}</div>
+          </div>
+          <div>
+            <div style="color: #4b5563; margin-bottom: 4px; font-weight: 600;">Fecha</div>
+            <div style="color: #1e293b; font-weight: 600;">${docData.fecha || '—'}</div>
+          </div>
+        </div>
+      </div>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 24px;">
+        <thead>
+          <tr style="background: #2b6cb0; color: white;">
+            <th style="padding: 10px; text-align: center;">Cant.</th>
+            <th style="padding: 10px; text-align: left;">Descripción</th>
+            <th style="padding: 10px; text-align: right;">P. Unit.</th>
+            <th style="padding: 10px; text-align: right;">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+        </tbody>
+      </table>
+
+      <div style="display: flex; justify-content: flex-end; gap: 24px;">
+        <div style="text-align: right; font-size: 13px;">
+          <div style="margin-bottom: 8px; color: #4b5563;">Subtotal</div>
+          <div style="margin-bottom: 8px; color: #4b5563;">Descuento</div>
+          <div style="margin-bottom: 8px; color: #4b5563;">IVA (15%)</div>
+          <div style="font-size: 16px; font-weight: 800; color: #1e40af; padding-top: 8px; border-top: 2px solid #cbd5e1;">Total</div>
+        </div>
+        <div style="text-align: right; font-size: 13px; font-weight: 600;">
+          <div style="margin-bottom: 8px;">${symbol} ${fmt(docData.subtotal)}</div>
+          <div style="margin-bottom: 8px;">${symbol} ${fmt(docData.descuento)}</div>
+          <div style="margin-bottom: 8px;">${symbol} ${fmt(docData.iva)}</div>
+          <div style="font-size: 16px; font-weight: 800; color: #1e40af; padding-top: 8px; border-top: 2px solid #cbd5e1;">${symbol} ${fmt(docData.total)}</div>
+        </div>
+      </div>
+
+      <div style="margin-top: 32px; display: flex; justify-content: space-between; font-size: 12px; color: #64748b; padding-top: 16px; border-top: 1px dashed #e2e8f0;">
+        <div>
+          <div style="font-weight: 600; color: #1e40af;">Aprobado por Contabilidad</div>
+          <div style="margin-top: 30px; border-top: 1px solid #94a3b8; padding-top: 4px;">Firma</div>
+        </div>
+        <div>
+          <div style="font-weight: 600; color: #1e40af;">Recibido por Proveedor</div>
+          <div style="margin-top: 30px; border-top: 1px solid #94a3b8; padding-top: 4px;">Firma y sello</div>
+        </div>
+      </div>
+    `;
+
+    window.html2pdf()
+      .set({
+        margin: [15, 15, 15, 15],
+        filename: `OC_${docData.numero}.pdf`,
+        html2canvas: { 
+          scale: 2, 
+          useCORS: true,
+          backgroundColor: "#ffffff"
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
+          orientation: 'portrait' 
+        }
+      })
+      .from(cont)
+      .save();
+  } catch (err) {
+    console.error('Error al generar PDF:', err);
+    alert('No se pudo generar el PDF: ' + err.message);
+  }
+}
+      // =============================================================================
+      // 🔹 EDITAR ORDEN EXISTENTE
+      // =============================================================================
+      async function cargarOrdenParaEdicion(numero) {
+        try {
+          const { data: orden, error: ordErr } = await window.supabaseClient
+            .from('ordenes_compra')
+            .select('*')
+            .eq('numero', numero)
+            .single();
+          if (ordErr) throw ordErr;
+
+          const { data: items, error: itemsErr } = await window.supabaseClient
+            .from('items_orden_compra')
+            .select('material_codigo, cantidad, precio_unitario')
+            .eq('orden_compra_id', orden.id);
+          if (itemsErr) throw itemsErr;
+
+          editingId = orden.id;
+          editingEstado = orden.estado;
+
+          document.getElementById('oc-numero').value = orden.numero;
+          document.getElementById('oc-proveedor-nombre').value = orden.proveedor || '';
+          document.getElementById('oc-proveedor-ruc').value = orden.ruc || '';
+          document.getElementById('oc-solicitante').value = orden.solicitado_por || '';
+          if (!document.getElementById('oc-solicitante').value && orden.solicitado_por) {
+            const opt = document.createElement('option');
+            opt.value = orden.solicitado_por;
+            opt.textContent = orden.solicitado_por;
+            document.getElementById('oc-solicitante').appendChild(opt);
+            document.getElementById('oc-solicitante').value = orden.solicitado_por;
+          }
+          document.getElementById('oc-fecha').value = orden.fecha || new Date().toISOString().split('T')[0];
+
+          moneda = (orden.moneda || 'USD').toUpperCase();
+          document.querySelectorAll('[data-moneda]').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.moneda === moneda);
+          });
+
+          aplicaIVA = (orden.iva || 0) > 0;
+          document.querySelectorAll('[data-iva]').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.iva === (aplicaIVA ? 'true' : 'false'));
+          });
+
+          document.getElementById('oc-descuento').value = orden.descuento || 0;
+
+          itemsOrden = (items || []).map(it => {
+            const mat = materiales.find(m => m.codigo === it.material_codigo);
+            return {
+              codigo: it.material_codigo,
+              nombre: mat ? mat.nombre : '',
+              cant: it.cantidad,
+              precio: it.precio_unitario
+            };
+          });
+
+          render();
+          recalcTotals();
+          showNotification(`Editando ${orden.numero}`);
+        } catch (err) {
+          console.error('Error cargando orden:', err);
+          alert('No se pudo cargar la orden para edición: ' + (err.message || err));
+        }
+      }
+
+      // =============================================================================
+      // 🔹 LISTA DE ÓRDENES
+      // =============================================================================
+      async function renderOrdenesList() {
+        const container = document.getElementById('oc-side-list');
+        try {
+          const { data, error } = await window.supabaseClient
+            .from('ordenes_compra')
+            .select('*')
+            .order('creado_en', { ascending: false });
+
+          if (error) throw error;
+          if (!data || data.length === 0) {
+            container.innerHTML = '<div class="oc-empty-list">No hay órdenes registradas aún.</div>';
+            return;
+          }
+
+          const html = data.map(o => {
+            const estadoClass = o.estado === 'ingresada' ? '' : 'oc-orden-estado-pendiente';
+            const estadoText = o.estado === 'ingresada' ? 'Ingresada' : (o.estado || 'Pendiente');
+            const bloqueado = ['ingresada', 'aprobada', 'registrada'].includes((o.estado || '').toLowerCase());
+            return `
+              <div class="oc-orden-item">
+                <div class="oc-orden-info">
+                  <strong>${o.numero}</strong> — ${o.proveedor || 'Desconocido'}
+                </div>
+                <div class="oc-orden-actions">
+                  <span class="oc-orden-estado ${estadoClass}">${estadoText}</span>
+                  ${bloqueado ? '' : `<button class="oc-orden-btn oc-orden-edit" data-numero="${o.numero}">Editar</button>`}
+                  <button class="oc-orden-btn oc-orden-delete" data-numero="${o.numero}">Eliminar</button>
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          container.innerHTML = html;
+
+          container.querySelectorAll('.oc-orden-delete').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+              const numero = e.currentTarget.dataset.numero;
+              if (!confirm(`¿Eliminar orden ${numero}?`)) return;
+              try {
+                // Primero eliminar ítems
+                const { data: ordenes } = await window.supabaseClient
+                  .from('ordenes_compra')
+                  .select('id')
+                  .eq('numero', numero);
+
+                if (ordenes.length > 0) {
+                  await window.supabaseClient
+                    .from('items_orden_compra')
+                    .delete()
+                    .eq('orden_compra_id', ordenes[0].id);
+                }
+
+                // Luego eliminar la orden
+                await window.supabaseClient
+                  .from('ordenes_compra')
+                  .delete()
+                  .eq('numero', numero);
+
+                renderOrdenesList();
+                showNotification(`Orden ${numero} eliminada`);
+              } catch (err) {
+                alert('Error al eliminar: ' + err.message);
+              }
+            });
+          });
+
+          container.querySelectorAll('.oc-orden-edit').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+              const numero = e.currentTarget.dataset.numero;
+              await cargarOrdenParaEdicion(numero);
+            });
+          });
+
+        } catch (err) {
+          console.error('Error al cargar órdenes:', err);
+          container.innerHTML = `<div class="oc-empty-list">Error al cargar órdenes.</div>`;
+        }
+      }
+
+      // =============================================================================
+      // 🔹 INICIALIZACIÓN
+      // =============================================================================
+      async function initTodo() {
+        try {
+          await Promise.all([
+            loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js', () => typeof window.html2pdf !== 'undefined')
+          ]);
+
+          await cargarDatos();
+          await initOC();
+
+          // Eventos
+          document.getElementById('oc-btn-guardar').addEventListener('click', guardarOrden);
+          document.getElementById('oc-btn-agregar').addEventListener('click', () => abrirModalMaterial());
+          document.getElementById('oc-descuento').addEventListener('input', () => recalcTotals());
+          document.getElementById('oc-refresh-list').addEventListener('click', renderOrdenesList);
+
+          document.querySelectorAll('[data-moneda]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+              document.querySelectorAll('[data-moneda]').forEach(b => b.classList.remove('active'));
+              e.currentTarget.classList.add('active');
+              moneda = e.currentTarget.dataset.moneda;
+              render();
+            });
+          });
+
+          document.querySelectorAll('[data-iva]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+              document.querySelectorAll('[data-iva]').forEach(b => b.classList.remove('active'));
+              e.currentTarget.classList.add('active');
+              aplicaIVA = e.currentTarget.dataset.iva === "true";
+              render();
+            });
+          });
+
+          document.getElementById('btn-confirmar-print').addEventListener('click', async () => {
+            generarOCPDF();
+            document.getElementById('modal-imprimir').style.display = 'none';
+            await initOC();
+          });
+          document.getElementById('btn-cerrar-modal').addEventListener('click', async () => {
+            document.getElementById('modal-imprimir').style.display = 'none';
+            await initOC();
+          });
+
+          // Eventos del modal de materiales
+          document.getElementById('oc-modal-material-close').addEventListener('click', cerrarModalMaterial);
+          document.getElementById('oc-modal-material-cerrar').addEventListener('click', cerrarModalMaterial);
+          document.getElementById('oc-modal-material-search').addEventListener('input', filtrarMateriales);
+          document.getElementById('oc-modal-material-bodega').addEventListener('change', filtrarMateriales);
+
+          // Cerrar modal al hacer clic fuera
+          document.getElementById('oc-modal-material').addEventListener('click', (e) => {
+            if (e.target.id === 'oc-modal-material') {
+              cerrarModalMaterial();
+            }
+          });
+
+        } catch (err) {
+          console.error('Error en initTodo:', err);
+          alert('Error al inicializar: ' + err.message);
+        }
+      }
+
+      // Iniciar
+      initTodo();
+    }, 50);
+  </script>
+</body>
+</html>

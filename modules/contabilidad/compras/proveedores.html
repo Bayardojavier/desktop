@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestión de Proveedores</title>
+  <link rel="stylesheet" href="../contabilidad.css">
+  <link rel="stylesheet" href="../../../styles/app.css">
+  <script src="../../../src/config/supabaseClient.js"></script>
+  <style>
+    /* =============================================================================
+       ESTILOS PROPIOS PARA EL MÓDULO DE PROVEEDORES
+       ============================================================================= */
+
+    .proveedores-container {
+      padding: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .proveedores-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding: 20px;
+      background: linear-gradient(135deg, rgba(45, 45, 45, 0.9) 0%, rgba(30, 30, 30, 0.95) 100%);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .proveedores-title {
+      color: #3794ff;
+      font-size: 28px;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .proveedores-btn-nuevo {
+      background: linear-gradient(135deg, #3794ff 0%, #2563eb 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(55, 148, 255, 0.3);
+    }
+
+    .proveedores-btn-nuevo:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(55, 148, 255, 0.4);
+    }
+
+    /* Formulario */
+    .proveedores-form-container {
+      background: rgba(45, 45, 45, 0.9);
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: none;
+    }
+
+    .proveedores-form-title {
+      color: #3794ff;
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .proveedores-form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .proveedores-form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .proveedores-label {
+      color: #e0e0e0;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .proveedores-input,
+    .proveedores-select,
+    .proveedores-textarea {
+      padding: 12px 16px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      color: #e0e0e0;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+
+    .proveedores-input:focus,
+    .proveedores-select:focus,
+    .proveedores-textarea:focus {
+      outline: none;
+      border-color: #3794ff;
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 0 3px rgba(55, 148, 255, 0.1);
+    }
+
+    .proveedores-textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .proveedores-form-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .proveedores-btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .proveedores-btn-guardar {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+    }
+
+    .proveedores-btn-guardar:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .proveedores-btn-cancelar {
+      background: rgba(255, 255, 255, 0.1);
+      color: #e0e0e0;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .proveedores-btn-cancelar:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Tabla */
+    .proveedores-table-container {
+      background: rgba(45, 45, 45, 0.9);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+    }
+
+    .proveedores-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .proveedores-table th {
+      background: rgba(55, 148, 255, 0.1);
+      color: #3794ff;
+      padding: 16px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .proveedores-table td {
+      padding: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      color: #e0e0e0;
+      font-size: 14px;
+    }
+
+    .proveedores-table tbody tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .proveedores-status-activo {
+      background: rgba(16, 185, 129, 0.2);
+      color: #10b981;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .proveedores-status-inactivo {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .proveedores-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .proveedores-btn-editar,
+    .proveedores-btn-eliminar {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .proveedores-btn-editar {
+      background: rgba(55, 148, 255, 0.2);
+      color: #3794ff;
+    }
+
+    .proveedores-btn-editar:hover {
+      background: rgba(55, 148, 255, 0.3);
+    }
+
+    .proveedores-btn-eliminar {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+    }
+
+    .proveedores-btn-eliminar:hover {
+      background: rgba(239, 68, 68, 0.3);
+    }
+
+    /* Filtros */
+    .proveedores-filters {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .proveedores-filter-group {
+      display: flex;
+      flex-direction: column;
+      min-width: 200px;
+    }
+
+    .proveedores-filter-label {
+      color: #e0e0e0;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .proveedores-filter-input,
+    .proveedores-filter-select {
+      padding: 10px 12px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      color: #e0e0e0;
+      font-size: 14px;
+    }
+
+    .proveedores-filter-input:focus,
+    .proveedores-filter-select:focus {
+      outline: none;
+      border-color: #3794ff;
+    }
+
+    /* Mensaje vacío */
+    .proveedores-empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: #888;
+      font-size: 16px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .proveedores-header {
+        flex-direction: column;
+        gap: 20px;
+        text-align: center;
+      }
+
+      .proveedores-form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .proveedores-filters {
+        flex-direction: column;
+      }
+
+      .proveedores-table-container {
+        overflow-x: auto;
+      }
+
+      .proveedores-form-actions {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="proveedores-container">
+    <!-- Header -->
+    <div class="proveedores-header">
+      <h1 class="proveedores-title">🏢 Gestión de Proveedores</h1>
+      <button class="proveedores-btn proveedores-btn-nuevo" id="proveedores-btn-nuevo">
+        ➕ Nuevo Proveedor
+      </button>
+    </div>
+
+    <!-- Formulario -->
+    <div class="proveedores-form-container" id="proveedores-form-container">
+      <h2 class="proveedores-form-title" id="proveedores-form-title">
+        <span id="proveedores-form-icon">➕</span>
+        <span id="proveedores-form-text">Agregar Nuevo Proveedor</span>
+      </h2>
+
+      <form id="proveedores-form">
+        <input type="hidden" id="proveedores-id" value="">
+
+        <div class="proveedores-form-grid">
+          <div class="proveedores-form-group">
+            <label class="proveedores-label" for="proveedores-nombre">Nombre del Proveedor *</label>
+            <input type="text" id="proveedores-nombre" class="proveedores-input" required>
+          </div>
+
+          <div class="proveedores-form-group">
+            <label class="proveedores-label" for="proveedores-ruc-id">RUC/ID</label>
+            <input type="text" id="proveedores-ruc-ci" class="proveedores-input" placeholder="Ej: J0310000000001">
+          </div>
+
+          <div class="proveedores-form-group">
+            <label class="proveedores-label" for="proveedores-telefono">Teléfono</label>
+            <input type="tel" id="proveedores-telefono" class="proveedores-input" placeholder="Ej: +505 981 123456">
+          </div>
+
+          <div class="proveedores-form-group">
+            <label class="proveedores-label" for="proveedores-email">Email</label>
+            <input type="email" id="proveedores-email" class="proveedores-input" placeholder="proveedor@email.com">
+          </div>
+
+          <div class="proveedores-form-group">
+            <label class="proveedores-label" for="proveedores-ciudad">Ciudad</label>
+            <input type="text" id="proveedores-ciudad" class="proveedores-input" placeholder="Ej: Asunción">
+          </div>
+
+          <div class="proveedores-form-group">
+            <label class="proveedores-label" for="proveedores-pais">País</label>
+            <input type="text" id="proveedores-pais" class="proveedores-input" value="Nicaragua">
+          </div>
+
+          <div class="proveedores-form-group">
+            <label class="proveedores-label" for="proveedores-tipo">Tipo de Proveedor</label>
+            <select id="proveedores-tipo" class="proveedores-select">
+              <option value="general">General</option>
+              <option value="servicios">Servicios</option>
+              <option value="materiales">Materiales</option>
+              <option value="tecnologia">Tecnología</option>
+              <option value="transporte">Transporte</option>
+              <option value="otro">Otro</option>
+            </select>
+          </div>
+
+          <div class="proveedores-form-group">
+            <label class="proveedores-label" for="proveedores-estado">Estado</label>
+            <select id="proveedores-estado" class="proveedores-select">
+              <option value="activo">Activo</option>
+              <option value="inactivo">Inactivo</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="proveedores-form-group">
+          <label class="proveedores-label" for="proveedores-direccion">Dirección</label>
+          <textarea id="proveedores-direccion" class="proveedores-textarea" placeholder="Dirección completa del proveedor..."></textarea>
+        </div>
+
+        <div class="proveedores-form-group">
+          <label class="proveedores-label" for="proveedores-observaciones">Observaciones</label>
+          <textarea id="proveedores-observaciones" class="proveedores-textarea" placeholder="Observaciones adicionales..."></textarea>
+        </div>
+
+        <div class="proveedores-form-actions">
+          <button type="button" class="proveedores-btn proveedores-btn-cancelar" id="proveedores-btn-cancelar">
+            Cancelar
+          </button>
+          <button type="submit" class="proveedores-btn proveedores-btn-guardar" id="proveedores-btn-guardar">
+            💾 Guardar Proveedor
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Filtros -->
+    <div class="proveedores-filters">
+      <div class="proveedores-filter-group">
+        <label class="proveedores-filter-label" for="proveedores-filtro-nombre">Buscar por Nombre</label>
+        <input type="text" id="proveedores-filtro-nombre" class="proveedores-filter-input" placeholder="Nombre del proveedor...">
+      </div>
+
+      <div class="proveedores-filter-group">
+        <label class="proveedores-filter-label" for="proveedores-filtro-tipo">Tipo</label>
+        <select id="proveedores-filtro-tipo" class="proveedores-filter-select">
+          <option value="">Todos los tipos</option>
+          <option value="general">General</option>
+          <option value="servicios">Servicios</option>
+          <option value="materiales">Materiales</option>
+          <option value="tecnologia">Tecnología</option>
+          <option value="transporte">Transporte</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+
+      <div class="proveedores-filter-group">
+        <label class="proveedores-filter-label" for="proveedores-filtro-estado">Estado</label>
+        <select id="proveedores-filtro-estado" class="proveedores-filter-select">
+          <option value="">Todos los estados</option>
+          <option value="activo">Activo</option>
+          <option value="inactivo">Inactivo</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Tabla -->
+    <div class="proveedores-table-container">
+      <table class="proveedores-table">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>RUC/ID</th>
+            <th>Teléfono</th>
+            <th>Email</th>
+            <th>Ciudad</th>
+            <th>Tipo</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="proveedores-tbody">
+          <!-- Los proveedores se cargarán aquí dinámicamente -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mensaje vacío -->
+    <div id="proveedores-empty" class="proveedores-empty" style="display: none;">
+      No hay proveedores registrados.
+    </div>
+  </div>
+
+  <script>
+    // =============================================================================
+    // 🔹 VARIABLES GLOBALES
+    // =============================================================================
+    let proveedoresGlobal = [];
+
+    // =============================================================================
+    // 🔹 FUNCIONES DE CARGA DE DATOS
+    // =============================================================================
+
+    async function cargarProveedores() {
+      try {
+        const { data: proveedores, error } = await window.supabaseClient
+          .from('proveedores')
+          .select('*')
+          .order('nombre', { ascending: true });
+
+        if (error) {
+          console.error('Error al cargar proveedores:', error);
+          alert('❌ Error al cargar los proveedores.');
+          return [];
+        }
+
+        proveedoresGlobal = proveedores || [];
+        return proveedoresGlobal;
+      } catch (e) {
+        console.error('Error al cargar proveedores:', e);
+        return [];
+      }
+    }
+
+    // =============================================================================
+    // 🔹 FUNCIONES DE RENDERIZADO
+    // =============================================================================
+
+    function renderizarProveedores(proveedoresFiltrados) {
+      const tbody = document.getElementById('proveedores-tbody');
+      const empty = document.getElementById('proveedores-empty');
+
+      if (proveedoresFiltrados.length === 0) {
+        tbody.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+
+      empty.style.display = 'none';
+      tbody.innerHTML = proveedoresFiltrados.map(proveedor => {
+        const statusClass = proveedor.estado === 'activo' ? 'proveedores-status-activo' : 'proveedores-status-inactivo';
+        const statusText = proveedor.estado === 'activo' ? 'Activo' : 'Inactivo';
+
+        return `
+          <tr>
+            <td>${proveedor.nombre}</td>
+            <td>${proveedor.ruc_id || '-'}</td>
+            <td>${proveedor.telefono || '-'}</td>
+            <td>${proveedor.email || '-'}</td>
+            <td>${proveedor.ciudad || '-'}</td>
+            <td>${proveedor.tipo_proveedor || 'general'}</td>
+            <td><span class="${statusClass}">${statusText}</span></td>
+            <td class="proveedores-actions">
+              <button class="proveedores-btn-editar" data-id="${proveedor.id}">Editar</button>
+              <button class="proveedores-btn-eliminar" data-id="${proveedor.id}">Eliminar</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // =============================================================================
+    // 🔹 FUNCIONES DE FILTRADO
+    // =============================================================================
+
+    function filtrarProveedores() {
+      const nombre = document.getElementById('proveedores-filtro-nombre').value.toLowerCase();
+      const tipo = document.getElementById('proveedores-filtro-tipo').value;
+      const estado = document.getElementById('proveedores-filtro-estado').value;
+
+      let filtrados = proveedoresGlobal;
+
+      if (nombre) {
+        filtrados = filtrados.filter(p => p.nombre.toLowerCase().includes(nombre));
+      }
+
+      if (tipo) {
+        filtrados = filtrados.filter(p => p.tipo_proveedor === tipo);
+      }
+
+      if (estado) {
+        filtrados = filtrados.filter(p => p.estado === estado);
+      }
+
+      renderizarProveedores(filtrados);
+    }
+
+    // =============================================================================
+    // 🔹 FUNCIONES CRUD
+    // =============================================================================
+
+    async function guardarProveedor(event) {
+      event.preventDefault();
+
+      // Validar que el nombre sea obligatorio
+      const nombreElement = document.getElementById('proveedores-nombre');
+      if (!nombreElement || !nombreElement.value.trim()) {
+        alert('❌ El nombre del proveedor es obligatorio.');
+        nombreElement?.focus();
+        return;
+      }
+
+      const id = document.getElementById('proveedores-id')?.value || '';
+      const proveedor = {
+        nombre: nombreElement.value.trim(),
+        ruc_id: document.getElementById('proveedores-ruc-ci')?.value?.trim() || null,
+        telefono: document.getElementById('proveedores-telefono')?.value?.trim() || null,
+        email: document.getElementById('proveedores-email')?.value?.trim() || null,
+        direccion: document.getElementById('proveedores-direccion')?.value?.trim() || null,
+        ciudad: document.getElementById('proveedores-ciudad')?.value?.trim() || null,
+        pais: document.getElementById('proveedores-pais')?.value?.trim() || 'Nicaragua',
+        tipo_proveedor: document.getElementById('proveedores-tipo')?.value || 'general',
+        estado: document.getElementById('proveedores-estado')?.value || 'activo',
+        observaciones: document.getElementById('proveedores-observaciones')?.value?.trim() || null
+      };
+
+      try {
+        let result;
+        if (id) {
+          // Actualizar
+          result = await window.supabaseClient
+            .from('proveedores')
+            .update(proveedor)
+            .eq('id', id);
+        } else {
+          // Crear
+          result = await window.supabaseClient
+            .from('proveedores')
+            .insert([proveedor]);
+        }
+
+        if (result.error) {
+          console.error('Error al guardar proveedor:', result.error);
+          alert('❌ Error al guardar el proveedor: ' + result.error.message);
+          return;
+        }
+
+        alert(id ? '✅ Proveedor actualizado correctamente.' : '✅ Proveedor creado correctamente.');
+        ocultarFormulario();
+        await recargarProveedores();
+
+      } catch (e) {
+        console.error('Error al guardar proveedor:', e);
+        alert('❌ Error inesperado al guardar el proveedor.');
+      }
+    }
+
+    async function editarProveedor(id) {
+      const proveedor = proveedoresGlobal.find(p => p.id == id);
+      if (!proveedor) {
+        alert('❌ Proveedor no encontrado.');
+        return;
+      }
+
+      // Llenar el formulario
+      document.getElementById('proveedores-id').value = proveedor.id;
+      document.getElementById('proveedores-nombre').value = proveedor.nombre || '';
+      document.getElementById('proveedores-ruc-ci').value = proveedor.ruc_id || '';
+      document.getElementById('proveedores-telefono').value = proveedor.telefono || '';
+      document.getElementById('proveedores-email').value = proveedor.email || '';
+      document.getElementById('proveedores-direccion').value = proveedor.direccion || '';
+      document.getElementById('proveedores-ciudad').value = proveedor.ciudad || '';
+      document.getElementById('proveedores-pais').value = proveedor.pais || 'Nicaragua';
+      document.getElementById('proveedores-tipo').value = proveedor.tipo_proveedor || 'general';
+      document.getElementById('proveedores-estado').value = proveedor.estado || 'activo';
+      document.getElementById('proveedores-observaciones').value = proveedor.observaciones || '';
+
+      // Cambiar título del formulario
+      document.getElementById('proveedores-form-icon').textContent = '✏️';
+      document.getElementById('proveedores-form-text').textContent = 'Editar Proveedor';
+      document.getElementById('proveedores-btn-guardar').textContent = '💾 Actualizar Proveedor';
+
+      mostrarFormulario();
+    }
+
+    async function eliminarProveedor(id) {
+      if (!confirm('¿Está seguro de que desea eliminar este proveedor? Esta acción no se puede deshacer.')) {
+        return;
+      }
+
+      try {
+        const { error } = await window.supabaseClient
+          .from('proveedores')
+          .delete()
+          .eq('id', id);
+
+        if (error) {
+          console.error('Error al eliminar proveedor:', error);
+          alert('❌ Error al eliminar el proveedor: ' + error.message);
+          return;
+        }
+
+        alert('✅ Proveedor eliminado correctamente.');
+        await recargarProveedores();
+
+      } catch (e) {
+        console.error('Error al eliminar proveedor:', e);
+        alert('❌ Error inesperado al eliminar el proveedor.');
+      }
+    }
+
+    // =============================================================================
+    // 🔹 FUNCIONES DE UI
+    // =============================================================================
+
+    function mostrarFormulario() {
+      document.getElementById('proveedores-form-container').style.display = 'block';
+      document.getElementById('proveedores-btn-nuevo').style.display = 'none';
+    }
+
+    function ocultarFormulario() {
+      document.getElementById('proveedores-form-container').style.display = 'none';
+      document.getElementById('proveedores-btn-nuevo').style.display = 'inline-block';
+      limpiarFormulario();
+    }
+
+    function limpiarFormulario() {
+      document.getElementById('proveedores-form').reset();
+      document.getElementById('proveedores-id').value = '';
+      document.getElementById('proveedores-pais').value = 'Nicaragua';
+      document.getElementById('proveedores-tipo').value = 'general';
+      document.getElementById('proveedores-estado').value = 'activo';
+
+      // Resetear título
+      document.getElementById('proveedores-form-icon').textContent = '➕';
+      document.getElementById('proveedores-form-text').textContent = 'Agregar Nuevo Proveedor';
+      document.getElementById('proveedores-btn-guardar').textContent = '💾 Guardar Proveedor';
+    }
+
+    async function recargarProveedores() {
+      proveedoresGlobal = await cargarProveedores();
+      filtrarProveedores();
+    }
+
+    // =============================================================================
+    // 🔹 INICIALIZACIÓN
+    // =============================================================================
+
+    async function initProveedores() {
+      try {
+        await recargarProveedores();
+
+        // Event listeners
+        document.getElementById('proveedores-btn-nuevo').addEventListener('click', mostrarFormulario);
+        document.getElementById('proveedores-btn-cancelar').addEventListener('click', ocultarFormulario);
+        document.getElementById('proveedores-form').addEventListener('submit', guardarProveedor);
+
+        // Filtros
+        document.getElementById('proveedores-filtro-nombre').addEventListener('input', filtrarProveedores);
+        document.getElementById('proveedores-filtro-tipo').addEventListener('change', filtrarProveedores);
+        document.getElementById('proveedores-filtro-estado').addEventListener('change', filtrarProveedores);
+
+        // Delegación de eventos para botones de acción
+        document.getElementById('proveedores-tbody').addEventListener('click', (e) => {
+          const btn = e.target.closest('button');
+          if (!btn) return;
+
+          const id = btn.getAttribute('data-id');
+          if (btn.classList.contains('proveedores-btn-editar')) {
+            editarProveedor(id);
+          } else if (btn.classList.contains('proveedores-btn-eliminar')) {
+            eliminarProveedor(id);
+          }
+        });
+
+        console.log('✅ Módulo de proveedores inicializado correctamente.');
+
+      } catch (error) {
+        console.error('❌ Error al inicializar el módulo de proveedores:', error);
+        alert('❌ Error al inicializar el módulo de proveedores.');
+      }
+    }
+
+    // Iniciar cuando el DOM esté listo
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initProveedores);
+    } else {
+      initProveedores();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,534 @@
+<style>
+.rrhh-icon-btn {
+  width: 32px;
+  height: 32px;
+  padding: 4px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e2e8f0;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+}
+.rrhh-icon-btn:hover {
+  background: #cbd5e0;
+}
+/* Definición esencial para que los botones sean visibles */
+.rrhh-button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  outline: none;
+  font: inherit;
+  color: inherit;
+  text-decoration: none;
+}
+.rrhh-button:focus {
+  outline: none;
+}
+</style>
+
+<h2>📄 Solicitud de Pago de Vacaciones</h2>
+<p style="color: #666; margin-bottom: 20px;">
+  Seleccione un empleado para ver su historial y registrar una nueva solicitud.
+</p>
+
+<!-- Selector de empleado -->
+<div class="rrhh-input-group" style="margin-bottom: 24px;">
+  <label>Empleado:</label>
+  <select id="solicitud-empleado" class="rrhh-select">
+    <option value="">Seleccione un empleado...</option>
+    <option value="1">Ana Martínez (Gerente)</option>
+    <option value="2">Carlos López (Vendedor)</option>
+    <option value="3">Diana Ruiz (Almacén)</option>
+  </select>
+</div>
+
+<!-- Datos del empleado -->
+<div id="empleado-datos" style="display: none; margin-bottom: 24px; padding: 16px; background: #f8fafc; border-radius: 8px;">
+  <h3 style="color: #1a365d; margin: 0 0 12px;">👤 Datos del Empleado</h3>
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+    <div><strong>Nombre:</strong> <span id="emp-nombre"></span></div>
+    <div><strong>Puesto:</strong> <span id="emp-puesto"></span></div>
+    <div><strong>Fecha de Ingreso:</strong> <span id="emp-ingreso"></span></div>
+    <div><strong>Días Disponibles:</strong> <span id="emp-dias-disp" style="color: #2b6cb0; font-weight: 600;"></span></div>
+  </div>
+</div>
+
+<!-- Historial de solicitudes -->
+<div id="historial-solicitudes" style="display: none; margin-bottom: 24px;">
+  <h3 style="color: #1a365d; margin: 0 0 12px;">📋 Historial de Solicitudes</h3>
+  <table class="rrhh-table" style="width: 100%; border-collapse: collapse; margin-bottom: 12px;">
+    <thead>
+      <tr style="background: #2b6cb0; color: white;">
+        <th style="padding: 10px; text-align: left;">ID</th>
+        <th style="padding: 10px; text-align: left;">Fecha</th>
+        <th style="padding: 10px; text-align: left;">Motivo</th>
+        <th style="padding: 10px; text-align: left;">Días</th>
+        <th style="padding: 10px; text-align: left;">Estado</th>
+        <th style="padding: 10px; text-align: left;">Acciones</th>
+      </tr>
+    </thead>
+    <tbody id="tabla-historial"></tbody>
+  </table>
+  <p id="sin-historial" style="margin-top: 12px; color: #888; display: none;">No hay solicitudes anteriores.</p>
+</div>
+
+<!-- Formulario para nueva solicitud -->
+<div id="nueva-solicitud" style="display: none; margin-bottom: 20px;">
+  <h3 style="color: #1a365d; margin: 0 0 16px;">➕ Nueva Solicitud</h3>
+  
+  <div class="rrhh-input-group" style="margin-bottom: 16px;">
+    <label>Motivo (mínimo 20 caracteres):</label>
+    <textarea id="solicitud-motivo" class="rrhh-textarea" rows="3" placeholder="Ej: Emergencia familiar, necesidad médica, etc."></textarea>
+    <div id="motivo-error" style="color: #e53e3e; font-size: 12px; margin-top: 4px; display: none;">El motivo es obligatorio.</div>
+  </div>
+
+  <div class="rrhh-input-group" style="margin-bottom: 16px;">
+    <label>Días a solicitar (máx: <span id="max-dias">0</span>):</label>
+    <input type="number" id="solicitud-dias" class="rrhh-input" min="1">
+    <div id="dias-error" style="color: #e53e3e; font-size: 12px; margin-top: 4px; display: none;">Cantidad inválida.</div>
+  </div>
+
+  <button class="rrhh-button rrhh-accent-btn" id="btn-guardar-solicitud">Guardar Solicitud</button>
+</div>
+
+<!-- Confirmación -->
+<div id="solicitud-confirmacion" style="display: none; background: #e6fffa; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+  <h3 style="color: #2f855a; margin: 0;">✅ Solicitud registrada</h3>
+  <p>ID: <strong id="solicitud-id"></strong> | Estado: <strong>Pendiente de Pago</strong></p>
+  <div style="display: flex; gap: 12px; margin-top: 12px;">
+    <button class="rrhh-button" id="btn-nueva-solicitud">Registrar otra solicitud</button>
+  </div>
+</div>
+
+<!-- Modal de edición -->
+<div id="editar-solicitud" style="display: none; margin-bottom: 20px; padding: 16px; background: #ebf8ff; border-radius: 8px;">
+  <h3 style="color: #2b6cb0; margin: 0 0 12px;">✏️ Editar Solicitud</h3>
+  <div class="rrhh-input-group" style="margin-bottom: 12px;">
+    <label>ID de Solicitud (no editable):</label>
+    <input type="text" id="edit-id" class="rrhh-input" readonly>
+  </div>
+  <div class="rrhh-input-group" style="margin-bottom: 12px;">
+    <label>Motivo:</label>
+    <textarea id="edit-motivo" class="rrhh-textarea" rows="2"></textarea>
+  </div>
+  <div class="rrhh-input-group" style="margin-bottom: 12px;">
+    <label>Días:</label>
+    <input type="number" id="edit-dias" class="rrhh-input" min="1">
+  </div>
+  <div style="display: flex; gap: 12px;">
+    <button class="rrhh-button rrhh-accent-btn" id="btn-guardar-edicion">Guardar Cambios</button>
+    <button class="rrhh-button" id="btn-cancelar-edicion">Cancelar</button>
+    <button class="rrhh-button" id="btn-exportar-pdf-edit">📄 Exportar PDF</button>
+  </div>
+</div>
+
+<!-- Contenido oculto para el PDF -->
+<div id="pdf-comprobante" style="display: none; width: 210mm; font-family: Arial, sans-serif; position: relative; overflow: hidden;"></div>
+
+<script>
+(function() {
+  const EMPLEADOS = {
+    "1": { nombre: "Ana Martínez", puesto: "Gerente", ingreso: "01/01/2020", estatus: "Fijo", diasAcumulados: 45 },
+    "2": { nombre: "Carlos López", puesto: "Vendedor", ingreso: "15/05/2018", estatus: "Fijo", diasAcumulados: 60 },
+    "3": { nombre: "Diana Ruiz", puesto: "Almacén", ingreso: "22/03/2020", estatus: "Fijo", diasAcumulados: 30 }
+  };
+
+  function initLocalStorage() {
+    const solicitudes = JSON.parse(localStorage.getItem('vacaciones_solicitudes') || '[]');
+    if (solicitudes.length === 0) {
+      const ejemplo = [{
+        id: "SOL-VAC-001",
+        empleadoId: "2",
+        empleado: "Carlos López",
+        supervisor: "Ana Martínez - Gerente",
+        fecha: "03/12/2025",
+        motivo: "Necesidad médica urgente para tratamiento de familiar cercano.",
+        dias: 5,
+        estado: "Pendiente de Pago"
+      }];
+      localStorage.setItem('vacaciones_solicitudes', JSON.stringify(ejemplo));
+    }
+  }
+
+  function getSolicitudes() {
+    return JSON.parse(localStorage.getItem('vacaciones_solicitudes') || '[]');
+  }
+
+  function calcularDias(empleadoId) {
+    const solicitudes = getSolicitudes().filter(s => s.empleadoId === empleadoId);
+    const diasTomados = 5;
+    const diasPagados = solicitudes
+      .filter(s => s.estado === "Pagada")
+      .reduce((sum, s) => sum + s.dias, 0);
+    const diasDisponibles = EMPLEADOS[empleadoId].diasAcumulados - diasTomados - diasPagados;
+    return { diasDisponibles, solicitudes };
+  }
+
+  function mostrarEmpleado(empleadoId) {
+    const emp = EMPLEADOS[empleadoId];
+    const { diasDisponibles, solicitudes } = calcularDias(empleadoId);
+
+    document.getElementById('emp-nombre').textContent = emp.nombre;
+    document.getElementById('emp-puesto').textContent = emp.puesto;
+    document.getElementById('emp-ingreso').textContent = emp.ingreso;
+    document.getElementById('emp-dias-disp').textContent = diasDisponibles;
+
+    document.getElementById('empleado-datos').style.display = 'block';
+
+    const tbody = document.getElementById('tabla-historial');
+    tbody.innerHTML = '';
+    if (solicitudes.length === 0) {
+      document.getElementById('sin-historial').style.display = 'block';
+      document.getElementById('historial-solicitudes').style.display = 'block';
+    } else {
+      document.getElementById('sin-historial').style.display = 'none';
+      solicitudes.forEach(s => {
+        const row = tbody.insertRow();
+        row.innerHTML = `
+          <td>${s.id}</td>
+          <td>${s.fecha}</td>
+          <td>${s.motivo}</td>
+          <td>${s.dias}</td>
+          <td>${s.estado}</td>
+          <td style="display: flex; gap: 6px; align-items: center;">
+            ${s.estado === "Pendiente de Pago" ? 
+              `
+              <button class="rrhh-button rrhh-icon-btn" title="Editar" onclick="editarSolicitud('${s.id}')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 20h9"></path>
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                </svg>
+              </button>
+              <button class="rrhh-button rrhh-icon-btn" title="Exportar PDF" onclick="exportarPdfSolicitud('${s.id}')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <path d="M14 2v6h6"></path>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                  <path d="M10 9h4"></path>
+                </svg>
+              </button>
+              <button class="rrhh-button rrhh-icon-btn" title="Eliminar" onclick="eliminarSolicitud('${s.id}')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+              ` : 
+              `<span style="color: #68d391;">✔️ Pagada</span>`
+            }
+          </td>
+        `;
+      });
+      document.getElementById('historial-solicitudes').style.display = 'block';
+    }
+
+    if (diasDisponibles > 0) {
+      document.getElementById('max-dias').textContent = diasDisponibles;
+      document.getElementById('nueva-solicitud').style.display = 'block';
+    } else {
+      document.getElementById('nueva-solicitud').style.display = 'none';
+    }
+
+    document.getElementById('solicitud-confirmacion').style.display = 'none';
+    document.getElementById('editar-solicitud').style.display = 'none';
+  }
+
+  // ✅ FUNCIÓN DE PDF: IDÉNTICA A LA VERSIÓN MÓVIL
+  async function generarPDFDeSolicitud(solicitudId) {
+    const empleadoId = document.getElementById('solicitud-empleado').value;
+    if (!empleadoId) {
+      alert('Seleccione un empleado primero.');
+      return;
+    }
+
+    const emp = EMPLEADOS[empleadoId];
+    const { diasDisponibles } = calcularDias(empleadoId);
+    const solicitudes = getSolicitudes();
+    const solicitud = solicitudes.find(s => s.id === solicitudId);
+
+    if (!solicitud) {
+      alert('Solicitud no encontrada.');
+      return;
+    }
+
+    const solicitudDetallesRow = `
+        <tr style="border-bottom: 1px solid #eee;">
+          <td style="padding: 6px;">${solicitud.id}</td>
+          <td style="padding: 6px;">${solicitud.fecha}</td>
+          <td style="padding: 6px;">${solicitud.dias}</td>
+          <td style="padding: 6px;">${solicitud.estado}</td>
+        </tr>
+        <tr>
+          <td colspan="4" style="padding: 6px; font-style: italic; color: #555; border-bottom: 1px solid #eee;">Motivo: ${solicitud.motivo}</td>
+        </tr>
+    `;
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+        <style>
+          body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            background: white;
+            -webkit-print-color-adjust: exact; 
+            print-color-adjust: exact;
+          }
+        </style>
+      </head>
+      <body>
+        <div style="position: relative; overflow: hidden; min-height: 100vh; width: 100%;">
+          
+          <div style="height: 180px; position: relative;">
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 180px; z-index: -1;">
+              <div style="position: absolute; top: 0; left: -20%; width: 140%; height: 100%;
+                background: linear-gradient(110deg, #ffecb3, #ffb74d);
+                clip-path: polygon(0 0, 100% 0, 100% 100%);
+                transform: skewX(-12deg); z-index: 1;"></div>
+              
+              <div style="position: absolute; top: 20px; right: -20%; width: 140%; height: 100%;
+                background: linear-gradient(110deg, #ff9800, #e65100);
+                clip-path: polygon(0 0, 100% 0, 100% 100%);
+                transform: skewX(8deg); z-index: 2;"></div>
+            </div>
+            
+            <div style="position: relative; z-index: 3; padding: 20px; color: white; display: flex; flex-direction: column; height: 100%; box-sizing: border-box;">
+              <div style="text-align: right; margin-bottom: auto;">
+                <img src="./assets/logo.png" alt="Logo" style="height: 60px; object-fit: contain;" />
+              </div>
+              <div style="text-align: center; margin-top: auto; padding-bottom: 10px;">
+                <h1 style="color: white; font-size: 22px; font-weight: 700; margin: 0; text-transform: uppercase; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">Comprobante de Solicitud</h1>
+                <p style="color: #fffde7; font-size: 14px; margin: 6px 0 0; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">Pago de Vacaciones</p>
+                <p style="color: #fff3e0; font-size: 13px; margin-top: 8px; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">
+                  Días Disponibles: ${diasDisponibles}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div style="padding: 25px; margin-top: -20px; background: white; border-radius: 8px; position: relative; z-index: 4;">
+            
+            <div style="background: #f8fafc; padding: 12px; border-radius: 6px; margin-bottom: 16px;">
+              <h3 style="color: #1a365d; margin: 0 0 8px; font-size: 16px;">Datos del Empleado</h3>
+              <div style="font-size: 14px; line-height: 1.6;">
+                <div><strong>Nombre:</strong> ${emp.nombre}</div>
+                <div><strong>Puesto:</strong> ${emp.puesto}</div>
+                <div><strong>Fecha de Ingreso:</strong> ${emp.ingreso}</div>
+              </div>
+            </div>
+
+            <h3 style="color: #1a365d; margin: 0 0 12px; font-size: 16px;">Detalle de la Solicitud ID: ${solicitud.id}</h3>
+            <table style="width:100%; border-collapse: collapse; font-size: 12px;">
+              <thead>
+                <tr style="background: #2b6cb0; color: white;">
+                  <th style="padding: 6px; text-align: left;">ID</th>
+                  <th style="padding: 6px; text-align: left;">Fecha</th>
+                  <th style="padding: 6px; text-align: left;">Días</th>
+                  <th style="padding: 6px; text-align: left;">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${solicitudDetallesRow}
+              </tbody>
+            </table>
+
+            <div style="margin-top: 50px; border-top: 1px dashed #ccc; padding-top: 40px;">
+              <h4 style="text-align: center; margin-bottom: 25px;">Firmas Requeridas</h4>
+              <table style="width: 100%; font-size: 10px;">
+                <tr>
+                  <td style="width: 33%; padding: 5px; text-align: center;">
+                    <div style="border-top: 1px solid #000; padding-top: 5px;">Firma del Supervisor</div>
+                  </td>
+                  <td style="width: 33%; padding: 5px; text-align: center;">
+                    <div style="border-top: 1px solid #000; padding-top: 5px;">Firma del Jefe Inmediato</div>
+                  </td>
+                  <td style="width: 33%; padding: 5px; text-align: center;">
+                    <div style="border-top: 1px solid #000; padding-top: 5px;">Firma del Gerente</div>
+                  </td>
+                </tr>
+              </table>
+            </div>
+
+            <div style="margin-top: 30px; color: #555; font-size: 10px; text-align: center;">
+              Este documento debe entregarse al Departamento de Contabilidad para su procesamiento.
+              <br><strong>© Absolute de Nicaragua – Confidencial</strong>
+            </div>
+
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const pdfContent = document.getElementById('pdf-comprobante');
+    pdfContent.innerHTML = html;
+    pdfContent.style.display = 'block';
+
+    try {
+      const { jsPDF } = window.jspdf;
+      const canvas = await html2canvas(pdfContent, { scale: 2, useCORS: true, logging: false });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      pdf.save(`Solicitud_Vacaciones_${emp.nombre.replace(/\s+/g, '_')}_${solicitud.id}.pdf`);
+    } catch (error) {
+      console.error('Error PDF:', error);
+      alert('Error al generar el PDF. Ver consola.');
+    } finally {
+      pdfContent.style.display = 'none';
+    }
+  }
+
+  function guardarSolicitud() {
+    const empleadoId = document.getElementById('solicitud-empleado').value;
+    if (!empleadoId) return;
+
+    const motivo = document.getElementById('solicitud-motivo').value.trim();
+    const dias = parseInt(document.getElementById('solicitud-dias').value);
+    const { diasDisponibles } = calcularDias(empleadoId);
+
+    if (motivo.length < 20) {
+      document.getElementById('motivo-error').style.display = 'block';
+      return;
+    } else {
+      document.getElementById('motivo-error').style.display = 'none';
+    }
+
+    if (isNaN(dias) || dias < 1 || dias > diasDisponibles) {
+      document.getElementById('dias-error').style.display = 'block';
+      return;
+    } else {
+      document.getElementById('dias-error').style.display = 'none';
+    }
+
+    const ahora = new Date();
+    const id = `SOL-VAC-${String(Date.now()).slice(-6)}`;
+
+    const nueva = {
+      id,
+      empleadoId,
+      empleado: EMPLEADOS[empleadoId].nombre,
+      supervisor: "Usuario Invitado",
+      fecha: ahora.toLocaleDateString('es-NI'),
+      motivo,
+      dias,
+      estado: "Pendiente de Pago"
+    };
+
+    const solicitudes = getSolicitudes();
+    solicitudes.push(nueva);
+    localStorage.setItem('vacaciones_solicitudes', JSON.stringify(solicitudes));
+
+    document.getElementById('solicitud-id').textContent = id;
+    document.getElementById('solicitud-confirmacion').style.display = 'block';
+    document.getElementById('nueva-solicitud').style.display = 'none';
+  }
+
+  window.editarSolicitud = function(id) {
+    const solicitudes = getSolicitudes();
+    const sol = solicitudes.find(s => s.id === id);
+    if (sol && sol.estado === "Pendiente de Pago") {
+      document.getElementById('edit-id').value = sol.id;
+      document.getElementById('edit-motivo').value = sol.motivo;
+      document.getElementById('edit-dias').value = sol.dias;
+      document.getElementById('editar-solicitud').style.display = 'block';
+      document.getElementById('nueva-solicitud').style.display = 'none';
+      document.getElementById('solicitud-confirmacion').style.display = 'none';
+    }
+  };
+
+  window.exportarPdfSolicitud = function(id) {
+    const empleadoId = document.getElementById('solicitud-empleado').value;
+    if (!empleadoId) {
+      alert('Empleado no seleccionado.');
+      return;
+    }
+    generarPDFDeSolicitud(id);
+  };
+
+  window.eliminarSolicitud = function(id) {
+    if (!confirm('¿Está seguro de eliminar esta solicitud? Esta acción no se puede deshacer.')) {
+      return;
+    }
+
+    let solicitudes = getSolicitudes();
+    solicitudes = solicitudes.filter(s => s.id !== id);
+    localStorage.setItem('vacaciones_solicitudes', JSON.stringify(solicitudes));
+
+    const empleadoId = document.getElementById('solicitud-empleado').value;
+    if (empleadoId) {
+      mostrarEmpleado(empleadoId);
+    }
+  };
+
+  function guardarEdicion() {
+    const id = document.getElementById('edit-id').value;
+    const motivo = document.getElementById('edit-motivo').value.trim();
+    const dias = parseInt(document.getElementById('edit-dias').value);
+    const empleadoId = document.getElementById('solicitud-empleado').value;
+    const { diasDisponibles } = calcularDias(empleadoId);
+
+    if (motivo.length < 10 || isNaN(dias) || dias < 1 || dias > diasDisponibles) {
+      alert('Datos inválidos.');
+      return;
+    }
+
+    const solicitudes = getSolicitudes();
+    const index = solicitudes.findIndex(s => s.id === id);
+    if (index !== -1) {
+      solicitudes[index].motivo = motivo;
+      solicitudes[index].dias = dias;
+      localStorage.setItem('vacaciones_solicitudes', JSON.stringify(solicitudes));
+      alert('✅ Solicitud actualizada.');
+      mostrarEmpleado(empleadoId);
+    }
+  }
+
+  // ✅ Eliminamos el listener del botón de PDF en la confirmación
+  // Ya que el PDF se genera exclusivamente desde el historial
+
+  function init() {
+    initLocalStorage();
+
+    document.getElementById('solicitud-empleado').addEventListener('change', function(e) {
+      if (e.target.value) {
+        mostrarEmpleado(e.target.value);
+      } else {
+        document.getElementById('empleado-datos').style.display = 'none';
+        document.getElementById('historial-solicitudes').style.display = 'none';
+        document.getElementById('nueva-solicitud').style.display = 'none';
+        document.getElementById('solicitud-confirmacion').style.display = 'none';
+        document.getElementById('editar-solicitud').style.display = 'none';
+      }
+    });
+
+    document.getElementById('btn-guardar-solicitud').addEventListener('click', guardarSolicitud);
+    document.getElementById('btn-guardar-edicion').addEventListener('click', guardarEdicion);
+    document.getElementById('btn-cancelar-edicion').addEventListener('click', function() {
+      const empleadoId = document.getElementById('solicitud-empleado').value;
+      if (empleadoId) mostrarEmpleado(empleadoId);
+    });
+    document.getElementById('btn-nueva-solicitud').addEventListener('click', function() {
+      const empleadoId = document.getElementById('solicitud-empleado').value;
+      if (empleadoId) mostrarEmpleado(empleadoId);
+    });
+    document.getElementById('btn-exportar-pdf-edit').addEventListener('click', function() {
+      const id = document.getElementById('edit-id').value;
+      if (id) generarPDFDeSolicitud(id);
+    });
+  }
+
+  setTimeout(init, 50);
+})();
+</script>

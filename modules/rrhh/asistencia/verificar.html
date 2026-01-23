@@ -1,0 +1,432 @@
+<div class="contenedor-verificar-asistencia">
+  <h2>Verificar Asistencia</h2>
+
+  <!-- Navegación de fechas -->
+  <div class="barra-fecha">
+    <button id="btn-fecha-anterior" class="btn-navegacion">&lt;</button>
+    <span id="fecha-mostrada" class="texto-fecha">Cargando...</span>
+    <button id="btn-fecha-siguiente" class="btn-navegacion">&gt;</button>
+  </div>
+
+  <!-- Controles de selección masiva -->
+  <div class="controles-seleccion">
+    <button id="btn-seleccionar-todas" class="btn-secundario">Seleccionar todas</button>
+    <button id="btn-deseleccionar-todas" class="btn-secundario">Deseleccionar todas</button>
+  </div>
+
+  <!-- Filtro por puestos -->
+  <div class="contenedor-filtros">
+    <p><strong>Verificar asistencia para los puestos:</strong></p>
+    <div id="contenedor-chips" class="contenedor-chips">
+      <!-- Se generará -->
+    </div>
+  </div>
+
+  <!-- Tabla de verificación -->
+  <div class="tabla-contenedor">
+    <table id="tabla-verificacion">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Nombre</th>
+          <th>Puesto</th>
+          <th>Entrada</th>
+          <th>Salida</th>
+          <th><input type="checkbox" class="check-cabecera" data-estado="presente"> Presente</th>
+          <th><input type="checkbox" class="check-cabecera" data-estado="ausente"> Ausente</th>
+          <th><input type="checkbox" class="check-cabecera" data-estado="abandono"> Abandono</th>
+          <th><input type="checkbox" class="check-cabecera" data-estado="permiso"> Permiso</th>
+         <th>Bod/Ofic</th>
+          <th>Evento</th>
+          <th>Justificación</th>
+          <th>≥4h (Permiso)</th>
+        </tr>
+      </thead>
+      <tbody id="cuerpo-tabla">
+      </tbody>
+    </table>
+    <div id="sin-resultados" style="display:none; text-align:center; margin-top:20px; color:#666;">
+      Selecciona al menos un puesto para ver empleados.
+    </div>
+  </div>
+
+  <div class="acciones-verificacion">
+    <button id="btn-guardar" class="btn-guardar" disabled>Guardar verificación</button>
+  </div>
+</div>
+
+<script>
+  // === DATOS SIMULADOS ===
+  const PUESTOS_ABSOLUTE = [
+    "Gerente", "Jefe de Operaciones", "Supervisor de Operaciones",
+    "Recurso Humanos", "Contador", "Comprador", "Ventas",
+    "Asistente de Ventas", "Diseñador", "Técnico Audiovisual",
+    "Ayudante de Audio Visual", "Armador A", "Armador B",
+    "Soldador", "Bodeguero", "Ayudante", "Asistente",
+    "Pasante", "Otro"
+  ];
+
+  const EMPLEADOS_SIMULADOS = [
+    { id: "001", nombre: "Bayardo Dávila",       puesto: "Diseñador" },
+    { id: "002", nombre: "Ana Martínez",         puesto: "Gerente" },
+    { id: "003", nombre: "Carlos Ruiz",          puesto: "Jefe de Operaciones" },
+    { id: "004", nombre: "Lucía Gómez",          puesto: "Supervisor de Operaciones" },
+    { id: "005", nombre: "Miguel Torres",        puesto: "Técnico Audiovisual" },
+    { id: "006", nombre: "Sofía Herrera",        puesto: "Ayudante de Audio Visual" },
+    { id: "007", nombre: "Javier Mendoza",       puesto: "Armador A" },
+    { id: "008", nombre: "Rosa Ramírez",         puesto: "Armador B" },
+    { id: "009", nombre: "Eduardo López",        puesto: "Soldador" },
+    { id: "010", nombre: "María Jiménez",        puesto: "Bodeguero" },
+    { id: "011", nombre: "Fernando Cruz",        puesto: "Ayudante" },
+    { id: "012", nombre: "Valeria Sánchez",      puesto: "Contador" },
+    { id: "013", nombre: "Diego Morales",        puesto: "Comprador" },
+    { id: "014", nombre: "Camila Ortega",        puesto: "Asistente de Ventas" },
+    { id: "015", nombre: "Pablo Vargas",         puesto: "Pasante" }
+  ];
+
+  const ASISTENCIA_SIMULADA = {
+    "2025-12-03": [
+      { id: "001", entrada: "08:55", salida: "17:02" },
+      { id: "002", entrada: "08:00", salida: "18:30" },
+      { id: "003", entrada: "07:30", salida: null },
+      { id: "005", entrada: "09:10", salida: "16:45" },
+      { id: "006", entrada: "09:15", salida: null },
+      { id: "007", entrada: "06:00", salida: "14:00" },
+      { id: "010", entrada: "08:05", salida: "12:30" },
+      { id: "011", entrada: null, salida: null },
+      { id: "015", entrada: "08:59", salida: "13:00" }
+    ],
+    "2025-12-02": [
+      { id: "001", entrada: "09:00", salida: "17:05" },
+      { id: "004", entrada: "07:55", salida: "16:00" },
+      { id: "008", entrada: "06:15", salida: "14:10" },
+      { id: "012", entrada: "08:30", salida: "17:20" },
+      { id: "013", entrada: null, salida: null }
+    ]
+  };
+
+  let fechaActual = new Date(2025, 11, 3);
+  const hoy = new Date(2025, 11, 3);
+  let verificacionesGuardadas = JSON.parse(localStorage.getItem('verificaciones_rrhh') || '{}');
+  const ESTADOS = ["presente", "ausente", "abandono", "permiso"];
+
+  function formatearFechaCompleta(fecha) {
+    return fecha.toLocaleDateString('es-NI', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).replace(/^\w/, c => c.toUpperCase());
+  }
+
+  function fechaAString(fecha) { return fecha.toISOString().split('T')[0]; }
+  function obtenerAsistenciaPorFecha(fechaStr) { return ASISTENCIA_SIMULADA[fechaStr] || []; }
+  function obtenerVerificacionGuardada(fechaStr, empleadoId) { 
+    return verificacionesGuardadas[fechaStr]?.[empleadoId] || { estado: null };
+  }
+
+  function guardarVerificacionLocal(fechaStr, empleadoId, datos) {
+    if (!verificacionesGuardadas[fechaStr]) verificacionesGuardadas[fechaStr] = {};
+    verificacionesGuardadas[fechaStr][empleadoId] = datos;
+  }
+
+  // === RENDERIZADO CHIPS ===
+  function renderizarChips() {
+    const contenedor = document.getElementById('contenedor-chips');
+    contenedor.innerHTML = '';
+    PUESTOS_ABSOLUTE.forEach(puesto => {
+      const chip = document.createElement('span');
+      chip.className = 'chip-puesto';
+      chip.textContent = puesto;
+      chip.dataset.value = puesto;
+      chip.addEventListener('click', () => {
+        chip.classList.toggle('activo');
+        renderizarTabla();
+      });
+      contenedor.appendChild(chip);
+    });
+  }
+
+  function obtenerPuestosSeleccionados() {
+    return Array.from(document.querySelectorAll('.chip-puesto.activo')).map(c => c.dataset.value);
+  }
+
+  function seleccionarTodas() {
+    document.querySelectorAll('.chip-puesto').forEach(c => c.classList.add('activo'));
+    renderizarTabla();
+  }
+
+  function deseleccionarTodas() {
+    document.querySelectorAll('.chip-puesto').forEach(c => c.classList.remove('activo'));
+    renderizarTabla();
+  }
+
+  // === RENDERIZADO TABLA ===
+  function renderizarFecha() {
+    document.getElementById('fecha-mostrada').textContent = formatearFechaCompleta(fechaActual);
+    document.getElementById('btn-fecha-siguiente').disabled = fechaActual >= hoy;
+  }
+
+  function renderizarTabla() {
+    const fechaStr = fechaAString(fechaActual);
+    const asistencia = obtenerAsistenciaPorFecha(fechaStr);
+    const puestosSeleccionados = obtenerPuestosSeleccionados();
+
+    const mapAsistencia = {};
+    asistencia.forEach(reg => mapAsistencia[reg.id] = reg);
+
+    const empleadosFiltrados = EMPLEADOS_SIMULADOS.filter(emp =>
+      puestosSeleccionados.includes(emp.puesto)
+    );
+
+    const tbody = document.getElementById('cuerpo-tabla');
+    const sinResultados = document.getElementById('sin-resultados');
+    const btnGuardar = document.getElementById('btn-guardar');
+
+    if (empleadosFiltrados.length === 0) {
+      tbody.innerHTML = '';
+      sinResultados.style.display = 'block';
+      btnGuardar.disabled = true;
+    } else {
+      sinResultados.style.display = 'none';
+      btnGuardar.disabled = false;
+      tbody.innerHTML = empleadosFiltrados.map(emp => {
+        const reg = mapAsistencia[emp.id] || { entrada: null, salida: null };
+        const verif = obtenerVerificacionGuardada(fechaStr, emp.id);
+        const esPresenteOPermiso = verif.estado === 'presente' || verif.estado === 'permiso';
+        const tipoBodega = verif.tipo_trabajo === 'bodega';
+        const tipoEvento = verif.tipo_trabajo === 'evento';
+        const justificacion = verif.justificacion || '';
+        const trabajoMedioDia = verif.trabajo_medio_dia === true;
+
+        // Estados checkboxes
+        const checksEstados = ESTADOS.map(estado => {
+          const isChecked = verif.estado === estado;
+          return `<td><input type="checkbox" class="check-estado" data-id="${emp.id}" data-estado="${estado}" ${isChecked ? 'checked' : ''}></td>`;
+        }).join('');
+
+        // Controles dinámicos
+        const bodegaCheck = `<input type="checkbox" class="check-tipo" data-id="${emp.id}" data-tipo="bodega" ${tipoBodega && esPresenteOPermiso ? 'checked' : ''} ${!esPresenteOPermiso ? 'disabled' : ''}>`;
+        const eventoCheck = `<input type="checkbox" class="check-tipo" data-id="${emp.id}" data-tipo="evento" ${tipoEvento && esPresenteOPermiso ? 'checked' : ''} ${!esPresenteOPermiso ? 'disabled' : ''}>`;
+        const justInput = `<input type="text" class="input-justificacion" data-id="${emp.id}" value="${justificacion}" placeholder="Ej: Concierto de Bronco" ${!esPresenteOPermiso ? 'disabled' : ''}>`;
+        const switch4h = verif.estado === 'permiso' 
+          ? `<label class="switch-4h"><input type="checkbox" class="check-4h" data-id="${emp.id}" ${trabajoMedioDia ? 'checked' : ''}> Sí</label>`
+          : `<span>—</span>`;
+
+        return `
+          <tr data-id="${emp.id}">
+            <td>${emp.id}</td>
+            <td>${emp.nombre}</td>
+            <td>${emp.puesto}</td>
+            <td>${reg.entrada || "—"}</td>
+            <td>${reg.salida || "—"}</td>
+            ${checksEstados}
+            <td>${bodegaCheck}</td>
+            <td>${eventoCheck}</td>
+            <td style="min-width:180px;">${justInput}</td>
+            <td>${switch4h}</td>
+          </tr>
+        `;
+      }).join('');
+
+      // === Event Listeners Dinámicos ===
+      document.querySelectorAll('.check-estado').forEach(chk => {
+        chk.addEventListener('change', function() {
+          const empleadoId = this.dataset.id;
+          const estado = this.checked ? this.dataset.estado : null;
+          actualizarVerificacion(empleadoId, { estado });
+          renderizarTabla();
+        });
+      });
+
+      document.querySelectorAll('.check-tipo').forEach(chk => {
+        chk.addEventListener('change', function() {
+          const empleadoId = this.dataset.id;
+          const tipo = this.dataset.tipo;
+          const isChecked = this.checked;
+          
+          // Exclusividad: si marco uno, desmarco el otro
+          if (isChecked) {
+            document.querySelectorAll(`.check-tipo[data-id="${empleadoId}"]`).forEach(other => {
+              if (other !== this) other.checked = false;
+            });
+            actualizarVerificacion(empleadoId, { tipo_trabajo: tipo });
+          } else {
+            actualizarVerificacion(empleadoId, { tipo_trabajo: null });
+          }
+        });
+      });
+
+      document.querySelectorAll('.input-justificacion').forEach(inp => {
+        inp.addEventListener('input', function() {
+          const empleadoId = this.dataset.id;
+          actualizarVerificacion(empleadoId, { justificacion: this.value });
+        });
+      });
+
+      document.querySelectorAll('.check-4h').forEach(chk => {
+        chk.addEventListener('change', function() {
+          const empleadoId = this.dataset.id;
+          actualizarVerificacion(empleadoId, { trabajo_medio_dia: this.checked });
+        });
+      });
+
+      actualizarCabeceras();
+    }
+  }
+
+  function actualizarVerificacion(empleadoId, datosParciales) {
+    const fechaStr = fechaAString(fechaActual);
+    const verifActual = obtenerVerificacionGuardada(fechaStr, empleadoId);
+    const nuevaVerif = { ...verifActual, ...datosParciales };
+    
+    // Si se desmarca el estado, limpiar campos
+    if (datosParciales.estado === null) {
+      nuevaVerif.tipo_trabajo = null;
+      nuevaVerif.justificacion = '';
+      nuevaVerif.trabajo_medio_dia = false;
+    }
+    
+    guardarVerificacionLocal(fechaStr, empleadoId, nuevaVerif);
+  }
+
+  function actualizarCabeceras() {
+    ESTADOS.forEach(estado => {
+      const checks = document.querySelectorAll(`.check-estado[data-estado="${estado}"]`);
+      const checkados = document.querySelectorAll(`.check-estado[data-estado="${estado}"]:checked`);
+      const cabecera = document.querySelector(`.check-cabecera[data-estado="${estado}"]`);
+      cabecera.checked = (checks.length > 0 && checks.length === checkados.length);
+    });
+  }
+
+  document.addEventListener('change', function(e) {
+    if (e.target.classList.contains('check-cabecera')) {
+      const estado = e.target.dataset.estado;
+      const isChecked = e.target.checked;
+      document.querySelectorAll(`.check-estado[data-estado="${estado}"]`).forEach(chk => {
+        chk.checked = isChecked;
+        const id = chk.dataset.id;
+        if (isChecked) {
+          actualizarVerificacion(id, { estado });
+        } else {
+          actualizarVerificacion(id, { estado: null });
+        }
+      });
+      renderizarTabla();
+    }
+  });
+
+  function cambiarFecha(deltaDias) {
+    const nuevaFecha = new Date(fechaActual);
+    nuevaFecha.setDate(nuevaFecha.getDate() + deltaDias);
+    if (nuevaFecha <= hoy) {
+      fechaActual = nuevaFecha;
+      renderizarFecha();
+      renderizarTabla();
+    }
+  }
+
+  function validarYGuardar() {
+    const fechaStr = fechaAString(fechaActual);
+    const puestosSeleccionados = obtenerPuestosSeleccionados();
+    const empleadosVisibles = EMPLEADOS_SIMULADOS.filter(emp => puestosSeleccionados.includes(emp.puesto));
+    
+    for (const emp of empleadosVisibles) {
+      const verif = obtenerVerificacionGuardada(fechaStr, emp.id);
+      if (verif.estado === 'presente' || verif.estado === 'permiso') {
+        if (!verif.justificacion || verif.justificacion.trim().length < 5) {
+          alert(`⚠️ El empleado ${emp.nombre} (${emp.id}) está marcado como "${verif.estado}" pero su justificación está vacía o es muy corta.`);
+          return false;
+        }
+        if (!verif.tipo_trabajo) {
+          alert(`⚠️ El empleado ${emp.nombre} (${emp.id}) necesita que seleccione si trabajó en "Bodega" o "Evento".`);
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  function init() {
+    renderizarChips();
+    renderizarFecha();
+    renderizarTabla();
+
+    document.getElementById('btn-fecha-anterior').addEventListener('click', () => cambiarFecha(-1));
+    document.getElementById('btn-fecha-siguiente').addEventListener('click', () => cambiarFecha(1));
+    document.getElementById('btn-seleccionar-todas').addEventListener('click', seleccionarTodas);
+    document.getElementById('btn-deseleccionar-todas').addEventListener('click', deseleccionarTodas);
+
+    document.getElementById('btn-guardar').addEventListener('click', () => {
+      if (validarYGuardar()) {
+        localStorage.setItem('verificaciones_rrhh', JSON.stringify(verificacionesGuardadas));
+        alert(`✅ Verificación guardada para ${formatearFechaCompleta(fechaActual)}`);
+      }
+    });
+  }
+
+  setTimeout(init, 50);
+</script>
+
+<style>
+  .contenedor-verificar-asistencia { padding: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+  .barra-fecha { display: flex; align-items: center; justify-content: center; margin: 20px 0; gap: 15px; }
+  .btn-navegacion { width: 40px; height: 40px; font-size: 18px; background: #f0f0f0; border: 1px solid #ccc; border-radius: 50%; cursor: pointer; }
+  .btn-navegacion:disabled { opacity: 0.4; cursor: not-allowed; }
+  .texto-fecha { font-size: 18px; font-weight: bold; color: #2b6cb0; }
+
+  .controles-seleccion { margin: 15px 0; }
+  .btn-secundario {
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    margin-right: 10px;
+  }
+  .btn-secundario:hover { background: #e2e8f0; }
+
+  .contenedor-filtros { margin: 20px 0; }
+  .contenedor-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+
+  .chip-puesto {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 20px;
+    background: #f0f4ff;
+    border: 1px solid #cbd5e0;
+    color: #4a5568;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 80px;
+    text-align: center;
+  }
+  .chip-puesto.activo {
+    background: #2b6cb0;
+    border-color: #2b6cb0;
+    color: white;
+  }
+  .chip-puesto:hover:not(.activo) { background: #e6f0ff; }
+
+  .tabla-contenedor { overflow-x: auto; margin: 20px 0; }
+  #tabla-verificacion {
+    width: 100%; border-collapse: collapse; box-shadow: 0 2px 8px rgba(0,0,0,0.1); min-width: 1200px;
+  }
+  #tabla-verificacion th, #tabla-verificacion td {
+    padding: 6px 4px; text-align: center; border-bottom: 1px solid #e0e0e0; vertical-align: middle; font-size: 13px;
+  }
+  #tabla-verificacion th {
+    background-color: #f9c74f; color: #000; font-weight: bold;
+  }
+  .input-justificacion {
+    width: 100%; padding: 4px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px;
+  }
+  .switch-4h {
+    display: flex; align-items: center; gap: 4px; justify-content: center;
+    font-size: 12px;
+  }
+  .acciones-verificacion { text-align: center; margin-top: 20px; }
+  .btn-guardar {
+    background-color: #2b6cb0; color: white; border: none; padding: 10px 24px; font-size: 16px; border-radius: 6px; cursor: pointer;
+  }
+  .btn-guardar:disabled { background-color: #cccccc; cursor: not-allowed; }
+  .btn-guardar:hover:not(:disabled) { background-color: #1d4ed8; }
+</style>

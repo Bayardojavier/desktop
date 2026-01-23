@@ -1,0 +1,415 @@
+<!-- desktop/modules/bodega/universal/modificar_audiovisual.html -->
+<div style="display:flex; gap:16px; height:100%;">
+
+  <div style="width: 340px; background: rgba(20, 30, 60, 0.45); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; padding: 12px; overflow:auto;">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px;">
+      <div style="font-weight:800; color:#cbd5e1;">Modificar</div>
+      <div style="color:#94a3b8; font-size:12px;">Audiovisual</div>
+    </div>
+
+    <div style="border-top:1px solid rgba(148,163,184,0.15); padding-top:10px;">
+      <div style="font-weight:700; color:#cbd5e1;">Secundaria</div>
+      <div id="secundarias-container" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;"></div>
+    </div>
+
+    <div style="border-top:1px solid rgba(148,163,184,0.15); padding-top:10px; margin-top:10px;">
+      <div style="font-weight:700; color:#cbd5e1;">Contenedor</div>
+      <div style="color:#94a3b8; font-size:12px; line-height:1.3; margin-top:6px;">Selecciona un contenedor para editar su nombre/estado, o mover módulos dentro/fuera.</div>
+      <div id="contenedores-container" style="display:flex; flex-direction:column; gap:8px; margin-top:10px;"></div>
+    </div>
+  </div>
+
+  <div style="flex:1; min-width: 520px; overflow:auto;">
+    <div class="bodega-encabezado" style="margin-bottom: 12px; display:flex; align-items:center; justify-content:space-between; gap:12px;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <h1 class="bodega-titulo" style="margin:0;">Modificar Contenedor (Audiovisual)</h1>
+      </div>
+      <div style="color:#94a3b8; font-size:12px;">No altera movimientos históricos</div>
+    </div>
+
+    <div id="sel-resumen" style="margin-bottom:12px; color:#cbd5e1;">Selecciona Secundaria + Contenedor</div>
+
+    <div style="display:flex; flex-direction:column; gap:14px; max-width: 980px;">
+
+      <div style="background: rgba(15,23,42,0.22); border: 1px solid rgba(148,163,184,0.15); border-radius: 10px; padding: 10px;">
+        <div style="font-weight:800; color:#cbd5e1; margin-bottom:10px;">Editar contenedor</div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+          <div style="flex:1; min-width:260px;">
+            <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Nombre del contenedor (texto visible)</label>
+            <input id="cont-nombre" class="audiovisual-input" placeholder="Ej: Case 01 / Rack 02" />
+            <div style="margin-top:6px; color:#94a3b8; font-size:12px;">Si lo cambias, actualiza también los materiales que están dentro.</div>
+          </div>
+          <div style="width: 220px;">
+            <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Tipo</label>
+            <input id="cont-tipo" class="audiovisual-input" placeholder="Ej: Case / Rack" />
+          </div>
+
+          <label style="display:inline-flex; gap:10px; align-items:center; padding:8px 10px; border:1px solid rgba(148,163,184,0.18); border-radius:10px; background: rgba(2,6,23,0.22);">
+            <input id="cont-cerrado" type="checkbox" />
+            <span style="font-weight:700; color:#cbd5e1;">Contenedor cerrado</span>
+            <span style="color:#94a3b8; font-size:12px;">(bloquea altas)</span>
+          </label>
+
+          <button type="button" id="btn-guardar-contenedor" class="audiovisual-boton audiovisual-save" style="padding:10px 14px;">Guardar cambios</button>
+        </div>
+      </div>
+
+      <div style="background: rgba(15,23,42,0.22); border: 1px solid rgba(148,163,184,0.15); border-radius: 10px; padding: 10px;">
+        <div style="display:flex; justify-content:space-between; gap:10px; align-items:center; margin-bottom:10px;">
+          <div style="font-weight:800; color:#cbd5e1;">Módulos dentro del contenedor</div>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <select id="mover-destino" class="audiovisual-input" style="width:240px;"></select>
+            <button type="button" id="btn-mover" class="audiovisual-boton" style="padding:10px 14px;">Mover a...</button>
+            <button type="button" id="btn-sacar" class="bodega-export-pdf-btn" style="padding:10px 14px;">Sacar del contenedor</button>
+          </div>
+        </div>
+
+        <div style="color:#94a3b8; font-size:12px; line-height:1.35; margin-bottom:10px;">Mover/Sacar solo actualiza el campo "contenedor" del catálogo. Los movimientos quedan intactos (histórico).</div>
+
+        <div id="mods-list" style="display:flex; flex-direction:column; gap:6px;"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const checkSupa = () => {
+    const supa = window.supabaseClient;
+    if (supa) init();
+    else setTimeout(checkSupa, 100);
+  };
+  checkSupa();
+
+  function init() {
+    const supa = window.supabaseClient;
+
+    const UA_CTX = window.__UA_CONTEXT || null;
+    const TABLE_CATALOGO = (UA_CTX && UA_CTX.tableOverrides && UA_CTX.tableOverrides.catalogo) ? UA_CTX.tableOverrides.catalogo : 'catalogo_audiovisual';
+
+    const state = {
+      principalId: null,
+      secundariaId: null,
+      secundariaNombre: null,
+      contenedorId: null,
+      contenedorCodigo: null,
+      contenedorNombre: null,
+      contenedorTipo: null,
+      contenedorCerrado: false,
+      contenedorCampos: null,
+      contenedorRow: null,
+      contenedoresCache: []
+    };
+
+    function safeJsonParse(v) {
+      if (!v) return null;
+      if (typeof v === 'object') return v;
+      if (typeof v !== 'string') return null;
+      try { return JSON.parse(v); } catch (_) { return null; }
+    }
+
+    function isCerrado(campos) {
+      const c = safeJsonParse(campos);
+      if (!c || typeof c !== 'object') return false;
+      return c.contenedor_cerrado === true || c.cerrado === true || c.bloqueado === true;
+    }
+
+    function setResumen() {
+      const el = document.getElementById('sel-resumen');
+      const s = state.secundariaNombre || '(secundaria)';
+      const c = state.contenedorNombre || '(contenedor)';
+      const lock = state.contenedorCerrado ? ' [CERRADO]' : '';
+      if (el) el.textContent = `S: ${s} > Cont: ${c}${lock}`;
+    }
+
+    async function loadSecundarias() {
+      // Buscar la bodega principal "Audiovisual"
+      const { data: principal, error: errPrin } = await supa
+        .from('inv2_bodegas_principales')
+        .select('id, nombre')
+        .eq('nombre', 'Audiovisual')
+        .single();
+      if (errPrin || !principal) {
+        alert('No se encontró la bodega principal "Audiovisual"');
+        return;
+      }
+      state.principalId = principal.id;
+
+      const { data: secundarias, error: errSec } = await supa
+        .from('inv2_bodegas_secundarias')
+        .select('id, nombre')
+        .eq('principal_id', state.principalId)
+        .eq('activa', true);
+      if (errSec) {
+        alert('Error cargando secundarias: ' + errSec.message);
+        return;
+      }
+
+      const host = document.getElementById('secundarias-container');
+      host.innerHTML = '';
+      (secundarias || []).forEach(s => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = s.nombre;
+        btn.className = 'audiovisual-boton secundaria-btn';
+        btn.addEventListener('click', () => selectSecundaria(s.id, s.nombre, btn));
+        host.appendChild(btn);
+      });
+    }
+
+    async function loadContenedores() {
+      const { data, error } = await supa
+        .from(TABLE_CATALOGO)
+        .select('id, codigo, contenedor, contenedor_tipo, bodega_secundaria, es_contenedor, tipo_alta, campos_personalizados')
+        .not('contenedor', 'is', null)
+        .neq('contenedor', '')
+        .order('contenedor');
+      if (error) {
+        alert('Error cargando contenedores: ' + error.message);
+        return;
+      }
+
+      const filtered = (data || []).filter(r => {
+        const esCont = (r.es_contenedor === true) || (String(r.tipo_alta || '').toUpperCase() === 'CONTENEDOR');
+        if (!esCont) return false;
+        if (!state.secundariaNombre) return false;
+        return String(r.bodega_secundaria || '') === String(state.secundariaNombre);
+      });
+
+      state.contenedoresCache = filtered;
+
+      const host = document.getElementById('contenedores-container');
+      host.innerHTML = '';
+      filtered.forEach(r => {
+        const cerrado = isCerrado(r.campos_personalizados);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'audiovisual-boton contenedor-btn';
+        btn.style.textAlign = 'left';
+        btn.textContent = cerrado ? `${r.contenedor} (CERRADO)` : r.contenedor;
+        btn.addEventListener('click', () => selectContenedor(r, btn));
+        host.appendChild(btn);
+      });
+
+      // poblar destino mover
+      const sel = document.getElementById('mover-destino');
+      sel.innerHTML = '';
+      const opt0 = document.createElement('option');
+      opt0.value = '';
+      opt0.textContent = 'Destino...';
+      sel.appendChild(opt0);
+      filtered.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = String(r.id);
+        opt.textContent = r.contenedor;
+        sel.appendChild(opt);
+      });
+    }
+
+    function selectSecundaria(id, nombre, btn) {
+      state.secundariaId = id;
+      state.secundariaNombre = nombre;
+      document.querySelectorAll('.secundaria-btn').forEach(b => b.classList.remove('secundaria-selected'));
+      btn.classList.add('secundaria-selected');
+
+      // limpiar contenedor seleccionado
+      state.contenedorId = null;
+      state.contenedorCodigo = null;
+      state.contenedorNombre = null;
+      state.contenedorTipo = null;
+      state.contenedorCerrado = false;
+      state.contenedorCampos = null;
+      state.contenedorRow = null;
+      document.getElementById('cont-nombre').value = '';
+      document.getElementById('cont-tipo').value = '';
+      document.getElementById('cont-cerrado').checked = false;
+      document.getElementById('mods-list').innerHTML = '';
+      setResumen();
+
+      loadContenedores();
+    }
+
+    async function selectContenedor(row, btn) {
+      state.contenedorRow = row;
+      state.contenedorId = row.id;
+      state.contenedorCodigo = row.codigo;
+      state.contenedorNombre = row.contenedor;
+      state.contenedorTipo = row.contenedor_tipo || '';
+      state.contenedorCampos = row.campos_personalizados;
+      state.contenedorCerrado = isCerrado(row.campos_personalizados);
+
+      document.querySelectorAll('.contenedor-btn').forEach(b => b.classList.remove('contenedor-selected'));
+      btn.classList.add('contenedor-selected');
+
+      document.getElementById('cont-nombre').value = state.contenedorNombre || '';
+      document.getElementById('cont-tipo').value = state.contenedorTipo || '';
+      document.getElementById('cont-cerrado').checked = !!state.contenedorCerrado;
+
+      setResumen();
+      await loadMods();
+    }
+
+    async function loadMods() {
+      const host = document.getElementById('mods-list');
+      host.innerHTML = '';
+      if (!state.contenedorNombre || !state.secundariaNombre) return;
+
+      const { data, error } = await supa
+        .from(TABLE_CATALOGO)
+        .select('id, codigo, nombre, tipo_alta')
+        .eq('bodega_secundaria', state.secundariaNombre)
+        .eq('contenedor', state.contenedorNombre)
+        .order('codigo');
+      if (error) {
+        host.textContent = 'Error cargando módulos: ' + error.message;
+        return;
+      }
+
+      const mods = (data || []).filter(r => String(r.tipo_alta || '').toUpperCase() === 'MATERIAL');
+      if (!mods.length) {
+        host.textContent = '(Sin módulos)';
+        return;
+      }
+
+      mods.forEach(r => {
+        const row = document.createElement('label');
+        row.style.display = 'flex';
+        row.style.gap = '10px';
+        row.style.alignItems = 'center';
+        row.style.padding = '8px';
+        row.style.border = '1px solid rgba(148,163,184,0.12)';
+        row.style.borderRadius = '10px';
+        row.style.background = 'rgba(2,6,23,0.18)';
+
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.dataset.id = String(r.id);
+
+        const txt = document.createElement('div');
+        txt.style.color = '#cbd5e1';
+        txt.style.flex = '1';
+        txt.textContent = `${r.codigo} — ${r.nombre || ''}`;
+
+        row.appendChild(cb);
+        row.appendChild(txt);
+        host.appendChild(row);
+      });
+    }
+
+    function getSelectedModIds() {
+      return Array.from(document.querySelectorAll('#mods-list input[type="checkbox"]'))
+        .filter(cb => cb.checked)
+        .map(cb => cb.dataset.id)
+        .filter(Boolean);
+    }
+
+    async function guardarContenedor() {
+      if (!state.contenedorId || !state.contenedorNombre) {
+        alert('Selecciona un contenedor');
+        return;
+      }
+      const nuevoNombre = (document.getElementById('cont-nombre').value || '').trim();
+      const nuevoTipo = (document.getElementById('cont-tipo').value || '').trim();
+      const cerrar = !!document.getElementById('cont-cerrado').checked;
+      if (!nuevoNombre) {
+        alert('El nombre del contenedor no puede ir vacío');
+        return;
+      }
+
+      // merge campos_personalizados
+      let campos = safeJsonParse(state.contenedorCampos) || {};
+      if (typeof campos !== 'object' || !campos) campos = {};
+      campos.contenedor_cerrado = cerrar;
+      campos.contenedor_cerrado_at = cerrar ? new Date().toISOString() : (campos.contenedor_cerrado_at || null);
+
+      // 1) actualizar registro del contenedor
+      const { error: errUpd } = await supa
+        .from(TABLE_CATALOGO)
+        .update({
+          contenedor: nuevoNombre,
+          contenedor_tipo: nuevoTipo || null,
+          campos_personalizados: campos
+        })
+        .eq('id', state.contenedorId);
+      if (errUpd) {
+        alert('Error guardando contenedor: ' + errUpd.message);
+        return;
+      }
+
+      // 2) si cambió el nombre del contenedor, actualizar los materiales que apuntan al nombre viejo
+      if (nuevoNombre !== state.contenedorNombre && state.secundariaNombre) {
+        const { error: errMass } = await supa
+          .from(TABLE_CATALOGO)
+          .update({ contenedor: nuevoNombre })
+          .eq('bodega_secundaria', state.secundariaNombre)
+          .eq('contenedor', state.contenedorNombre)
+          .neq('id', state.contenedorId);
+        if (errMass) {
+          alert('Se actualizó el contenedor, pero falló actualizar los módulos dentro: ' + errMass.message);
+          // continuar
+        }
+      }
+
+      // refrescar
+      state.contenedorNombre = nuevoNombre;
+      state.contenedorTipo = nuevoTipo;
+      state.contenedorCampos = campos;
+      state.contenedorCerrado = cerrar;
+      setResumen();
+      await loadContenedores();
+      await loadMods();
+      alert('Cambios guardados');
+    }
+
+    async function moverSeleccionados() {
+      const ids = getSelectedModIds();
+      if (!ids.length) { alert('Selecciona al menos 1 módulo'); return; }
+      const destId = (document.getElementById('mover-destino').value || '').trim();
+      if (!destId) { alert('Selecciona un destino'); return; }
+      if (String(destId) === String(state.contenedorId)) { alert('El destino no puede ser el mismo contenedor'); return; }
+
+      const dest = state.contenedoresCache.find(c => String(c.id) === String(destId));
+      if (!dest) { alert('Destino inválido'); return; }
+
+      // mover: cambiar campo contenedor
+      const { error } = await supa
+        .from(TABLE_CATALOGO)
+        .update({ contenedor: dest.contenedor, bodega_secundaria: state.secundariaNombre })
+        .in('id', ids);
+      if (error) {
+        alert('Error moviendo: ' + error.message);
+        return;
+      }
+
+      await loadMods();
+      alert('Módulos movidos');
+    }
+
+    async function sacarSeleccionados() {
+      const ids = getSelectedModIds();
+      if (!ids.length) { alert('Selecciona al menos 1 módulo'); return; }
+
+      const { error } = await supa
+        .from(TABLE_CATALOGO)
+        .update({ contenedor: null })
+        .in('id', ids);
+      if (error) {
+        alert('Error sacando: ' + error.message);
+        return;
+      }
+
+      await loadMods();
+      alert('Módulos sacados del contenedor');
+    }
+
+    document.getElementById('btn-guardar-contenedor').addEventListener('click', guardarContenedor);
+    document.getElementById('btn-mover').addEventListener('click', moverSeleccionados);
+    document.getElementById('btn-sacar').addEventListener('click', sacarSeleccionados);
+
+    loadSecundarias();
+    setResumen();
+  }
+})();
+</script>

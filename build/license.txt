@@ -1,0 +1,30 @@
+TERMINOS Y CONDICIONES DE USO Y CONFIDENCIALIDAD - ABSOLUTE DE NICARAGUA
+
+El presente documento establece las normas, condiciones y protocolos de seguridad para el uso de la plataforma administrativa de Absolute de Nicaragua (en adelante, "La Empresa"). Al proceder con la instalacion y uso de este software, el usuario acepta de manera integra los siguientes puntos:
+
+1. NATURALEZA DEL SOFTWARE
+Este aplicativo es una herramienta de uso estrictamente profesional y administrativo destinada a la gestion, organizacion y ejecucion de eventos especiales. Su proposito es centralizar la logistica y operacion de La Empresa.
+
+2. PROPIEDAD INTELECTUAL
+Todo el contenido, codigo fuente, logotipos y estructuras de datos son propiedad exclusiva de Absolute de Nicaragua. Queda prohibida su reproduccion, ingenieria inversa o distribucion no autorizada.
+
+3. SIGILO Y CONFIDENCIALIDAD DE DATOS
+Dada la naturaleza del sector de eventos, este software maneja informacion sensible de clientes, presupuestos y estrategias de mercado.
+* Confidencialidad Estricta: El usuario se compromete a mantener bajo estricto sigilo toda la informacion visualizada o extraida de esta plataforma.
+* Prohibicion de Divulgacion: Queda terminantemente prohibido compartir capturas de pantalla, bases de datos o detalles logisticos con personas ajenas a la organizacion.
+
+4. GESTION DE MATERIAL AUDIOVISUAL Y FOTOGRAFIAS
+El software puede contener o dar acceso a registros fotograficos y videos de eventos previos o en curso.
+* Uso Restringido: El material audiovisual es propiedad de La Empresa o esta sujeto a derechos de imagen de los clientes. Queda prohibida su descarga, publicacion o difusion en redes sociales personales o externas sin autorizacion escrita de la direccion.
+* Resguardo de Imagen: El usuario es responsable de asegurar que el material grafico no sea utilizado de forma que comprometa la privacidad de los asistentes.
+
+5. RELACION CON PROVEEDORES Y CONTRATOS
+Este sistema centraliza acuerdos y costos con proveedores estrategicos.
+* Sigilo Comercial: Los montos, tarifas especiales y condiciones contractuales con proveedores son secretos comerciales. Revelar esta informacion se considera una violacion grave a este contrato.
+* Integridad de Datos: El usuario debe velar por la veracidad de la informacion ingresada para asegurar la transparencia operativa.
+
+6. RESPONSABILIDAD Y ACCESO
+El acceso es personal e intransferible. El usuario es responsable de cualquier filtracion de datos derivada del uso negligente de sus credenciales.
+
+7. ACTUALIZACIONES Y SANCIONES
+Absolute de Nicaragua se reserva el derecho de actualizar estos terminos. El incumplimiento de las clausulas de confidencialidad podra conllevar la revocacion inmediata del acceso y las medidas legales correspondientes segun la legislacion nicaraguense.

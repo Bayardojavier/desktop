@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Registro de Venta de Activos</title>
+  <!-- ❌ ELIMINADO: app.css -->
+  <link rel="stylesheet" href="../ventas.css">
+</head>
+<body>
+  <div class="ventas-layout-tres-columnas">
+    <!-- Columna Izquierda - Solicitudes de Ventas Activas -->
+    <div class="ventas-panel-izquierdo">
+      <div class="ventas-activas-contenedor">
+        <h2 class="ventas-activas-titulo">📋 Solicitudes de Ventas Activas</h2>
+        <p class="ventas-activas-subtitulo">Ventas pendientes de gestión - Gestiona tus solicitudes</p>
+
+        <div id="ventasActivasContainer" class="ventas-activas-seccion">
+          <div id="ventasActivasLista" class="ventas-activas-lista">
+            <!-- Las ventas activas se cargarán aquí dinámicamente -->
+          </div>
+          <div id="ventasActivasVacio" class="ventas-activas-vacio" style="display: none;">
+            <p>No hay ventas activas pendientes.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Columna Central - Formulario de Venta -->
+    <div class="ventas-contenedor-principal">
+    <div class="ventas-tarjeta-principal">
+      <div class="ventas-encabezado">
+        <h1 class="ventas-titulo-principal">💰 Registro de Venta de Activos</h1>
+      </div>
+
+      <div class="ventas-seccion-principal">
+        <div class="ventas-formulario">
+          <div class="ventas-fila-datos">
+            <div>
+              <label class="ventas-etiqueta">Cliente:</label>
+              <input type="text" id="ventas-cliente" class="ventas-campo" placeholder="Nombre del cliente" required>
+            </div>
+            <div>
+              <label class="ventas-etiqueta">Fecha:</label>
+              <input type="date" id="ventas-fecha" class="ventas-campo" required>
+            </div>
+          </div>
+
+          <div class="ventas-detalle-pedido">
+            <h2 class="ventas-titulo-pedido">🛒 Detalle del Pedido</h2>
+            <div id="ventas-carrito-contenido" class="ventas-contenedor-carrito"></div>
+            <div class="ventas-resumen-total">
+              <b class="ventas-monto-total">Total: <span id="ventas-monto">$ 0.00</span></b>
+              <div style="display: flex; gap: 12px; margin-top: 12px;">
+                <button id="ventas-btn-confirmar" class="ventas-boton-confirmar">✅ CONFIRMAR VENTA</button>
+                <button id="ventas-btn-exportar-pdf" class="ventas-boton-confirmar" style="background: #6c757d;">📄 Exportar PDF</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ventas-panel-bodega">
+          <div class="ventas-encabezado-bodega">📦 BODEGA</div>
+          <div class="ventas-pestanas-bodega">
+            <button id="ventas-btn-items" class="ventas-pestaña-activa">Items</button>
+            <button id="ventas-btn-recetas">Recetas</button>
+          </div>
+          <div id="ventas-lista-bodega" class="ventas-contenido-bodega"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalPDF" class="ingreso-modal-overlay" style="display: none;">
+    <div class="ingreso-modal-content">
+      <h2 class="ingreso-modal-title">Factura Generada</h2>
+      <p class="ingreso-modal-text">La factura ha sido generada exitosamente. ¿Desea descargarla?</p>
+      <div class="ingreso-modal-buttons">
+        <button id="btnNoDescargar" class="ingreso-btn ingreso-btn-secondary">No</button>
+        <button id="btnSiDescargar" class="ingreso-btn ingreso-btn-primary">Sí, Descargar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =============================================================================
+    // 🔹 CARGAR DATOS REALES DE SUPABASE
+    // =============================================================================
+    let materialesBodega = [];
+    let recetasVentas = [];
+
+    // =============================================================================
+    // 🔹 FUNCIONES DE CARGA DE DATOS
+    // =============================================================================
+    async function cargarMaterialesBodega() {
+      try {
+        const { data, error } = await window.supabaseClient
+          .from('stock_actual_con_precio')
+          .select('material_codigo, material_nombre, bodega_principal, bodega_secundaria, existencia, precio_promedio')
+          .order('material_codigo', { ascending: true });
+
+        if (error) {
+          console.error('Error al cargar materiales:', error);
+          alert('⚠️ Error al cargar materiales de bodega.');
+          return;
+        }
+
+        // Transformar los datos para mantener consistencia con el código existente
+        materialesBodega = (data || []).map(item => ({
+          codigo: item.material_codigo,
+          nombre: item.material_nombre,
+          existencia: item.existencia,
+          precio_unitario: item.precio_promedio,
+          bodega_principal: item.bodega_principal,
+          bodega_secundaria: item.bodega_secundaria
+        }));
+      } catch (err) {
+        console.error('Error:', err);
+        alert('⚠️ Error al conectar con la base de datos.');
+      }
+    }
+
+    async function cargarRecetas() {
+      try {
+        const { data: recetas, error } = await window.supabaseClient
+          .from('recetas')
+          .select('id, nombre')
+          .order('nombre', { ascending: true });
+
+        if (error) {
+          console.error('Error al cargar recetas:', error);
+          return;
+        }
+
+        for (const receta of recetas) {
+          const { data: materiales, error: errMat } = await window.supabaseClient
+            .from('recetas_materiales')
+            .select('material_codigo, cantidad')
+            .eq('receta_id', receta.id);
+
+          if (!errMat && materiales) {
+            receta.items = materiales;
+            recetasVentas.push(receta);
+          }
+        }
+      } catch (err) {
+        console.error('Error al cargar recetas:', err);
+      }
+    }
+
+    // =============================================================================
+    // 🔹 ESTADO
+    // =============================================================================
+    let carrito = [];
+    let pestanaActiva = 'items';
+    let ultimaVenta = null;
+
+    // =============================================================================
+    // 🔹 UTILIDADES DE PRECIO Y EXISTENCIA
+    // =============================================================================
+    function getExistencia(mat) {
+      return mat.existencia || 0;
+    }
+
+    function getPrecioMaterial(mat) {
+      return mat.precio_unitario || 0;
+    }
+
+    // =============================================================================
+    // 🔹 CARGA DE VENTAS ACTIVAS PARA PANEL IZQUIERDO
+    // =============================================================================
+    async function cargarVentasActivasPanel() {
+      try {
+        // Load all ventas_activas
+        const { data, error } = await window.supabaseClient
+          .from('ventas_activas')
+          .select(`
+            id,
+            cliente,
+            fecha,
+            total,
+            estado,
+            items_venta_activa (
+              codigo_material,
+              nombre_material,
+              cantidad,
+              precio_unitario
+            )
+          `)
+          .order('fecha', { ascending: false });
+
+        if (error) {
+          console.error('Error al cargar ventas activas para panel:', error);
+          return;
+        }
+
+        const contenedor = document.getElementById('ventasActivasLista');
+        const contenedorVacio = document.getElementById('ventasActivasVacio');
+
+        if (!data || data.length === 0) {
+          contenedor.innerHTML = '';
+          contenedorVacio.style.display = 'block';
+          return;
+        }
+
+        contenedorVacio.style.display = 'none';
+        contenedor.innerHTML = '';
+
+        data.forEach(venta => {
+          const isDespachada = venta.estado === 'despachada';
+          const itemDiv = document.createElement('div');
+          itemDiv.className = 'ventas-activas-item';
+
+          const fechaFormateada = new Date(venta.fecha).toLocaleDateString('es-ES');
+          const totalFormateado = new Intl.NumberFormat('es-ES', {
+            style: 'currency',
+            currency: 'USD'
+          }).format(venta.total || 0);
+
+          let botonesHTML = '';
+
+          if (isDespachada) {
+            // Solo PDF para despachadas
+            botonesHTML = `
+              <button class="ventas-activas-btn ventas-activas-btn-imprimir"
+                      data-venta-id="${venta.id}"
+                      title="Generar PDF de la venta">
+                🖨️ PDF
+              </button>
+            `;
+          } else {
+            // Todos los botones para no despachadas
+            botonesHTML = `
+              <button class="ventas-activas-btn ventas-activas-btn-imprimir"
+                      data-venta-id="${venta.id}"
+                      title="Generar PDF de la venta">
+                🖨️ PDF
+              </button>
+              <button class="ventas-activas-btn ventas-activas-btn-editar"
+                      data-venta-id="${venta.id}"
+                      title="Editar venta">
+                ✏️ Editar
+              </button>
+              <button class="ventas-activas-btn ventas-activas-btn-eliminar"
+                      data-venta-id="${venta.id}"
+                      title="Eliminar venta">
+                🗑️ Eliminar
+              </button>
+            `;
+          }
+
+          itemDiv.innerHTML = `
+            <div class="ventas-activas-info">
+              <div class="ventas-activas-titulo-item">Venta ${venta.id}</div>
+              <div class="ventas-activas-detalles">
+                <div><strong>Cliente:</strong> ${venta.cliente}</div>
+                <div><strong>Fecha:</strong> ${fechaFormateada}</div>
+                <div><strong>Total:</strong> ${totalFormateado}</div>
+                <div><strong>Estado:</strong> ${venta.estado || 'Activa'}</div>
+              </div>
+            </div>
+            <div class="ventas-activas-acciones">
+              ${botonesHTML}
+            </div>
+          `;
+
+          contenedor.appendChild(itemDiv);
+        });
+
+        // Agregar event listeners a los botones
+        document.querySelectorAll('.ventas-activas-btn-imprimir').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            const ventaId = e.currentTarget.dataset.ventaId;
+            try {
+              await generarPDFFromVentaActiva(ventaId);
+            } catch (err) {
+              console.error('Error al generar PDF:', err);
+              alert('❌ Error al generar el PDF.');
+            }
+          });
+        });
+
+        document.querySelectorAll('.ventas-activas-btn-editar').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const ventaId = e.currentTarget.dataset.ventaId;
+            editarVentaActiva(ventaId);
+          });
+        });
+
+        document.querySelectorAll('.ventas-activas-btn-eliminar').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            const ventaId = e.currentTarget.dataset.ventaId;
+            if (confirm('¿Estás seguro de que quieres eliminar esta venta activa?')) {
+              await eliminarVentaActiva(ventaId);
+            }
+          });
+        });
+
+      } catch (err) {
+        console.error('Error al cargar ventas activas para panel:', err);
+      }
+    }
+
+    // =============================================================================
+    // 🔹 FUNCIONES AUXILIARES
+    // =============================================================================
+    function generarIdVenta() {
+      let ultimoNumero = parseInt(localStorage.getItem('ultimo_num_venta') || "0");
+      ultimoNumero++;
+      localStorage.setItem('ultimo_num_venta', ultimoNumero.toString());
+      return `V-${String(ultimoNumero).padStart(4, '0')}`;
+    }
+
+    function agregarAlCarrito(codigo, nombre, precio) {
+      const existe = carrito.find(item => item.codigo === codigo);
+      if (existe) {
+        existe.cantidad++;
+      } else {
+        carrito.push({
+          codigo: codigo,
+          nombre: nombre,
+          precio: precio,
+          cantidad: 1
+        });
+      }
+      renderCarrito();
+    }
+
+    // =============================================================================
+    // 🔹 RENDERIZADO
+    // =============================================================================
+    function renderBodega() {
+      const contenedor = document.getElementById('ventas-lista-bodega');
+      if (!contenedor) return;
+      contenedor.innerHTML = "";
+
+      if (pestanaActiva === 'items') {
+        // Agrupar materiales por categoría (usando bodega_principal como categoría)
+        const categorias = {};
+        materialesBodega.forEach(material => {
+          const categoria = material.bodega_principal || 'Sin categoría';
+          if (!categorias[categoria]) {
+            categorias[categoria] = [];
+          }
+          categorias[categoria].push(material);
+        });
+
+        Object.keys(categorias).sort().forEach(categoria => {
+          const divCategoria = document.createElement('div');
+          divCategoria.className = 'ventas-categoria-item';
+          divCategoria.textContent = categoria;
+          contenedor.appendChild(divCategoria);
+
+          categorias[categoria].forEach(material => {
+            const precio = getPrecioMaterial(material);
+            const existencia = getExistencia(material);
+            const divProducto = document.createElement('div');
+            divProducto.className = 'ventas-producto-item';
+            divProducto.innerHTML = `
+              <div class="ventas-info-producto">
+                <strong>${material.nombre}</strong>
+                <small>${material.codigo}</small>
+                <div class="ventas-precio-item">$${precio.toFixed(2)}${existencia > 0 ? ` · Stock: ${existencia}` : ' · Sin stock'}</div>
+              </div>
+              <button class="ventas-boton-agregar" data-codigo="${material.codigo}" data-nombre="${material.nombre}" data-precio="${precio}" data-existencia="${existencia}">+</button>
+            `;
+            contenedor.appendChild(divProducto);
+          });
+        });
+      } else {
+        // Renderizar recetas
+        if (recetasVentas.length === 0) {
+          contenedor.innerHTML = '<p class="ventas-mensaje-vacio">No hay recetas disponibles</p>';
+        } else {
+          recetasVentas.forEach(receta => {
+            const divCombo = document.createElement('div');
+            divCombo.className = 'ventas-tarjeta-combo';
+            divCombo.innerHTML = `
+              <div class="ventas-titulo-combo">${receta.nombre}</div>
+              <button class="ventas-boton-combo" data-receta="${receta.id}">Cargar Combo</button>
+            `;
+            contenedor.appendChild(divCombo);
+          });
+        }
+      }
+
+      // Eventos para los botones
+      document.querySelectorAll('.ventas-boton-agregar').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const codigo = e.currentTarget.dataset.codigo;
+          const nombre = e.currentTarget.dataset.nombre;
+          const precio = parseFloat(e.currentTarget.dataset.precio);
+          agregarAlCarrito(codigo, nombre, precio);
+        });
+      });
+
+      document.querySelectorAll('.ventas-boton-combo').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const recetaId = e.currentTarget.dataset.receta;
+          const receta = recetasVentas.find(r => r.id === recetaId);
+          if (receta) {
+            receta.items.forEach(item => {
+              const material = materialesBodega.find(m => m.codigo === item.codigo);
+              if (material) {
+                const precio = getPrecioMaterial(material);
+                for (let i = 0; i < (item.cantidad || 1); i++) {
+                  agregarAlCarrito(material.codigo, material.nombre, precio);
+                }
+              }
+            });
+          }
+        });
+      });
+    }
+
+    function renderCarrito() {
+      const contenedor = document.getElementById('ventas-carrito-contenido');
+      if (!contenedor) return;
+
+      if (carrito.length === 0) {
+        contenedor.innerHTML = '<p class="ventas-carrito-vacio">Carrito vacío</p>';
+        document.getElementById('ventas-monto').textContent = '$ 0.00';
+        return;
+      }
+
+      contenedor.innerHTML = '';
+      let total = 0;
+
+      carrito.forEach((item, index) => {
+        const subtotal = item.precio * item.cantidad;
+        total += subtotal;
+
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'ventas-item-carrito';
+        itemDiv.innerHTML = `
+          <div class="ventas-info-item">
+            <strong>${item.nombre}</strong>
+            <small>${item.codigo}</small>
+          </div>
+          <div class="ventas-controles-item">
+              <label class="ventas-precio-label">Precio</label>
+            <input type="number" class="ventas-precio-edit" value="${item.precio.toFixed(2)}" min="0" step="0.01" data-indice="${index}">
+            <input type="number" class="ventas-cantidad-item" value="${item.cantidad}" min="1" data-indice="${index}">
+            <span class="ventas-subtotal-item">$${subtotal.toFixed(2)}</span>
+            <button class="ventas-boton-eliminar-item" data-indice="${index}" title="Eliminar item">🗑️</button>
+          </div>
+        `;
+        contenedor.appendChild(itemDiv);
+      });
+
+      document.getElementById('ventas-monto').textContent = `$ ${total.toFixed(2)}`;
+
+      // Eventos para los inputs de cantidad
+      document.querySelectorAll('.ventas-cantidad-item').forEach(input => {
+        input.addEventListener('change', (e) => {
+          const indice = parseInt(e.currentTarget.dataset.indice);
+          const nuevaCantidad = parseInt(e.currentTarget.value) || 1;
+          
+          if (nuevaCantidad <= 0) {
+            carrito.splice(indice, 1);
+          } else {
+            carrito[indice].cantidad = nuevaCantidad;
+          }
+          renderCarrito();
+        });
+      });
+
+      document.querySelectorAll('.ventas-precio-edit').forEach(input => {
+        input.addEventListener('change', (e) => {
+          const indice = parseInt(e.currentTarget.dataset.indice);
+          const nuevoPrecio = parseFloat(e.currentTarget.value);
+          carrito[indice].precio = Number.isFinite(nuevoPrecio) && nuevoPrecio >= 0 ? nuevoPrecio : 0;
+          renderCarrito();
+        });
+      });
+
+      // Evento para eliminar items del carrito
+      document.querySelectorAll('.ventas-boton-eliminar-item').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const indice = parseInt(e.currentTarget.dataset.indice);
+          carrito.splice(indice, 1);
+          renderCarrito();
+        });
+      });
+    }
+
+    // =============================================================================
+    // 🔹 GUARDAR VENTA
+    // =============================================================================
+    async function guardarVenta() {
+      const cliente = document.getElementById('ventas-cliente').value.trim();
+      const fecha = document.getElementById('ventas-fecha').value;
+
+      if (!cliente) {
+        alert('⚠️ Por favor ingrese el nombre del cliente.');
+        document.getElementById('ventas-cliente').focus();
+        return false;
+      }
+
+      if (!fecha) {
+        alert('⚠️ Por favor seleccione la fecha de venta.');
+        document.getElementById('ventas-fecha').focus();
+        return false;
+      }
+
+      if (carrito.length === 0) {
+        alert('⚠️ El carrito está vacío. Agregue al menos un producto.');
+        return false;
+      }
+
+      // Calcular total
+      let total = 0;
+      carrito.forEach(item => {
+        total += item.precio * item.cantidad;
+      });
+
+      try {
+        // Generar ID de venta
+        const idVenta = generarIdVenta();
+
+        // Insertar venta principal
+        const { data: venta, error: errorVenta } = await window.supabaseClient
+          .from('ventas_activas')
+          .insert({
+            id: idVenta,
+            cliente: cliente,
+            fecha: fecha,
+            fecha_registro: new Date().toISOString(),
+            total: total,
+            estado: 'activa'
+          })
+          .select()
+          .single();
+
+        if (errorVenta) {
+          console.error('Error al guardar venta:', errorVenta);
+          alert('❌ Error al guardar la venta.');
+          return false;
+        }
+
+        // Insertar items de la venta
+        const itemsParaInsertar = carrito.map(item => ({
+          venta_id: idVenta,
+          codigo_material: item.codigo,
+          nombre_material: item.nombre,
+          cantidad: item.cantidad,
+          precio_unitario: item.precio
+        }));
+
+        const { error: errorItems } = await window.supabaseClient
+          .from('items_venta_activa')
+          .insert(itemsParaInsertar);
+
+        if (errorItems) {
+          console.error('Error al guardar items de venta:', errorItems);
+          alert('❌ Error al guardar los items de la venta.');
+          return false;
+        }
+
+        alert(`✅ Venta ${idVenta} registrada exitosamente.`);
+        return { 
+          id: idVenta, 
+          venta: venta, 
+          items: itemsParaInsertar,
+          cliente: cliente,
+          fecha: fecha,
+          total: total
+        };
+
+      } catch (err) {
+        console.error('Error:', err);
+        alert('❌ Error al guardar la venta.');
+        return false;
+      }
+    }
+
+    // =============================================================================
+    // 🔹 GENERAR DOCUMENTO PDF
+    // =============================================================================
+    function generarDocumentoPDF(data) {
+      if (!window.html2pdf) {
+        alert("html2pdf no está cargado.");
+        return;
+      }
+
+      var copias = [
+        { leyenda: "Original – Empresa" },
+        { leyenda: "Copia – Cliente" },
+        { leyenda: "Copia – Archivo" }
+      ];
+
+      var contenidoCompleto = "";
+      copias.forEach(function(copia) {
+        var titulo = "Factura de Venta Activa";
+        var numeroFactura = data.id;
+        var colorHeader = "#2563eb"; // Azul corporativo
+        var contenidoDetalles = '\
+          <p><strong>Cliente:</strong> ' + data.cliente + '</p>\
+          <p><strong>Fecha de Venta:</strong> ' + data.fecha + '</p>\
+        ';
+
+        var tablaFilas = data.items.map(function(item) {
+          var subtotal = item.precio_unitario * item.cantidad;
+          return '\
+            <tr style="font-size: 9pt;">\
+              <td style="padding: 6pt; border: 1px solid #ddd;">' + item.nombre_material + '</td>\
+              <td style="padding: 6pt; border: 1px solid #ddd; text-align: center;">' + item.cantidad + '</td>\
+              <td style="padding: 6pt; border: 1px solid #ddd; text-align: right;">$' + item.precio_unitario.toFixed(2) + '</td>\
+              <td style="padding: 6pt; border: 1px solid #ddd; text-align: right;">$' + subtotal.toFixed(2) + '</td>\
+            </tr>\
+          ';
+        }).join("");
+
+        contenidoDetalles += '\
+          <h3 style="color: ' + colorHeader + '; margin: 12pt 0 6pt 0; font-size: 12pt; border-bottom: 1px solid #ccc; padding-bottom: 3pt;">Productos Vendidos</h3>\
+          <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">\
+            <thead>\
+              <tr style="background-color: ' + colorHeader + '; color: white;">\
+                <th style="padding: 6pt; border: 1px solid #ddd;">Producto</th>\
+                <th style="padding: 6pt; border: 1px solid #ddd;">Cantidad</th>\
+                <th style="padding: 6pt; border: 1px solid #ddd;">Precio Unit.</th>\
+                <th style="padding: 6pt; border: 1px solid #ddd;">Subtotal</th>\
+              </tr>\
+            </thead>\
+            <tbody>' + tablaFilas + '</tbody>\
+          </table>\
+          <div style="text-align: right; margin-top: 10pt; font-size: 11pt; font-weight: bold;">\
+            <p style="margin: 0;">Total: $' + data.total.toFixed(2) + '</p>\
+          </div>\
+        ';
+
+        contenidoCompleto += '\
+        <div style="width: 185mm; font-family: Arial, sans-serif; color: #333; line-height: 1.3; font-size: 10pt; page-break-after: always;">\
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10pt; border-bottom: 2px solid ' + colorHeader + '; padding-bottom: 6pt;">\
+            <img src="assets/logo.png" alt="Logo" style="height: 20mm; margin-right: 8mm;">\
+            <div style="text-align: center; flex: 1;">\
+              <h1 style="color: ' + colorHeader + '; margin: 0; font-size: 16pt;">' + titulo + '</h1>\
+              <p style="margin: 3pt 0 0 0; color: #555; font-size: 9pt;">\
+                Fecha de Emisión: ' + new Date().toLocaleDateString('es-ES') + '\
+              </p>\
+            </div>\
+            <div style="text-align: right;">\
+              <div style="font-size: 24pt; font-weight: bold; color: ' + colorHeader + '; letter-spacing: 1px;">' + numeroFactura + '</div>\
+            </div>\
+          </div>\
+          <div style="background: #f0f9ff; padding: 6pt; border-radius: 4pt; margin: 8pt 0; font-size: 9pt;">\
+            ' + contenidoDetalles + '\
+          </div>';
+
+        // Firmas
+        contenidoCompleto += '\
+          <div style="display: flex; justify-content: space-around; margin-top: 20mm;">\
+            <div style="text-align: center; width: 30%;">\
+              <div style="border-top: 1px solid black; padding-top: 5pt; font-weight: bold;">Vendedor</div>\
+              <p style="margin: 5pt 0 0 0; font-size: 8pt;">Firma</p>\
+            </div>\
+            <div style="text-align: center; width: 30%;">\
+              <div style="border-top: 1px solid black; padding-top: 5pt; font-weight: bold;">' + data.cliente + '</div>\
+              <p style="margin: 5pt 0 0 0; font-size: 8pt;">Cliente</p>\
+            </div>\
+            <div style="text-align: center; width: 30%;">\
+              <div style="border-top: 1px solid black; padding-top: 5pt; font-weight: bold;">Supervisor</div>\
+              <p style="margin: 5pt 0 0 0; font-size: 8pt;">Autoriza</p>\
+            </div>\
+          </div>';
+
+        contenidoCompleto += '\
+          <div style="margin-top: 10mm; text-align: center; font-size: 9pt; color: #666; border-top: 1px solid #eee; padding-top: 4pt;">\
+            ' + copia.leyenda + '\
+          </div>\
+          <div style="background: #dbeafe; color: #1e40af; padding: 4pt; font-size: 9pt; text-align: center; border: 1px dashed #bfdbfe; margin-top: 8pt;">\
+            ✅ VENTA REGISTRADA – PRODUCTOS ENTREGADOS\
+          </div>\
+        </div>';
+      });
+
+      if (contenidoCompleto.endsWith('page-break-after: always;">')) {
+        contenidoCompleto = contenidoCompleto.slice(0, -'page-break-after: always;">'.length) + '">';
+      }
+
+      var options = {
+        margin: [15, 15, 15, 15],
+        filename: 'Factura_' + data.id + '.pdf',
+        image: { type: 'jpeg', quality: 0.95 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+        jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
+      };
+
+      html2pdf().from(contenidoCompleto).set(options).save();
+    }
+
+    // =============================================================================
+    // 🔹 INICIALIZACIÓN
+    // =============================================================================
+    async function inicializarVentasActivo() {
+      try {
+        // Cargar datos de Supabase
+        await cargarMaterialesBodega();
+        await cargarRecetas();
+
+        // Fecha actual
+        const hoy = new Date().toISOString().split('T')[0];
+        document.getElementById('ventas-fecha').value = hoy;
+
+        // Eventos de pestañas
+        document.getElementById('ventas-btn-items').addEventListener('click', () => {
+          pestanaActiva = 'items';
+          document.getElementById('ventas-btn-items').classList.add('ventas-pestaña-activa');
+          document.getElementById('ventas-btn-recetas').classList.remove('ventas-pestaña-activa');
+          renderBodega();
+        });
+
+        document.getElementById('ventas-btn-recetas').addEventListener('click', () => {
+          pestanaActiva = 'recetas';
+          document.getElementById('ventas-btn-recetas').classList.add('ventas-pestaña-activa');
+          document.getElementById('ventas-btn-items').classList.remove('ventas-pestaña-activa');
+          renderBodega();
+        });
+
+        // Evento de confirmar venta
+        document.getElementById('ventas-btn-confirmar').addEventListener('click', async () => {
+          const resultado = await guardarVenta();
+          if (resultado) {
+            ultimaVenta = resultado;
+            // Limpiar formulario
+            carrito = [];
+            document.getElementById('ventas-cliente').value = '';
+            renderCarrito();
+          }
+        });
+
+        // Evento de exportar PDF
+        document.getElementById('ventas-btn-exportar-pdf').addEventListener('click', () => {
+          if (!ultimaVenta) {
+            alert('⚠️ No hay una venta registrada para exportar.');
+            return;
+          }
+          document.getElementById('modalPDF').style.display = 'flex';
+        });
+
+        // Evento de confirmar PDF
+        document.getElementById('btnSiDescargar').addEventListener('click', () => {
+          generarDocumentoPDF(ultimaVenta);
+          document.getElementById('modalPDF').style.display = 'none';
+        });
+
+        // Evento de cancelar PDF
+        document.getElementById('btnNoDescargar').addEventListener('click', () => {
+          document.getElementById('modalPDF').style.display = 'none';
+        });
+
+        // =============================================================================
+        // 🔹 FUNCIONES PARA PANEL IZQUIERDO
+        // =============================================================================
+
+        // Generar PDF desde venta activa
+        async function generarPDFFromVentaActiva(ventaId) {
+          try {
+            const { data: venta, error: ventaError } = await window.supabaseClient
+              .from('ventas_activas')
+              .select(`
+                id,
+                cliente,
+                fecha,
+                total,
+                items_venta_activa (
+                  codigo_material,
+                  nombre_material,
+                  cantidad,
+                  precio_unitario
+                )
+              `)
+              .eq('id', ventaId)
+              .single();
+
+            if (ventaError) {
+              console.error('Error al cargar venta activa:', ventaError);
+              alert('❌ Error al cargar los datos de la venta.');
+              return;
+            }
+
+            // Preparar datos para el PDF
+            const pdfData = {
+              numeroFactura: ventaId.split('-')[1],
+              cliente: venta.cliente,
+              fecha: new Date(venta.fecha).toLocaleDateString('es-ES'),
+              items: venta.items_venta_activa.map(item => ({
+                codigo: item.codigo_material,
+                nombre: item.nombre_material,
+                cantidad: item.cantidad,
+                precio: item.precio_unitario,
+                total: item.cantidad * item.precio_unitario
+              })),
+              total: venta.total
+            };
+
+            // Generar el PDF
+            generarDocumentoPDF(pdfData);
+
+          } catch (err) {
+            console.error('Error al generar PDF desde venta activa:', err);
+            alert('❌ Error al generar el PDF.');
+          }
+        }
+
+        // Editar venta activa (placeholder)
+        function editarVentaActiva(ventaId) {
+          alert(`Funcionalidad de edición para la venta ${ventaId} - Pendiente de implementar`);
+        }
+
+        // Eliminar venta activa
+        async function eliminarVentaActiva(ventaId) {
+          try {
+            const { error } = await window.supabaseClient
+              .from('ventas_activas')
+              .delete()
+              .eq('id', ventaId);
+
+            if (error) {
+              console.error('Error al eliminar venta activa:', error);
+              alert('❌ Error al eliminar la venta.');
+              return;
+            }
+
+            alert('✅ Venta activa eliminada correctamente.');
+            
+            // Recargar el panel
+            await cargarVentasActivasPanel();
+
+          } catch (err) {
+            console.error('Error al eliminar venta activa:', err);
+            alert('❌ Error al eliminar la venta.');
+          }
+        }
+
+        // Renderizar inicial
+        renderBodega();
+        renderCarrito();
+        await cargarVentasActivasPanel();
+
+      } catch (err) {
+        console.error('Error en inicialización:', err);
+        alert('❌ Error al inicializar el módulo de ventas.');
+      }
+    }
+
+    // Iniciar cuando el DOM esté listo
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', inicializarVentasActivo);
+    } else {
+      inicializarVentasActivo();
+    }
+  </script>
+</body>
+</html>
