@@ -1523,7 +1523,12 @@
             alert(`Guardadas ${cantidad} unidades en catálogo con códigos consecutivos.`);
           } else {
             // Pieza o cantidad = 1: un solo registro
-            const suffix = [base, ...extras].filter(Boolean).join('-');
+            let filteredExtras = extras;
+            if (state.itemTipo === 'ACCESORIO') {
+              // Para Piezas, no incluir nombre_abrev en extras para evitar duplicación
+              filteredExtras = extras.filter(e => e !== components.nombre_abrev);
+            }
+            const suffix = [base, ...filteredExtras].filter(Boolean).join('-');
             const consec = await obtenerSiguienteConsecutivo(suffix);
             let codigo;
             if (state.itemTipo === 'ACCESORIO') {
