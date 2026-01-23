@@ -178,8 +178,8 @@
         </div>
       </div>
 
-      <div id="ua-grupo-hechizo">
-        <label style="display:inline-flex; gap:8px; align-items:center; color:#cbd5e1;"><input type="checkbox" id="producto-hechizo" /> Producto Hechizo</label>
+      <div id="ua-grupo-fabricado-local">
+        <label style="display:inline-flex; gap:8px; align-items:center; color:#cbd5e1;"><input type="checkbox" id="producto-hechizo" /> Producto Fabricado Local</label>
       </div>
 
       <div id="grupo-marca-modelo" style="display:flex; gap:10px;">
@@ -1238,33 +1238,50 @@
   }
 
   async function loadContenedores() {
-    if (!state.secundariaNombre) return;
     try {
-      const { data, error } = await supa
+      const { data: contenedores, error } = await supa
         .from(TABLE_CATALOGO)
-        .select('*')
-        .eq('bodega_secundaria', state.secundariaNombre)
-        .eq('es_contenedor', true)
-        .order('nombre');
+        .select('codigo, contenedor, contenedor_tipo, bodega_secundaria, es_contenedor, tipo_alta, campos_personalizados')
+        .not('contenedor', 'is', null)
+        .neq('contenedor', '')
+        .order('contenedor');
       if (error) {
         console.warn('Error cargando contenedores', error);
         return;
       }
       const container = document.getElementById('contenedor-tipos-container');
-      if (!container) return;
+      if (container) {
+        container.innerHTML = '';
+        const filtered = (contenedores || []).filter(c => {
+          if (!c || !c.contenedor) return false;
+          // compatibilidad con datos antiguos
+          const esCont = (c.es_contenedor === true) || (String(c.tipo_alta || '').toUpperCase() === 'CONTENEDOR');
+          if (!esCont) return false;
+          if (!state.secundariaNombre) return true;
+          return String(c.bodega_secundaria || '') === String(state.secundariaNombre);
+        });
 
-      container.innerHTML = '';
-      (data || []).forEach(r => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'audiovisual-boton contenedor-btn';
-        btn.textContent = r.nombre || r.contenedor || r.codigo;
-        btn.dataset.codigo = r.codigo || '';
-        btn.dataset.cerrado = isCerrado(r.campos_personalizados) ? '1' : '0';
-        btn.addEventListener('click', () => selectContenedor(r, btn));
-        container.appendChild(btn);
-      });
-
+        filtered.forEach(c => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          const cerrado = isCerrado(c.campos_personalizados);
+          btn.textContent = cerrado ? `${c.contenedor} (CERRADO)` : c.contenedor;
+          btn.className = 'audiovisual-boton contenedor-btn';
+          btn.dataset.contenedor = c.contenedor;
+          btn.dataset.tipo = (c.contenedor_tipo || '').toString().trim();
+          btn.dataset.codigo = c.codigo || '';
+          // btn.dataset.contId eliminado porque no hay id en catalogo_consumibles
+          btn.dataset.cerrado = cerrado ? '1' : '0';
+          if (cerrado) {
+            btn.disabled = true;
+            btn.style.opacity = '0.55';
+            btn.style.cursor = 'not-allowed';
+          } else {
+            btn.addEventListener('click', () => selectContenedor(c, btn));
+          }
+          container.appendChild(btn);
+        });
+      }
     } catch (e) {
       console.warn('Error en loadContenedores', e);
     }
@@ -1320,7 +1337,8 @@
     let contenedorCodigo = null;
 
     if (tipo === 'CONTENEDOR') {
-      nombreFinal = [contTipoVal || 'Contenedor', contBaseVal, numeroNorm].filter(Boolean).join(' ').trim();
+      // Solo nombre base + número
+      nombreFinal = [contBaseVal, numeroNorm].filter(Boolean).join(' ').trim();
     } else {
       nombreFinal = (document.getElementById('nombre-producto')?.value || '').trim();
       if (!nombreFinal) { alert('Para agregar material debes llenar el Nombre del Producto.'); return; }
@@ -1386,6 +1404,12 @@
       marca: (document.getElementById('marca')?.value || '').trim() || null,
       modelo: (document.getElementById('modelo')?.value || '').trim() || null,
       foto_url: fotoUrl || null,
+      // Guardar datos de contenedor en columnas explícitas:
+      contenedor: (tipo === 'CONTENEDOR') ? nombreFinal : (contenedorNombre || null),
+      contenedor_tipo: (tipo === 'CONTENEDOR') ? (contTipoVal || null) : (state.contenedorRow?.campos_personalizados?.contenedor_tipo || null),
+      nombre_base: (tipo === 'CONTENEDOR') ? (contBaseVal || null) : null,
+      nombre_numero: (tipo === 'CONTENEDOR') ? (numeroNorm || null) : null,
+      apodo: (tipo === 'CONTENEDOR') ? (contTipoVal || null) : null,
       // IMPORTANTE: en algunos esquemas estos IDs son UUID; si mandamos bigint provoca 400.
       // Por eso solo los enviamos si realmente parecen UUID.
       // UPDATE: Se remueven por completo para evitar el 400 inicial. La DB los puede resolver por nombre.

@@ -38,8 +38,42 @@
     </button>
   </div>
 
-  <!-- TABLA -->
-  <div id="tabla-inventario-bodega" style="flex: 1; overflow: auto;"></div>
+  <!-- CONTENEDOR PRINCIPAL CON DOS COLUMNAS -->
+  <div style="display: flex; gap: 20px; flex: 1; overflow: hidden;">
+    <!-- TABLA DE INVENTARIO -->
+    <div style="flex: 2; display: flex; flex-direction: column;">
+      <h3 style="color: #cbd5e1; margin-bottom: 10px; font-size: 16px;">📦 Inventario Actual</h3>
+      <div id="tabla-inventario-bodega" style="flex: 1; overflow: auto; border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 8px; padding: 10px; background: rgba(20, 30, 60, 0.3);"></div>
+    </div>
+
+    <!-- MOVIMIENTOS RECIENTES -->
+    <div style="flex: 1; display: flex; flex-direction: column;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h3 style="color: #cbd5e1; font-size: 16px; margin: 0;">🔄 Actividad Reciente</h3>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button id="btn-refresh-movimientos" style="background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 4px; color: #cbd5e1; padding: 4px 8px; font-size: 11px; cursor: pointer;">↻</button>
+          <div style="font-size: 11px; color: #64748b;">
+            <span id="movimientos-status">🔄 Auto-actualización</span>
+          </div>
+        </div>
+      </div>
+      <div id="panel-movimientos" style="flex: 1; overflow: auto; border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 8px; padding: 10px; background: rgba(20, 30, 60, 0.3);">
+        <div style="text-align: center; color: #888; margin-top: 20px; font-size: 12px;">
+          <div>Cargando actividad de bodegas...</div>
+          <div style="font-size: 10px; margin-top: 4px; color: #666;">🎥 Audiovisual • 🔧 Hierros • 🛠️ Consumibles</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INDICADOR DE ESTADO -->
+  <div id="estado-conexion" style="position: absolute; top: 10px; right: 10px; padding: 8px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; z-index: 1000; background: rgba(20, 30, 60, 0.9); border: 1px solid rgba(99, 102, 241, 0.3);">
+    <div style="display: flex; align-items: center; gap: 6px;">
+      <div id="estado-icono">🔄</div>
+      <div id="estado-texto">Conectando...</div>
+    </div>
+    <div id="estado-detalle" style="font-size: 9px; margin-top: 2px; opacity: 0.8;"></div>
+  </div>
 
 </div>
 
@@ -59,6 +93,20 @@
   font-weight: bold;
   color: #64b5f6;
 }
+
+#btn-refresh-movimientos {
+  transition: all 0.2s;
+}
+
+#btn-refresh-movimientos:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.4);
+  border-color: rgba(59, 130, 246, 0.5);
+}
+
+#btn-refresh-movimientos:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 </style>
 
 
@@ -72,9 +120,11 @@
 
   const estado = {
     inventario: [],
+    movimientos: [],
     bodegasPrincipales: [],
     bodegasSecundarias: [],
-    secundariasPorPrincipal: new Map()
+    secundariasPorPrincipal: new Map(),
+    autoRefreshInterval: null
   };
 
   function normalizarBodega(b) {
@@ -87,91 +137,147 @@
     const cont = document.getElementById('tabla-inventario-bodega');
     cont.innerHTML = '<p style="color:#cbd5e1; text-align:center; margin-top: 40px;">Cargando inventario…</p>';
 
-    const [{ data: stockData, error: stockError }, { data: catData, error: catError }] = await Promise.all([
+    const [{ data: movAudioData, error: movAudioError }, { data: movHierroData, error: movHierroError }, { data: movConsumibleData, error: movConsumibleError }, { data: catAudioData, error: catAudioError }, { data: catHierroData, error: catHierroError }, { data: catConsumibleData, error: catConsumibleError }] = await Promise.all([
       supa
-        .from('stock_actual_con_precio')
-        .select('material_codigo, material_nombre, bodega_principal, bodega_secundaria, existencia')
-        .order('bodega_principal', { ascending: true })
-        .order('bodega_secundaria', { ascending: true })
-        .order('material_codigo', { ascending: true }),
+        .from('movimientos_bodega_audiovisual')
+        .select('material_codigo, bodega_principal, bodega_secundaria, cantidad, signo')
+        .not('cantidad', 'is', null)
+        .not('signo', 'is', null),
       supa
-        .from('catalogo')
+        .from('movimientos_bodega_hierros')
+        .select('material_codigo, bodega_principal, bodega_secundaria, cantidad, signo')
+        .not('cantidad', 'is', null)
+        .not('signo', 'is', null),
+      supa
+        .from('movimientos_bodega_consumibles')
+        .select('material_codigo, bodega_principal, bodega_secundaria, cantidad, signo')
+        .not('cantidad', 'is', null)
+        .not('signo', 'is', null),
+      supa
+        .from('catalogo_audiovisual')
+        .select('codigo, nombre, bodega_principal, bodega_secundaria, tipo_material, color')
+        .eq('es_contenedor', false),
+      supa
+        .from('catalogo_hierros')
+        .select('codigo, nombre, bodega_principal, bodega_secundaria, tipo_material, color')
+        .eq('es_contenedor', false),
+      supa
+        .from('catalogo_consumibles')
         .select('codigo, nombre, bodega_principal, bodega_secundaria, tipo_material, color')
         .eq('es_contenedor', false)
     ]);
 
-    if (stockError) {
-      console.error('Error cargando stock_actual_con_precio:', stockError);
-      cont.innerHTML = `<p style="color:#ef4444; text-align:center; margin-top: 40px;">Error al cargar inventario: ${stockError.message}</p>`;
+    // Verificar errores en movimientos
+    if (movAudioError && movHierroError && movConsumibleError) {
+      console.error('Error cargando movimientos:', movAudioError, movHierroError, movConsumibleError);
+      cont.innerHTML = `<p style="color:#ef4444; text-align:center; margin-top: 40px;">Error al cargar movimientos: ${movAudioError?.message || movHierroError?.message || movConsumibleError?.message}</p>`;
       return;
     }
 
-    if (catError) {
-      console.warn('No se pudo cargar catalogo (tipo/color):', catError);
+    // Combinar datos de catálogo de las 3 tablas
+    const catMap = new Map();
+    function addToCatMap(data, tipo) {
+      (data || []).forEach(c => {
+        catMap.set(c.codigo, {
+          codigo: c.codigo,
+          nombre: c.nombre,
+          bodega_principal: c.bodega_principal,
+          bodega_secundaria: c.bodega_secundaria,
+          tipo: c.tipo_material,
+          color: c.color,
+          tabla_origen: tipo
+        });
+      });
     }
 
-    const catMap = new Map();
-    (catData || []).forEach(c => {
-      catMap.set(c.codigo, {
-        codigo: c.codigo,
-        nombre: c.nombre,
-        bodega_principal: c.bodega_principal,
-        bodega_secundaria: c.bodega_secundaria,
-        tipo: c.tipo_material,
-        color: c.color
-      });
-    });
+    addToCatMap(catAudioData, 'audiovisual');
+    addToCatMap(catHierroData, 'hierros');
+    addToCatMap(catConsumibleData, 'consumibles');
+
+    if (catAudioError && catHierroError && catConsumibleError) {
+      console.warn('No se pudieron cargar los catálogos:', catAudioError, catHierroError, catConsumibleError);
+    }
 
     const inventarioMap = new Map();
     function makeKey(codigo, principal, secundaria) {
       return `${String(codigo || '').trim()}||${normalizarBodega(principal) || 'Principal'}||${normalizarBodega(secundaria) || 'General'}`;
     }
 
-    // Base: filas reales de stock (por principal+secundaria)
-    (stockData || []).forEach(s => {
-      const codigo = String(s.material_codigo || '').trim();
-      if (!codigo) return;
+    // Calcular existencia desde movimientos de las 3 tablas
+    const existenciaMap = new Map();
 
-      const bodegaPrincipal = normalizarBodega(s.bodega_principal) || 'Principal';
-      const bodegaSecundaria = normalizarBodega(s.bodega_secundaria) || 'General';
-      const c = catMap.get(codigo) || {};
-      const key = makeKey(codigo, bodegaPrincipal, bodegaSecundaria);
-      const bodegaMostrar = bodegaSecundaria || bodegaPrincipal;
+    function procesarMovimientos(movimientos, tipo) {
+      (movimientos || []).forEach(m => {
+        const codigo = String(m.material_codigo || '').trim();
+        if (!codigo) return;
 
-      inventarioMap.set(key, {
-        codigo,
-        nombre: c.nombre || s.material_nombre || codigo,
-        bodega: bodegaMostrar,
-        bodega_principal: bodegaPrincipal,
-        bodega_secundaria: bodegaSecundaria,
-        tipo: c.tipo || '–',
-        color: c.color || '–',
-        existencia: Number(s.existencia) || 0
+        const bodegaPrincipal = normalizarBodega(m.bodega_principal) || 'Principal';
+        const bodegaSecundaria = normalizarBodega(m.bodega_secundaria) || 'General';
+        const key = makeKey(codigo, bodegaPrincipal, bodegaSecundaria);
+
+        const cantidad = Number(m.cantidad) || 0;
+        const signo = Number(m.signo) || 1;
+        const ajuste = cantidad * signo;
+
+        if (!existenciaMap.has(key)) {
+          existenciaMap.set(key, { existencia: 0, tabla_origen: tipo });
+        }
+        existenciaMap.get(key).existencia += ajuste;
       });
-    });
+    }
 
-    // Complemento: items del catálogo sin stock aún (existencia=0)
-    (catData || []).forEach(c => {
-      const codigo = String(c.codigo || '').trim();
-      if (!codigo) return;
+    procesarMovimientos(movAudioData, 'audiovisual');
+    procesarMovimientos(movHierroData, 'hierros');
+    procesarMovimientos(movConsumibleData, 'consumibles');
 
-      const bodegaPrincipal = normalizarBodega(c.bodega_principal) || 'Principal';
-      const bodegaSecundaria = normalizarBodega(c.bodega_secundaria) || 'General';
-      const key = makeKey(codigo, bodegaPrincipal, bodegaSecundaria);
-      if (inventarioMap.has(key)) return;
-
+    // Crear inventario con existencias calculadas
+    existenciaMap.forEach((data, key) => {
+      const [codigo, bodegaPrincipal, bodegaSecundaria] = key.split('||');
+      const c = catMap.get(codigo) || {};
       const bodegaMostrar = bodegaSecundaria || bodegaPrincipal;
+
       inventarioMap.set(key, {
         codigo,
         nombre: c.nombre || codigo,
         bodega: bodegaMostrar,
         bodega_principal: bodegaPrincipal,
         bodega_secundaria: bodegaSecundaria,
-        tipo: c.tipo_material || '–',
+        tipo: c.tipo || '–',
         color: c.color || '–',
-        existencia: 0
+        existencia: Math.max(0, data.existencia), // No permitir existencias negativas
+        tabla_origen: data.tabla_origen
       });
     });
+
+    // Complemento: items del catálogo sin movimientos aún (existencia=0)
+    function addCatalogoSinStock(data, tipo) {
+      (data || []).forEach(c => {
+        const codigo = String(c.codigo || '').trim();
+        if (!codigo) return;
+
+        const bodegaPrincipal = normalizarBodega(c.bodega_principal) || 'Principal';
+        const bodegaSecundaria = normalizarBodega(c.bodega_secundaria) || 'General';
+        const key = makeKey(codigo, bodegaPrincipal, bodegaSecundaria);
+        if (inventarioMap.has(key)) return;
+
+        const bodegaMostrar = bodegaSecundaria || bodegaPrincipal;
+        inventarioMap.set(key, {
+          codigo,
+          nombre: c.nombre || codigo,
+          bodega: bodegaMostrar,
+          bodega_principal: bodegaPrincipal,
+          bodega_secundaria: bodegaSecundaria,
+          tipo: c.tipo_material || '–',
+          color: c.color || '–',
+          existencia: 0,
+          tabla_origen: tipo
+        });
+      });
+    }
+
+    addCatalogoSinStock(catAudioData, 'audiovisual');
+    addCatalogoSinStock(catHierroData, 'hierros');
+    addCatalogoSinStock(catConsumibleData, 'consumibles');
 
     const inventario = Array.from(inventarioMap.values()).sort((a, b) =>
       a.bodega_principal.localeCompare(b.bodega_principal)
@@ -196,6 +302,234 @@
 
     poblarSelectBodegaPrincipal(estado.bodegasPrincipales);
     poblarSelectBodegaSecundaria(document.getElementById('filtro-bodega-principal')?.value || 'todas');
+  }
+
+  async function cargarMovimientosRecientes() {
+    if (!supa) return;
+
+    try {
+      // Consultar las 3 tablas de movimientos por separado y combinar
+      console.log('Cargando movimientos de las 3 bodegas...');
+
+      const [audioResult, hierroResult, consumibleResult] = await Promise.allSettled([
+        supa
+          .from('movimientos_bodega_audiovisual')
+          .select(`
+            id,
+            material_codigo,
+            material_nombre,
+            bodega_principal,
+            bodega_secundaria,
+            ubicacion_nombre,
+            tipo_movimiento,
+            cantidad,
+            signo,
+            referencia_tipo,
+            fecha_movimiento,
+            observaciones,
+            estado,
+            created_at
+          `)
+          .order('created_at', { ascending: false })
+          .limit(25),
+
+        supa
+          .from('movimientos_bodega_hierros')
+          .select(`
+            id,
+            material_codigo,
+            material_nombre,
+            bodega_principal,
+            bodega_secundaria,
+            ubicacion_nombre,
+            tipo_movimiento,
+            cantidad,
+            signo,
+            referencia_tipo,
+            fecha_movimiento,
+            observaciones,
+            estado,
+            created_at
+          `)
+          .order('created_at', { ascending: false })
+          .limit(25),
+
+        supa
+          .from('movimientos_bodega_consumibles')
+          .select(`
+            id,
+            material_codigo,
+            material_nombre,
+            bodega_principal,
+            bodega_secundaria,
+            ubicacion_nombre,
+            tipo_movimiento,
+            cantidad,
+            signo,
+            referencia_tipo,
+            fecha_movimiento,
+            observaciones,
+            estado,
+            created_at
+          `)
+          .order('created_at', { ascending: false })
+          .limit(25)
+      ]);
+
+      // Procesar resultados y manejar errores individuales
+      const processResult = (result, tipo) => {
+        if (result.status === 'fulfilled' && result.value.data) {
+          return result.value.data.map(m => ({ ...m, tabla_origen: tipo }));
+        } else {
+          console.warn(`Error cargando movimientos de ${tipo}:`, result.reason || result.value?.error);
+          return [];
+        }
+      };
+
+      const movimientosAudio = processResult(audioResult, 'audiovisual');
+      const movimientosHierro = processResult(hierroResult, 'hierros');
+      const movimientosConsumible = processResult(consumibleResult, 'consumibles');
+
+      // Combinar y ordenar por fecha (más recientes primero)
+      const allMovimientos = [
+        ...movimientosAudio,
+        ...movimientosHierro,
+        ...movimientosConsumible
+      ].sort((a, b) => {
+        const fechaA = new Date(a.created_at || a.fecha_movimiento || 0);
+        const fechaB = new Date(b.created_at || b.fecha_movimiento || 0);
+        return fechaB - fechaA;
+      });
+
+      estado.movimientos = allMovimientos.slice(0, 50);
+      renderizarMovimientos();
+
+      // Actualizar indicador de estado
+      actualizarIndicadorEstado('success', 'Conectado', `${allMovimientos.length} movimientos cargados`);
+
+    } catch (err) {
+      console.error('Error general en cargarMovimientosRecientes:', err);
+      document.getElementById('panel-movimientos').innerHTML = `<div style="text-align: center; color: #ef4444;">Error al cargar movimientos</div>`;
+      actualizarIndicadorEstado('error', 'Error de conexión', 'No se pudieron cargar los movimientos');
+    }
+  }
+
+  function renderizarMovimientos() {
+    const container = document.getElementById('panel-movimientos');
+    if (!container) return;
+
+    if (!estado.movimientos || estado.movimientos.length === 0) {
+      container.innerHTML = `<div style="text-align: center; color: #888; margin-top: 20px;">No hay movimientos recientes</div>`;
+      return;
+    }
+
+    let html = '<div style="display: flex; flex-direction: column; gap: 6px; max-height: 100%; overflow-y: auto;">';
+
+    estado.movimientos.slice(0, 20).forEach(mov => { // Mostrar solo los 20 más recientes
+      const fecha = new Date(mov.created_at || mov.fecha_movimiento).toLocaleString('es-NI', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      const tipoIcon = mov.tipo_movimiento === 'ingreso' ? '📥' : '📤';
+      const tipoColor = mov.tipo_movimiento === 'ingreso' ? '#4ade80' : '#f87171';
+      const cantidadDisplay = `${mov.signo > 0 ? '+' : ''}${mov.cantidad}`;
+
+      const referencia = mov.referencia_tipo ? ` • ${mov.referencia_tipo.replace(/_/g, ' ')}` : '';
+      const ubicacion = mov.ubicacion_nombre ? ` → ${mov.ubicacion_nombre}` : '';
+
+      // Indicador de tipo de bodega
+      const bodegaIcon = mov.tabla_origen === 'audiovisual' ? '🎥' :
+                        mov.tabla_origen === 'hierros' ? '🔧' :
+                        mov.tabla_origen === 'consumibles' ? '🛠️' : '📦';
+      const bodegaLabel = mov.tabla_origen === 'audiovisual' ? 'Audio' :
+                         mov.tabla_origen === 'hierros' ? 'Hierros' :
+                         mov.tabla_origen === 'consumibles' ? 'Consumibles' : 'Genérico';
+
+      html += `
+        <div style="background: rgba(30, 40, 70, 0.5); border: 1px solid rgba(99, 102, 241, 0.1); border-radius: 6px; padding: 8px; font-size: 12px; transition: background-color 0.2s;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-weight: bold; color: #cbd5e1; font-size: 11px; word-break: break-all;">${mov.material_codigo}</div>
+              <div style="color: #94a3b8; font-size: 10px; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${mov.material_nombre || 'Sin nombre'}</div>
+            </div>
+            <div style="text-align: right; margin-left: 8px;">
+              <div style="color: ${tipoColor}; font-weight: bold; font-size: 13px;">${tipoIcon} ${cantidadDisplay}</div>
+              <div style="color: #64748b; font-size: 9px;">${fecha}</div>
+            </div>
+          </div>
+          <div style="color: #64748b; font-size: 10px; margin-top: 4px;">
+            <span style="color: #475569;">${bodegaIcon} ${bodegaLabel}</span> •
+            <span style="color: #64748b;">${mov.bodega_secundaria || mov.bodega_principal || 'Bodega'}</span>${ubicacion}${referencia}
+          </div>
+        </div>
+      `;
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
+  function iniciarAutoRefresh() {
+    // Actualizar movimientos cada 30 segundos
+    estado.autoRefreshInterval = setInterval(async () => {
+      actualizarIndicadorEstado('loading', 'Actualizando...', 'Sincronizando bodegas');
+      await cargarMovimientosRecientes();
+    }, 30000);
+  }
+
+  function detenerAutoRefresh() {
+    if (estado.autoRefreshInterval) {
+      clearInterval(estado.autoRefreshInterval);
+      estado.autoRefreshInterval = null;
+    }
+  }
+
+  function actualizarIndicadorEstado(tipo, texto, detalle = '') {
+    const contenedor = document.getElementById('estado-conexion');
+    const icono = document.getElementById('estado-icono');
+    const textoEl = document.getElementById('estado-texto');
+    const detalleEl = document.getElementById('estado-detalle');
+
+    if (!contenedor || !icono || !textoEl) return;
+
+    // Configurar colores y iconos según el tipo
+    let color, icon;
+    switch (tipo) {
+      case 'success':
+        color = 'rgba(34, 197, 94, 0.2)';
+        icon = '✅';
+        break;
+      case 'error':
+        color = 'rgba(239, 68, 68, 0.2)';
+        icon = '❌';
+        break;
+      case 'warning':
+        color = 'rgba(251, 191, 36, 0.2)';
+        icon = '⚠️';
+        break;
+      case 'loading':
+      default:
+        color = 'rgba(59, 130, 246, 0.2)';
+        icon = '🔄';
+        break;
+    }
+
+    contenedor.style.background = color;
+    contenedor.style.borderColor = tipo === 'success' ? 'rgba(34, 197, 94, 0.3)' :
+                                  tipo === 'error' ? 'rgba(239, 68, 68, 0.3)' :
+                                  tipo === 'warning' ? 'rgba(251, 191, 36, 0.3)' :
+                                  'rgba(59, 130, 246, 0.3)';
+
+    icono.textContent = icon;
+    textoEl.textContent = texto;
+
+    if (detalleEl) {
+      detalleEl.textContent = detalle;
+      detalleEl.style.display = detalle ? 'block' : 'none';
+    }
   }
 
   function poblarSelectBodegaPrincipal(principales = []) {
@@ -294,11 +628,20 @@
 
   // === INICIALIZAR ===
   (async function init() {
-    await cargarInventarioDesdeSupabase();
+    actualizarIndicadorEstado('loading', 'Cargando datos...', 'Conectando a bodegas');
+
+    await Promise.all([
+      cargarInventarioDesdeSupabase(),
+      cargarMovimientosRecientes()
+    ]);
+
     renderizarTabla(
       document.getElementById('filtro-bodega-principal')?.value || 'todas',
       document.getElementById('filtro-bodega-secundaria')?.value || 'todas'
     );
+
+    // Iniciar actualización automática de movimientos
+    iniciarAutoRefresh();
   })();
 
   // === EVENTOS ===
@@ -313,6 +656,37 @@
       document.getElementById('filtro-bodega-principal')?.value || 'todas',
       e.target.value
     );
+  });
+
+  // Detener auto-refresh cuando se cierre la página
+  window.addEventListener('beforeunload', () => {
+    detenerAutoRefresh();
+  });
+
+  // También detener cuando se cambie de vista (si hay navegación)
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      detenerAutoRefresh();
+    } else {
+      // Re-iniciar si vuelve a ser visible
+      if (!estado.autoRefreshInterval) {
+        iniciarAutoRefresh();
+      }
+    }
+  });
+
+  // Botón de refresh manual
+  document.getElementById('btn-refresh-movimientos').addEventListener('click', async () => {
+    const btn = document.getElementById('btn-refresh-movimientos');
+    const originalText = btn.textContent;
+    btn.textContent = '⟳';
+    btn.disabled = true;
+
+    actualizarIndicadorEstado('loading', 'Actualizando...', 'Refresco manual');
+    await cargarMovimientosRecientes();
+
+    btn.textContent = originalText;
+    btn.disabled = false;
   });
 
   document.getElementById('btn-exportar-xbodega').addEventListener('click', () => {

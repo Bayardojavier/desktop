@@ -53,8 +53,8 @@
 
           <div id="ua-itemtipo-wrap" style="display:flex; gap:8px; align-items:center; padding:6px 10px; border:1px solid rgba(148,163,184,0.18); border-radius:10px; background: rgba(2,6,23,0.22);">
             <span style="font-weight:700;">Tipo</span>
-            <button type="button" id="ua-tipo-equipo" class="audiovisual-boton" style="padding:6px 10px;">Piezas</button>
-            <button type="button" id="ua-tipo-accesorio" class="audiovisual-boton" style="padding:6px 10px;">Lote</button>
+            <button type="button" id="ua-tipo-equipo" class="audiovisual-boton" style="padding:6px 10px;">Equipo/Estructura</button>
+            <button type="button" id="ua-tipo-accesorio" class="audiovisual-boton" style="padding:6px 10px;">Piezas</button>
           </div>
 
           <label style="display:inline-flex; gap:10px; align-items:center; padding:6px 10px; border:1px solid rgba(148,163,184,0.18); border-radius:10px; background: rgba(2,6,23,0.22);">
@@ -73,6 +73,11 @@
             <span style="font-weight:700; color:#cbd5e1;">Cerrar contenedor</span>
             <span style="color:#94a3b8; font-size:12px;">(bloquea agregar más materiales a este contenedor)</span>
           </label>
+        </div>
+
+        <div id="ua-accesorio-largo-wrap" style="display:none; width: 220px;">
+          <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Largo de las piezas</label>
+          <input id="ua-accesorio-largo" class="audiovisual-input" placeholder="Ej: 10M / 15M / 150CM" maxlength="8" />
         </div>
       </div>
 
@@ -172,7 +177,7 @@
       </div>
 
       <div id="ua-grupo-hechizo">
-        <label style="display:inline-flex; gap:8px; align-items:center; color:#cbd5e1;"><input type="checkbox" id="producto-hechizo" /> Producto Hechizo</label>
+        <label style="display:inline-flex; gap:8px; align-items:center; color:#cbd5e1;"><input type="checkbox" id="producto-hechizo" /> Fabricado Local</label>
       </div>
 
       <div id="grupo-marca-modelo" style="display:flex; gap:10px;">
@@ -258,6 +263,7 @@
       cantidad: 1,
       cerrarContenedor: false,
       contenedorCerrado: false,
+      isSubmitting: false,
       camposExtra: [],
       color: null,
       fotoFile: null,
@@ -266,6 +272,8 @@
       secundariaNombre: null,
       contenedorTipo: null,
       contenedorCodigo: null,
+      itemTipo: 'EQUIPO', // 'EQUIPO' o 'ACCESORIO'
+      accesorioLargo: '',
       // CONTENEDOR: 2 partes extra (además de consecutivo + principal + secundaria)
       codigoOrdenContenedor: ['cont_nombre_base', 'cont_numero'],
       // MATERIAL: 2 partes extra (además del código heredado del contenedor)
@@ -340,6 +348,28 @@
       }
     }
 
+    function paintTipoButtons() {
+      const selectedStyle = '2px solid rgba(255,255,255,0.85)';
+      const normalStyle = '2px solid rgba(255,255,255,0.12)';
+      const btnEquipo = document.getElementById('ua-tipo-equipo');
+      const btnAccesorio = document.getElementById('ua-tipo-accesorio');
+      if (btnEquipo) btnEquipo.style.border = (state.itemTipo === 'EQUIPO') ? selectedStyle : normalStyle;
+      if (btnAccesorio) btnAccesorio.style.border = (state.itemTipo === 'ACCESORIO') ? selectedStyle : normalStyle;
+
+      if (btnEquipo) btnEquipo.style.background = (state.itemTipo === 'EQUIPO') ? 'rgba(59,130,246,0.22)' : 'rgba(2,6,23,0.0)';
+      if (btnAccesorio) btnAccesorio.style.background = (state.itemTipo === 'ACCESORIO') ? 'rgba(245,158,11,0.18)' : 'rgba(2,6,23,0.0)';
+    }
+
+    function updateItemTipoUI() {
+      const accesorioLargoWrap = document.getElementById('ua-accesorio-largo-wrap');
+      const accesorioLargoEl = document.getElementById('ua-accesorio-largo');
+      if (accesorioLargoWrap) accesorioLargoWrap.style.display = (state.itemTipo === 'ACCESORIO') ? '' : 'none';
+      if (state.itemTipo !== 'ACCESORIO') {
+        state.accesorioLargo = '';
+        if (accesorioLargoEl) accesorioLargoEl.value = '';
+      }
+    }
+
     function bindInputs() {
       // Activo
       const activoEl = document.getElementById('ua-es-activo');
@@ -371,6 +401,17 @@
         cerrarEl.addEventListener('change', () => {
           state.cerrarContenedor = !!cerrarEl.checked;
           updateResumen();
+        });
+      }
+
+      // Accesorio largo
+      const accesorioLargoEl = document.getElementById('ua-accesorio-largo');
+      if (accesorioLargoEl) {
+        state.accesorioLargo = normalizeAccesorioLargo(accesorioLargoEl.value);
+        accesorioLargoEl.addEventListener('input', () => {
+          state.accesorioLargo = normalizeAccesorioLargo(accesorioLargoEl.value);
+          updateResumen();
+          updateCodigoPreview();
         });
       }
 
@@ -408,6 +449,28 @@
       // Campos extra
       const addCampo = document.getElementById('btn-agregar-campo');
       if (addCampo) addCampo.addEventListener('click', addCampoExtra);
+
+      // Tipo de item (Piezas/Lote)
+      const btnEquipo = document.getElementById('ua-tipo-equipo');
+      const btnAccesorio = document.getElementById('ua-tipo-accesorio');
+      if (btnEquipo) {
+        btnEquipo.addEventListener('click', () => {
+          state.itemTipo = 'EQUIPO';
+          paintTipoButtons();
+          updateItemTipoUI();
+          updateResumen();
+          updateCodigoPreview();
+        });
+      }
+      if (btnAccesorio) {
+        btnAccesorio.addEventListener('click', () => {
+          state.itemTipo = 'ACCESORIO';
+          paintTipoButtons();
+          updateItemTipoUI();
+          updateResumen();
+          updateCodigoPreview();
+        });
+      }
 
       // Secundarias
       const addSec = document.getElementById('btn-agregar-secundaria');
@@ -529,7 +592,9 @@
       const cantidadEl = document.getElementById('ua-cantidad');
       const cerrarEl = document.getElementById('ua-cerrar-contenedor');
       const itemTipoWrap = document.getElementById('ua-itemtipo-wrap');
-      if (itemTipoWrap) itemTipoWrap.style.display = 'none';
+      const accesorioLargoWrap = document.getElementById('ua-accesorio-largo-wrap');
+      if (itemTipoWrap) itemTipoWrap.style.display = (tipo === 'MATERIAL') ? '' : 'none';
+      if (accesorioLargoWrap) accesorioLargoWrap.style.display = 'none'; // Ocultar por defecto
       const cantidadWrap = document.getElementById('ua-cantidad-wrap');
       const cerrarWrap = document.getElementById('ua-cerrar-contenedor-wrap');
       const nombreWrap = document.getElementById('div-nombre-producto');
@@ -575,6 +640,10 @@
         if (nombreWrap) nombreWrap.style.display = '';
         if (abrevWrap) abrevWrap.style.display = '';
         if (nombreInput) nombreInput.required = true;
+
+        // Aplicar UI del tipo de item (Piezas/Lote)
+        paintTipoButtons();
+        updateItemTipoUI();
       }
     }
 
@@ -632,6 +701,15 @@
         console.warn('No se pudo cerrar el contenedor', e);
         return { ok: false, error: e.message || String(e) };
       }
+    }
+
+    function normalizeAccesorioLargo(txt) {
+      return (txt || '')
+        .toString()
+        .trim()
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, '')
+        .slice(0, 8);
     }
 
     function abrev(txt) {
@@ -1128,6 +1206,7 @@
         { key: 'modelo', label: 'Modelo (4)' },
         { key: 'nombre_abrev', label: 'Abrev. (4)' },
         { key: 'ua-cantidad', label: 'Cantidad' },
+        { key: 'ua-accesorio-largo', label: 'Largo accesorio' },
         { key: 'ancho', label: 'Ancho' },
         { key: 'largo', label: 'Largo' },
         { key: 'grosor', label: 'Grosor' },
@@ -1272,204 +1351,221 @@
     async function onSubmit(ev) {
       ev.preventDefault();
 
-      if (!state.secundariaId || !state.secundariaNombre) {
-        alert('Debes seleccionar una Bodega Secundaria antes de guardar.');
+      // Prevenir múltiples envíos
+      if (state.isSubmitting) {
         return;
       }
 
-      const tipo = state.contenedorCodigo ? 'MATERIAL' : 'CONTENEDOR';
+      // Marcar como enviando y deshabilitar botón
+      state.isSubmitting = true;
+      const submitBtn = document.getElementById('ua-btn-submit');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Guardando...';
+      }
 
-      if (tipo === 'MATERIAL') {
-        if (!state.contenedorCodigo) {
-          alert('Para agregar material debes seleccionar un Contenedor creado.');
+      try {
+        if (!state.secundariaId || !state.secundariaNombre) {
+          alert('Debes seleccionar una Bodega Secundaria antes de guardar.');
           return;
         }
-        if (state.contenedorCerrado) {
-          alert('Este contenedor está CERRADO. No se puede agregar más material aquí.');
+
+        const tipo = state.contenedorCodigo ? 'MATERIAL' : 'CONTENEDOR';
+
+        if (tipo === 'MATERIAL') {
+          if (!state.contenedorCodigo) {
+            alert('Para agregar material debes seleccionar un Contenedor creado.');
+            return;
+          }
+          if (state.contenedorCerrado) {
+            alert('Este contenedor está CERRADO. No se puede agregar más material aquí.');
+            return;
+          }
+        }
+
+        const cantidadEl = document.getElementById('ua-cantidad');
+        const cantidad = parseInt(String(cantidadEl?.value || state.cantidad || 1), 10) || 1;
+
+        const codigoPreview = await updateCodigoPreview();
+        if (!codigoPreview) {
+          alert('No se pudo generar el código. Revisa selección/inputs.');
           return;
         }
-      }
 
-      const cantidadEl = document.getElementById('ua-cantidad');
-      const cantidad = parseInt(String(cantidadEl?.value || state.cantidad || 1), 10) || 1;
+        const contTipoEl = document.getElementById('cont-tipo');
+        const contBaseEl = document.getElementById('cont-nombre-base');
+        const contNumeroEl = document.getElementById('cont-numero');
+        const contTipoVal = contTipoEl ? contTipoEl.value.trim() : '';
+        const contBaseVal = contBaseEl ? contBaseEl.value.trim() : '';
+        const contNumeroVal = contNumeroEl ? contNumeroEl.value.trim() : '';
+        const numeroNorm = contNumeroVal ? contNumeroVal.padStart(2, '0') : '';
 
-      const codigoPreview = await updateCodigoPreview();
-      if (!codigoPreview) {
-        alert('No se pudo generar el código. Revisa selección/inputs.');
-        return;
-      }
+        // Contenedor identidad
+        if (tipo === 'CONTENEDOR') {
+          if (!contBaseVal) { alert('Para guardar un contenedor debes llenar el Nombre Base.'); return; }
+          if (!numeroNorm) { alert('Para guardar un contenedor debes llenar el Número.'); return; }
+        }
 
-      const contTipoEl = document.getElementById('cont-tipo');
-      const contBaseEl = document.getElementById('cont-nombre-base');
-      const contNumeroEl = document.getElementById('cont-numero');
-      const contTipoVal = contTipoEl ? contTipoEl.value.trim() : '';
-      const contBaseVal = contBaseEl ? contBaseEl.value.trim() : '';
-      const contNumeroVal = contNumeroEl ? contNumeroEl.value.trim() : '';
-      const numeroNorm = contNumeroVal ? contNumeroVal.padStart(2, '0') : '';
+        // Nombre final / contenedor final
+        const contenedorNombreInput = document.getElementById('contenedor-nombre');
+        const contenedorNombre = contenedorNombreInput ? contenedorNombreInput.value.trim() : '';
+        let apodo = [contBaseVal, numeroNorm].filter(Boolean).join(' ').trim();
+        let nombreFinal = tipo === 'MATERIAL'
+          ? (document.getElementById('nombre-producto')?.value || '').trim()
+          : (contTipoVal || 'Contenedor');
+        let contenedorFinal = tipo === 'MATERIAL'
+          ? contenedorNombre
+          : (apodo || contenedorNombre);
 
-      // Contenedor identidad
-      if (tipo === 'CONTENEDOR') {
-        if (!contBaseVal) { alert('Para guardar un contenedor debes llenar el Nombre Base.'); return; }
-        if (!numeroNorm) { alert('Para guardar un contenedor debes llenar el Número.'); return; }
-      }
+        if (tipo === 'MATERIAL' && !nombreFinal) { alert('Para agregar material debes llenar el Nombre del Producto.'); return; }
+        if (tipo === 'MATERIAL' && !contenedorFinal) { alert('Selecciona un contenedor válido.'); return; }
 
-      // Contenedor identidad
-      if (tipo === 'CONTENEDOR') {
-        if (!contBaseVal) { alert('Para guardar un contenedor debes llenar el Nombre Base.'); return; }
-        if (!numeroNorm) { alert('Para guardar un contenedor debes llenar el Número.'); return; }
-      }
+        // Foto
+        const fotoUrl = await uploadFotoIfNeeded();
 
-      // Nombre final / contenedor final
-      const contenedorNombreInput = document.getElementById('contenedor-nombre');
-      const contenedorNombre = contenedorNombreInput ? contenedorNombreInput.value.trim() : '';
-      let apodo = [contBaseVal, numeroNorm].filter(Boolean).join(' ').trim();
-      let nombreFinal = tipo === 'MATERIAL'
-        ? (document.getElementById('nombre-producto')?.value || '').trim()
-        : (contTipoVal || 'Contenedor');
-      let contenedorFinal = tipo === 'MATERIAL'
-        ? contenedorNombre
-        : (apodo || contenedorNombre);
-
-      if (tipo === 'MATERIAL' && !nombreFinal) { alert('Para agregar material debes llenar el Nombre del Producto.'); return; }
-      if (tipo === 'MATERIAL' && !contenedorFinal) { alert('Selecciona un contenedor válido.'); return; }
-
-      // Foto
-      const fotoUrl = await uploadFotoIfNeeded();
-
-      const payloadBase = {
-        nombre: nombreFinal,
-        apodo: (tipo === 'MATERIAL') ? null : (apodo || null),
-        nombre_base: (tipo === 'MATERIAL') ? null : (contBaseVal || null),
-        nombre_numero: (tipo === 'MATERIAL') ? null : (numeroNorm || null),
-        bodega_principal: PRINCIPAL_FIJO,
-        bodega_secundaria: state.secundariaNombre || null,
-        contenedor: contenedorFinal || null,
-        contenedor_tipo: (tipo === 'MATERIAL') ? (state.contenedorTipo || null) : (contTipoVal || null),
-        tipo_alta: tipo,
-        abreviacion: (document.getElementById('nombre-abrev')?.value || '').trim() || null,
-        tipo_uso: (document.getElementById('tipo-uso')?.value || '').trim() || null,
-        tipo_material: (document.getElementById('tipo-material')?.value || '').trim() || null,
-        unidad_medida: 'CMT',
-        dimensiones: {
-          ancho: numVal('ancho'),
-          largo: numVal('largo'),
-          grosor: numVal('grosor')
-        },
-        peso: numVal('peso'),
-        precio_unitario: numVal('precio'),
-        color: colorNames[state.color] || state.color,
-        es_hechizo: !!document.getElementById('producto-hechizo')?.checked,
-        marca: (document.getElementById('marca')?.value || '').trim() || null,
-        modelo: (document.getElementById('modelo')?.value || '').trim() || null,
-        notas: (document.getElementById('notas')?.value || '').trim() || null,
-        campos_personalizados: collectCamposExtra(),
-        es_contenedor: (tipo !== 'MATERIAL')
-      };
-      if (fotoUrl) payloadBase.foto_url = fotoUrl;
-
-      async function crearMovimientoIngreso({ codigo, nombre, cantidadMov, referenciaTipo }) {
-        const hoy = new Date();
-        const fecha = hoy.toISOString().slice(0, 10);
-        const movimiento = {
-          material_codigo: codigo,
-          material_nombre: (nombre || codigo),
+        const payloadBase = {
+          nombre: nombreFinal,
+          apodo: (tipo === 'MATERIAL') ? null : (apodo || null),
+          nombre_base: (tipo === 'MATERIAL') ? null : (contBaseVal || null),
+          nombre_numero: (tipo === 'MATERIAL') ? null : (numeroNorm || null),
           bodega_principal: PRINCIPAL_FIJO,
           bodega_secundaria: state.secundariaNombre || null,
-          ubicacion_nombre: contenedorFinal || null,
-          tipo_movimiento: 'ingreso',
-          cantidad: cantidadMov,
-          signo: 1,
-          referencia_tipo: referenciaTipo || 'alta_material_activo',
-          fecha_movimiento: fecha,
-                   observaciones: 'Alta automática (activo)',
-          estado: 'completado'
+          contenedor: contenedorFinal || null,
+          contenedor_tipo: (tipo === 'MATERIAL') ? (state.contenedorTipo || null) : (contTipoVal || null),
+          tipo_alta: tipo,
+          abreviacion: (document.getElementById('nombre-abrev')?.value || '').trim() || null,
+          tipo_uso: (document.getElementById('tipo-uso')?.value || '').trim() || null,
+          tipo_material: (document.getElementById('tipo-material')?.value || '').trim() || null,
+          unidad_medida: 'CMT',
+          dimensiones: {
+            ancho: numVal('ancho'),
+            largo: numVal('largo'),
+            grosor: numVal('grosor')
+          },
+          peso: numVal('peso'),
+          precio_unitario: numVal('precio'),
+          color: colorNames[state.color] || state.color,
+          es_hechizo: !!document.getElementById('producto-hechizo')?.checked,
+          marca: (document.getElementById('marca')?.value || '').trim() || null,
+          modelo: (document.getElementById('modelo')?.value || '').trim() || null,
+          notas: (document.getElementById('notas')?.value || '').trim() || null,
+          campos_personalizados: collectCamposExtra(),
+          es_contenedor: (tipo !== 'MATERIAL')
         };
-        return await insertConFallback(TABLE_MOVIMIENTOS, movimiento);
-      }
+        if (fotoUrl) payloadBase.foto_url = fotoUrl;
 
-      // Guardado
-      if (tipo === 'MATERIAL') {
-        const base = getCodigoSinConsecutivo(state.contenedorCodigo || '');
-        const components = {
-          tipo_uso: ref4(document.getElementById('tipo-uso')?.value || ''),
-          tipo_material: ref4(document.getElementById('tipo-material')?.value || ''),
-          marca: abrev(document.getElementById('marca')?.value || ''),
-          modelo: abrev(document.getElementById('modelo')?.value || ''),
-          'ua-cantidad': String(state.cantidad),
-          nombre_abrev: (document.getElementById('nombre-abrev')?.value || '').trim() || abrev(nombreFinal)
-        };
-        const extras = (state.codigoOrdenMaterial || []).map(k => components[k]).filter(Boolean).slice(0, 2);
-
-        // Siempre guardar como un solo material con cantidad total
-        const suffix = [base, ...extras].filter(Boolean).join('-');
-        const consec = await obtenerSiguienteConsecutivo(suffix);
-        const codigo = `${consec}-${suffix}`;
-        const payload = { ...payloadBase, codigo };
-        const res = await insertConFallback(TABLE_CATALOGO, payload);
-        if (!res.ok) { alert('Error al guardar: ' + res.error); return; }
-
-        if (state.esActivo) {
-          const resMov = await crearMovimientoIngreso({ codigo, nombre: nombreFinal, cantidadMov: cantidad });
-          if (!resMov.ok) {
-            alert('Se guardó el catálogo pero NO se pudo crear el movimiento de ingreso.\n' + resMov.error);
-            return;
-          }
+        async function crearMovimientoIngreso({ codigo, nombre, cantidadMov, referenciaTipo }) {
+          const hoy = new Date();
+          const fecha = hoy.toISOString().slice(0, 10);
+          const movimiento = {
+            material_codigo: codigo,
+            material_nombre: (nombre || codigo),
+            bodega_principal: PRINCIPAL_FIJO,
+            bodega_secundaria: state.secundariaNombre || null,
+            ubicacion_nombre: contenedorFinal || null,
+            tipo_movimiento: 'ingreso',
+            cantidad: cantidadMov,
+            signo: 1,
+            referencia_tipo: referenciaTipo || 'alta_material_activo',
+            fecha_movimiento: fecha,
+                     observaciones: 'Alta automática (activo)',
+            estado: 'completado'
+          };
+          return await insertConFallback(TABLE_MOVIMIENTOS, movimiento);
         }
-        alert(`Guardado en catálogo: ${codigo}`);
 
-        if (state.cerrarContenedor) {
-          const cierre = await cerrarContenedorActual();
-          if (!cierre.ok) {
-            alert('Se guardó el material, pero NO se pudo cerrar el contenedor.\n' + cierre.error);
-            return;
+        // Guardado
+        if (tipo === 'MATERIAL') {
+          const base = getCodigoSinConsecutivo(state.contenedorCodigo || '');
+          const components = {
+            tipo_uso: ref4(document.getElementById('tipo-uso')?.value || ''),
+            tipo_material: ref4(document.getElementById('tipo-material')?.value || ''),
+            marca: abrev(document.getElementById('marca')?.value || ''),
+            modelo: abrev(document.getElementById('modelo')?.value || ''),
+            'ua-cantidad': String(state.cantidad),
+            nombre_abrev: (document.getElementById('nombre-abrev')?.value || '').trim() || abrev(nombreFinal)
+          };
+          const extras = (state.codigoOrdenMaterial || []).map(k => components[k]).filter(Boolean).slice(0, 2);
+
+          // Siempre guardar como un solo material con cantidad total
+          const suffix = [base, ...extras].filter(Boolean).join('-');
+          const consec = await obtenerSiguienteConsecutivo(suffix);
+          const codigo = `${consec}-${suffix}`;
+          const payload = { ...payloadBase, codigo };
+          const res = await insertConFallback(TABLE_CATALOGO, payload);
+          if (!res.ok) { alert('Error al guardar: ' + res.error); return; }
+
+          if (state.esActivo) {
+            const resMov = await crearMovimientoIngreso({ codigo, nombre: nombreFinal, cantidadMov: cantidad });
+            if (!resMov.ok) {
+              alert('Se guardó el catálogo pero NO se pudo crear el movimiento de ingreso.\n' + resMov.error);
+              return;
+            }
           }
+          alert(`Guardado en catálogo: ${codigo}`);
+
+          if (state.cerrarContenedor) {
+            const cierre = await cerrarContenedorActual();
+            if (!cierre.ok) {
+              alert('Se guardó el material, pero NO se pudo cerrar el contenedor.\n' + cierre.error);
+              return;
+            }
+            await loadContenedores();
+          }
+        } else {
+          // CONTENEDOR
+          const codigo = codigoPreview;
+          const payload = { ...payloadBase, codigo };
+          const res = await insertConFallback(TABLE_CATALOGO, payload);
+          if (!res.ok) { alert('Error al guardar contenedor: ' + res.error); return; }
+
+          if (state.esActivo) {
+            const resMov = await crearMovimientoIngreso({ codigo, nombre: contenedorFinal || nombreFinal, cantidadMov: 1, referenciaTipo: 'alta_contenedor_activo' });
+            if (!resMov.ok) {
+              alert('Se guardó el contenedor en catálogo pero NO se pudo crear el movimiento de ingreso.\n' + resMov.error);
+              return;
+            }
+          }
+
+          alert(`Contenedor guardado: ${codigo}`);
           await loadContenedores();
-        }
-      } else {
-        // CONTENEDOR
-        const codigo = codigoPreview;
-        const payload = { ...payloadBase, codigo };
-        const res = await insertConFallback(TABLE_CATALOGO, payload);
-        if (!res.ok) { alert('Error al guardar contenedor: ' + res.error); return; }
 
-        if (state.esActivo) {
-          const resMov = await crearMovimientoIngreso({ codigo, nombre: contenedorFinal || nombreFinal, cantidadMov: 1, referenciaTipo: 'alta_contenedor_activo' });
-          if (!resMov.ok) {
-            alert('Se guardó el contenedor en catálogo pero NO se pudo crear el movimiento de ingreso.\n' + resMov.error);
-            return;
+          // Auto-seleccionar el contenedor creado y pasar a MATERIAL
+          const btn = Array.from(document.querySelectorAll('.contenedor-btn')).find(b => (b && b.dataset && (b.dataset.codigo === codigo || b.dataset.contenedor === contenedorFinal)));
+          if (btn) {
+            selectContenedor(contenedorFinal, btn);
           }
         }
 
-        alert(`Contenedor guardado: ${codigo}`);
-        await loadContenedores();
-
-        // Auto-seleccionar el contenedor creado y pasar a MATERIAL
-        const btn = Array.from(document.querySelectorAll('.contenedor-btn')).find(b => (b && b.dataset && (b.dataset.codigo === codigo || b.dataset.contenedor === contenedorFinal)));
-        if (btn) {
-          selectContenedor(contenedorFinal, btn);
+        // Reset parcial (mantener secundaria seleccionada)
+        formEl.reset();
+        state.camposExtra = [];
+        state.color = null;
+        state.fotoFile = null;
+        state.esActivo = true;
+        state.cantidad = 1;
+        state.cerrarContenedor = false;
+        const activoEl = document.getElementById('ua-es-activo');
+        if (activoEl) activoEl.checked = true;
+        const cantidadEl2 = document.getElementById('ua-cantidad');
+        if (cantidadEl2) cantidadEl2.value = '1';
+        const cerrarEl2 = document.getElementById('ua-cerrar-contenedor');
+        if (cerrarEl2) cerrarEl2.checked = false;
+        const preview = document.getElementById('photo-preview');
+        if (preview) preview.textContent = 'Sin foto';
+        renderCamposExtra();
+        applyAltaTipoUI();
+        updateResumen();
+        updateCodigoPreview();
+      } finally {
+        // Re-habilitar botón después de completar (éxito o error)
+        state.isSubmitting = false;
+        const submitBtn = document.getElementById('ua-btn-submit');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Guardar en catálogo';
         }
       }
-
-      // Reset parcial (mantener secundaria seleccionada)
-      formEl.reset();
-      state.camposExtra = [];
-      state.color = null;
-      state.fotoFile = null;
-      state.esActivo = true;
-      state.cantidad = 1;
-      state.cerrarContenedor = false;
-      const activoEl = document.getElementById('ua-es-activo');
-      if (activoEl) activoEl.checked = true;
-      const cantidadEl2 = document.getElementById('ua-cantidad');
-      if (cantidadEl2) cantidadEl2.value = '1';
-      const cerrarEl2 = document.getElementById('ua-cerrar-contenedor');
-      if (cerrarEl2) cerrarEl2.checked = false;
-      const preview = document.getElementById('photo-preview');
-      if (preview) preview.textContent = 'Sin foto';
-      renderCamposExtra();
-      applyAltaTipoUI();
-      updateResumen();
-      updateCodigoPreview();
     }
   }
 
