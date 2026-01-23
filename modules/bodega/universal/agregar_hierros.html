@@ -465,11 +465,11 @@
       if (btnAccesorio) {
         btnAccesorio.addEventListener('click', () => {
           state.itemTipo = 'ACCESORIO';
-          // Autocompletar campos para Piezas
+          // Mostrar campos para Piezas
           const nombreAbrevEl = document.getElementById('nombre-abrev');
           const accesorioLargoEl = document.getElementById('ua-accesorio-largo');
-          if (nombreAbrevEl) nombreAbrevEl.value = 'CALA';
-          if (accesorioLargoEl) accesorioLargoEl.value = '10CM';
+          if (nombreAbrevEl) nombreAbrevEl.placeholder = 'Ej: CALA';
+          if (accesorioLargoEl) accesorioLargoEl.placeholder = 'Ej: 10CM';
           paintTipoButtons();
           updateItemTipoUI();
           updateResumen();
