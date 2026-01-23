@@ -20,17 +20,15 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd desktop
           npm install
 
       - name: Build Electron app
         run: |
-          cd desktop
           npm run make
 
       - name: Upload release assets
         uses: softprops/action-gh-release@v2
         with:
-          files: desktop/out/**
+          files: out/**
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
