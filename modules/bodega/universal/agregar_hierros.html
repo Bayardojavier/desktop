@@ -1493,7 +1493,9 @@
           // Si cantidad > 1, crear códigos consecutivos para cada unidad
           if (cantidad > 1) {
             const abrevProducto = (document.getElementById('nombre-abrev')?.value || '').trim() || abrev(nombreFinal);
-            const suffixConAbrev = [base, ...extras, abrevProducto].filter(Boolean).join('-');
+            const suffixBase = [base, ...extras].filter(Boolean).join('-');
+            const loteConsecutivo = await obtenerSiguienteConsecutivo(suffixBase);
+            const suffixConAbrev = `${loteConsecutivo}-${suffixBase}-${abrevProducto}`;
 
             for (let i = 1; i <= cantidad; i++) {
               const numeroUnidad = String(i).padStart(2, '0');
@@ -1513,7 +1515,7 @@
                 }
               }
             }
-            alert(`Guardadas ${cantidad} unidades en catálogo con códigos consecutivos.`);
+            alert(`Guardadas ${cantidad} unidades en catálogo con códigos consecutivos. Lote: ${loteConsecutivo}`);
           } else {
             // Cantidad = 1, guardar como antes
             const suffix = [base, ...extras].filter(Boolean).join('-');
