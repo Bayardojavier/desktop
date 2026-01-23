@@ -2,3 +2,5 @@ node_modules
 dist/
 out/
 releases/
+temp_build/
+build_output/

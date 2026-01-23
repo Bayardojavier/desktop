@@ -277,7 +277,7 @@
       // CONTENEDOR: 2 partes extra (además de consecutivo + principal + secundaria)
       codigoOrdenContenedor: ['cont_nombre_base', 'cont_numero'],
       // MATERIAL: 2 partes extra (además del código heredado del contenedor)
-      codigoOrdenMaterial: ['tipo_material', 'abre']
+      codigoOrdenMaterial: ['nombre_abrev', 'ua-accesorio-largo']
     };
 
     const savedOrdenMat = localStorage.getItem('codigoOrdenHierrosMaterial');
@@ -1048,6 +1048,8 @@
             extras.push(abre);
           } else if (k === 'ua-cantidad') {
             extras.push(String(state.cantidad));
+           } else if (k === 'accesorio_largo') {
+            extras.push(normalizeAccesorioLargo(document.getElementById('ua-accesorio-largo')?.value || '')); 
           } else if (k === 'ancho') {
             extras.push(ref4(document.getElementById('ancho')?.value || ''));
           } else if (k === 'largo') {
@@ -1206,7 +1208,7 @@
         { key: 'modelo', label: 'Modelo (4)' },
         { key: 'nombre_abrev', label: 'Abrev. (4)' },
         { key: 'ua-cantidad', label: 'Cantidad' },
-        { key: 'ua-accesorio-largo', label: 'Largo accesorio' },
+        { key: 'ua-accesorio-largo', label: 'accesorio_largo' },
         { key: 'ancho', label: 'Ancho' },
         { key: 'largo', label: 'Largo' },
         { key: 'grosor', label: 'Grosor' },
@@ -1436,6 +1438,7 @@
           abreviacion: (document.getElementById('nombre-abrev')?.value || '').trim() || null,
           tipo_uso: (document.getElementById('tipo-uso')?.value || '').trim() || null,
           tipo_material: (document.getElementById('tipo-material')?.value || '').trim() || null,
+          ua_accesorio_largo: (document.getElementById('ua-accesorio-largo')?.value || '').trim() || null,
           unidad_medida: 'CMT',
           dimensiones: {
             ancho: numVal('ancho'),
