@@ -1,0 +1,36 @@
+name: Build and Release Electron Desktop App
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: |
+          cd desktop
+          npm install
+
+      - name: Build Electron app
+        run: |
+          cd desktop
+          npm run make
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: desktop/out/**
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
