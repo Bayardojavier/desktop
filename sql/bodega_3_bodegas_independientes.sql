@@ -162,4 +162,9 @@ create index if not exists idx_mov_audiovisual_codigo on public.movimientos_bode
 create index if not exists idx_mov_hierros_codigo on public.movimientos_bodega_hierros (material_codigo);
 create index if not exists idx_mov_consumibles_codigo on public.movimientos_bodega_consumibles (material_codigo);
 
+-- Agregar columna created_at si no existe
+alter table public.movimientos_bodega_audiovisual add column if not exists created_at timestamp with time zone default now();
+alter table public.movimientos_bodega_hierros add column if not exists created_at timestamp with time zone default now();
+alter table public.movimientos_bodega_consumibles add column if not exists created_at timestamp with time zone default now();
+
 commit;
