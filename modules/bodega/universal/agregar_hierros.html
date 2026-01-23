@@ -1371,9 +1371,19 @@
         submitBtn.textContent = 'Guardando...';
       }
 
+      // Función para resetear el botón en caso de error
+      const resetSubmitButton = () => {
+        state.isSubmitting = false;
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Guardar';
+        }
+      };
+
       try {
         if (!state.secundariaId || !state.secundariaNombre) {
           alert('Debes seleccionar una Bodega Secundaria antes de guardar.');
+          resetSubmitButton();
           return;
         }
 
@@ -1382,10 +1392,12 @@
         if (tipo === 'MATERIAL') {
           if (!state.contenedorCodigo) {
             alert('Para agregar material debes seleccionar un Contenedor creado.');
+            resetSubmitButton();
             return;
           }
           if (state.contenedorCerrado) {
             alert('Este contenedor está CERRADO. No se puede agregar más material aquí.');
+            resetSubmitButton();
             return;
           }
         }
@@ -1396,6 +1408,7 @@
         const codigoPreview = await updateCodigoPreview();
         if (!codigoPreview) {
           alert('No se pudo generar el código. Revisa selección/inputs.');
+          resetSubmitButton();
           return;
         }
 
@@ -1409,8 +1422,8 @@
 
         // Contenedor identidad
         if (tipo === 'CONTENEDOR') {
-          if (!contBaseVal) { alert('Para guardar un contenedor debes llenar el Nombre Base.'); return; }
-          if (!numeroNorm) { alert('Para guardar un contenedor debes llenar el Número.'); return; }
+          if (!contBaseVal) { alert('Para guardar un contenedor debes llenar el Nombre Base.'); resetSubmitButton(); return; }
+          if (!numeroNorm) { alert('Para guardar un contenedor debes llenar el Número.'); resetSubmitButton(); return; }
         }
 
         // Nombre final / contenedor final
@@ -1424,8 +1437,8 @@
           ? contenedorNombre
           : (apodo || contenedorNombre);
 
-        if (tipo === 'MATERIAL' && !nombreFinal) { alert('Para agregar material debes llenar el Nombre del Producto.'); return; }
-        if (tipo === 'MATERIAL' && !contenedorFinal) { alert('Selecciona un contenedor válido.'); return; }
+        if (tipo === 'MATERIAL' && !nombreFinal) { alert('Para agregar material debes llenar el Nombre del Producto.'); resetSubmitButton(); return; }
+        if (tipo === 'MATERIAL' && !contenedorFinal) { alert('Selecciona un contenedor válido.'); resetSubmitButton(); return; }
 
         // Foto
         const fotoUrl = await uploadFotoIfNeeded();
@@ -1509,6 +1522,7 @@
               const res = await insertConFallback(TABLE_CATALOGO, payload);
               if (!res.ok) { 
                 alert(`Error al guardar unidad ${i}: ${res.error}`); 
+                resetSubmitButton();
                 return; 
               }
 
@@ -1516,6 +1530,7 @@
                 const resMov = await crearMovimientoIngreso({ codigo, nombre: `${nombreFinal} ${numeroUnidad}`, cantidadMov: 1 });
                 if (!resMov.ok) {
                   alert(`Se guardó la unidad ${i} en catálogo pero NO se pudo crear el movimiento de ingreso.\n${resMov.error}`);
+                  resetSubmitButton();
                   return;
                 }
               }
@@ -1543,12 +1558,13 @@
             }
             const payload = { ...payloadBase, codigo };
             const res = await insertConFallback(TABLE_CATALOGO, payload);
-            if (!res.ok) { alert('Error al guardar: ' + res.error); return; }
+            if (!res.ok) { alert('Error al guardar: ' + res.error); resetSubmitButton(); return; }
 
             if (state.esActivo) {
               const resMov = await crearMovimientoIngreso({ codigo, nombre: nombreFinal, cantidadMov: cantidad });
               if (!resMov.ok) {
                 alert('Se guardó el catálogo pero NO se pudo crear el movimiento de ingreso.\n' + resMov.error);
+                resetSubmitButton();
                 return;
               }
             }
@@ -1559,6 +1575,7 @@
             const cierre = await cerrarContenedorActual();
             if (!cierre.ok) {
               alert('Se guardaron las unidades, pero NO se pudo cerrar el contenedor.\n' + cierre.error);
+              resetSubmitButton();
               return;
             }
             await loadContenedores();
@@ -1568,12 +1585,13 @@
           const codigo = codigoPreview;
           const payload = { ...payloadBase, codigo };
           const res = await insertConFallback(TABLE_CATALOGO, payload);
-          if (!res.ok) { alert('Error al guardar contenedor: ' + res.error); return; }
+          if (!res.ok) { alert('Error al guardar contenedor: ' + res.error); resetSubmitButton(); return; }
 
           if (state.esActivo) {
             const resMov = await crearMovimientoIngreso({ codigo, nombre: contenedorFinal || nombreFinal, cantidadMov: 1, referenciaTipo: 'alta_contenedor_activo' });
             if (!resMov.ok) {
               alert('Se guardó el contenedor en catálogo pero NO se pudo crear el movimiento de ingreso.\n' + resMov.error);
+              resetSubmitButton();
               return;
             }
           }
