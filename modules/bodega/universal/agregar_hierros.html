@@ -1490,27 +1490,53 @@
           };
           const extras = (state.codigoOrdenMaterial || []).map(k => components[k]).filter(Boolean).slice(0, 2);
 
-          // Siempre guardar como un solo material con cantidad total
-          const suffix = [base, ...extras].filter(Boolean).join('-');
-          const consec = await obtenerSiguienteConsecutivo(suffix);
-          const codigo = `${consec}-${suffix}`;
-          const payload = { ...payloadBase, codigo };
-          const res = await insertConFallback(TABLE_CATALOGO, payload);
-          if (!res.ok) { alert('Error al guardar: ' + res.error); return; }
+          // Si cantidad > 1, crear códigos consecutivos para cada unidad
+          if (cantidad > 1) {
+            const abrevProducto = (document.getElementById('nombre-abrev')?.value || '').trim() || abrev(nombreFinal);
+            const suffixConAbrev = [base, ...extras, abrevProducto].filter(Boolean).join('-');
 
-          if (state.esActivo) {
-            const resMov = await crearMovimientoIngreso({ codigo, nombre: nombreFinal, cantidadMov: cantidad });
-            if (!resMov.ok) {
-              alert('Se guardó el catálogo pero NO se pudo crear el movimiento de ingreso.\n' + resMov.error);
-              return;
+            for (let i = 1; i <= cantidad; i++) {
+              const numeroUnidad = String(i).padStart(2, '0');
+              const codigo = `${suffixConAbrev}-${numeroUnidad}`;
+              const payload = { ...payloadBase, codigo, nombre: `${nombreFinal} ${numeroUnidad}` };
+              const res = await insertConFallback(TABLE_CATALOGO, payload);
+              if (!res.ok) { 
+                alert(`Error al guardar unidad ${i}: ${res.error}`); 
+                return; 
+              }
+
+              if (state.esActivo) {
+                const resMov = await crearMovimientoIngreso({ codigo, nombre: `${nombreFinal} ${numeroUnidad}`, cantidadMov: 1 });
+                if (!resMov.ok) {
+                  alert(`Se guardó la unidad ${i} en catálogo pero NO se pudo crear el movimiento de ingreso.\n${resMov.error}`);
+                  return;
+                }
+              }
             }
+            alert(`Guardadas ${cantidad} unidades en catálogo con códigos consecutivos.`);
+          } else {
+            // Cantidad = 1, guardar como antes
+            const suffix = [base, ...extras].filter(Boolean).join('-');
+            const consec = await obtenerSiguienteConsecutivo(suffix);
+            const codigo = `${consec}-${suffix}`;
+            const payload = { ...payloadBase, codigo };
+            const res = await insertConFallback(TABLE_CATALOGO, payload);
+            if (!res.ok) { alert('Error al guardar: ' + res.error); return; }
+
+            if (state.esActivo) {
+              const resMov = await crearMovimientoIngreso({ codigo, nombre: nombreFinal, cantidadMov: cantidad });
+              if (!resMov.ok) {
+                alert('Se guardó el catálogo pero NO se pudo crear el movimiento de ingreso.\n' + resMov.error);
+                return;
+              }
+            }
+            alert(`Guardado en catálogo: ${codigo}`);
           }
-          alert(`Guardado en catálogo: ${codigo}`);
 
           if (state.cerrarContenedor) {
             const cierre = await cerrarContenedorActual();
             if (!cierre.ok) {
-              alert('Se guardó el material, pero NO se pudo cerrar el contenedor.\n' + cierre.error);
+              alert('Se guardaron las unidades, pero NO se pudo cerrar el contenedor.\n' + cierre.error);
               return;
             }
             await loadContenedores();
