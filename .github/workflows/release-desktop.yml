@@ -26,11 +26,11 @@ jobs:
 
       - name: Build Electron app
         run: |
-          npm run make
+          npm run dist:win
 
       - name: Upload release assets
         uses: softprops/action-gh-release@v2
         with:
-          files: out/**
+          files: dist/**
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
