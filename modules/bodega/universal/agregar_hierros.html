@@ -1511,8 +1511,10 @@
           // Lógica según tipo de item
           if (state.itemTipo === 'EQUIPO' && cantidad > 1) {
             // Equipo/Estructura: múltiples registros con abreviación + número consecutivo
+            // Para EQUIPOS, excluir 'nombre_abrev' de extras porque ya se añade al final como abrevProducto
+            const extrasEquipo = extras.filter(e => e !== components.nombre_abrev);
             const abrevProducto = (document.getElementById('nombre-abrev')?.value || '').trim() || abrev(nombreFinal);
-            const suffixBase = [base, ...extras].filter(Boolean).join('-');
+            const suffixBase = [base, ...extrasEquipo].filter(Boolean).join('-');
 
             const unidadesGuardadas = [];
             let errorOcurrido = false;
@@ -1566,6 +1568,9 @@
             if (state.itemTipo === 'ACCESORIO') {
               // Para Piezas, no incluir nombre_abrev en extras para evitar duplicación
               filteredExtras = extras.filter(e => e !== components.nombre_abrev);
+            } else if (state.itemTipo === 'EQUIPO') {
+              // Para Equipos cantidad = 1, tampoco incluir nombre_abrev en extras (se añade al final)
+              filteredExtras = extras.filter(e => e !== components.nombre_abrev);
             }
             const suffix = [base, ...filteredExtras].filter(Boolean).join('-');
             const consec = await obtenerSiguienteConsecutivo(suffix);
@@ -1585,6 +1590,10 @@
               
               const terminacion = [abrevProducto, largoAccesorio].filter(Boolean).join('-');
               codigo = `${consec}-${suffix}-${terminacion}`;
+            } else if (state.itemTipo === 'EQUIPO') {
+              // Equipo/Estructura cantidad = 1: añadir abreviación al final
+              const abrevProducto = (document.getElementById('nombre-abrev')?.value || '').trim() || abrev(nombreFinal);
+              codigo = `${consec}-${suffix}-${abrevProducto}`;
             } else {
               // Equipo/Estructura cantidad = 1: terminación normal
               codigo = `${consec}-${suffix}`;
