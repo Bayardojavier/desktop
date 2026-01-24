@@ -36,7 +36,8 @@
 }
 
 /* CLASE DE SELECCIÓN CON MAYOR ESPECIFICIDAD - AL FINAL DEL CSS */
-.audiovisual-boton.bodega-secundaria-seleccionada {
+.audiovisual-boton.bodega-secundaria-seleccionada,
+.bodega-secundaria-seleccionada {
   /* Verde brillante para bodega secundaria seleccionada */
   background: #10b981 !important;
   color: white !important;
