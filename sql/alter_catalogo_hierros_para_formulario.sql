@@ -14,7 +14,8 @@ alter table if exists public.catalogo_hierros
   add column if not exists precio_unitario numeric,
   add column if not exists notas text,
   add column if not exists nombre_base text,
-  add column if not exists nombre_numero text;
+  add column if not exists nombre_numero text,
+  add column if not exists ua_accesorio_largo text;
 
 -- Opcional (rendimiento): si cargas/ordenas contenedores por nombre frecuentemente
 -- create index if not exists idx_cat_hierros_contenedor on public.catalogo_hierros (contenedor);
