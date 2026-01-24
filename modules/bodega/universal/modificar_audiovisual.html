@@ -211,8 +211,8 @@
     function selectSecundaria(id, nombre, btn) {
       state.secundariaId = id;
       state.secundariaNombre = nombre;
-      document.querySelectorAll('.secundaria-btn').forEach(b => b.classList.remove('secundaria-selected'));
-      btn.classList.add('secundaria-selected');
+      document.querySelectorAll('.secundaria-btn').forEach(b => b.classList.remove('bodega-secundaria-seleccionada'));
+      btn.classList.add('bodega-secundaria-seleccionada');
 
       // limpiar contenedor seleccionado
       state.contenedorId = null;
