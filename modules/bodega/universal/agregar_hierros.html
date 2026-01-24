@@ -943,8 +943,8 @@
 
       state.secundariaId = id;
       state.secundariaNombre = nombre;
-      document.querySelectorAll('.secundaria-btn').forEach(b => b.classList.remove('secundaria-selected'));
-      if (btn) btn.classList.add('secundaria-selected');
+      document.querySelectorAll('.secundaria-btn').forEach(b => b.classList.remove('bodega-secundaria-seleccionada'));
+      if (btn) btn.classList.add('bodega-secundaria-seleccionada');
 
       // Metodología: secundaria seleccionada pero SIN contenedor => modo CONTENEDOR
       state.altaTipo = 'CONTENEDOR';

@@ -1,10 +1,13 @@
 /* catalogo.css - Estilos para el módulo de catálogo de bodega */
 
-.audiovisual-boton.secundaria-selected {
-  outline: 3px solid #10b981 !important;
-  background: rgba(16, 185, 129, 0.4) !important;
-  box-shadow: 0 0 8px rgba(16, 185, 129, 0.5) !important;
+.bodega-secundaria-seleccionada {
+  outline: 4px solid #10b981 !important;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.6), rgba(16, 185, 129, 0.4)) !important;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
   color: white !important;
+  border: 2px solid #10b981 !important;
+  transform: scale(1.02) !important;
+  transition: all 0.2s ease !important;
 }
 
 .audiovisual-boton.contenedor-selected {
