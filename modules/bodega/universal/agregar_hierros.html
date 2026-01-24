@@ -1591,9 +1591,9 @@
               const terminacion = [abrevProducto, largoAccesorio].filter(Boolean).join('-');
               codigo = `${consec}-${suffix}-${terminacion}`;
             } else if (state.itemTipo === 'EQUIPO') {
-              // Equipo/Estructura cantidad = 1: añadir abreviación al final
+              // Equipo/Estructura cantidad = 1: añadir abreviación + número de unidad al final
               const abrevProducto = (document.getElementById('nombre-abrev')?.value || '').trim() || abrev(nombreFinal);
-              codigo = `${consec}-${suffix}-${abrevProducto}`;
+              codigo = `${consec}-${suffix}-${abrevProducto}-01`;
             } else {
               // Equipo/Estructura cantidad = 1: terminación normal
               codigo = `${consec}-${suffix}`;
