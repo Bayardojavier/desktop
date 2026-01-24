@@ -1,6 +1,6 @@
 /* catalogo.css - Estilos para el módulo de catálogo de bodega */
 
-.audiovisual-boton {
+.hierro-boton {
     --bg-color: #1e1e1e;
 
     --title-bg: #252526;
@@ -28,7 +28,7 @@
     box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.14) inset;
 }
 
-.audiovisual-boton.contenedor-selected {
+.hierro-boton.contenedor-selected {
   outline: 3px solid #22c55e !important;
   background: rgba(34, 197, 94, 0.4) !important;
   box-shadow: 0 0 8px rgba(34, 197, 94, 0.5) !important;
@@ -36,7 +36,7 @@
 }
 
 /* CLASE DE SELECCIÓN CON MAYOR ESPECIFICIDAD - AL FINAL DEL CSS */
-.audiovisual-boton.bodega-secundaria-seleccionada,
+.hierro-boton.bodega-secundaria-seleccionada,
 .bodega-secundaria-seleccionada {
   /* Verde brillante para bodega secundaria seleccionada */
   background: #10b981 !important;
