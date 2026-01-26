@@ -8,7 +8,8 @@ function getCurrentUser() {
   return {
     id: localStorage.getItem('usuario_id'),
     nombre: localStorage.getItem('usuario_nombre'),
-    rol: localStorage.getItem('usuario_rol')
+    rol: localStorage.getItem('usuario_rol'),
+    puede_crear_usuarios: localStorage.getItem('usuario_puede_crear') === 'true'
   };
 }
 
@@ -16,9 +17,21 @@ function isLoggedIn() {
   return !!getCurrentUser().rol;
 }
 
-// =============================
-// CONTROLES DE VENTANA (siempre activos)
-// =============================
+// Función auxiliar para crear sesión de auth para usuarios existentes (simplificada)
+async function createAuthSessionForUser(userData) {
+  // Por ahora, solo guardar los datos (sin auth compleja)
+  localStorage.setItem('usuario_id', userData.id);
+  localStorage.setItem('usuario_nombre', userData.nombre);
+  localStorage.setItem('usuario_rol', userData.rol);
+  localStorage.setItem('usuario_puede_crear', userData.puede_crear_usuarios);
+  return true;
+}
+
+// Verificar estado de autenticación al cargar (se ejecuta después de que supabaseClient esté disponible)
+function initAuthStateListener() {
+  // Función simplificada - por ahora no necesitamos listener complejo
+  console.log('Auth state listener inicializado (simplificado)');
+}
 
 function initWindowControls() {
   document.getElementById('minimize-btn')?.addEventListener('click', () => {
@@ -128,9 +141,9 @@ function loadLogin() {
       const contrasena = document.getElementById('contrasena').value;
 
       try {
-          const { data, error } = await supabaseClient
+          const { data, error } = await window.supabaseClient
            .from('usuarios')
-           .select('id, nombre, rol')
+           .select('id, nombre, rol, puede_crear_usuarios')
            .eq('usuario', usuario)
            .eq('contrasena', contrasena)
            .maybeSingle(); // evita 406 si hay más de un match
@@ -140,10 +153,182 @@ function loadLogin() {
         localStorage.setItem('usuario_id', data.id);
         localStorage.setItem('usuario_nombre', data.nombre);
         localStorage.setItem('usuario_rol', data.rol);
+        localStorage.setItem('usuario_puede_crear', data.puede_crear_usuarios);
         location.reload();
       } catch (err) {
           console.warn('Login fallido:', err);
           alert('❌ Usuario o contraseña incorrectos');
+      }
+    });
+  `;
+  document.body.appendChild(script);
+}
+
+// =============================
+// CREAR USUARIO (solo para administradores)
+// =============================
+
+function loadCreateUser() {
+  const user = getCurrentUser();
+  if (!user.puede_crear_usuarios) {
+    alert('No tienes permisos para crear usuarios');
+    return;
+  }
+
+  const contentArea = document.querySelector('.content-area');
+  if (!contentArea) return;
+
+  contentArea.className = 'content-area';
+  Object.assign(contentArea.style, {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: '20px',
+    minHeight: 'calc(100vh - 60px)'
+  });
+
+  contentArea.innerHTML = `
+    <style>
+      .create-user-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        width: 100%;
+        max-width: 450px;
+        padding: 32px;
+      }
+      .create-user-card h2 {
+        text-align: center;
+        color: #1e40af;
+        margin-bottom: 24px;
+        font-size: 24px;
+      }
+      .input-group {
+        margin-bottom: 18px;
+      }
+      .input-group label {
+        display: block;
+        margin-bottom: 6px;
+        color: #374151;
+        font-weight: 600;
+        font-size: 14px;
+      }
+      .input-group input, .input-group select {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 15px;
+      }
+      .btn-create {
+        width: 100%;
+        padding: 12px;
+        background: #10b981;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-bottom: 12px;
+      }
+      .btn-create:hover {
+        background: #059669;
+      }
+      .btn-cancel {
+        width: 100%;
+        padding: 12px;
+        background: #6b7280;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .btn-cancel:hover {
+        background: #4b5563;
+      }
+    </style>
+
+    <div class="create-user-card">
+      <h2>Crear Nuevo Usuario</h2>
+      <form id="formCreateUser">
+        <div class="input-group">
+          <label>Nombre Completo</label>
+          <input type="text" id="nombre" required />
+        </div>
+        <div class="input-group">
+          <label>Usuario</label>
+          <input type="text" id="usuario" required />
+        </div>
+        <div class="input-group">
+          <label>Contraseña</label>
+          <input type="password" id="contrasena" required />
+        </div>
+        <div class="input-group">
+          <label>Rol</label>
+          <select id="rol" required>
+            <option value="">Seleccionar rol...</option>
+            <option value="admin">Administrador</option>
+            <option value="ventas">Ventas</option>
+            <option value="bodega">Bodega</option>
+            <option value="rrhh">Recursos Humanos</option>
+            <option value="logistica">Logística</option>
+            <option value="contabilidad">Contabilidad</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>
+            <input type="checkbox" id="puede_crear_usuarios" />
+            Puede crear usuarios
+          </label>
+        </div>
+        <button type="submit" class="btn-create">Crear Usuario</button>
+        <button type="button" class="btn-cancel" onclick="loadDashboard()">Cancelar</button>
+      </form>
+    </div>
+  `;
+
+  const script = document.createElement('script');
+  script.textContent = `
+    document.getElementById('formCreateUser')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const nombre = document.getElementById('nombre').value.trim();
+      const usuario = document.getElementById('usuario').value.trim();
+      const contrasena = document.getElementById('contrasena').value;
+      const rol = document.getElementById('rol').value;
+      const puedeCrear = document.getElementById('puede_crear_usuarios').checked;
+
+      if (!nombre || !usuario || !contrasena || !rol) {
+        alert('Por favor complete todos los campos');
+        return;
+      }
+
+      try {
+        const { data, error } = await window.supabaseClient
+          .from('usuarios')
+          .insert([{
+            nombre,
+            usuario,
+            contrasena,
+            rol,
+            puede_crear_usuarios: puedeCrear
+          }])
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        alert('✅ Usuario creado exitosamente');
+        loadDashboard(); // Regresar al dashboard
+      } catch (err) {
+        console.warn('Error creando usuario:', err);
+        if (err.code === '23505') {
+          alert('❌ El nombre de usuario ya existe');
+        } else {
+          alert('❌ Error al crear usuario: ' + err.message);
+        }
       }
     });
   `;
@@ -336,21 +521,65 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ✅ Botones de inicio: siempre disponibles
+  document.getElementById('btn-login')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    loadLogin();
+  });
+
+  document.getElementById('btn-crear-usuario')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    const user = getCurrentUser();
+    if (!user.puede_crear_usuarios) {
+      alert('No tienes permisos para crear usuarios');
+      return;
+    }
+    loadCreateUser();
+  });
+
   // 🔒 App principal: solo si hay sesión
   if (isLoggedIn()) {
-    // Activar listeners de menú SOLO tras login
-    const menuMap = {
-      'btn-ventas': 'ventas',
-      'btn-rrhh': 'rrhh',
-      'btn-bodega': 'bodega',
-      'btn-logistica': 'logistica',
-      'btn-contabilidad': 'contabilidad'
+    const user = getCurrentUser();
+
+    // Ocultar/mostrar botones de inicio según sesión
+    document.getElementById('btn-login').style.display = 'none';
+    document.getElementById('btn-cerrar-sesion').style.display = 'flex';
+    if (!user.puede_crear_usuarios) {
+      document.getElementById('btn-crear-usuario').style.display = 'none';
+    }
+
+    // Ocultar botones de módulos según rol
+    const rolePermissions = {
+      'btn-ventas': ['ventas', 'admin'],
+      'btn-bodega': ['bodega', 'admin'],
+      'btn-rrhh': ['rrhh', 'admin'],
+      'btn-logistica': ['logistica', 'admin'],
+      'btn-contabilidad': ['contabilidad', 'admin']
     };
 
-    Object.entries(menuMap).forEach(([btnId, module]) => {
+    Object.entries(rolePermissions).forEach(([btnId, allowedRoles]) => {
+      if (!allowedRoles.includes(user.rol)) {
+        document.getElementById(btnId).style.display = 'none';
+      }
+    });
+
+    // Activar listeners de menú SOLO tras login
+    const menuMap = {
+      'btn-ventas': { module: 'ventas', roles: ['ventas', 'admin'] },
+      'btn-rrhh': { module: 'rrhh', roles: ['rrhh', 'admin'] },
+      'btn-bodega': { module: 'bodega', roles: ['bodega', 'admin'] },
+      'btn-logistica': { module: 'logistica', roles: ['logistica', 'admin'] },
+      'btn-contabilidad': { module: 'contabilidad', roles: ['contabilidad', 'admin'] }
+    };
+
+    Object.entries(menuMap).forEach(([btnId, config]) => {
       document.getElementById(btnId)?.addEventListener('click', (e) => {
         e.preventDefault();
-        loadModule(module);
+        if (config.roles.includes(user.rol)) {
+          loadModule(config.module);
+        } else {
+          alert('No tienes permisos para acceder a este módulo');
+        }
       });
     });
 
@@ -384,6 +613,11 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch (error) {
         alert('Error al actualizar: ' + error.message);
       }
+    });
+
+    // Botón de acerca de
+    document.getElementById('btn-acerca')?.addEventListener('click', () => {
+      alert('Absolute de Nicaragua\nVersión 1.2.1\nAplicación de escritorio para gestión empresarial.');
     });
 
     // === CONFIGURACIÓN DE VENTANA ===
@@ -469,7 +703,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Cargar dashboard
     loadDashboard();
   } else {
-    // Sin sesión: solo login
+    // Sin sesión: mostrar botones apropiados
+    document.getElementById('btn-login').style.display = 'flex';
+    document.getElementById('btn-crear-usuario').style.display = 'none';
+    document.getElementById('btn-cerrar-sesion').style.display = 'none';
     loadLogin();
   }
+
+  // Inicializar listener de estado de autenticación
+  initAuthStateListener();
 });

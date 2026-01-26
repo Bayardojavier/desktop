@@ -22,4 +22,21 @@
   window.supabaseClient = client;
   window.SUPABASE_URL = SUPABASE_URL;
   window.SUPABASE_ANON_KEY = SUPABASE_ANON_KEY;
+
+  // Función global para logs de auditoría
+  window.logAuditoria = async (operacion, tabla, registroId, datosNuevos) => {
+    if (!window.currentUser) return; // No loguear si no hay usuario
+    try {
+      await client.from('logs_auditoria').insert({
+        usuario_id: window.currentUser.id,
+        usuario_nombre: window.currentUser.nombre,
+        tabla_afectada: tabla,
+        operacion: operacion,
+        registro_id: registroId,
+        datos_nuevos: datosNuevos
+      });
+    } catch (e) {
+      console.warn('Error en log de auditoría:', e);
+    }
+  };
 })();

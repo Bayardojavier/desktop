@@ -75,8 +75,12 @@
     // =============================================================================
     let estado = {
       modoIngreso: "receta",
-      recetasSeleccionadas: [],
-      itemsAdicionales: [],
+      recetasSeleccionadas: {
+        plantillas: [],
+        especificas: []
+      },
+      materialesEspecificos: [],
+      plantillasAdicionales: [],
       itemsPorItem: []
     };
 
@@ -88,7 +92,7 @@
     }
 
     function getMaterial(codigo) {
-      return materialesCatalogo.find(m => m.cod === codigo);
+      return materialesCatalogo.find(m => m.cod.trim() === (codigo || '').toString().trim());
     }
 
     function decodeTipoYObs(observacion) {
@@ -255,6 +259,54 @@
     }
 
     // =============================================================================
+    // 🔹 MODAL: ELEGIR TIPO DE MATERIAL
+    // =============================================================================
+    function abrirModalElegirTipoMaterial() {
+      if (document.getElementById('modal-elegir-tipo')) return;
+
+      const modal = document.createElement('div');
+      modal.id = 'modal-elegir-tipo';
+      modal.style = `
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+      `;
+      modal.innerHTML = `
+        <div style="background: white; width: 90%; max-width: 400px; border-radius: 12px; padding: 24px; text-align: center;">
+          <h3 style="margin: 0 0 20px 0; font-size: 18px; color: #1a365d;">¿Qué tipo de material deseas agregar?</h3>
+          <div style="display: flex; gap: 12px; justify-content: center;">
+            <button id="btn-material-especifico" style="padding: 12px 20px; background: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">Material Específico</button>
+            <button id="btn-material-plantilla" style="padding: 12px 20px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">Material de Plantilla</button>
+          </div>
+          <button id="btn-cerrar-modal" style="margin-top: 16px; background: none; border: none; color: #6c757d; cursor: pointer; font-size: 14px;">Cancelar</button>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      modal.querySelector('#btn-material-especifico').addEventListener('click', () => {
+        document.body.removeChild(modal);
+        abrirModalAdicionales();
+      });
+
+      modal.querySelector('#btn-material-plantilla').addEventListener('click', () => {
+        document.body.removeChild(modal);
+        abrirModalPlantillas();
+      });
+
+      modal.querySelector('#btn-cerrar-modal').addEventListener('click', () => {
+        document.body.removeChild(modal);
+      });
+
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) document.body.removeChild(modal);
+      });
+    }
+
+    // =============================================================================
     // 🔹 MODAL: MATERIALES ADICIONALES
     // =============================================================================
     function abrirModalAdicionales() {
@@ -286,7 +338,7 @@
             </div>
           </div>
           <div style="flex: 1; overflow-y: auto; padding: 16px;">
-            <table class="log-table" style="font-size: 13px; width: 100%;">
+            <table class="solicitud-table" style="font-size: 13px; width: 100%;">
               <thead>
                 <tr>
                   <th>Código</th>
@@ -319,15 +371,27 @@
       function renderTablaFiltrada() {
         const busqueda = modal.querySelector('#busqueda-materiales').value.toLowerCase();
         const bodega = filtroBodega.value;
-        
+
         // Crear set de códigos en recetas para filtrar
         const codigosEnRecetas = new Set();
         if (estado.recetasSeleccionadas) {
-          estado.recetasSeleccionadas.forEach(receta => {
-            if (receta.materiales) {
-              receta.materiales.forEach(mat => {
-                if (mat && mat.codigo) {
-                  codigosEnRecetas.add(mat.codigo.trim().toLowerCase());
+          // Recorrer recetas de plantillas
+          (estado.recetasSeleccionadas.plantillas || []).forEach(grupo => {
+            if (grupo.receta && grupo.receta.items) {
+              grupo.receta.items.forEach(item => {
+                if (item && item.codigo) {
+                  codigosEnRecetas.add(item.codigo.trim().toLowerCase());
+                }
+              });
+            }
+          });
+
+          // Recorrer recetas específicas
+          (estado.recetasSeleccionadas.especificas || []).forEach(grupo => {
+            if (grupo.receta && grupo.receta.items) {
+              grupo.receta.items.forEach(item => {
+                if (item && item.codigo) {
+                  codigosEnRecetas.add(item.codigo.trim().toLowerCase());
                 }
               });
             }
@@ -360,16 +424,26 @@
             const cod = e.currentTarget.dataset.cod;
             const m = getMaterial(cod);
             if (!m) return;
-            const existe = estado.itemsAdicionales.find(i => i.codigo === cod);
+            const existe = estado.materialesEspecificos.find(i => i.codigo === cod);
             if (existe) {
-              existe.cantidad++;
-              mostrarNotificacion(`➕ Cantidad aumentada: ${m.nom} (${cod}) ahora tiene ${existe.cantidad} unidades.`, 'info');
+              mostrarNotificacion(`❌ Material ${m.nom} (${cod}) ya está en la lista. No se permiten duplicados.`, 'error');
+              return;
             } else {
-              if (estado.recetasSeleccionadas && estado.recetasSeleccionadas.some(receta => receta.materiales && receta.materiales.some(mat => mat && mat.codigo === cod))) {
-                mostrarNotificacion(`❌ Material ${m.nom} (${cod}) ya está incluido en la receta. No se puede agregar como adicional.`, 'error');
-                return;
+              if (estado.recetasSeleccionadas) {
+                // Verificar si el material ya está en alguna receta seleccionada
+                const yaEnPlantillas = estado.recetasSeleccionadas.plantillas.some(grupo =>
+                  grupo.receta && grupo.receta.items && grupo.receta.items.some(mat => mat && mat.codigo === cod)
+                );
+                const yaEnEspecificas = estado.recetasSeleccionadas.especificas.some(grupo =>
+                  grupo.receta && grupo.receta.items && grupo.receta.items.some(mat => mat && mat.codigo === cod)
+                );
+
+                if (yaEnPlantillas || yaEnEspecificas) {
+                  mostrarNotificacion(`❌ Material ${m.nom} (${cod}) ya está incluido en la receta. No se puede agregar como adicional.`, 'error');
+                  return;
+                }
               }
-              estado.itemsAdicionales.push({
+              estado.materialesEspecificos.push({
                 codigo: m.cod,
                 nombre: m.nom,
                 ubicacionNombre: m.ubicacionNombre,
@@ -380,7 +454,7 @@
               });
               mostrarNotificacion(`✅ Material adicional agregado: ${m.nom} (${cod}).`, 'success');
             }
-            renderResumenAdicionales();
+            renderResumenEspecificos();
           });
         });
       }
@@ -398,6 +472,98 @@
       modal.onclick = (e) => {
         if (e.target === modal) document.body.removeChild(modal);
       };
+    }
+
+    // =============================================================================
+    // 🔹 MODAL: PLANTILLAS
+    // =============================================================================
+    function abrirModalPlantillas() {
+      if (document.getElementById('modal-plantillas')) return;
+
+      const modal = document.createElement('div');
+      modal.id = 'modal-plantillas';
+      modal.style = `
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+      `;
+      modal.innerHTML = `
+        <div style="background: white; width: 90%; max-width: 800px; max-height: 80vh; overflow: hidden; border-radius: 12px; display: flex; flex-direction: column;">
+          <div style="padding: 16px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; font-size: 16px; color: #1a365d;">📋 Seleccionar Plantilla</h3>
+            <button id="btn-cerrar-modal" style="background: none; border: none; font-size: 20px; cursor: pointer;">✕</button>
+          </div>
+          <div style="padding: 16px; border-bottom: 1px solid #e2e8f0;">
+            <input type="text" id="busqueda-plantillas" placeholder="Buscar plantillas..." style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 14px;">
+          </div>
+          <div style="flex: 1; overflow-y: auto; padding: 16px;">
+            <div id="plantillas-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px;">
+              ${renderPlantillas(plantillas)}
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      // Event delegation for selecting plantilla
+      modal.addEventListener('click', (e) => {
+        if (e.target.matches('[data-plantilla]')) {
+          const clave = e.target.dataset.plantilla;
+          const plantilla = plantillas.find(p => p.id === clave);
+          if (plantilla) {
+            // Agregar como material adicional de tipo GRUPO
+            const existe = estado.plantillasAdicionales.find(i => i.codigo === clave);
+            if (existe) {
+              mostrarNotificacion(`❌ Plantilla ${plantilla.nombre_plantilla} ya está en la lista. No se permiten duplicados.`, 'error');
+              return;
+            } else {
+              estado.plantillasAdicionales.push({
+                codigo: clave,
+                nombre: plantilla.nombre_plantilla,
+                ubicacionNombre: '',
+                stockActual: 0, // Plantillas no tienen stock directo
+                bodegaPrincipal: plantilla.bodega_secundaria ? plantilla.bodega_secundaria.join(', ') : '',
+                contenedor: '',
+                cantidad: 1,
+                tipo: 'GRUPO'
+              });
+              mostrarNotificacion(`✅ Plantilla agregada: ${plantilla.nombre_plantilla}.`, 'success');
+            }
+            renderResumenPlantillas();
+            document.body.removeChild(modal);
+          }
+        }
+      });
+
+      // Search functionality
+      modal.querySelector('#busqueda-plantillas').addEventListener('input', (e) => {
+        const busqueda = e.target.value.toLowerCase();
+        const filtradas = plantillas.filter(p => p.nombre_plantilla.toLowerCase().includes(busqueda) || (p.descripcion && p.descripcion.toLowerCase().includes(busqueda)));
+        modal.querySelector('#plantillas-grid').innerHTML = renderPlantillas(filtradas);
+      });
+
+      modal.querySelector('#btn-cerrar-modal').onclick = () => {
+        document.body.removeChild(modal);
+      };
+      modal.onclick = (e) => {
+        if (e.target === modal) document.body.removeChild(modal);
+      };
+    }
+
+    function renderPlantillas(plantillasList) {
+      return plantillasList.map(plantilla => `
+        <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; background: #f8fafc;">
+          <h4 style="margin: 0 0 8px 0; font-size: 14px; color: #1a365d;">${plantilla.nombre_plantilla}</h4>
+          <p style="margin: 0 0 8px 0; font-size: 12px; color: #64748b;">${plantilla.descripcion || 'Sin descripción'}</p>
+          <p style="margin: 0 0 8px 0; font-size: 11px; color: #64748b;">Tipo: ${plantilla.tipo}</p>
+          <p style="margin: 0 0 12px 0; font-size: 11px; color: #64748b;">Bodega: ${plantilla.bodega_secundaria && plantilla.bodega_secundaria.length > 0 ? plantilla.bodega_secundaria.join(', ') : 'N/A'}</p>
+          <button class="btn-add" data-plantilla="${plantilla.id}" style="width: 100%; font-size: 12px; padding: 6px;">Seleccionar Plantilla</button>
+        </div>
+      `).join('');
     }
 
     // =============================================================================
@@ -426,29 +592,68 @@
             <h3 style="margin: 0; font-size: 16px; color: #1a365d;">📋 Seleccionar Receta</h3>
             <button id="btn-cerrar-modal" style="background: none; border: none; font-size: 20px; cursor: pointer;">✕</button>
           </div>
+          <div style="padding: 16px; border-bottom: 1px solid #e2e8f0;">
+            <div style="display: flex; gap: 12px; align-items: center;">
+              <input type="text" id="busqueda-recetas" placeholder="Buscar por nombre o código..." style="flex: 1; padding: 8px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 14px;">
+              <select id="filtro-rubro-recetas" style="padding: 8px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 14px;">
+                <option value="">Todos los rubros</option>
+                <option value="Estructuras">Estructuras</option>
+                <option value="Audiovisual">Audiovisual</option>
+                <option value="Mobiliario">Mobiliario</option>
+                <option value="Iluminación">Iluminación</option>
+                <option value="Otros">Otros</option>
+              </select>
+            </div>
+          </div>
           <div style="flex: 1; overflow-y: auto; padding: 16px;">
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;">
-              ${recetasDisponibles.map(receta => `
-                <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; background: #f8fafc;">
-                  <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #1a365d;">${receta.nombre}</h4>
-                  <div style="font-size: 12px; margin-bottom: 12px;">
-                    ${receta.items.map(item => {
-                      if (item.tipo === 'CASE' || isCaseBaseCodigo(item.codigo)) {
-                        const baseName = getCaseBaseFromCodigo(item.codigo) || 'Case';
-                        return `<div>• CASE ${baseName} × ${item.cantidad}</div>`;
-                      }
-                      const mat = getMaterial(item.codigo);
-                      return `<div>• ${item.codigo}: ${mat?.nom || 'Desconocido'} × ${item.cantidad}</div>`;
-                    }).join('')}
-                  </div>
-                  <button class="btn-add" data-receta="${receta.nombre}" style="width: 100%; font-size: 12px; padding: 6px;">Seleccionar Receta</button>
-                </div>
-              `).join('')}
+            <div id="recetas-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;">
+              ${renderRecetasFiltradas(recetasDisponibles)}
             </div>
           </div>
         </div>
       `;
       document.body.appendChild(modal);
+
+      // Event delegation for recipe selection
+      modal.addEventListener('click', (e) => {
+        if (e.target.matches('[data-receta]')) {
+          const nombreReceta = e.target.dataset.receta;
+          const tipoReceta = e.target.dataset.tipo;
+          const receta = recetasDisponibles.find(r => r.nombre === nombreReceta && r.tipo === tipoReceta);
+
+          if (receta) {
+            // Verificar si ya está seleccionada en su tipo correspondiente
+            const yaSeleccionada = estado.recetasSeleccionadas[tipoReceta === 'plantilla' ? 'plantillas' : 'especificas']
+              .some(grupo => grupo.receta.nombre === nombreReceta);
+
+            if (yaSeleccionada) {
+              mostrarNotificacion(`⚠️ La receta "${nombreReceta}" ya está seleccionada.`, 'warning');
+              return;
+            }
+
+            // Agregar al contenedor correspondiente
+            const contenedor = tipoReceta === 'plantilla' ? 'plantillas' : 'especificas';
+            estado.recetasSeleccionadas[contenedor].push({
+              receta: receta,
+              cantidadRecetas: 1
+            });
+
+            // Renderizar el contenedor correspondiente
+            if (tipoReceta === 'plantilla') {
+              renderResumenRecetasPlantillas();
+            } else {
+              renderResumenRecetasEspecificas();
+            }
+
+            document.body.removeChild(modal);
+            mostrarNotificacion(`✅ Receta "${nombreReceta}" agregada correctamente.`, 'success');
+          }
+        }
+      });
+
+      // Attach event listeners for search and filter
+      modal.querySelector('#busqueda-recetas').addEventListener('input', filtrarRecetasLocal);
+      modal.querySelector('#filtro-rubro-recetas').addEventListener('change', filtrarRecetasLocal);
 
       modal.querySelector('#btn-cerrar-modal').onclick = () => {
         document.body.removeChild(modal);
@@ -457,28 +662,28 @@
         if (e.target === modal) document.body.removeChild(modal);
       };
 
-      modal.querySelectorAll('[data-receta]').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const nombreReceta = e.currentTarget.dataset.receta;
-          const receta = recetasDisponibles.find(r => r.nombre === nombreReceta);
-          if (receta) {
-            // Verificar si la receta ya está seleccionada
-            const yaSeleccionada = estado.recetasSeleccionadas.some(grupo => grupo.receta.nombre === nombreReceta);
-            if (yaSeleccionada) {
-              mostrarNotificacion(`⚠️ La receta "${nombreReceta}" ya está seleccionada.`, 'error');
-              return;
-            }
+      // Función de filtrado específica para este modal
+      function filtrarRecetasLocal() {
+        const busqueda = modal.querySelector('#busqueda-recetas').value.toLowerCase();
+        const filtroRubro = modal.querySelector('#filtro-rubro-recetas').value;
 
-            estado.recetasSeleccionadas.push({
-              receta: receta,
-              cantidadRecetas: 1
-            });
-            renderResumenRecetas();
-            document.body.removeChild(modal);
-            mostrarNotificacion(`✅ Receta "${nombreReceta}" agregada correctamente.`, 'success');
-          }
+        const filtradas = recetasDisponibles.filter(receta => {
+          const matchBusqueda = !busqueda ||
+            receta.nombre.toLowerCase().includes(busqueda) ||
+            receta.items.some(item => item.codigo.toLowerCase().includes(busqueda));
+
+          const matchRubro = !filtroRubro || receta.rubro === filtroRubro;
+
+          return matchBusqueda && matchRubro;
         });
-      });
+
+        const grid = modal.querySelector('#recetas-grid');
+        grid.innerHTML = renderRecetasFiltradas(filtradas);
+      }
+
+      // Event listeners para filtrado
+      modal.querySelector('#busqueda-recetas').addEventListener('input', filtrarRecetasLocal);
+      modal.querySelector('#filtro-rubro-recetas').addEventListener('change', filtrarRecetasLocal);
     }
 
     // =============================================================================
@@ -497,37 +702,82 @@
       contenedor.innerHTML = `
         <div style="display: flex; gap: 20px; height: 620px; overflow: hidden;">
 
-          <!-- Columna izquierda: resumen de recetas -->
+          <!-- Columna izquierda: resumen de recetas separadas por tipo -->
           <div style="flex: 2; overflow-y: auto; background: #f1f5f9; padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
               <h3 class="log-titulo" style="font-size: 15px; margin: 0; color: #1a365d;">1. Recetas Seleccionadas</h3>
               <button id="btn-abrir-modal-recetas" class="btn-add" style="font-size: 12px; padding: 4px 8px; height: fit-content;">+ Agregar Receta</button>
             </div>
-            <div id="resumen-recetas-contenedor"></div>
-            <div id="msg-recetas-vacio" style="padding: 16px; text-align: center; color: #94a3b8; font-style: italic; font-size: 12px; display: ${estado.recetasSeleccionadas.length === 0 ? 'block' : 'none'};">
-              No hay recetas seleccionadas.
+
+            <!-- Recetas de Plantillas -->
+            <div style="margin-bottom: 20px;">
+              <h4 style="font-size: 14px; margin: 0 0 12px 0; color: #1a365d; display: flex; align-items: center; gap: 8px;">
+                <span style="color: #764ba2;">📋</span>
+                Recetas de Plantillas
+              </h4>
+              <div id="resumen-recetas-plantillas-contenedor"></div>
+              <div id="msg-recetas-plantillas-vacio" style="padding: 12px; text-align: center; color: #94a3b8; font-style: italic; font-size: 12px; display: ${estado.recetasSeleccionadas.plantillas.length === 0 ? 'block' : 'none'};">
+                No hay recetas de plantillas seleccionadas.
+              </div>
+            </div>
+
+            <!-- Recetas Específicas -->
+            <div>
+              <h4 style="font-size: 14px; margin: 0 0 12px 0; color: #1a365d; display: flex; align-items: center; gap: 8px;">
+                <span style="color: #3797a4;">🎯</span>
+                Recetas Específicas
+              </h4>
+              <div id="resumen-recetas-especificas-contenedor"></div>
+              <div id="msg-recetas-especificas-vacio" style="padding: 12px; text-align: center; color: #94a3b8; font-style: italic; font-size: 12px; display: ${estado.recetasSeleccionadas.especificas.length === 0 ? 'block' : 'none'};">
+                No hay recetas específicas seleccionadas.
+              </div>
             </div>
           </div>
 
-          <!-- Columna derecha: resumen de materiales adicionales -->
-          <div style="flex: 1; display: flex; flex-direction: column; gap: 14px; background: white; padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0;">
+          <!-- Columna derecha: materiales adicionales -->
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 14px; background: white; padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0; max-height: 620px; overflow-y: auto;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <h3 class="log-titulo" style="font-size: 13px; margin: 0; color: #1a365d;">Materiales Adicionales</h3>
               <button id="btn-abrir-modal-adicionales" class="btn-add" style="font-size: 12px; padding: 4px 8px; height: fit-content;">+ Agregar</button>
             </div>
-            <div style="border: 1px solid var(--accent); border-radius: 8px; background: white; flex: 1; display: flex; flex-direction: column;">
-              <div style="overflow-y: auto; flex: 1;">
-                <table class="log-table" style="font-size: 12px;">
-                  <thead>
-                    <tr style="background: rgba(55, 148, 255, 0.05);">
-                      <th style="width: 60%;">Descripción</th>
-                      <th style="width: 20%;">Cant.</th>
-                      <th style="width: 20%; text-align: center;">Quitar</th>
-                    </tr>
-                  </thead>
-                  <tbody id="ped-adicionales-body"></tbody>
-                </table>
-                <div id="msg-adicionales-vacio" style="padding: 16px; text-align: center; color: #94a3b8; font-style: italic; font-size: 12px; display: none;">No hay materiales adicionales.</div>
+            
+            <!-- Materiales Específicos -->
+            <div style="flex: 1; display: flex; flex-direction: column;">
+              <h4 style="font-size: 12px; margin: 0 0 8px 0; color: #1a365d;">Específicos</h4>
+              <div style="border: 1px solid var(--accent); border-radius: 8px; background: white; flex: 1; display: flex; flex-direction: column;">
+                <div style="overflow-y: auto; flex: 1;">
+                  <table class="solicitud-table" style="font-size: 12px;">
+                    <thead>
+                      <tr style="background: rgba(55, 148, 255, 0.05);">
+                        <th style="width: 60%;">Descripción</th>
+                        <th style="width: 20%;">Cant.</th>
+                        <th style="width: 20%; text-align: center;">Quitar</th>
+                      </tr>
+                    </thead>
+                    <tbody id="ped-especificos-body"></tbody>
+                  </table>
+                  <div id="msg-especificos-vacio" style="padding: 16px; text-align: center; color: #94a3b8; font-style: italic; font-size: 12px; display: block;">No hay materiales específicos.</div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Plantillas -->
+            <div style="flex: 1; display: flex; flex-direction: column;">
+              <h4 style="font-size: 12px; margin: 0 0 8px 0; color: #1a365d;">Plantillas</h4>
+              <div style="border: 1px solid var(--accent); border-radius: 8px; background: white; flex: 1; display: flex; flex-direction: column;">
+                <div style="overflow-y: auto; flex: 1;">
+                  <table class="solicitud-table" style="font-size: 12px;">
+                    <thead>
+                      <tr style="background: rgba(118, 75, 162, 0.05);">
+                        <th style="width: 60%;">Descripción</th>
+                        <th style="width: 20%;">Cant.</th>
+                        <th style="width: 20%; text-align: center;">Quitar</th>
+                      </tr>
+                    </thead>
+                    <tbody id="ped-plantillas-body"></tbody>
+                  </table>
+                  <div id="msg-plantillas-vacio" style="padding: 16px; text-align: center; color: #94a3b8; font-style: italic; font-size: 12px; display: block;">No hay plantillas.</div>
+                </div>
               </div>
             </div>
           </div>
@@ -535,43 +785,45 @@
         </div>
       `;
 
-      renderResumenRecetas();
-      renderResumenAdicionales();
+      renderResumenRecetasPlantillas();
+      renderResumenRecetasEspecificas();
+      renderResumenEspecificos();
+      renderResumenPlantillas();
 
-      document.getElementById("btn-abrir-modal-recetas").addEventListener("click", () => {
+      document.querySelector('.logistica-container #btn-abrir-modal-recetas').addEventListener("click", () => {
         abrirModalRecetas();
       });
 
-      document.getElementById("btn-abrir-modal-adicionales").addEventListener("click", () => {
-        abrirModalAdicionales();
+      document.querySelector('.logistica-container #btn-abrir-modal-adicionales').addEventListener("click", () => {
+        abrirModalElegirTipoMaterial();
       });
     }
 
-    function renderResumenRecetas() {
-      const contenedor = document.getElementById("resumen-recetas-contenedor");
-      const msg = document.getElementById("msg-recetas-vacio");
-      
-      if (estado.recetasSeleccionadas.length === 0) {
+    function renderResumenRecetasPlantillas() {
+      const contenedor = document.querySelector('.logistica-container #resumen-recetas-plantillas-contenedor');
+      const msg = document.querySelector('.logistica-container #msg-recetas-plantillas-vacio');
+
+      if (estado.recetasSeleccionadas.plantillas.length === 0) {
         contenedor.innerHTML = '';
         msg.style.display = 'block';
         return;
       }
       msg.style.display = 'none';
 
-      contenedor.innerHTML = estado.recetasSeleccionadas.map((grupo, index) => `
-        <div style="margin-bottom: 16px; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc;">
+      contenedor.innerHTML = estado.recetasSeleccionadas.plantillas.map((grupo, index) => `
+        <div style="margin-bottom: 16px; padding: 12px; border: 1px solid #764ba2; border-radius: 8px; background: #f8f0ff;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <strong style="font-size: 13px; color: #1a365d;">${grupo.receta.nombre}</strong>
-            <button class="btn-remove" data-index="${index}" style="width: 24px; height: 24px; padding: 0; font-size: 14px;">✕</button>
+            <button class="btn-remove" data-tipo="plantilla" data-index="${index}" style="width: 24px; height: 24px; padding: 0; font-size: 14px;">✕</button>
           </div>
           <div style="display: flex; gap: 12px; align-items: end; margin-bottom: 12px;">
             <div style="flex: 1;">
               <label class="log-label" style="font-size: 12px; margin-bottom: 4px;">Cantidad de Recetas</label>
-              <input type="number" class="log-input" min="1" value="${grupo.cantidadRecetas}" data-index="${index}" data-campo="cantidadRecetas" style="width: 100%; font-size: 13px;"/>
+              <input type="number" class="log-input" min="1" value="${grupo.cantidadRecetas}" data-tipo="plantilla" data-index="${index}" data-campo="cantidadRecetas" style="width: 100%; font-size: 13px;"/>
             </div>
           </div>
           <div style="margin-top: 10px;">
-            <table class="log-table" style="font-size: 12px;">
+            <table class="solicitud-table" style="font-size: 12px;">
               <thead>
                 <tr>
                   <th>Material</th>
@@ -596,8 +848,8 @@
                   return `
                     <tr>
                       <td>
-                        <strong>${item.codigo}</strong><br>
-                        <small>${mat ? `${mat.nom} (${mat.med}) – ${mat.col}` : 'Desconocido'}</small>
+                        <strong>${item.nombre || item.codigo}</strong><br>
+                        <small>${mat ? `(${mat.med}) – ${mat.col}` : ''}</small>
                       </td>
                       <td>${cantidadTotal}</td>
                     </tr>
@@ -609,37 +861,119 @@
         </div>
       `).join('');
 
-      document.querySelectorAll('#resumen-recetas-contenedor [data-campo="cantidadRecetas"]').forEach(input => {
+      // Event listeners para plantillas
+      document.querySelectorAll('.logistica-container #resumen-recetas-plantillas-contenedor [data-campo="cantidadRecetas"]').forEach(input => {
         input.addEventListener('input', (e) => {
           const idx = parseInt(e.target.dataset.index);
-          estado.recetasSeleccionadas[idx].cantidadRecetas = parseInt(e.target.value) || 1;
-          renderResumenRecetas();
+          estado.recetasSeleccionadas.plantillas[idx].cantidadRecetas = parseInt(e.target.value) || 1;
+          renderResumenRecetasPlantillas();
         });
       });
 
-      document.querySelectorAll('#resumen-recetas-contenedor .btn-remove').forEach(btn => {
+      document.querySelectorAll('.logistica-container #resumen-recetas-plantillas-contenedor .btn-remove').forEach(btn => {
         btn.addEventListener('click', (e) => {
           const idx = parseInt(e.currentTarget.dataset.index);
-          estado.recetasSeleccionadas.splice(idx, 1);
-          renderResumenRecetas();
+          estado.recetasSeleccionadas.plantillas.splice(idx, 1);
+          renderResumenRecetasPlantillas();
         });
       });
     }
 
-    function renderResumenAdicionales() {
-      const tbody = document.getElementById('ped-adicionales-body');
-      const msg = document.getElementById('msg-adicionales-vacio');
-      if (estado.itemsAdicionales.length === 0) {
+    function renderResumenRecetasEspecificas() {
+      const contenedor = document.querySelector('.logistica-container #resumen-recetas-especificas-contenedor');
+      const msg = document.querySelector('.logistica-container #msg-recetas-especificas-vacio');
+
+      if (estado.recetasSeleccionadas.especificas.length === 0) {
+        contenedor.innerHTML = '';
+        msg.style.display = 'block';
+        return;
+      }
+      msg.style.display = 'none';
+
+      contenedor.innerHTML = estado.recetasSeleccionadas.especificas.map((grupo, index) => `
+        <div style="margin-bottom: 16px; padding: 12px; border: 1px solid #3797a4; border-radius: 8px; background: #f0fdff;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <strong style="font-size: 13px; color: #1a365d;">${grupo.receta.nombre}</strong>
+            <button class="btn-remove" data-tipo="especifica" data-index="${index}" style="width: 24px; height: 24px; padding: 0; font-size: 14px;">✕</button>
+          </div>
+          <div style="display: flex; gap: 12px; align-items: end; margin-bottom: 12px;">
+            <div style="flex: 1;">
+              <label class="log-label" style="font-size: 12px; margin-bottom: 4px;">Cantidad de Recetas</label>
+              <input type="number" class="log-input" min="1" value="${grupo.cantidadRecetas}" data-tipo="especifica" data-index="${index}" data-campo="cantidadRecetas" style="width: 100%; font-size: 13px;"/>
+            </div>
+          </div>
+          <div style="margin-top: 10px;">
+            <table class="solicitud-table" style="font-size: 12px;">
+              <thead>
+                <tr>
+                  <th>Material</th>
+                  <th>Cantidad</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${grupo.receta.items.map(item => {
+                  const cantidadTotal = (item.cantidad || 0) * (grupo.cantidadRecetas || 1);
+                  if (item.tipo === 'CASE' || isCaseBaseCodigo(item.codigo)) {
+                    return `
+                      <tr>
+                        <td>
+                          <strong>CASE ${getCaseBaseFromCodigo(item.codigo) || 'Case'}</strong><br>
+                          <small>Se selecciona el Case físico en despacho</small>
+                        </td>
+                        <td>${cantidadTotal}</td>
+                      </tr>
+                    `;
+                  }
+                  const mat = getMaterial(item.codigo);
+                  return `
+                    <tr>
+                      <td>
+                        <strong>${item.nombre || item.codigo}</strong><br>
+                        <small>${mat ? `(${mat.med}) – ${mat.col}` : ''}</small>
+                      </td>
+                      <td>${cantidadTotal}</td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `).join('');
+
+      // Event listeners para específicas
+      document.querySelectorAll('.logistica-container #resumen-recetas-especificas-contenedor [data-campo="cantidadRecetas"]').forEach(input => {
+        input.addEventListener('input', (e) => {
+          const idx = parseInt(e.target.dataset.index);
+          estado.recetasSeleccionadas.especificas[idx].cantidadRecetas = parseInt(e.target.value) || 1;
+          renderResumenRecetasEspecificas();
+        });
+      });
+
+      document.querySelectorAll('.logistica-container #resumen-recetas-especificas-contenedor .btn-remove').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const idx = parseInt(e.currentTarget.dataset.index);
+          estado.recetasSeleccionadas.especificas.splice(idx, 1);
+          renderResumenRecetasEspecificas();
+        });
+      });
+    }
+
+    function renderResumenEspecificos() {
+      if (!estado.materialesEspecificos) estado.materialesEspecificos = [];
+      const tbody = document.querySelector('.logistica-container #ped-especificos-body');
+      const msg = document.querySelector('.logistica-container #msg-especificos-vacio');
+      if (estado.materialesEspecificos.length === 0) {
         tbody.innerHTML = '';
         msg.style.display = 'block';
         return;
       }
       msg.style.display = 'none';
-      tbody.innerHTML = estado.itemsAdicionales.map((item, idx) => `
+      tbody.innerHTML = estado.materialesEspecificos.map((item, idx) => `
         <tr>
           <td>
-            <strong>${item.codigo}</strong><br>
-            <small>${item.nombre} (Ubicación: ${item.ubicacionNombre}) – Stock: ${item.stockActual}</small>
+            <strong>${item.nombre}</strong><br>
+            <small>(Ubicación: ${item.ubicacionNombre}) – Stock: ${item.stockActual}</small>
           </td>
           <td>
             <input type="number" class="log-input" min="1" max="${item.stockActual}" value="${item.cantidad}" data-index="${idx}" style="width: 60px; padding: 4px; font-size: 12px;" />
@@ -649,23 +983,64 @@
           </td>
         </tr>
       `).join('');
-      document.querySelectorAll('#ped-adicionales-body [data-index]').forEach(el => {
+      document.querySelectorAll('.logistica-container #ped-especificos-body [data-index]').forEach(el => {
         if (el.tagName === 'INPUT') {
           el.addEventListener('input', (e) => {
             const idx = parseInt(e.target.dataset.index);
             let val = parseInt(e.target.value) || 1;
-            if (val > estado.itemsAdicionales[idx].stockActual) {
-              val = estado.itemsAdicionales[idx].stockActual;
+            if (val > estado.materialesEspecificos[idx].stockActual) {
+              val = estado.materialesEspecificos[idx].stockActual;
               e.target.value = val;
               mostrarNotificacion(`Cantidad ajustada al stock disponible: ${val}`, 'warning');
             }
-            estado.itemsAdicionales[idx].cantidad = val;
+            estado.materialesEspecificos[idx].cantidad = val;
           });
         } else if (el.classList.contains('btn-remove')) {
           el.addEventListener('click', (e) => {
             const idx = parseInt(e.currentTarget.dataset.index);
-            estado.itemsAdicionales.splice(idx, 1);
-            renderResumenAdicionales();
+            estado.materialesEspecificos.splice(idx, 1);
+            renderResumenEspecificos();
+          });
+        }
+      });
+    }
+
+    function renderResumenPlantillas() {
+      if (!estado.plantillasAdicionales) estado.plantillasAdicionales = [];
+      const tbody = document.querySelector('.logistica-container #ped-plantillas-body');
+      const msg = document.querySelector('.logistica-container #msg-plantillas-vacio');
+      if (estado.plantillasAdicionales.length === 0) {
+        tbody.innerHTML = '';
+        msg.style.display = 'block';
+        return;
+      }
+      msg.style.display = 'none';
+      tbody.innerHTML = estado.plantillasAdicionales.map((item, idx) => `
+        <tr>
+          <td>
+            <strong>${item.nombre}</strong><br>
+            <small>${item.tipo === 'GRUPO' ? '' : `(Ubicación: ${item.ubicacionNombre})`}</small>
+          </td>
+          <td>
+            <input type="number" class="log-input" min="1" value="${item.cantidad}" data-index="${idx}" style="width: 60px; padding: 4px; font-size: 12px;" />
+          </td>
+          <td style="text-align: center;">
+            <button class="btn-remove" data-index="${idx}" style="width: 24px; height: 24px; padding: 0; font-size: 12px;">✕</button>
+          </td>
+        </tr>
+      `).join('');
+      document.querySelectorAll('.logistica-container #ped-plantillas-body [data-index]').forEach(el => {
+        if (el.tagName === 'INPUT') {
+          el.addEventListener('input', (e) => {
+            const idx = parseInt(e.target.dataset.index);
+            let val = parseInt(e.target.value) || 1;
+            estado.plantillasAdicionales[idx].cantidad = val;
+          });
+        } else if (el.classList.contains('btn-remove')) {
+          el.addEventListener('click', (e) => {
+            const idx = parseInt(e.currentTarget.dataset.index);
+            estado.plantillasAdicionales.splice(idx, 1);
+            renderResumenPlantillas();
           });
         }
       });
@@ -681,7 +1056,7 @@
           <!-- Columna izquierda: catálogo -->
           <div style="flex: 2; overflow-y: auto; background: #f8fafc; padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0;">
             <div style="max-height: 540px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; background: white;">
-              <table class="log-table" style="font-size: 12px;">
+              <table class="solicitud-table" style="font-size: 12px;">
                 <thead style="position: sticky; top: 0; background: #f8fafc;">
                   <tr>
                     <th>Código</th>
@@ -702,7 +1077,7 @@
           <div style="flex: 1; display: flex; flex-direction: column; gap: 14px; background: white; padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0;">
             <h3 class="log-titulo" style="font-size: 13px; margin: 0 0 8px 0; color: #1a365d;">Resumen de Pedido</h3>
             <div style="border: 1px solid var(--accent); border-radius: 8px; overflow: hidden; background: white; flex: 1;">
-              <table class="log-table" style="font-size: 12px;">
+              <table class="solicitud-table" style="font-size: 12px;">
                 <thead>
                   <tr style="background: rgba(55, 148, 255, 0.05);">
                     <th style="width: 60%;">Descripción</th>
@@ -725,7 +1100,7 @@
     }
 
     function renderCatalogoItem() {
-      const tbody = document.getElementById('cat-item-body');
+      const tbody = document.querySelector('.logistica-container #cat-item-body');
       tbody.innerHTML = materialesCatalogo.map(m => `
         <tr>
           <td><span class="code-badge" style="font-size: 11px;">${m.cod}</span></td>
@@ -739,7 +1114,7 @@
           </td>
         </tr>
       `).join('');
-      document.querySelectorAll('[data-cod]').forEach(btn => {
+      tbody.querySelectorAll('[data-cod]').forEach(btn => {
         btn.addEventListener('click', (e) => {
           const cod = e.currentTarget.dataset.cod;
           const m = getMaterial(cod);
@@ -766,8 +1141,9 @@
     }
 
     function renderResumenItem() {
-      const tbody = document.getElementById('ped-item-body');
-      const msg = document.getElementById('msg-item-vacio');
+      if (!estado.itemsPorItem) estado.itemsPorItem = [];
+      const tbody = document.querySelector('.logistica-container #ped-item-body');
+      const msg = document.querySelector('.logistica-container #msg-item-vacio');
       if (estado.itemsPorItem.length === 0) {
         tbody.innerHTML = '';
         msg.style.display = 'block';
@@ -788,7 +1164,7 @@
           </td>
         </tr>
       `).join('');
-      document.querySelectorAll('#ped-item-body [data-index]').forEach(el => {
+      document.querySelectorAll('.logistica-container #ped-item-body [data-index]').forEach(el => {
         if (el.tagName === 'INPUT') {
           el.addEventListener('input', (e) => {
             const idx = parseInt(e.target.dataset.index);
@@ -815,6 +1191,7 @@
     // =============================================================================
     let eventos = [];
     let materialesCatalogo = [];
+    let plantillas = [];
     let recetas = [];
 
     async function cargarEventos() {
@@ -841,37 +1218,88 @@
     async function cargarMaterialesCatalogo() {
       try {
         const allRows = [];
+        const CATALOGOS = [
+          { table: 'catalogo_hierros' },
+          { table: 'catalogo_audiovisual' },
+          { table: 'catalogo_consumibles' }
+        ];
+        for (const c of CATALOGOS) {
+          const selectStr = c.table === 'catalogo_consumibles'
+            ? 'codigo, nombre, dimensiones, color, unidad_medida, campos_personalizados'
+            : 'codigo, nombre, dimensiones, color, unidad_medida, campos_personalizados';
+          const { data, error } = await window.supabaseClient
+            .from(c.table)
+            .select(selectStr)
+            .order('codigo', { ascending: true });
+          if (error) {
+            console.error(`Error al cargar ${c.table}:`, error);
+            continue;
+          }
+          const rows = (data || []).map(r => ({ ...r, __catalogo: c.table }));
+          allRows.push(...rows);
+        }
+
+        // Crear mapa de materiales con nombres
+        const materialesMap = new Map();
+        allRows.forEach(item => {
+          materialesMap.set(item.codigo, {
+            cod: item.codigo,
+            nom: item.nombre,
+            med: formatMedidas(item.dimensiones),
+            col: item.color || '',
+            bodegaPrincipal: '',
+            bodegaSecundaria: '',
+            contenedor: '',
+            ubicacionNombre: '',
+            stockActual: 0,
+            fechaCompra: null,
+            __catalogo: item.__catalogo
+          });
+        });
+
+        // Actualizar con datos de stock
         const STOCK_VIEWS = [
-          { key: 'HIERROS', label: 'Hierros', view: 'stock_hierros' },
-          { key: 'AUDIOVISUAL', label: 'Audiovisual', view: 'stock_audiovisual' },
-          { key: 'CONSUMIBLES', label: 'Consumibles', view: 'stock_consumibles' }
+          { view: 'stock_hierros' },
+          { view: 'stock_audiovisual' },
+          { view: 'stock_consumibles' }
         ];
         for (const v of STOCK_VIEWS) {
           const { data, error } = await window.supabaseClient
             .from(v.view)
-            .select('material_codigo, material_nombre, precio, stock_actual, bodega_principal, bodega_secundaria, contenedor, ubicacion_nombre, fecha_compra')
-            .order('material_codigo', { ascending: true });
+            .select('material_codigo, material_nombre, precio, stock_actual, bodega_principal, bodega_secundaria, contenedor, ubicacion_nombre, fecha_compra');
           if (error) {
-            console.error(`Error al cargar ${v.view}:`, error);
+            console.error(`Error al cargar stock de ${v.view}:`, error);
             continue;
           }
-          const rows = (data || []).map(r => ({ ...r, __stock_view: v.view }));
-          allRows.push(...rows);
+          (data || []).forEach(r => {
+            if (materialesMap.has(r.material_codigo)) {
+              const mat = materialesMap.get(r.material_codigo);
+              mat.bodegaPrincipal = r.bodega_principal || '';
+              mat.bodegaSecundaria = r.bodega_secundaria || '';
+              mat.contenedor = r.contenedor || '';
+              mat.ubicacionNombre = r.ubicacion_nombre || '';
+              mat.stockActual = r.stock_actual || 0;
+              mat.fechaCompra = r.fecha_compra || null;
+            } else {
+              // Si no está en catálogo, agregarlo (aunque no debería pasar)
+              materialesMap.set(r.material_codigo, {
+                cod: r.material_codigo,
+                nom: r.material_nombre,
+                med: '',
+                col: '',
+                bodegaPrincipal: r.bodega_principal || '',
+                bodegaSecundaria: r.bodega_secundaria || '',
+                contenedor: r.contenedor || '',
+                ubicacionNombre: r.ubicacion_nombre || '',
+                stockActual: r.stock_actual || 0,
+                fechaCompra: r.fecha_compra || null,
+                __catalogo: v.view
+              });
+            }
+          });
         }
 
-        materialesCatalogo = allRows.map(item => ({
-          cod: item.material_codigo,
-          nom: item.material_nombre,
-          med: '', // Dimensiones no disponibles en vistas de stock
-          col: '', // Color no disponible
-          bodegaPrincipal: item.bodega_principal || '',
-          bodegaSecundaria: item.bodega_secundaria || '',
-          contenedor: item.contenedor || '',
-          ubicacionNombre: item.ubicacion_nombre || '',
-          stockActual: item.stock_actual || 0,
-          fechaCompra: item.fecha_compra || null,
-          __stock_view: item.__stock_view
-        }));
+        materialesCatalogo = Array.from(materialesMap.values());
 
       } catch (err) {
         console.error('Error cargando materiales:', err);
@@ -879,45 +1307,153 @@
       }
     }
 
-    async function cargarRecetas() {
+    async function cargarPlantillas() {
       try {
         const { data, error } = await window.supabaseClient
+          .from('recetas_plantillas_materiales')
+          .select('id, nombre_plantilla, tipo, dimensiones, catalogos, descripcion, bodega_secundaria')
+          .order('nombre_plantilla', { ascending: true });
+        if (error) {
+          console.error('Error al cargar plantillas:', error);
+          return;
+        }
+        plantillas = data || [];
+      } catch (err) {
+        console.error('Error:', err);
+      }
+    }
+
+    async function cargarRecetas() {
+      try {
+        // Cargar recetas de plantillas
+        const { data: dataPlantillas, error: errorPlantillas } = await window.supabaseClient
           .from('recetas')
           .select(`
             id,
             nombre,
+            rubro,
             recetas_materiales (
               material_codigo,
               cantidad,
-              observacion
+              observacion,
+              material_nombre
             )
           `)
           .order('nombre', { ascending: true });
 
-        if (error) {
-          console.error('Error al cargar recetas:', error);
-          return;
+        if (errorPlantillas) {
+          console.error('Error al cargar recetas de plantillas:', errorPlantillas);
         }
 
-        recetasDisponibles = (data || []).map(receta => ({
+        // Cargar recetas específicas
+        const { data: dataEspecificas, error: errorEspecificas } = await window.supabaseClient
+          .from('recetas_especificas')
+          .select(`
+            id,
+            nombre,
+            rubro,
+            recetas_especificas_materiales (
+              material_codigo,
+              cantidad,
+              observacion,
+              material_nombre
+            )
+          `)
+          .order('nombre', { ascending: true });
+
+        if (errorEspecificas) {
+          console.error('Error al cargar recetas específicas:', errorEspecificas);
+        }
+
+        // Procesar recetas de plantillas
+        const recetasPlantillas = (dataPlantillas || []).map(receta => ({
+          id: receta.id,
           nombre: receta.nombre,
+          rubro: receta.rubro,
+          tipo: 'plantilla',
           items: receta.recetas_materiales.map(item => ({
             codigo: item.material_codigo,
             cantidad: item.cantidad,
+            nombre: item.material_nombre,
             tipo: isCaseBaseCodigo(item.material_codigo) ? 'CASE' : decodeTipoYObs(item.observacion).tipo,
             observacion: isCaseBaseCodigo(item.material_codigo) ? (item.observacion || '') : decodeTipoYObs(item.observacion).obs
           }))
         }));
+
+        // Procesar recetas específicas
+        const recetasEspecificas = (dataEspecificas || []).map(receta => ({
+          id: receta.id,
+          nombre: receta.nombre,
+          rubro: receta.rubro,
+          tipo: 'especifica',
+          items: receta.recetas_especificas_materiales.map(item => ({
+            codigo: item.material_codigo,
+            cantidad: item.cantidad,
+            nombre: item.material_nombre,
+            tipo: isCaseBaseCodigo(item.material_codigo) ? 'CASE' : decodeTipoYObs(item.observacion).tipo,
+            observacion: isCaseBaseCodigo(item.material_codigo) ? (item.observacion || '') : decodeTipoYObs(item.observacion).obs
+          }))
+        }));
+
+        // Combinar ambas listas
+        recetasDisponibles = [...recetasPlantillas, ...recetasEspecificas];
       } catch (err) {
         console.error('Error:', err);
       }
+    }
+
+    function renderRecetasFiltradas(recetas) {
+      return recetas.map(receta => {
+        const tipoIcono = receta.tipo === 'plantilla' ? '📋' : '🎯';
+        const tipoColor = receta.tipo === 'plantilla' ? '#764ba2' : '#3797a4';
+        const tipoTexto = receta.tipo === 'plantilla' ? 'Plantilla' : 'Específica';
+
+        return `
+        <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; background: #f8fafc; display: flex; flex-direction: column; gap: 12px;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+              <h4 style="margin: 0; font-size: 16px; color: #1a365d;">${receta.nombre}</h4>
+              <span style="font-size: 12px; color: ${tipoColor}; background: rgba(255,255,255,0.8); padding: 2px 6px; border-radius: 4px; border: 1px solid ${tipoColor};">${tipoIcono} ${tipoTexto}</span>
+            </div>
+            <div style="font-size: 12px; color: #64748b;">Rubro: ${receta.rubro || 'Sin especificar'}</div>
+          </div>
+          <div style="flex: 1;">
+            <h5 style="margin: 0 0 8px 0; font-size: 14px; color: #374151;">Materiales:</h5>
+            <div style="max-height: 200px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 4px; background: white;">
+              <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
+                <thead style="background: #f1f5f9;">
+                  <tr>
+                    <th style="padding: 8px; text-align: left; border-bottom: 1px solid #e2e8f0;">Material</th>
+                    <th style="padding: 8px; text-align: center; border-bottom: 1px solid #e2e8f0; width: 80px;">Cant.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${receta.items.map(item => {
+                    if (item.tipo === 'CASE' || isCaseBaseCodigo(item.codigo)) {
+                      const baseName = getCaseBaseFromCodigo(item.codigo) || 'Case';
+                      return `<tr><td style="padding: 6px 8px; border-bottom: 1px solid #f1f5f9;">CASE ${baseName}</td><td style="padding: 6px 8px; text-align: center; border-bottom: 1px solid #f1f5f9;">${item.cantidad}</td></tr>`;
+                    }
+                    return `<tr><td style="padding: 6px 8px; border-bottom: 1px solid #f1f5f9;">${item.nombre || item.codigo}</td><td style="padding: 6px 8px; text-align: center; border-bottom: 1px solid #f1f5f9;">${item.cantidad}</td></tr>`;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <button class="btn-add" data-receta="${receta.nombre}" data-tipo="${receta.tipo}" style="width: 100%; font-size: 12px; padding: 8px; background: ${tipoColor};">Seleccionar Receta</button>
+        </div>
+      `;
+      }).join('');
     }
 
     // =============================================================================
     // 🔹 CARGAR EVENTOS DESDE SUPABASE
     // =============================================================================
     function cargarEventosEnSelect() {
-      const select = document.getElementById('sol-evento');
+      const select = document.querySelector('.logistica-container #sol-evento');
+      if (!select) {
+        console.error('Elemento sol-evento no encontrado');
+        return;
+      }
       select.innerHTML = '<option value="">-- Seleccione un Evento --</option>';
 
       eventos.forEach(evento => {
@@ -1012,7 +1548,8 @@
       }
 
       if (estado.modoIngreso === "receta") {
-        for (const grupo of estado.recetasSeleccionadas) {
+        // Procesar recetas de plantillas
+        for (const grupo of estado.recetasSeleccionadas.plantillas || []) {
           if (!grupo.receta) continue;
           const factorReceta = (Number(grupo.cantidadRecetas) || 1);
 
@@ -1048,15 +1585,64 @@
           }
         }
 
-        estado.itemsAdicionales.forEach(item => {
+        // Procesar recetas específicas
+        for (const grupo of estado.recetasSeleccionadas.especificas || []) {
+          if (!grupo.receta) continue;
+          const factorReceta = (Number(grupo.cantidadRecetas) || 1);
+
+          for (const item of (grupo.receta.items || [])) {
+            const base = (Number(item.cantidad) || 0) * factorReceta;
+            if (base <= 0) continue;
+
+            // CASE genérico (por base): NO se expande aquí. Bodega elige Case físico al despachar.
+            if (isCaseBaseCodigo(item.codigo) || item.tipo === 'CASE') {
+              const baseName = getCaseBaseFromCodigo(item.codigo) || 'Case';
+              const codigoPlantilla = isCaseBaseCodigo(item.codigo) ? item.codigo : `CASEBASE|${baseName}`;
+              addOrSum({
+                codigo: codigoPlantilla,
+                nombre: baseName,
+                cantidad: base,
+                estado: "pendiente",
+                observacion: `Requiere ${baseName} (selección de Case físico en despacho)`,
+                medidas: "",
+                color: ""
+              });
+            } else {
+              const mat = getMaterial(item.codigo);
+              addOrSum({
+                codigo: item.codigo,
+                nombre: mat?.nom || "Desconocido",
+                cantidad: base,
+                estado: "pendiente",
+                observacion: "",
+                medidas: mat?.med || "",
+                color: mat?.col || ""
+              });
+            }
+          }
+        }
+
+        estado.materialesEspecificos.forEach(item => {
           addOrSum({
             codigo: item.codigo,
             nombre: item.nombre,
             cantidad: item.cantidad,
             estado: "pendiente",
-            observacion: "Material adicional (fuera de receta)",
+            observacion: "Material adicional específico (fuera de receta)",
             medidas: item.medidas,
             color: item.color
+          });
+        });
+
+        estado.plantillasAdicionales.forEach(item => {
+          addOrSum({
+            codigo: item.codigo,
+            nombre: item.nombre,
+            cantidad: item.cantidad,
+            estado: "pendiente",
+            observacion: "Plantilla adicional (fuera de receta)",
+            medidas: "",
+            color: ""
           });
         });
       } else {
@@ -1122,6 +1708,107 @@
         return;
       }
 
+      // Validar que no haya códigos duplicados
+      const codigos = items.map(item => item.codigo);
+      const codigosUnicos = [...new Set(codigos)];
+      if (codigos.length !== codigosUnicos.length) {
+        // Mostrar interfaz para resolver duplicados
+        await mostrarResolucionDuplicados(items);
+        return;
+      }
+
+      await procesarEnvioSolicitud(items, evento);
+    }
+
+    async function mostrarResolucionDuplicados(items) {
+      return new Promise((resolve) => {
+        // Crear modal para resolución de duplicados
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+          position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+          background: rgba(0,0,0,0.8); z-index: 10000; display: flex;
+          align-items: center; justify-content: center; font-family: Arial, sans-serif;
+        `;
+
+        // Encontrar códigos duplicados
+        const codigos = items.map(item => item.codigo);
+        const duplicadosMap = new Map();
+
+        codigos.forEach((codigo, index) => {
+          if (!duplicadosMap.has(codigo)) {
+            duplicadosMap.set(codigo, []);
+          }
+          duplicadosMap.get(codigo).push({ item: items[index], index });
+        });
+
+        const codigosDuplicados = Array.from(duplicadosMap.entries())
+          .filter(([codigo, ocurrencias]) => ocurrencias.length > 1);
+
+        modal.innerHTML = `
+          <div style="background: #1a1a1a; color: white; padding: 24px; border-radius: 12px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
+            <h3 style="color: #ff6b6b; margin: 0 0 16px 0; font-size: 18px;">⚠️ Códigos Duplicados Detectados</h3>
+            <p style="margin: 0 0 20px 0; color: #ccc;">Se encontraron códigos duplicados. Selecciona cuál instancia deseas mantener para cada código:</p>
+
+            <div id="duplicados-container" style="margin-bottom: 24px;">
+              ${codigosDuplicados.map(([codigo, ocurrencias]) => `
+                <div style="background: #2a2a2a; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+                  <h4 style="color: #4ecdc4; margin: 0 0 12px 0; font-size: 14px;">Código: ${codigo}</h4>
+                  <div style="display: flex; flex-direction: column; gap: 8px;">
+                    ${ocurrencias.map((ocurrencia, idx) => `
+                      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 4px; background: #333;">
+                        <input type="radio" name="duplicado-${codigo}" value="${ocurrencia.index}" ${idx === 0 ? 'checked' : ''} style="margin: 0;">
+                        <div style="flex: 1;">
+                          <div style="font-weight: bold; color: #fff;">${ocurrencia.item.nombre || 'Sin nombre'}</div>
+                          <div style="font-size: 12px; color: #ccc;">Cantidad: ${ocurrencia.item.cantidad} | Estado: ${ocurrencia.item.estado}</div>
+                          ${ocurrencia.item.observacion ? `<div style="font-size: 11px; color: #888;">Obs: ${ocurrencia.item.observacion}</div>` : ''}
+                        </div>
+                      </label>
+                    `).join('')}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+              <button id="btn-cancelar" style="background: #666; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">Cancelar</button>
+              <button id="btn-resolver" style="background: #4ecdc4; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">Resolver Duplicados</button>
+            </div>
+          </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Event listeners
+        document.getElementById('btn-cancelar').onclick = () => {
+          document.body.removeChild(modal);
+          resolve(false);
+        };
+
+        document.getElementById('btn-resolver').onclick = async () => {
+          // Recopilar índices seleccionados para mantener
+          const indicesAMantener = new Set();
+          codigosDuplicados.forEach(([codigo]) => {
+            const radioSeleccionado = document.querySelector(`input[name="duplicado-${codigo}"]:checked`);
+            if (radioSeleccionado) {
+              indicesAMantener.add(parseInt(radioSeleccionado.value));
+            }
+          });
+
+          // Filtrar items manteniendo solo los seleccionados
+          const itemsResueltos = items.filter((item, index) => indicesAMantener.has(index));
+
+          document.body.removeChild(modal);
+
+          // Proceder con el envío usando los items resueltos
+          const evento = document.getElementById('sol-evento').value;
+          await procesarEnvioSolicitud(itemsResueltos, evento);
+          resolve(true);
+        };
+      });
+    }
+
+    async function procesarEnvioSolicitud(items, evento) {
+
       try {
         // Generar ID secuencial para la solicitud
         const idSolicitud = await generarIdSolicitud();
@@ -1139,7 +1826,8 @@
             encargado_evento: responsable,
             prioridad: "Normal",
             modo_ingreso: estado.modoIngreso,
-            fecha_solicitud: new Date().toISOString()
+            fecha_solicitud: new Date().toISOString(),
+            usuario_id: window.currentUser?.id
           })
           .select()
           .single();
@@ -1150,6 +1838,19 @@
           return;
         }
 
+        // Log de auditoría para solicitud
+        await window.logAuditoria('INSERT', 'solicitudes_logistica', idSolicitud, {
+          id: idSolicitud,
+          tipo: "despacho",
+          estado: "pendiente_bodega",
+          evento: evento,
+          encargado_evento: responsable,
+          prioridad: "Normal",
+          modo_ingreso: estado.modoIngreso,
+          fecha_solicitud: new Date().toISOString(),
+          usuario_id: window.currentUser?.id
+        });
+
         // Insertar items de la solicitud
         const itemsParaInsertar = items.map(item => ({
           solicitud_id: idSolicitud,
@@ -1159,7 +1860,8 @@
           estado: item.estado,
           observacion: item.observacion,
           medidas: item.medidas,
-          color: item.color
+          color: item.color,
+          usuario_id: window.currentUser?.id
         }));
 
         const { error: errorItems } = await window.supabaseClient
@@ -1172,10 +1874,24 @@
           return;
         }
 
+        // Log de auditoría para items de solicitud
+        itemsParaInsertar.forEach(item => {
+          window.logAuditoria('INSERT', 'items_solicitud_logistica', null, item);
+        });
+
         alert(`✅ Solicitud ${idSolicitud} enviada a Bodega.`);
 
         // Reiniciar estado
-        estado = { modoIngreso: "receta", recetasSeleccionadas: [], itemsAdicionales: [], itemsPorItem: [] };
+        estado = { 
+          modoIngreso: "receta", 
+          recetasSeleccionadas: {
+            plantillas: [],
+            especificas: []
+          },
+          materialesEspecificos: [],
+          plantillasAdicionales: [],
+          itemsPorItem: []
+        };
         renderContenidoDinamico();
         document.getElementById('sol-evento').value = "";
         const panel = document.getElementById('panelResumenEvento');
@@ -1240,21 +1956,33 @@
           return;
         }
 
-        document.getElementById('sol-evento').value = solicitud.evento;
-        document.getElementById('sol-responsable').value = solicitud.encargado_evento || "Carlos Méndez";
+        document.querySelector('.logistica-container #sol-evento').value = solicitud.evento;
+        document.querySelector('.logistica-container #sol-responsable').value = solicitud.encargado_evento || "Carlos Méndez";
         await actualizarPanelEvento(solicitud.evento);
 
         estado = {
           modoIngreso: solicitud.modo_ingreso || "receta",
-          recetasSeleccionadas: [],
-          itemsAdicionales: [],
+          recetasSeleccionadas: {
+            plantillas: [],
+            especificas: []
+          },
+          materialesEspecificos: [],
+          plantillasAdicionales: [],
           itemsPorItem: []
         };
 
         // Reconstruir el estado desde los items guardados
         solicitud.items_solicitud_logistica.forEach(item => {
           if (item.observacion === "Material adicional (fuera de receta)") {
-            estado.itemsAdicionales.push({
+            estado.materialesEspecificos.push({
+              codigo: item.codigo_material,
+              nombre: item.nombre_material,
+              medidas: item.medidas,
+              color: item.color,
+              cantidad: item.cantidad_solicitada
+            });
+          } else if (item.observacion === "Plantilla adicional (fuera de receta)") {
+            estado.plantillasAdicionales.push({
               codigo: item.codigo_material,
               nombre: item.nombre_material,
               medidas: item.medidas,
@@ -1262,19 +1990,37 @@
               cantidad: item.cantidad_solicitada
             });
           } else {
-            // Intentar encontrar la receta correspondiente
-            const receta = recetas.find(r =>
-              r.items.some(ri => ri.codigo === item.codigo_material)
+            // Intentar encontrar la receta correspondiente (primero en plantillas, luego en específicas)
+            let recetaEncontrada = null;
+            let tipoReceta = null;
+
+            // Buscar en recetas de plantillas
+            const recetaPlantilla = recetasDisponibles.find(r =>
+              r.tipo === 'plantilla' && r.items.some(ri => ri.codigo === item.codigo_material)
             );
-            if (receta) {
-              const itemReceta = receta.items.find(ri => ri.codigo === item.codigo_material);
+            if (recetaPlantilla) {
+              recetaEncontrada = recetaPlantilla;
+              tipoReceta = 'plantillas';
+            } else {
+              // Buscar en recetas específicas
+              const recetaEspecifica = recetasDisponibles.find(r =>
+                r.tipo === 'especifica' && r.items.some(ri => ri.codigo === item.codigo_material)
+              );
+              if (recetaEspecifica) {
+                recetaEncontrada = recetaEspecifica;
+                tipoReceta = 'especificas';
+              }
+            }
+
+            if (recetaEncontrada && tipoReceta) {
+              const itemReceta = recetaEncontrada.items.find(ri => ri.codigo === item.codigo_material);
               const cantidadRecetas = Math.floor(item.cantidad_solicitada / (itemReceta?.cantidad || 1));
-              const existing = estado.recetasSeleccionadas.find(r => r.receta.nombre === receta.nombre);
+              const existing = estado.recetasSeleccionadas[tipoReceta].find(r => r.receta.nombre === recetaEncontrada.nombre);
               if (existing) {
                 existing.cantidadRecetas = Math.max(existing.cantidadRecetas, cantidadRecetas);
               } else {
-                estado.recetasSeleccionadas.push({
-                  receta: receta,
+                estado.recetasSeleccionadas[tipoReceta].push({
+                  receta: recetaEncontrada,
                   cantidadRecetas: cantidadRecetas
                 });
               }
@@ -1292,7 +2038,7 @@
         });
 
         renderContenidoDinamico();
-        document.querySelector(`.log-tab-btn[data-modo="${estado.modoIngreso}"]`).click();
+        document.querySelector('.logistica-container .log-tab-btn[data-modo="' + estado.modoIngreso + '"]').click();
 
       } catch (err) {
         console.error('Error al cargar solicitud:', err);
@@ -1303,11 +2049,28 @@
     // =============================================================================
     // 🔹 INICIO
     // =============================================================================
+    function poblarFiltrosPlantillas(filtroPrincipal = 'todas', filtroSecundaria = 'todas') {
+      // Función para poblar filtros de plantillas, con checks para evitar errores
+      const selectPrincipal = document.getElementById('filtro-bodega-principal-recetas');
+      const selectSecundaria = document.getElementById('filtro-bodega-secundaria-recetas');
+      
+      if (selectPrincipal) {
+        selectPrincipal.innerHTML = '<option value="todas">Todas las Bodegas</option>';
+        // Poblar si es necesario
+      }
+      
+      if (selectSecundaria) {
+        selectSecundaria.innerHTML = '<option value="todas">Todas las Bodegas</option>';
+        // Poblar si es necesario
+      }
+    }
+
     async function inicializarModulo() {
       try {
         // Cargar datos desde Supabase
         await cargarEventos();
         await cargarMaterialesCatalogo();
+        await cargarPlantillas();
         await cargarRecetas();
 
         // Actualizar la variable recetasSimuladas para compatibilidad

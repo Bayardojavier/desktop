@@ -18,13 +18,20 @@
       if (!s.startsWith('CASEBASE|')) return '';
       return s.substring('CASEBASE|'.length).trim();
     }
+
+    let materialesCatalogo = [];
+    function getMaterial(codigo) {
+      return materialesCatalogo.find(m => m.codigo === codigo);
+    }
+
     function renderMaterialCell(item) {
       const codigo = item?.codigo_material || '';
       if (isCaseBaseCodigo(codigo)) {
         const base = getCaseBaseFromCodigo(codigo) || 'Case';
         return `<strong>CASE ${base}</strong><br><small>Pendiente de selección en despacho</small>`;
       }
-      return `<strong>${codigo}</strong><br><small>${item?.nombre_material || ''} (${item?.medidas || ''}) – ${item?.color || ''}</small>`;
+      const mat = getMaterial(codigo);
+      return `<strong>${codigo}</strong><br><small>${item?.nombre_material || ''} (${mat?.bodega_principal || ''}) – ${item?.medidas || ''} – ${item?.color || ''}</small>`;
     }
 
     function mostrarNotificacion(mensaje, tipo = 'info') {
@@ -360,6 +367,19 @@
           return;
         }
 
+        // Cargar detalles del evento
+        let eventoDetalles = null;
+        try {
+          const { data: eventoData } = await window.supabaseClient
+            .from('eventos')
+            .select('nombre, cliente, lugar, descripcion, fecha_montaje, hora_montaje, fecha_desmontaje, hora_desmontaje')
+            .eq('nombre', solicitud.evento)
+            .single();
+          eventoDetalles = eventoData;
+        } catch (err) {
+          console.error('Error al cargar detalles del evento:', err);
+        }
+
         const modal = document.createElement('div');
         modal.id = 'modal-edicion';
         modal.style = `
@@ -387,6 +407,26 @@
                 <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                   <strong>Evento:</strong>
                   <span>${solicitud.evento}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+                  <strong>Cliente:</strong>
+                  <span>${eventoDetalles?.cliente || 'N/A'}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+                  <strong>Lugar:</strong>
+                  <span>${eventoDetalles?.lugar || 'N/A'}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+                  <strong>Servicio:</strong>
+                  <span>${eventoDetalles?.descripcion || 'N/A'}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+                  <strong>Montaje:</strong>
+                  <span>${eventoDetalles?.fecha_montaje ? new Date(eventoDetalles.fecha_montaje).toLocaleDateString('es-ES') : 'N/A'} ${eventoDetalles?.hora_montaje || ''}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+                  <strong>Desmontaje:</strong>
+                  <span>${eventoDetalles?.fecha_desmontaje ? new Date(eventoDetalles.fecha_desmontaje).toLocaleDateString('es-ES') : 'N/A'} ${eventoDetalles?.hora_desmontaje || ''}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; margin-top: 8px;">
                   <strong>Encargado:</strong>
@@ -431,37 +471,71 @@
           console.error('Error al cargar catálogo:', err);
         }
 
-        function getMaterial(codigo) {
-          return materialesCatalogo.find(m => m.codigo === codigo);
-        }
-
         // Renderizar contenido según modo
         const contenidoItems = modal.querySelector('#modal-contenido-items');
 
         if (solicitud.modo_ingreso === 'receta') {
           // === Modo Receta ===
-          // Separar items de receta y adicionales
-          const adicionales = solicitud.items_solicitud_logistica.filter(item =>
-            item.observacion?.includes("Material adicional")
+          // Separar items de receta, específicos y plantillas
+          const especificos = solicitud.items_solicitud_logistica.filter(item =>
+            item.observacion === "Material adicional específico (fuera de receta)"
+          );
+          const plantillas = solicitud.items_solicitud_logistica.filter(item =>
+            item.observacion === "Plantilla adicional (fuera de receta)"
           );
           const itemsReceta = solicitud.items_solicitud_logistica.filter(item =>
-            !item.observacion?.includes("Material adicional")
+            !item.observacion?.includes("Material adicional") && !item.observacion?.includes("Plantilla adicional")
           );
 
-          // Cargar recetas disponibles
+          // Cargar recetas disponibles (plantillas y específicas)
           let recetas = [];
           try {
-            const { data: recetasData } = await window.supabaseClient
+            // Cargar recetas de plantillas
+            const { data: dataPlantillas } = await window.supabaseClient
               .from('recetas')
               .select(`
                 id,
                 nombre,
+                rubro,
                 recetas_materiales (
                   material_codigo,
-                  cantidad
+                  cantidad,
+                  material_nombre
                 )
               `);
-            recetas = recetasData || [];
+
+            // Cargar recetas específicas
+            const { data: dataEspecificas } = await window.supabaseClient
+              .from('recetas_especificas')
+              .select(`
+                id,
+                nombre,
+                rubro,
+                recetas_especificas_materiales (
+                  material_codigo,
+                  cantidad,
+                  material_nombre
+                )
+              `);
+
+            // Procesar y combinar
+            const recetasPlantillas = (dataPlantillas || []).map(receta => ({
+              id: receta.id,
+              nombre: receta.nombre,
+              rubro: receta.rubro,
+              tipo: 'plantilla',
+              recetas_materiales: receta.recetas_materiales
+            }));
+
+            const recetasEspecificas = (dataEspecificas || []).map(receta => ({
+              id: receta.id,
+              nombre: receta.nombre,
+              rubro: receta.rubro,
+              tipo: 'especifica',
+              recetas_materiales: receta.recetas_especificas_materiales
+            }));
+
+            recetas = [...recetasPlantillas, ...recetasEspecificas];
           } catch (err) {
             console.error('Error al cargar recetas:', err);
           }
@@ -486,10 +560,15 @@
 
           // Renderizar recetas
           recetasAgrupadas.forEach((grupo, idx) => {
+            const tipoIcono = grupo.receta.tipo === 'plantilla' ? '📋' : '🎯';
+            const tipoColor = grupo.receta.tipo === 'plantilla' ? '#764ba2' : '#3797a4';
+            const tipoTexto = grupo.receta.tipo === 'plantilla' ? 'Plantilla' : 'Específica';
+
             const div = document.createElement('div');
             div.innerHTML = `
               <h4 style="margin: 16px 0 8px 0; color: #1a365d; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">
-                📋 ${grupo.receta.nombre}
+                <span style="color: ${tipoColor};">${tipoIcono}</span> ${grupo.receta.nombre}
+                <span style="font-size: 11px; color: ${tipoColor}; background: rgba(255,255,255,0.8); padding: 2px 6px; border-radius: 4px; border: 1px solid ${tipoColor}; margin-left: 8px;">${tipoTexto}</span>
                 <input type="number" min="1" value="${grupo.cantidadRecetas}" data-receta-idx="${idx}"
                        style="width: 80px; margin-left: 10px; padding: 4px; font-size: 13px; border: 1px solid #ccc; border-radius: 4px;">
               </h4>
@@ -503,7 +582,7 @@
                       const base = getCaseBaseFromCodigo(itemReceta.material_codigo) || 'Case';
                       return `<tr><td><strong>CASE ${base}</strong><br><small>Pendiente de selección en despacho</small></td><td class="cantidad-calculada">${total}</td></tr>`;
                     }
-                    return `<tr><td><strong>${itemReceta.material_codigo}</strong><br><small>${mat?.nombre || ''} (${mat?.dimensiones || ''}) – ${mat?.color || ''}</small></td><td class="cantidad-calculada">${total}</td></tr>`;
+                    return `<tr><td><strong>${itemReceta.material_nombre || itemReceta.material_codigo}</strong><br><small>${mat?.dimensiones || ''} – ${mat?.color || ''}</small></td><td class="cantidad-calculada">${total}</td></tr>`;
                   }).join('')}
                 </tbody>
               </table>
@@ -545,27 +624,50 @@
             });
           });
 
-          // Renderizar materiales adicionales
-          if (adicionales.length > 0) {
-            const divAdd = document.createElement('div');
-            divAdd.innerHTML = `
-              <h4 style="margin: 16px 0 8px 0; color: #1a365d; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">➕ Materiales Adicionales</h4>
+          // Renderizar materiales específicos
+          if (especificos.length > 0) {
+            const divEsp = document.createElement('div');
+            divEsp.innerHTML = `
+              <h4 style="margin: 16px 0 8px 0; color: #1a365d; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">🔧 Materiales Específicos</h4>
               <table class="log-table" style="width: 100%; font-size: 12px;">
                 <thead><tr style="background: #f1f5f9;"><th>Material</th><th>Cantidad</th><th style="text-align: center;">Acción</th></tr></thead>
-                <tbody id="modal-add-body">
-                  ${adicionales.map((item, idx) => `
-                    <tr data-add-idx="${idx}">
+                <tbody id="modal-esp-body">
+                  ${especificos.map((item, idx) => `
+                    <tr data-esp-idx="${idx}">
                       <td>${renderMaterialCell(item)}</td>
-                      <td><input type="number" min="1" value="${item.cantidad_solicitada}" data-add-idx="${idx}" style="width: 70px; padding: 4px; font-size: 13px; border: 1px solid #ccc; border-radius: 4px;"></td>
+                      <td><input type="number" min="1" value="${item.cantidad_solicitada}" data-esp-idx="${idx}" style="width: 70px; padding: 4px; font-size: 13px; border: 1px solid #ccc; border-radius: 4px;"></td>
                       <td style="text-align: center;">
-                        <button class="btn-remove-add" data-add-idx="${idx}" data-item-id="${item.id}" style="width: 24px; height: 24px; padding: 0; font-size: 14px; background: #ef4445; color: white; border: none; border-radius: 4px;">🗑️</button>
+                        <button class="btn-remove-esp" data-esp-idx="${idx}" data-item-id="${item.id}" style="width: 24px; height: 24px; padding: 0; font-size: 14px; background: #ef4445; color: white; border: none; border-radius: 4px;">🗑️</button>
                       </td>
                     </tr>
                   `).join('')}
                 </tbody>
               </table>
             `;
-            contenidoItems.appendChild(divAdd);
+            contenidoItems.appendChild(divEsp);
+          }
+
+          // Renderizar plantillas
+          if (plantillas.length > 0) {
+            const divPla = document.createElement('div');
+            divPla.innerHTML = `
+              <h4 style="margin: 16px 0 8px 0; color: #1a365d; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">📋 Plantillas</h4>
+              <table class="log-table" style="width: 100%; font-size: 12px;">
+                <thead><tr style="background: #f1f5f9;"><th>Plantilla</th><th>Cantidad</th><th style="text-align: center;">Acción</th></tr></thead>
+                <tbody id="modal-pla-body">
+                  ${plantillas.map((item, idx) => `
+                    <tr data-pla-idx="${idx}">
+                      <td><strong>${item.nombre_material}</strong></td>
+                      <td><input type="number" min="1" value="${item.cantidad_solicitada}" data-pla-idx="${idx}" style="width: 70px; padding: 4px; font-size: 13px; border: 1px solid #ccc; border-radius: 4px;"></td>
+                      <td style="text-align: center;">
+                        <button class="btn-remove-pla" data-pla-idx="${idx}" data-item-id="${item.id}" style="width: 24px; height: 24px; padding: 0; font-size: 14px; background: #ef4445; color: white; border: none; border-radius: 4px;">🗑️</button>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            `;
+            contenidoItems.appendChild(divPla);
           }
 
         } else {
@@ -603,7 +705,7 @@
 
         // Manejo de eliminaciones
         const itemsAEliminar = new Set();
-        modal.querySelectorAll('.btn-remove-add, .btn-remove-item').forEach(btn => {
+        modal.querySelectorAll('.btn-remove-esp, .btn-remove-pla, .btn-remove-item').forEach(btn => {
           btn.addEventListener('click', (e) => {
             if (confirm("¿Eliminar este ítem?")) {
               const itemId = e.currentTarget.dataset.itemId;
@@ -689,12 +791,31 @@
                 }
               });
 
-              // Agregar materiales adicionales no eliminados
-              const adicionalesOriginales = solicitud.items_solicitud_logistica.filter(item =>
-                item.observacion?.includes("Material adicional") && !itemsAEliminar.has(item.id.toString())
+              // Agregar materiales específicos no eliminados
+              const especificosOriginales = solicitud.items_solicitud_logistica.filter(item =>
+                item.observacion === "Material adicional específico (fuera de receta)" && !itemsAEliminar.has(item.id.toString())
               );
-              adicionalesOriginales.forEach(item => {
-                const input = modal.querySelector(`[data-add-idx="${adicionalesOriginales.indexOf(item)}"]`);
+              especificosOriginales.forEach((item, idx) => {
+                const input = modal.querySelector(`[data-esp-idx="${idx}"]`);
+                const nuevaCantidad = input ? parseInt(input.value) || 1 : item.cantidad_solicitada;
+                nuevosItems.push({
+                  solicitud_id: idSolicitud,
+                  codigo_material: item.codigo_material,
+                  nombre_material: item.nombre_material,
+                  cantidad_solicitada: nuevaCantidad,
+                  estado: 'pendiente',
+                  observacion: item.observacion,
+                  medidas: item.medidas,
+                  color: item.color
+                });
+              });
+
+              // Agregar plantillas no eliminadas
+              const plantillasOriginales = solicitud.items_solicitud_logistica.filter(item =>
+                item.observacion === "Plantilla adicional (fuera de receta)" && !itemsAEliminar.has(item.id.toString())
+              );
+              plantillasOriginales.forEach((item, idx) => {
+                const input = modal.querySelector(`[data-pla-idx="${idx}"]`);
                 const nuevaCantidad = input ? parseInt(input.value) || 1 : item.cantidad_solicitada;
                 nuevosItems.push({
                   solicitud_id: idSolicitud,

@@ -1,0 +1,3 @@
+-- Tabla para materiales específicos de recetas
+-- Esta tabla ya está incluida en create_recetas_especificas.sql
+-- Este archivo se mantiene por compatibilidad pero está vacío

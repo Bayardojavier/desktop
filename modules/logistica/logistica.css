@@ -4,9 +4,12 @@
 
 .log-container {
     display: flex;
-    height: 100%;
+    height: calc(100vh - 160px);
     background-color: var(--app-bg); /* Blanco */
     gap: 24px;
+    margin: -20px;
+    padding: 20px;
+    box-sizing: border-box;
 }
 
 /* MENÚ LATERAL (Estilo RRHH / Ventas) */
@@ -19,6 +22,8 @@
     display: flex;
     flex-direction: column;
     box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
 }
 
 .log-menu-lateral h3 {
@@ -65,6 +70,7 @@
     background: white;
     border-radius: 8px;
     overflow-y: auto;
+    max-height: calc(100vh - 120px);
 }
 
 /* ELEMENTOS DEL FORMULARIO (Basados en Ventas/RRHH) */
@@ -90,6 +96,8 @@
     font-family: 'Segoe UI', sans-serif;
     font-size: 14px;
     margin-bottom: 15px;
+    color: #333; /* Color de texto explícito */
+    background: white; /* Fondo explícito */
 }
 
 .log-input:focus, .log-select:focus {
@@ -99,13 +107,13 @@
 }
 
 /* TABLAS (Estilo report-table de tu app) */
-.log-table {
+.solicitud-table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 10px;
 }
 
-.log-table th {
+.solicitud-table th {
     text-align: left;
     padding: 12px;
     background: var(--accent); /* Azul para cabeceras */
@@ -114,7 +122,7 @@
     font-size: 13px;
 }
 
-.log-table td {
+.solicitud-table td {
     padding: 10px;
     border-bottom: 1px solid #edf2f7;
     font-size: 13px;
@@ -989,6 +997,59 @@
 }
 
 .col-material { width: 50%; }
+
+/* =========================================
+   RESPONSIVE DESIGN
+   ========================================= */
+
+@media (max-width: 1024px) {
+  .log-container {
+    gap: 16px;
+  }
+  
+  .log-menu-lateral {
+    width: 200px;
+  }
+}
+
+@media (max-width: 768px) {
+  .log-container {
+    flex-direction: column;
+    height: auto;
+    min-height: calc(100vh - 120px);
+  }
+  
+  .log-menu-lateral {
+    width: 100%;
+    max-height: 200px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .log-menu-lateral h3 {
+    width: 100%;
+    margin: 10px 0 5px;
+  }
+  
+  .log-area-dinamica {
+    max-height: calc(100vh - 320px);
+  }
+}
+
+@media (max-width: 480px) {
+  .log-container {
+    gap: 8px;
+  }
+  
+  .log-menu-lateral {
+    padding: 12px;
+  }
+  
+  .log-area-dinamica {
+    padding: 12px;
+  }
+}
 .col-cantidad { width: 20%; text-align: center; }
 .col-obs { width: 20%; }
 .col-acciones { width: 10%; }

@@ -30,60 +30,28 @@
 }
 
 /* Estilos para el modal de ver receta */
-.receta-view-detalles {
-  padding: 0;
-  background: transparent;
-}
-
-.receta-view-info {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-  border-radius: 12px;
+.receta-detalles {
   padding: 20px;
-  margin-bottom: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
 }
 
-.receta-view-info h3 {
-  margin: 0 0 16px 0;
-  color: #f0f0f0;
-  font-size: 1.8em;
-  font-weight: 700;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+.receta-info h3 {
+  margin: 0 0 10px 0;
+  color: #ffffff;
+  font-size: 1.5em;
 }
 
-.receta-view-info p {
-  margin: 8px 0;
-  color: #e0e0e0;
-  font-size: 1em;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.receta-info p {
+  margin: 5px 0;
+  color: #cccccc;
 }
 
-.receta-view-info p strong {
-  color: #f0f0f0;
-  font-weight: 600;
-  min-width: 80px;
-}
-
-.receta-view-materiales h4 {
-  margin: 0 0 16px 0;
-  color: #f0f0f0;
-  font-size: 1.4em;
-  font-weight: 600;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.receta-view-materiales h4::before {
-  content: '📋';
+.receta-materiales h4 {
+  margin: 20px 0 10px 0;
+  color: #ffffff;
   font-size: 1.2em;
 }
 
-.receta-view-materiales-table {
+.receta-materiales-table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 10px;
@@ -92,21 +60,21 @@
   overflow: hidden;
 }
 
-.receta-view-materiales-table th, .receta-view-materiales-table td {
+.receta-materiales-table th, .receta-materiales-table td {
   padding: 12px;
   text-align: left;
   border-bottom: 1px solid #333;
 }
 
-.receta-view-materiales-table th {
+.receta-materiales-table th {
   background: linear-gradient(135deg, #2d2d30 0%, #1e1e1e 100%);
-  color: #f0f0f0;
+  color: #ffffff;
   font-weight: bold;
   text-transform: uppercase;
   font-size: 0.9em;
 }
 
-.receta-view-materiales-table td {
+.receta-materiales-table td {
   color: #cccccc;
 }
 
@@ -117,214 +85,77 @@
   font-size: 1.1em;
 }
 
-.receta-view-materiales-table tbody tr:hover {
+.receta-materiales-table tbody tr:hover {
   background: #2a2a2a;
 }
 
-/* Estilos para la tabla de materiales en el modal de recetas */
-.receta-view-materiales-lista {
+/* Estilos para la lista de materiales */
+.materiales-lista {
   margin-top: 15px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
-  border-radius: 16px;
-  padding: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
-.receta-view-materiales-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  background: rgba(45, 45, 48, 0.95);
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+.material-item {
+  background: #2a2a2a;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 10px;
+  border: 1px solid #333;
+  transition: background 0.3s ease;
 }
 
-.receta-view-materiales-table thead {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.material-item:hover {
+  background: #333;
 }
 
-.receta-view-table-header-number,
-.receta-view-table-header-name,
-.receta-view-table-header-bodega,
-.receta-view-table-header-cantidad {
-  padding: 20px 24px;
-  text-align: left;
-  color: #f0f0f0;
-  font-weight: 700;
-  font-size: 0.95em;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
-  position: relative;
-}
-
-.receta-view-table-header-number {
-  width: 60px;
-  text-align: center;
-}
-
-.receta-view-table-header-name {
-  width: 40%;
-}
-
-.receta-view-table-header-bodega {
-  width: 35%;
-}
-
-.receta-view-table-header-cantidad {
-  width: 15%;
-  text-align: center;
-}
-
-.receta-view-table-row {
-  transition: all 0.3s ease;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  margin-bottom: 4px;
-}
-
-.receta-view-table-row:hover {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-  transform: scale(1.01);
-}
-
-.receta-view-table-row:last-child {
-  border-bottom: none;
-}
-
-.receta-view-table-cell-number,
-.receta-view-table-cell-name,
-.receta-view-table-cell-bodega,
-.receta-view-table-cell-cantidad {
-  padding: 20px 24px;
-  color: #e0e0e0;
-  font-size: 0.95em;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
-  vertical-align: middle;
-  position: relative;
-}
-
-.receta-view-table-cell-number::after,
-.receta-view-table-cell-name::after,
-.receta-view-table-cell-bodega::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  top: 20%;
-  bottom: 20%;
-  width: 1px;
-  background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.1), transparent);
-}
-
-.receta-view-table-cell-number {
-  text-align: center;
-  font-weight: 700;
-  color: #667eea;
-  background: rgba(102, 126, 234, 0.1);
-  border-radius: 8px 0 0 8px;
-  width: 60px;
-}
-
-.receta-view-table-cell-name {
-  font-weight: 600;
-  color: #f0f0f0;
-  border-left: none;
-}
-
-.receta-view-table-cell-bodega {
-  color: #b8c5d6;
-  font-weight: 500;
+.material-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  margin-bottom: 8px;
 }
 
-.receta-view-table-cell-cantidad {
-  text-align: center;
-  font-weight: 700;
-  color: #28a745;
-  background: rgba(40, 167, 69, 0.1);
-  border-radius: 0 8px 8px 0;
-  border-right: none;
-}
-
-.receta-view-table-row:nth-child(even) {
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.receta-view-table-row:nth-child(even):hover {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
-}
-
-/* Estilos para los totales */
-.receta-view-total-separator {
-  margin: 24px 0 16px 0;
-  text-align: center;
-}
-
-.receta-view-divider {
-  border: none;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.5), transparent);
-  margin: 16px 0;
-  border-radius: 1px;
-}
-
-.receta-view-total-count,
-.receta-view-total-quantities {
-  display: inline-block;
-  margin: 8px 16px;
-  padding: 12px 20px;
-  background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(34, 197, 94, 0.1) 100%);
-  border-radius: 12px;
-  border: 1px solid rgba(40, 167, 69, 0.2);
-  font-weight: 600;
-}
-
-.receta-view-total-label,
-.receta-view-quantities-label {
-  color: #28a745;
+.material-number {
+  background: #00ff00;
+  color: #000;
+  font-weight: bold;
   font-size: 0.9em;
-  margin-right: 8px;
+  padding: 4px 8px;
+  border-radius: 50%;
+  margin-right: 12px;
+  min-width: 24px;
+  text-align: center;
 }
 
-.receta-view-total-number,
-.receta-view-quantities-number {
-  color: #f0f0f0;
+.material-name {
+  color: #ffffff;
+  font-weight: bold;
   font-size: 1.1em;
-  font-weight: 700;
+}
+
+.material-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.material-bodega {
+  color: #cccccc;
+  font-size: 0.9em;
+  background: #1e1e1e;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.material-cantidad {
+  color: #00ff00;
+  font-weight: bold;
+  font-size: 1em;
 }
 
 /* Ajuste del modal para contenido */
-#modalVerReceta .receta-modal-content {
-  max-width: 400px;
-  width: 50vw;
-  height: auto;
-  min-height: 400px;
-  max-height: 90vh;
-}
-
-#modalVerReceta .receta-modal-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  border-radius: 16px 16px 0 0 !important;
-}
-
-#modalVerReceta .receta-modal-header h2 {
-  color: #f0f0f0 !important;
-  font-size: 1.5em !important;
-  font-weight: 700 !important;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
-}
-
-#modalVerReceta .receta-modal-body {
-  flex: 1;
-  padding: 32px;
+#modalVerReceta .modal-body {
+  max-height: 70vh;
   overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #667eea rgba(45, 45, 48, 0.5);
 }
 
 /* Estilos para la tabla del catálogo */
@@ -458,13 +289,13 @@
     </div>
 
     <!-- Modal para ver receta -->
-    <div id="modalVerReceta" class="receta-modal-overlay">
-      <div class="receta-modal-content">
-        <div class="receta-modal-header">
+    <div id="modalVerReceta" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
           <h2>👁️ DETALLES DE LA RECETA</h2>
-          <button id="btnCerrarModalVer" class="receta-modal-close">✕</button>
+          <button id="btnCerrarModalVer" class="modal-close">✕</button>
         </div>
-        <div class="receta-modal-body">
+        <div class="modal-body">
           <div id="detallesReceta"></div>
         </div>
       </div>
@@ -495,14 +326,15 @@
         }
 
         function isGrupoCodigo(codigo) {
-          // Ahora las plantillas tienen clave = nombre_plantilla, no PLANTILLA|id
-          // Verificar si existe en gruposCatalogo
-          return (gruposCatalogo || []).some(g => g.clave === codigo);
+          return (codigo || '').toString().startsWith('PLANTILLA|');
         }
 
         function getGrupoClaveFromCodigo(codigo) {
-          // Ya no necesitamos extraer de PLANTILLA|, la clave es directamente el nombre
-          return codigo;
+          const c = (codigo || '').toString();
+          if (c.startsWith('PLANTILLA|')) {
+            return c.split('|')[1] || '';
+          }
+          return '';
         }
 
         function isCaseBaseCodigo(codigo) {
@@ -1052,7 +884,7 @@ const tables = CATALOGOS.map(c => c.table);  // Siempre cargar todos los catálo
     }
 
     async function agregarMaterialALista(material) {
-      const tipo = (gruposCatalogo || []).some(g => g.clave === material.clave) ? 'GRUPO' : 'ITEM';
+      const tipo = (material.clave && material.clave.startsWith('PLANTILLA_')) ? 'GRUPO' : 'ITEM';
       if (tipo === 'GRUPO') {
         const clave = material.clave;
         // Agregar como ítem único
@@ -1179,7 +1011,7 @@ const tables = CATALOGOS.map(c => c.table);  // Siempre cargar todos los catálo
           const nombreCase = `CASE: ${base}`;
           html += `<tr>
             <td>
-              <input type="text" class="input-shadow readonly-input" value="${nombreCase}" readonly />
+              <input type="text" class="input-shadow input-readonly" value="${nombreCase}" readonly />
             </td>
             <td class="td-center">
               <input type="number" class="input-shadow input-shadow-sm td-center" data-idx="${idx}" min="1" value="${item.cantidad || 1}" />
@@ -1194,20 +1026,11 @@ const tables = CATALOGOS.map(c => c.table);  // Siempre cargar todos los catálo
           return;
         }
 
-        let nombre = item.material_codigo; // fallback por defecto
-
-        if (item.material_nombre) {
-          nombre = item.material_nombre;
-        } else {
-          // Buscar el material en el catálogo
-          const mat = materialesCatalogo.find(m => m.codigo === item.material_codigo);
-          if (mat) {
-            nombre = `${mat.nombre || mat.material_nombre} (${mat.codigo || mat.material_codigo})`;
-          }
-        }
+        const mat = materialesCatalogo.find(m => m.codigo === item.material_codigo);
+        const nombre = mat ? `${mat.nombre} (${mat.codigo})` : item.material_codigo;
         html += `<tr>
           <td>
-            <input type="text" class="input-shadow readonly-input" value="${nombre}" readonly />
+            <input type="text" class="input-shadow input-readonly" value="${nombre}" readonly />
           </td>
           <td class="td-center">
             <input type="number" class="input-shadow input-shadow-sm td-center" data-idx="${idx}" min="1" value="${item.cantidad || 1}" />
@@ -1363,7 +1186,7 @@ const tables = CATALOGOS.map(c => c.table);  // Siempre cargar todos los catálo
 
       const { data: materiales, error: errMat } = await window.supabaseClient
         .from(tablaMateriales)
-        .select('id, material_codigo, material_nombre, bodega_principal, bodega_secundaria, cantidad, observacion')
+        .select('*')
         .eq('receta_id', id);
 
       // Load into form
@@ -1371,21 +1194,10 @@ const tables = CATALOGOS.map(c => c.table);  // Siempre cargar todos los catálo
       document.getElementById('rubroReceta').value = receta.rubro;
       materialesReceta = materiales.map(m => ({
         material_codigo: m.material_codigo,
-        material_nombre: m.material_nombre,
         cantidad: m.cantidad,
         tipo: isCaseBaseCodigo(m.material_codigo) ? 'CASE' : decodeLegacyTipoFromObs(m.observacion).tipo,
         observacion: isCaseBaseCodigo(m.material_codigo) ? (m.observacion || '') : decodeLegacyTipoFromObs(m.observacion).obs
       }));
-
-      // Asegurar que el catálogo esté cargado antes de renderizar
-      if ((!gruposCatalogo || gruposCatalogo.length === 0) && (!materialesCatalogo || materialesCatalogo.length === 0)) {
-        try {
-          await cargarCatalogo();
-        } catch (error) {
-          console.error('Error cargando catálogos:', error);
-        }
-      }
-
       renderListaMateriales();
 
       isEditing = true;
@@ -1451,7 +1263,7 @@ const tables = CATALOGOS.map(c => c.table);  // Siempre cargar todos los catálo
             ].filter(x => x).join('x');
           }
           return {
-            clave: g.nombre_plantilla,  // Usar nombre_plantilla como clave en lugar de PLANTILLA|id
+            clave: 'PLANTILLA|' + g.id,
             nombre: g.nombre_plantilla,
             descripcion: g.descripcion,
             tipo: g.tipo,
@@ -1517,130 +1329,78 @@ const tables = CATALOGOS.map(c => c.table);  // Siempre cargar todos los catálo
       });
     }
 
-    verReceta = async (id) => {
+    window.verReceta = async (id) => {
       const tablaRecetas = modoCreacion === 'PLANTILLAS' ? 'recetas' : 'recetas_especificas';
-
+      const tablaMateriales = modoCreacion === 'PLANTILLAS' ? 'recetas_materiales' : 'recetas_especificas_materiales';
       // Poblar el modal correctamente
       const contenedor = document.getElementById('detallesReceta');
 
-      // Verificar si los catálogos están cargados (solo necesario para recetas específicas)
-      if (modoCreacion !== 'PLANTILLAS') {
-        if ((!gruposCatalogo || gruposCatalogo.length === 0) && (!materialesCatalogo || materialesCatalogo.length === 0)) {
-          try {
-            await cargarCatalogo();
-          } catch (error) {
-            console.error('Error cargando catálogos:', error);
-            contenedor.innerHTML = `
-              <div class="receta-detalles">
-                <div class="receta-info">
-                  <h3>Error</h3>
-                  <p>No se pudieron cargar los datos del catálogo.</p>
-                </div>
-              </div>
-            `;
-            modalVerReceta.classList.add('active');
-            return;
-          }
-        }
-      }
-
-      // Obtener datos de la receta
+      // Obtener datos de la receta y sus materiales
       const { data: receta, error: errorReceta } = await window.supabaseClient
         .from(tablaRecetas)
         .select('*')
         .eq('id', id)
         .single();
       if (errorReceta) {
-        console.error('Error obteniendo receta:', errorReceta);
         alert('No se pudo cargar la receta.');
         return;
       }
-
-      // Obtener materiales según el modo
-      const tablaMateriales = modoCreacion === 'PLANTILLAS' ? 'recetas_materiales' : 'recetas_especificas_materiales';
-      let materiales = [];
-      const { data: mats, error: errorMats } = await window.supabaseClient
+      const { data: materiales, error: errorMateriales } = await window.supabaseClient
         .from(tablaMateriales)
-        .select('id, material_codigo, material_nombre, bodega_principal, bodega_secundaria, cantidad, observacion')
+        .select('*')
         .eq('receta_id', id);
-
-      if (errorMats) {
-        console.error('Error obteniendo materiales:', errorMats);
+      if (errorMateriales) {
         alert('No se pudieron cargar los materiales.');
         return;
       }
 
-      materiales = mats || [];
-
-      // Renderizar filas de materiales como tabla
+      // Renderizar filas de materiales como lista
       let materialesList = '';
-      if (!materiales || materiales.length === 0) {
-        materialesList = '<div style="text-align: center; padding: 40px 20px; color: #6c757d; font-style: italic; background: rgba(108, 117, 125, 0.1); border-radius: 12px; border: 2px dashed rgba(108, 117, 125, 0.3);"><div style="font-size: 3em; margin-bottom: 16px;">📦</div><div style="font-size: 1.1em; font-weight: 500;">Esta receta no tiene materiales asignados</div><div style="font-size: 0.9em; margin-top: 8px; opacity: 0.8;">Agregue materiales desde el catálogo para completar la receta</div></div>';
-      } else {
-        materialesList = `
-          <table class="receta-view-materiales-table">
-            <thead>
-              <tr>
-                <th class="receta-view-table-header-number">#</th>
-                <th class="receta-view-table-header-name">Material</th>
-                <th class="receta-view-table-header-bodega">Bodega</th>
-                <th class="receta-view-table-header-cantidad">Cantidad</th>
-              </tr>
-            </thead>
-            <tbody>`;
+      materiales.forEach((mat, idx) => {
+        let nombre = mat.material_codigo;
+        let bodega = '';
+        let cantidad = mat.cantidad || 1;
 
-        materiales.forEach((mat, idx) => {
-          let nombre = mat.material_nombre || mat.material_codigo;
-          let bodega = mat.bodega_principal || '';
-          let cantidad = mat.cantidad || 1;
-
-          // Asegurar que bodega sea string
-          if (Array.isArray(bodega)) {
-            bodega = bodega.join(', ');
-          } else if (bodega === null || bodega === undefined) {
-            bodega = 'Sin asignar';
+        // Si es plantilla, buscar nombre y bodega
+        if (isGrupoCodigo(mat.material_codigo)) {
+          const clave = getGrupoClaveFromCodigo(mat.material_codigo);
+          const grupo = (gruposCatalogo || []).find(x => (x.clave || '') === ('PLANTILLA|' + clave) || (x.clave || '') === mat.material_codigo);
+          nombre = grupo ? grupo.nombre : mat.material_codigo;
+          bodega = grupo ? grupo.catalogo : '';
+        } else {
+          // Si es material normal, buscar en catálogo
+          const material = materialesCatalogo.find(m => m.codigo === mat.material_codigo);
+          if (material) {
+            nombre = material.nombre;
+            bodega = material.bodega_principal || '';
           }
-
-          materialesList += `
-              <tr class="receta-view-table-row">
-                <td class="receta-view-table-cell-number">${idx + 1}</td>
-                <td class="receta-view-table-cell-name">${nombre}</td>
-                <td class="receta-view-table-cell-bodega">📍 ${bodega}</td>
-                <td class="receta-view-table-cell-cantidad">${cantidad}</td>
-              </tr>`;
-        });
+        }
 
         materialesList += `
-            </tbody>
-          </table>`;
-      }
-
-      // Calcular total de artículos y suma de cantidades
-      const totalArticulos = materiales.length;
-      const totalCantidades = materiales.reduce((sum, mat) => sum + (parseInt(mat.cantidad) || 0), 0);
+          <div class="material-item">
+            <div class="material-header">
+              <span class="material-number">${idx + 1}</span>
+              <span class="material-name">${nombre}</span>
+            </div>
+            <div class="material-details">
+              <span class="material-bodega">${bodega}</span>
+              <span class="material-cantidad">Cantidad: ${cantidad}</span>
+            </div>
+          </div>
+        `;
+      });
 
       contenedor.innerHTML = `
-        <div class="receta-view-detalles">
-          <div class="receta-view-info">
+        <div class="receta-detalles">
+          <div class="receta-info">
             <h3>${receta.nombre}</h3>
             <p><strong>Rubro:</strong> ${receta.rubro}</p>
             <p><strong>Creado:</strong> ${new Date(receta.creado_en).toLocaleString()}</p>
           </div>
-          <div class="receta-view-materiales">
+          <div class="receta-materiales">
             <h4>Materiales:</h4>
-            <div class="receta-view-materiales-lista">
+            <div class="materiales-lista">
               ${materialesList}
-            </div>
-            <div class="receta-view-total-separator">
-              <hr class="receta-view-divider">
-              <div class="receta-view-total-count">
-                <span class="receta-view-total-label">Total de artículos:</span>
-                <span class="receta-view-total-number">${totalArticulos}</span>
-              </div>
-              <div class="receta-view-total-quantities">
-                <span class="receta-view-quantities-label">Suma total de cantidades:</span>
-                <span class="receta-view-quantities-number">${totalCantidades}</span>
-              </div>
             </div>
           </div>
         </div>

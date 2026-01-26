@@ -127,6 +127,29 @@ async function createWindow() {
     owner: 'Bayardojavier',
     repo: 'desktop'
   });
+
+  // Eventos de auto-updater
+  autoUpdater.on('update-available', () => {
+    console.log('Actualización disponible');
+  });
+
+  autoUpdater.on('update-downloaded', () => {
+    dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      title: 'Actualización lista',
+      message: 'La actualización ha sido descargada. ¿Desea reiniciar la aplicación ahora?',
+      buttons: ['Sí', 'No']
+    }).then(result => {
+      if (result.response === 0) {
+        autoUpdater.quitAndInstall();
+      }
+    });
+  });
+
+  autoUpdater.on('error', (error) => {
+    dialog.showErrorBox('Error en actualización', error.message);
+  });
+
   autoUpdater.checkForUpdatesAndNotify();
 
   // === IPC Handlers ===
@@ -166,8 +189,8 @@ async function createWindow() {
     try {
       const result = await autoUpdater.checkForUpdates();
       if (result.updateInfo.version !== app.getVersion()) {
-        await autoUpdater.downloadUpdate();
-        autoUpdater.quitAndInstall();
+        autoUpdater.downloadUpdate();
+        return { message: 'Nueva versión disponible. Descargando actualización...' };
       } else {
         return { message: 'La aplicación está actualizada.' };
       }

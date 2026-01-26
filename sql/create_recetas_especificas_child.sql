@@ -1,23 +1,3 @@
--- Crear tabla para recetas específicas (por código)
-create table if not exists public.recetas_especificas (
-  id uuid primary key default gen_random_uuid(),
-  nombre text not null,
-  rubro text not null,
-  activo boolean not null default true,
-  creado_en timestamptz not null default now(),
-  creado_por text
-);
-
--- Índices para mejor rendimiento
-create index if not exists idx_recetas_especificas_activo on public.recetas_especificas(activo);
-create index if not exists idx_recetas_especificas_rubro on public.recetas_especificas(rubro);
-create index if not exists idx_recetas_especificas_creado_en on public.recetas_especificas(creado_en);
-
--- Comentarios
-comment on table public.recetas_especificas is 'Recetas creadas a partir de códigos específicos del catálogo';
-comment on column public.recetas_especificas.nombre is 'Nombre de la receta específica';
-comment on column public.recetas_especificas.rubro is 'Rubro al que pertenece la receta';
-
 -- Crear tabla para materiales de recetas específicas
 create table if not exists public.recetas_especificas_materiales (
   id uuid primary key default gen_random_uuid(),
@@ -36,17 +16,8 @@ create index if not exists idx_recetas_especificas_materiales_receta_id on publi
 create index if not exists idx_recetas_especificas_materiales_codigo on public.recetas_especificas_materiales(material_codigo);
 create index if not exists idx_recetas_especificas_materiales_bodega_principal on public.recetas_especificas_materiales(bodega_principal);
 
--- Políticas RLS
-alter table public.recetas_especificas enable row level security;
+-- Políticas RLS para recetas_especificas_materiales
 alter table public.recetas_especificas_materiales enable row level security;
-
-drop policy if exists "recetas_especificas_select" on public.recetas_especificas;
-drop policy if exists "recetas_especificas_insert" on public.recetas_especificas;
-drop policy if exists "recetas_especificas_update" on public.recetas_especificas;
-
-create policy "recetas_especificas_select" on public.recetas_especificas for select using (true);
-create policy "recetas_especificas_insert" on public.recetas_especificas for insert with check (true);
-create policy "recetas_especificas_update" on public.recetas_especificas for update using (true);
 
 drop policy if exists "recetas_especificas_materiales_select" on public.recetas_especificas_materiales;
 drop policy if exists "recetas_especificas_materiales_insert" on public.recetas_especificas_materiales;

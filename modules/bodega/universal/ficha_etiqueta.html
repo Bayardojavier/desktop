@@ -79,6 +79,7 @@
 
     <div style="border-top:1px solid rgba(148,163,184,0.15); padding-top:10px; margin-top:10px; display:flex; gap:8px;">
       <button type="button" id="fe-btn-export-pdf" class="audiovisual-boton audiovisual-new" style="padding:10px 12px; flex:1;">📄 Exportar PDF (Ficha + Etiquetas)</button>
+      <button type="button" id="fe-btn-export-png" class="audiovisual-boton audiovisual-new" style="padding:10px 12px; flex:1;">🖼️ Exportar PNG</button>
     </div>
   </div>
 
@@ -112,15 +113,40 @@
     </div>
 
     <div style="margin-top: 10px; display:flex; gap:8px;">
-      <input id="fe-modal-q" class="audiovisual-input" placeholder="Buscar por código o nombre..." style="flex:1;" />
+      <input id="fe-modal-q" class="audiovisual-input" placeholder="Buscar por código, nombre, contenedor o tipo..." style="flex:1;" />
       <button type="button" id="fe-modal-buscar" class="audiovisual-boton audiovisual-new" style="padding:8px 12px;">🔎 Buscar</button>
     </div>
-    <div id="fe-modal-hint" style="margin-top: 6px; color:#94a3b8; font-size:12px;">Tip: escribe parte del código o del nombre.</div>
+    <div id="fe-modal-hint" style="margin-top: 6px; color:#94a3b8; font-size:12px;">Tip: busca por código, nombre, contenedor o tipo de contenedor.</div>
 
     <div id="fe-modal-resultados" style="margin-top: 10px; overflow:auto; padding-right:6px; display:flex; flex-direction:column; gap:8px;"></div>
 
     <div style="display:flex; justify-content:flex-end; gap:10px; margin-top: 12px;">
       <button type="button" id="fe-modal-cancel" class="bodega-export-pdf-btn" style="padding:8px 12px;">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal export PNG -->
+<div id="fe-modal-png" class="fe-modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+  <div class="fe-modal-content" style="background:#1e293b; border:1px solid #334155; border-radius:10px; padding:20px; max-width:500px; width:90%; max-height:80vh; overflow:auto;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+      <div style="font-weight: 900; color: #e5e7eb;">🖼️ Exportar PNG</div>
+      <button type="button" id="fe-modal-png-x" class="bodega-export-pdf-btn" style="padding:6px 10px;">✕</button>
+    </div>
+
+    <div style="margin-bottom: 15px;">
+      <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Tipo de exportación</label>
+      <select id="fe-png-select-tipo" class="audiovisual-input" style="width:100%; margin-bottom:10px;">
+        <option value="etiqueta">Etiqueta</option>
+        <option value="ficha">Ficha</option>
+      </select>
+      <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Seleccionar código</label>
+      <select id="fe-png-select-codigo" class="audiovisual-input" style="width:100%;"></select>
+    </div>
+
+    <div style="display:flex; justify-content:flex-end; gap:10px;">
+      <button type="button" id="fe-modal-png-cancel" class="bodega-export-pdf-btn" style="padding:8px 12px;">Cancelar</button>
+      <button type="button" id="fe-modal-png-export" class="audiovisual-boton audiovisual-new" style="padding:8px 12px;">📥 Exportar PNG</button>
     </div>
   </div>
 </div>
@@ -216,7 +242,7 @@
     { value: 'DIMENSIONES', label: 'Medidas/Dimensiones' },
     { value: 'MARCA', label: 'Marca' },
     { value: 'MODELO', label: 'Modelo' },
-    { value: 'ESTADO', label: 'Estado (Hechizo/Original)' },
+    { value: 'ESTADO', label: 'Estado (Fabricación Local/Original)' },
     { value: 'FECHA', label: 'Fecha' }
   ];
 
@@ -469,13 +495,13 @@
     // IMPORTANTE: en tu data actual, los contenedores pueden tener es_contenedor=false,
     // así que la fuente de verdad aquí es tipo_alta (y es_contenedor solo ayuda si está bien).
     const selectBusqueda = isConsumibles
-      ? 'codigo, nombre, bodega_principal, bodega_secundaria, foto_url, campos_personalizados'
-      : 'codigo, nombre, bodega_principal, bodega_secundaria, foto_url, es_contenedor, tipo_alta, campos_personalizados';
+      ? 'codigo, nombre, bodega_principal, bodega_secundaria, foto_url, campos_personalizados, contenedor, contenedor_tipo'
+      : 'codigo, nombre, bodega_principal, bodega_secundaria, foto_url, es_contenedor, tipo_alta, campos_personalizados, contenedor, contenedor_tipo';
 
     let { data, error } = await supa
       .from(catalogo)
       .select(selectBusqueda)
-      .or(`codigo.ilike.${like},nombre.ilike.${like}`)
+      .or(`codigo.ilike.${like},nombre.ilike.${like},contenedor.ilike.${like},contenedor_tipo.ilike.${like}`)
       .order('nombre', { ascending: true })
       .limit(80);
 
@@ -486,8 +512,8 @@
 
       const retry = await supa
         .from(catalogo)
-        .select('codigo, nombre, bodega_principal, bodega_secundaria, foto_url, campos_personalizados')
-        .or(`codigo.ilike.${like},nombre.ilike.${like}`)
+        .select('codigo, nombre, bodega_principal, bodega_secundaria, foto_url, campos_personalizados, contenedor, contenedor_tipo')
+        .or(`codigo.ilike.${like},nombre.ilike.${like},contenedor.ilike.${like},contenedor_tipo.ilike.${like}`)
         .order('nombre', { ascending: true })
         .limit(80);
       if (retry.error) throw retry.error;
@@ -800,24 +826,24 @@
       const qrBlock = '';
 
       return `
-        <div class="fe-etiq" style="border-color:${colorAcento}; width: 384px;">
+        <div class="fe-etiq" style="border-color:${colorAcento}; width: 384px; position: relative;">
           <div class="fe-etiq-row" style="flex-direction:${cfg.fotoPos === 'right' ? 'row-reverse' : 'row'};">
             ${fotoBlock}
             <div class="fe-etiq-right">
               <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px;">
                 <div style="flex:1; min-width:0;">
-                  <div class="fe-etiq-codigo" style="border-bottom-color:${colorAcento}; color:${colorAcento};">${escapeHtml(String(codigo))}</div>
                   <div class="fe-etiq-nombre">${escapeHtml(String(nombre))}</div>
                   <div class="fe-etiq-detalle">${escapeHtml(detalle)}</div>
                 </div>
                 ${qrBlock}
               </div>
               <div class="fe-etiq-footer" style="border-top-color:${colorAcento};">
-                <span>CATÁLOGO ABSOLUTE</span>
-                <img class="fe-etiq-logo" src="./assets/logo.png" alt="Logo" />
+                <div class="fe-etiq-codigo" style="border-bottom-color:${colorAcento}; color:${colorAcento}; font-size: 18px; font-weight: bold;">${escapeHtml(String(codigo))}</div>
               </div>
             </div>
           </div>
+          <img class="fe-etiq-logo" src="./assets/logo.png" alt="Logo" style="position: absolute; top: 10px; right: 10px; width: 120px; height: auto; z-index: 10;" />
+        </div>
         </div>
       `;
     }
@@ -993,6 +1019,56 @@
         console.error(err);
         alert('❌ No se pudo exportar a PDF: ' + (err.message || err));
       });
+    });
+
+    document.getElementById('fe-btn-export-png')?.addEventListener('click', () => {
+      abrirModalPNG();
+    });
+
+    // Modal PNG
+    const modalPNG = document.getElementById('fe-modal-png');
+    const selectTipoPNG = document.getElementById('fe-png-select-tipo');
+    const selectCodigoPNG = document.getElementById('fe-png-select-codigo');
+    const btnModalPNGExport = document.getElementById('fe-modal-png-export');
+    const btnModalPNGCancel = document.getElementById('fe-modal-png-cancel');
+    const btnModalPNGX = document.getElementById('fe-modal-png-x');
+
+    function abrirModalPNG() {
+      if (!modalPNG || !selectCodigoPNG) return;
+      // Populate select with current material code
+      const currentMaterial = state.material;
+      if (currentMaterial && currentMaterial.codigo) {
+        selectCodigoPNG.innerHTML = `<option value="${escapeHtml(currentMaterial.codigo)}">${escapeHtml(currentMaterial.codigo)}</option>`;
+      } else {
+        selectCodigoPNG.innerHTML = '<option value="">No hay material cargado</option>';
+      }
+      modalPNG.style.display = 'flex';
+    }
+
+    function cerrarModalPNG() {
+      if (!modalPNG) return;
+      modalPNG.style.display = 'none';
+    }
+
+    btnModalPNGExport?.addEventListener('click', () => {
+      const selectedTipo = selectTipoPNG?.value || 'etiqueta';
+      const selectedCode = selectCodigoPNG?.value;
+      if (!selectedCode) {
+        alert('Selecciona un código válido.');
+        return;
+      }
+      exportarPNG(selectedTipo, selectedCode).catch(err => {
+        console.error(err);
+        alert('❌ Error exportando PNG: ' + (err.message || err));
+      });
+      cerrarModalPNG();
+    });
+
+    btnModalPNGCancel?.addEventListener('click', cerrarModalPNG);
+    btnModalPNGX?.addEventListener('click', cerrarModalPNG);
+
+    modalPNG?.addEventListener('click', (e) => {
+      if (e.target === modalPNG) cerrarModalPNG();
     });
   }
 
@@ -1189,6 +1265,55 @@
       await window.html2pdf().set(opts).from(exportRoot).save();
     } finally {
       exportRoot.remove();
+    }
+  }
+
+  async function exportarPNG(tipo, selectedCode) {
+    if (!state.material) throw new Error('Primero carga un material o contenedor.');
+    if (!window.html2canvas) throw new Error('html2canvas no está disponible.');
+
+    let elementId, filename;
+    if (tipo === 'ficha') {
+      elementId = 'fe-ficha-print-area';
+      filename = `${selectedCode}-ficha.png`;
+    } else {
+      elementId = 'fe-etiq-print-area';
+      filename = `${selectedCode}-etiqueta.png`;
+    }
+
+    const el = document.getElementById(elementId);
+    if (!el) throw new Error(`No se encontró el área de ${tipo}.`);
+
+    const html = (el.innerHTML || '').trim();
+    if (!html) throw new Error(`La ${tipo} está vacía (no hay nada que exportar).`);
+
+    try {
+      // Capturar directamente el elemento visible
+      const canvas = await window.html2canvas(el, {
+        scale: 2, // Alta resolución
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      });
+
+      // Convertir a blob y descargar
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          alert('❌ Error generando la imagen PNG.');
+          return;
+        }
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        alert('✅ PNG exportado correctamente.');
+      }, 'image/png');
+    } catch (error) {
+      throw new Error('Error capturando la imagen: ' + error.message);
     }
   }
 
@@ -1472,7 +1597,7 @@
       contenedor_nombre,
       __contenedores_str,
       __dimensiones_str: buildDimensionesStr(data),
-      __estado_str: esHechizo ? 'Hechizo' : 'Original',
+      __estado_str: esHechizo ? 'Fabricación Local' : 'Original',
       __fecha_str: hoy
     };
     state.hijos = hijos;

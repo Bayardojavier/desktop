@@ -185,6 +185,18 @@ console.log('bodega-area-contenido existe:', document.querySelector('.bodega-are
 
       contenedor.innerHTML = htmlToInject;
 
+      // Cargar CSS adicional si es necesario
+      if (vista === 'hierro-agregar' || vista === 'universal-agregar-estructuras' || vista === 'hierro-modificar' || vista === 'universal-agregar-electronicos' || vista === 'audiovisual-agregar' || vista === 'audiovisual-modificar') {
+        const cssHref = './modules/bodega/universal/catalogo.css';
+        if (!document.querySelector(`link[href="${cssHref}"]`)) {
+          const link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href = cssHref;
+          document.head.appendChild(link);
+          console.log('CSS cargado:', cssHref);
+        }
+      }
+
       // Ejecutar scripts encapsulados
       if (scriptContent) {
         setTimeout(() => {
