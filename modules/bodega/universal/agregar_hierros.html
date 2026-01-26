@@ -1,5 +1,12 @@
 ﻿<!-- desktop/modules/bodega/universal/agregar_hierros.html -->
 <link rel="stylesheet" href="./catalogo.css">
+<<<<<<< HEAD
+=======
+<style>
+  .secundaria-selected { border-color: rgba(99,102,241,0.9) !important; background: rgba(99,102,241,0.22) !important; outline: 2px solid rgba(255,255,255,0.85); }
+  .contenedor-selected { border-color: rgba(34,197,94,0.9) !important; background: rgba(34,197,94,0.18) !important; outline: 2px solid rgba(255,255,255,0.85); }
+</style>
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
 <div style="display:flex; gap:16px; height:100%;">
 
   <div style="width: 320px; background: rgba(20, 30, 60, 0.45); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; padding: 12px; overflow:auto;">
@@ -86,10 +93,16 @@
             <option value="Andamio">Andamio</option>
             <option value="Cuarto">Cuarto</option>
             <option value="Patio">Patio</option>
+<<<<<<< HEAD
             <option value="Balde">Balde</option>
             <option value="Otro">Otro</option>
           </select>
           <input id="cont-nombre-base" class="audiovisual-input" placeholder="Nombre (Lote / Burra / Andamio/ Cuarto / Patio / Balde / Otro)" style="flex:1;" />
+=======
+            <option value="Otro">Otro</option>
+          </select>
+          <input id="cont-nombre-base" class="audiovisual-input" placeholder="Nombre (Lote / Burra / Andamio/ Cuarto / Patio / Otro)" style="flex:1;" />
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
           <input id="cont-numero" class="audiovisual-input" placeholder="Número (01, 02)" style="width: 120px;" />
         </div>
       </div>
@@ -919,7 +932,11 @@
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.textContent = s.nombre;
+<<<<<<< HEAD
             btn.className = 'hierro-boton secundaria-btn';
+=======
+            btn.className = 'audiovisual-boton secundaria-btn';
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
             btn.dataset.secId = String(s.id);
             btn.addEventListener('click', () => selectSecundaria(s.id, s.nombre, btn));
             container.appendChild(btn);
@@ -941,8 +958,13 @@
 
       state.secundariaId = id;
       state.secundariaNombre = nombre;
+<<<<<<< HEAD
       document.querySelectorAll('.secundaria-btn').forEach(b => b.classList.remove('bodega-secundaria-seleccionada'));
       if (btn) btn.classList.add('bodega-secundaria-seleccionada');
+=======
+      document.querySelectorAll('.secundaria-btn').forEach(b => b.classList.remove('secundaria-selected'));
+      if (btn) btn.classList.add('secundaria-selected');
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
 
       // Metodología: secundaria seleccionada pero SIN contenedor => modo CONTENEDOR
       state.altaTipo = 'CONTENEDOR';
@@ -982,7 +1004,11 @@
           btn.type = 'button';
           const cerrado = isContenedorCerrado(c.campos_personalizados);
           btn.textContent = cerrado ? `${c.contenedor} (CERRADO)` : c.contenedor;
+<<<<<<< HEAD
           btn.className = 'hierro-boton contenedor-btn';
+=======
+          btn.className = 'audiovisual-boton contenedor-btn';
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
           btn.dataset.contenedor = c.contenedor;
           btn.dataset.tipo = (c.contenedor_tipo || '').toString().trim();
           btn.dataset.codigo = c.codigo || '';
@@ -1373,7 +1399,11 @@
         state.isSubmitting = false;
         if (submitBtn) {
           submitBtn.disabled = false;
+<<<<<<< HEAD
           submitBtn.textContent = 'Guardar en catálogo';
+=======
+          submitBtn.textContent = 'Guardar';
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
         }
       };
 
@@ -1508,6 +1538,7 @@
           // Lógica según tipo de item
           if (state.itemTipo === 'EQUIPO' && cantidad > 1) {
             // Equipo/Estructura: múltiples registros con abreviación + número consecutivo
+<<<<<<< HEAD
             // Para EQUIPOS, excluir 'nombre_abrev' de extras porque ya se añade al final como abrevProducto
             const extrasEquipo = extras.filter(e => e !== components.nombre_abrev);
             const abrevProducto = (document.getElementById('nombre-abrev')?.value || '').trim() || abrev(nombreFinal);
@@ -1516,6 +1547,10 @@
             const unidadesGuardadas = [];
             let errorOcurrido = false;
             let ultimoError = '';
+=======
+            const abrevProducto = (document.getElementById('nombre-abrev')?.value || '').trim() || abrev(nombreFinal);
+            const suffixBase = [base, ...extras].filter(Boolean).join('-');
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
 
             for (let i = 1; i <= cantidad; i++) {
               const numeroUnidad = String(i).padStart(2, '0');
@@ -1523,16 +1558,25 @@
               const codigo = `${loteConsecutivo}-${suffixBase}-${abrevProducto}-${numeroUnidad}`;
               const payload = { ...payloadBase, codigo, nombre: `${nombreFinal} ${numeroUnidad}` };
               const res = await insertConFallback(TABLE_CATALOGO, payload);
+<<<<<<< HEAD
               if (!res.ok) {
                 errorOcurrido = true;
                 ultimoError = `Error al guardar unidad ${i}: ${res.error}`;
                 break;
               }
               unidadesGuardadas.push(codigo);
+=======
+              if (!res.ok) { 
+                alert(`Error al guardar unidad ${i}: ${res.error}`); 
+                resetSubmitButton();
+                return; 
+              }
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
 
               if (state.esActivo) {
                 const resMov = await crearMovimientoIngreso({ codigo, nombre: `${nombreFinal} ${numeroUnidad}`, cantidadMov: 1 });
                 if (!resMov.ok) {
+<<<<<<< HEAD
                   errorOcurrido = true;
                   ultimoError = `Se guardó la unidad ${i} en catálogo pero NO se pudo crear el movimiento de ingreso.\n${resMov.error}`;
                   break;
@@ -1558,6 +1602,14 @@
               return;
             }
 
+=======
+                  alert(`Se guardó la unidad ${i} en catálogo pero NO se pudo crear el movimiento de ingreso.\n${resMov.error}`);
+                  resetSubmitButton();
+                  return;
+                }
+              }
+            }
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
             alert(`Guardadas ${cantidad} unidades en catálogo con códigos consecutivos.`);
           } else {
             // Pieza o cantidad = 1: un solo registro
@@ -1565,9 +1617,12 @@
             if (state.itemTipo === 'ACCESORIO') {
               // Para Piezas, no incluir nombre_abrev en extras para evitar duplicación
               filteredExtras = extras.filter(e => e !== components.nombre_abrev);
+<<<<<<< HEAD
             } else if (state.itemTipo === 'EQUIPO') {
               // Para Equipos cantidad = 1, tampoco incluir nombre_abrev en extras (se añade al final)
               filteredExtras = extras.filter(e => e !== components.nombre_abrev);
+=======
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
             }
             const suffix = [base, ...filteredExtras].filter(Boolean).join('-');
             const consec = await obtenerSiguienteConsecutivo(suffix);
@@ -1575,6 +1630,7 @@
             if (state.itemTipo === 'ACCESORIO') {
               // Pieza: terminación abreviación + largo accesorio
               const abrevProducto = (document.getElementById('nombre-abrev')?.value || '').trim() || abrev(nombreFinal);
+<<<<<<< HEAD
               const largoAccesorioRaw = (document.getElementById('ua-accesorio-largo')?.value || '').trim();
               const largoAccesorio = normalizeAccesorioLargo(largoAccesorioRaw);
               
@@ -1591,6 +1647,11 @@
               // Equipo/Estructura cantidad = 1: añadir abreviación + número de unidad al final
               const abrevProducto = (document.getElementById('nombre-abrev')?.value || '').trim() || abrev(nombreFinal);
               codigo = `${consec}-${suffix}-${abrevProducto}-01`;
+=======
+              const largoAccesorio = (document.getElementById('ua-accesorio-largo')?.value || '').trim() || '';
+              const terminacion = [abrevProducto, largoAccesorio].filter(Boolean).join('-');
+              codigo = `${consec}-${suffix}-${terminacion}`;
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
             } else {
               // Equipo/Estructura cantidad = 1: terminación normal
               codigo = `${consec}-${suffix}`;
@@ -1710,7 +1771,11 @@
           btn.type = 'button';
           const cerrado = isContenedorCerrado(c.campos_personalizados);
           btn.textContent = cerrado ? `${c.contenedor} (CERRADO)` : c.contenedor;
+<<<<<<< HEAD
           btn.className = 'hierro-boton contenedor-btn';
+=======
+          btn.className = 'audiovisual-boton contenedor-btn';
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
           btn.dataset.contenedor = c.contenedor;
           btn.dataset.tipo = (c.contenedor_tipo || '').toString().trim();
           btn.dataset.codigo = c.codigo || '';
@@ -1749,6 +1814,19 @@
     updateCodigoPreview();
   }
 
+<<<<<<< HEAD
+=======
+  function isContenedorCerrado(campos) {
+    if (!campos) return false;
+    try {
+      const parsed = typeof campos === 'string' ? JSON.parse(campos) : campos;
+      return parsed.cerrar_contenedor === true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
   // Inicializar contenedores
   loadContenedores();
 

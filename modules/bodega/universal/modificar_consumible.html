@@ -1,6 +1,7 @@
 <!-- desktop/modules/bodega/universal/modificar_consumible.html -->
 <link rel="stylesheet" href="./catalogo.css">
 <style>
+<<<<<<< HEAD
   .bodega-secundaria-seleccionada {
     background: #10b981 !important;
     color: white !important;
@@ -10,6 +11,9 @@
     font-weight: bold !important;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
   }
+=======
+  .secundaria-selected { border-color: rgba(99,102,241,0.9) !important; background: rgba(99,102,241,0.22) !important; outline: 2px solid rgba(255,255,255,0.85); }
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
 </style>
 
 <div style="display:flex; gap:16px; height:100%;">
@@ -250,7 +254,11 @@
     state.contenedoresCache = [];
     state.materialesCache = [];
     clearMaterialForm();
+<<<<<<< HEAD
     document.querySelectorAll('.secundaria-btn').forEach(b => b.classList.remove('bodega-secundaria-seleccionada'));
+=======
+    document.querySelectorAll('.secundaria-btn').forEach(b => b.classList.remove('secundaria-selected'));
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
     document.getElementById('contenedor-select').innerHTML = '';
     document.getElementById('mover-destino').innerHTML = '';
     document.getElementById('materiales-list').innerHTML = '';
@@ -425,8 +433,13 @@
   function selectSecundaria(id, nombre, btn) {
     state.secundariaId = id;
     state.secundariaNombre = nombre;
+<<<<<<< HEAD
     document.querySelectorAll('.secundaria-btn').forEach(b => b.classList.remove('bodega-secundaria-seleccionada'));
     if (btn) btn.classList.add('bodega-secundaria-seleccionada');
+=======
+    document.querySelectorAll('.secundaria-btn').forEach(b => b.classList.remove('secundaria-selected'));
+    if (btn) btn.classList.add('secundaria-selected');
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
 
     state.contenedorCodigo = null;
     state.contenedorNombre = null;

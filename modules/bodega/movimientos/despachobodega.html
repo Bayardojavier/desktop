@@ -54,6 +54,7 @@
     const formatDateTime = (f, h) => (f && h) ? new Date(f + 'T' + h).toLocaleString("es-ES") : "—";
     const formatDate = (date) => new Date(date).toLocaleDateString("es-ES");
 
+<<<<<<< HEAD
     // FUNCIONES UTILITARIAS GLOBALES
     function isCaseBaseCodigo(codigo) {
         return (codigo || '').toString().startsWith('CASEBASE|');
@@ -102,6 +103,8 @@
         return `<b>${nombre}</b><br><small>Código: ${cod} (${item?.medidas || ''})</small>`;
     }
 
+=======
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
     // 2. FUNCIÓN DE CORRELATIVO SECUENCIAL
     async function generarCorrelativo() {
         try {
@@ -221,9 +224,15 @@
                 for (const despacho of despachos) {
                     try {
                         const { count, error: countError } = await window.supabaseClient
+<<<<<<< HEAD
                             .from('items_despacho_logistica')
                             .select('*', { count: 'exact', head: true })
                             .eq('despacho_id', despacho.id);
+=======
+                            .from('movimientos_bodega')
+                            .select('*', { count: 'exact', head: true })
+                            .eq('referencia_documento', despacho.numero_despacho);
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
 
                         const itemCount = countError ? 0 : count;
 
@@ -295,6 +304,7 @@
                 return;
             }
 
+<<<<<<< HEAD
             // Obtener items del despacho desde items_despacho_logistica
             const { data: itemsDespacho, error: errorItems } = await window.supabaseClient
                 .from('items_despacho_logistica')
@@ -303,6 +313,17 @@
 
             if (errorItems) {
                 console.error('Error al obtener items del despacho:', errorItems);
+=======
+            // Obtener items del despacho desde movimientos_bodega
+            const { data: movimientos, error: errorMovimientos } = await window.supabaseClient
+                .from('movimientos_bodega')
+                .select('*')
+                .eq('referencia_documento', numeroDespacho)
+                .eq('tipo_movimiento', 'despacho');
+
+            if (errorMovimientos) {
+                console.error('Error al obtener movimientos:', errorMovimientos);
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
                 alert('Error al obtener items del despacho');
                 return;
             }
@@ -328,6 +349,7 @@
                 evento: despacho.evento,
                 clienteEvento: eventoData?.cliente || "",
                 lugarMontaje: eventoData?.lugar || "",
+<<<<<<< HEAD
                 itemsSalida: itemsDespacho.map(item => ({
                     material: (isCaseBaseCodigo(item.codigo_material)
                       ? `CASE ${getCaseBaseFromCodigo(item.codigo_material) || item.nombre_material || 'Case'}`
@@ -335,6 +357,13 @@
                     cantidad: item.cantidad_despachada,
                     estado: item.estado || "Despachado",
                     observacion: item.observacion || ""
+=======
+                itemsSalida: movimientos.map(mov => ({
+                    material: mov.material_nombre || mov.material_codigo,
+                    cantidad: Math.abs(mov.cantidad), // Convertir a positivo
+                    estado: "Despachado",
+                    observacion: mov.observaciones || ""
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
                 })),
                 eventoCompleto: eventoData || {}
             };
@@ -387,9 +416,12 @@
 
     window.verPedidoDespacho = async function(id) {
         try {
+<<<<<<< HEAD
             // Almacenar el ID de la solicitud actual para uso en otras funciones
             window.solicitudActualId = id;
 
+=======
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
             // Obtener solicitud desde Supabase
             const { data: solicitud, error: errorSolicitud } = await window.supabaseClient
                 .from('solicitudes_logistica')
@@ -463,6 +495,7 @@
 
             actualizarPanelEvento(eventoData || {}, serviciosTexto);
 
+<<<<<<< HEAD
             // Obtener catálogo de materiales para resolver nombres (mismo formato que solicitudmateriales.html)
             const allRows = [];
             const CATALOGOS = [
@@ -537,6 +570,8 @@
               console.warn('No se pudo cargar el catálogo de materiales');
             }
 
+=======
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
             // Obtener stock actual calculado desde movimientos_bodega
             const { data: movimientosStock, error: errorStock } = await window.supabaseClient
                 .from('movimientos_bodega')
@@ -556,17 +591,56 @@
                 stockPorMaterial[mov.material_codigo] += (mov.cantidad * mov.signo);
             });
 
+<<<<<<< HEAD
             // Detectar si hay materiales de plantilla que requieren asignación
             const tieneMaterialesPlantilla = solicitud.items_solicitud_logistica.some(item =>
                 item.observacion && item.observacion.toLowerCase().includes('plantilla')
             );
 
             // Verificar si ya existe un despacho para esta solicitud
+=======
+            function isCaseBaseCodigo(codigo) {
+                return (codigo || '').toString().startsWith('CASEBASE|');
+            }
+            function getCaseBaseFromCodigo(codigo) {
+                const s = (codigo || '').toString();
+                if (!s.startsWith('CASEBASE|')) return '';
+                return s.substring('CASEBASE|'.length).trim();
+            }
+            function renderCodigoNombreHTML(item) {
+                const cod = item?.codigo_material;
+                if (isCaseBaseCodigo(cod)) {
+                    const base = getCaseBaseFromCodigo(cod) || (item?.nombre_material || 'Case');
+                    return `<b>CASE ${base}</b><br><small>Pendiente de selección en despacho</small>`;
+                }
+                return `<b>${cod}</b><br><small>${item?.nombre_material || ''} (${item?.medidas || ''})</small>`;
+            }
+
+            let tabla = `
+                <table class="tabla-despacho-inventario">
+                    <thead><tr><th>Material</th><th>Cantidad</th><th>Estado</th><th>Stock</th></tr></thead>
+                    <tbody>`;
+            
+            solicitud.items_solicitud_logistica.forEach(it => {
+                const stock = stockPorMaterial[it.codigo_material] || 0;
+                const stockClass = stock >= it.cantidad_solicitada ? 'despacho-stock-ok' : 'despacho-stock-bad';
+                tabla += `
+                    <tr>
+                        <td>${renderCodigoNombreHTML(it)}</td>
+                        <td class="despacho-td-center">${it.cantidad_solicitada}</td>
+                        <td class="despacho-td-center">${it.estado || 'Nuevo'}</td>
+                        <td class="despacho-td-center ${stockClass}">${stock}</td>
+                    </tr>`;
+            });
+
+            // Verificar si ya existe un despacho para esta solicitud o si ya fue procesada
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
             const { data: despachoExistente, error: errorDespachoExistente } = await window.supabaseClient
                 .from('despachos_logistica')
                 .select('numero_despacho, fecha_despacho')
                 .eq('solicitud_id', id);
 
+<<<<<<< HEAD
             // Separar materiales por tipo/origen con mejor lógica
             const materialesDeRecetas = solicitud.items_solicitud_logistica.filter(item =>
                 !item.observacion || (!item.observacion.includes('Material adicional') && !item.observacion.includes('Plantilla adicional'))
@@ -904,6 +978,14 @@
                         <button class="btn-despacho-outline despacho-action-secondary" onclick="window.limpiarVistaDetallada()">VOLVER</button>
                     </div>`;
             }
+=======
+            let estadoHeader = `Confirmación de Salida: ${solicitud.id}`;
+            let botonesHTML = `
+                <div class="despacho-actions">
+                    <button class="btn-despacho-solido despacho-action-main" onclick="window.confirmarDespachoOficial('${solicitud.id}')">✅ CONFIRMAR Y GENERAR ACTA</button>
+                    <button class="btn-despacho-outline despacho-action-secondary" onclick="window.limpiarVistaDetallada()">VOLVER</button>
+                </div>`;
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
 
             // Si la solicitud ya fue procesada (tiene fecha_procesamiento) o tiene un despacho existente, mostrar información diferente
             if (solicitud.fecha_procesamiento || (!errorDespachoExistente && despachoExistente && despachoExistente.length > 0)) {
@@ -929,10 +1011,17 @@
                 <div class="despacho-section-header">
                     <h3 class="despacho-section-title">${estadoHeader}</h3>
                 </div>
+<<<<<<< HEAD
                 ${materialesHTML}
 
                 <!-- Panel de información del evento -->
                 <div id="panelResumenEventoDetalle" class="despacho-evento-panel">
+=======
+                ${tabla}</tbody></table>
+
+                <!-- Panel de información del evento -->
+                <div id="panelResumenEvento" class="despacho-evento-panel">
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
                     <h4 class="despacho-evento-title">📋 Información del Evento</h4>
                     <div class="despacho-evento-grid">
                         <div>
@@ -970,6 +1059,7 @@
         }
     };
 
+<<<<<<< HEAD
     // Función para actualizar contador de asignaciones
     window.actualizarEstadoAsignacion = function() {
         const selects = document.querySelectorAll('.select-material-especifico');
@@ -1240,6 +1330,8 @@
         }
     };
 
+=======
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
     // 4. LÓGICA DE CIERRE: VALIDAR STOCK + PDF CON DATOS COMPLETOS
     window.confirmarDespachoOficial = async function(id) {
         try {
@@ -1279,6 +1371,7 @@
                 return;
             }
 
+<<<<<<< HEAD
             // ✅ VALIDAR QUE NO QUEDEN MATERIALES DE PLANTILLA SIN ASIGNAR
             const materialesPlantillaPendientes = solicitud.items_solicitud_logistica.filter(item =>
                 item.observacion && item.observacion.toLowerCase().includes('plantilla')
@@ -1309,6 +1402,20 @@
                 movimientosStock = movimientosStock.concat(movData || []);
             }
 
+=======
+            // Obtener stock actual calculado desde movimientos_bodega
+            const { data: movimientosStock, error: errorStock } = await window.supabaseClient
+                .from('movimientos_bodega')
+                .select('material_codigo, cantidad, signo')
+                .eq('estado', 'completado');
+
+            if (errorStock) {
+                console.error('Error al obtener stock:', errorStock);
+                alert('Error al verificar inventario');
+                return;
+            }
+
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
             // Calcular stock por material
             const stockPorMaterial = {};
             movimientosStock?.forEach(mov => {
@@ -1360,8 +1467,12 @@
                     numero_acta: numeroRegistro,
                     fecha_despacho: new Date().toISOString(),
                     estado: 'completado',
+<<<<<<< HEAD
                     observaciones: `Despacho generado desde solicitud ${solicitud.id}`,
                     usuario_id: window.currentUser?.id
+=======
+                    observaciones: `Despacho generado desde solicitud ${solicitud.id}`
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
                 };
 
                 const { data: despachoCreado, error: errorDespacho } = await window.supabaseClient
@@ -1378,6 +1489,7 @@
 
                 console.log('✅ Despacho creado:', despachoCreado);
 
+<<<<<<< HEAD
                 // Log de auditoría para despacho
                 await window.logAuditoria('INSERT', 'despachos_logistica', despachoCreado.id, despachoData);
 
@@ -1413,6 +1525,8 @@
                     window.logAuditoria('INSERT', 'items_despacho_logistica', null, item);
                 });
 
+=======
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
                 // 2. Crear movimientos de bodega referenciando al despacho
                 // IMPORTANTE (Bodegas V2): registrar bodega_principal/bodega_secundaria reales para que el stock se descuente correctamente.
                 // isCaseBaseCodigo/getCaseBaseFromCodigo definidos arriba
@@ -1433,6 +1547,7 @@
 
                     const base = getCaseBaseFromCodigo(cod) || 'Case';
 
+<<<<<<< HEAD
                     // 1) Buscar Cases físicos candidatos en las 3 tablas de catálogo
                     let candidatos = [];
                     try {
@@ -1469,6 +1584,36 @@
                                 bodega_secundaria: r.bodega_secundaria || 'General'
                             })));
                         }
+=======
+                    // 1) Buscar Cases físicos candidatos por Nombre Base (campos_personalizados) o por nombre
+                    let candidatos = [];
+                    try {
+                        const { data: catData, error: catErr } = await window.supabaseClient
+                            .from('catalogo')
+                            .select('codigo, nombre, bodega_principal, bodega_secundaria, es_contenedor, tipo_material, tipo_uso, campos_personalizados')
+                            .eq('es_contenedor', true)
+                            .or(`tipo_material.ilike.%case%,tipo_uso.ilike.%case%,nombre.ilike.%case%`);
+
+                        if (catErr) throw catErr;
+                        const rows = catData || [];
+                        const matchBase = (row) => {
+                            const cps = row.campos_personalizados;
+                            if (Array.isArray(cps)) {
+                                const nb = cps.find(x => (x?.nombre || '').toString().trim().toLowerCase() === 'nombre base' && (x?.valor || '').toString().trim());
+                                const v = (nb?.valor || '').toString().trim();
+                                if (v && v.toLowerCase() === base.toLowerCase()) return true;
+                            }
+                            const nm = (row.nombre || '').toString().trim().toLowerCase();
+                            return nm.startsWith(base.toLowerCase());
+                        };
+
+                        candidatos = rows.filter(r => matchBase(r)).map(r => ({
+                            codigo: r.codigo,
+                            nombre: r.nombre || r.codigo,
+                            bodega_principal: r.bodega_principal || 'Principal',
+                            bodega_secundaria: r.bodega_secundaria || 'General'
+                        }));
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
                     } catch (e) {
                         console.error('Error cargando catálogo para resolver CASEBASE:', e);
                         alert(`❌ No se pudo cargar catálogo para resolver ${base}.`);
@@ -1480,6 +1625,7 @@
                         return;
                     }
 
+<<<<<<< HEAD
                     // 2) Filtrar por stock > 0 desde las vistas separadas
                     let disponibles = [];
                     try {
@@ -1503,6 +1649,22 @@
                                 stockMap.set((r.material_codigo || '').toString(), Number(r.stock_actual) || 0);
                             });
                         }
+=======
+                    // 2) Filtrar por stock > 0
+                    let disponibles = [];
+                    try {
+                        const cods = candidatos.map(c => c.codigo).filter(Boolean);
+                        const { data: stockData, error: stockErr } = await window.supabaseClient
+                            .from('stock_actual_con_precio')
+                            .select('material_codigo, bodega_principal, bodega_secundaria, existencia')
+                            .in('material_codigo', cods);
+                        if (stockErr) throw stockErr;
+
+                        const stockMap = new Map();
+                        (stockData || []).forEach(r => {
+                            stockMap.set((r.material_codigo || '').toString(), Number(r.existencia) || 0);
+                        });
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
 
                         disponibles = candidatos
                             .map(c => ({ ...c, existencia: stockMap.get(c.codigo) || 0 }))
@@ -1577,6 +1739,7 @@
 
                 let stockRows = [];
                 if (codigosUnicos.length > 0) {
+<<<<<<< HEAD
                     const vistasStock = ['stock_audiovisual', 'stock_hierros', 'stock_consumibles'];
 
                     for (const vista of vistasStock) {
@@ -1591,6 +1754,16 @@
                         }
 
                         stockRows = stockRows.concat(stockData || []);
+=======
+                    const { data: stockData, error: stockDataErr } = await window.supabaseClient
+                        .from('stock_actual_con_precio')
+                        .select('material_codigo, bodega_principal, bodega_secundaria, existencia')
+                        .in('material_codigo', codigosUnicos);
+                    if (stockDataErr) {
+                        console.warn('No se pudo cargar stock_actual_con_precio para bodegas:', stockDataErr);
+                    } else {
+                        stockRows = stockData || [];
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
                     }
                 }
 
@@ -1602,7 +1775,11 @@
                     arr.push({
                         bodega_principal: r.bodega_principal || 'Principal',
                         bodega_secundaria: r.bodega_secundaria || 'General',
+<<<<<<< HEAD
                         existencia: Number(r.stock_actual) || 0
+=======
+                        existencia: Number(r.existencia) || 0
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
                     });
                     stockPorCodigo.set(c, arr);
                 });
@@ -1636,7 +1813,10 @@
                             responsable: solicitud.encargado_evento,
                             observaciones: `Despacho ${numeroRegistro} - Evento: ${solicitud.evento}. Estado: ${item.estado || 'Nuevo'}. ${item.observacion || ''}`,
                             estado: 'completado',
+<<<<<<< HEAD
                             usuario_id: window.currentUser?.id,
+=======
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
                             // Ubicación fina (contenedor) no aplica aquí
                             ubicacion_codigo: null,
                             ubicacion_nombre: null
@@ -1659,13 +1839,17 @@
                             responsable: solicitud.encargado_evento,
                             observaciones: `Despacho ${numeroRegistro} - Evento: ${solicitud.evento}. Estado: ${item.estado || 'Nuevo'}. ${item.observacion || ''}`,
                             estado: 'completado',
+<<<<<<< HEAD
                             usuario_id: window.currentUser?.id,
+=======
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
                             ubicacion_codigo: null,
                             ubicacion_nombre: null
                         });
                     }
                 }
 
+<<<<<<< HEAD
                 // 3. Insertar movimientos en las tablas separadas según bodega
                 const movimientosPorTabla = {
                     movimientos_bodega_audiovisual: [],
@@ -1705,6 +1889,18 @@
 
                 if (movimientosInsertados.length === 0) {
                     console.warn('No se registraron movimientos en ninguna tabla');
+=======
+                const { data: movimientosInsertados, error: errorMovimientos } = await window.supabaseClient
+                    .from('movimientos_bodega')
+                    .insert(movimientos)
+                    .select();
+
+                if (errorMovimientos) {
+                    console.error('Error al registrar movimientos:', errorMovimientos);
+                    alert('❌ Error al registrar movimientos. Despacho creado pero sin movimientos.');
+                } else {
+                    console.log('✅ Movimientos registrados:', movimientosInsertados);
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
                 }
             } catch (error) {
                 console.error('Error en integración con Supabase:', error);
@@ -1844,6 +2040,7 @@
     function actualizarPanelEvento(data, serviciosTexto = 'No disponible') {
         console.log('🔄 Ejecutando actualizarPanelEvento con:', { data, serviciosTexto });
 
+<<<<<<< HEAD
         // Buscar primero el panel de detalle (cuando hay una solicitud cargada)
         let panel = document.getElementById("panelResumenEventoDetalle");
         if (!panel) {
@@ -1854,6 +2051,13 @@
 
         if (!panel) {
             console.error('❌ Ningún panel de evento encontrado');
+=======
+        const panel = document.getElementById("panelResumenEvento");
+        console.log('Panel encontrado:', panel);
+
+        if (!panel) {
+            console.error('❌ Panel panelResumenEvento no encontrado');
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
             return;
         }
 
@@ -1931,6 +2135,7 @@
 
     window.renderLista = renderLista;
     renderLista();
+<<<<<<< HEAD
 
     // CSS específico para asegurar que los colores se apliquen correctamente
     const style = document.createElement('style');
@@ -2428,5 +2633,7 @@
         return modal;
     }
 
+=======
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
 })();
 </script>

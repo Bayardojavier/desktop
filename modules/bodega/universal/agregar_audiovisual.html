@@ -1,5 +1,6 @@
 ﻿<!-- desktop/modules/bodega/universal/agregar_audiovisual.html -->
 <style>
+<<<<<<< HEAD
   .bodega-secundaria-seleccionada {
     background: #10b981 !important;
     color: white !important;
@@ -9,6 +10,9 @@
     font-weight: bold !important;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
   }
+=======
+  .secundaria-selected { border-color: rgba(99,102,241,0.9) !important; background: rgba(99,102,241,0.22) !important; outline: 2px solid rgba(255,255,255,0.85); }
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
   .contenedor-selected { border-color: rgba(34,197,94,0.9) !important; background: rgba(34,197,94,0.18) !important; outline: 2px solid rgba(255,255,255,0.85); }
 </style>
 <div style="display:flex; gap:16px; height:100%;">
@@ -1473,7 +1477,11 @@
       if (largoEl2) largoEl2.value = '';
       const cerrarEl2 = document.getElementById('ua-cerrar-contenedor');
       if (cerrarEl2) cerrarEl2.checked = false;
+<<<<<<< HEAD
       document.querySelectorAll('.secundaria-btn').forEach(b => b.classList.remove('bodega-secundaria-seleccionada'));
+=======
+      document.querySelectorAll('.secundaria-btn').forEach(b => b.classList.remove('secundaria-selected'));
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
       document.querySelectorAll('.contenedor-btn').forEach(b => b.classList.remove('contenedor-selected'));
       renderCamposExtra();
       updateResumen();
@@ -1570,8 +1578,13 @@
     state.secundariaId = id;
     state.secundariaNombre = nombre;
     // Resaltar el botón seleccionado
+<<<<<<< HEAD
     document.querySelectorAll('.secundaria-btn').forEach(b => b.classList.remove('bodega-secundaria-seleccionada'));
     btn.classList.add('bodega-secundaria-seleccionada');
+=======
+    document.querySelectorAll('.secundaria-btn').forEach(b => b.classList.remove('secundaria-selected'));
+    btn.classList.add('secundaria-selected');
+>>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
 
     // Reset del formulario de material
     try {
