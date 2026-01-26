@@ -1,12 +1,7 @@
-﻿<!-- desktop/modules/bodega/universal/agregar_hierros.html -->
+<!-- desktop/modules/bodega/universal/agregar_hierros.html -->
 <link rel="stylesheet" href="./catalogo.css">
-<<<<<<< HEAD
-=======
-<style>
-  .secundaria-selected { border-color: rgba(99,102,241,0.9) !important; background: rgba(99,102,241,0.22) !important; outline: 2px solid rgba(255,255,255,0.85); }
-  .contenedor-selected { border-color: rgba(34,197,94,0.9) !important; background: rgba(34,197,94,0.18) !important; outline: 2px solid rgba(255,255,255,0.85); }
-</style>
->>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
+
+
 <div style="display:flex; gap:16px; height:100%;">
 
   <div style="width: 320px; background: rgba(20, 30, 60, 0.45); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; padding: 12px; overflow:auto;">
@@ -44,7 +39,7 @@
     </div>
 
     <div id="estado-seleccion" style="margin-bottom: 12px; color:#cbd5e1; display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
-      <div style="padding-top:2px;"><strong>Selección:</strong> <span id="sel-resumen">(pendiente)</span></div>
+      <div style="padding-top:2px;"><strong>Selecci�n:</strong> <span id="sel-resumen">(pendiente)</span></div>
       <div id="sel-codigo-host" style="display:none;"></div>
     </div>
 
@@ -52,7 +47,7 @@
       <div style="background: rgba(15,23,42,0.22); border: 1px solid rgba(148,163,184,0.15); border-radius: 10px; padding: 10px;">
         <div style="font-weight:800; color:#cbd5e1; margin-bottom:6px;">Tipo de alta</div>
         <div style="display:flex; gap:14px; align-items:center; color:#cbd5e1; flex-wrap:wrap;">
-          <span>Modo automático: Crea contenedor si no hay seleccionado, agrega material si hay.</span>
+          <span>Modo autom�tico: Crea contenedor si no hay seleccionado, agrega material si hay.</span>
 
           <div id="ua-itemtipo-wrap" style="display:flex; gap:8px; align-items:center; padding:6px 10px; border:1px solid rgba(148,163,184,0.18); border-radius:10px; background: rgba(2,6,23,0.22);">
             <span style="font-weight:700;">Tipo</span>
@@ -63,7 +58,7 @@
           <label style="display:inline-flex; gap:10px; align-items:center; padding:6px 10px; border:1px solid rgba(148,163,184,0.18); border-radius:10px; background: rgba(2,6,23,0.22);">
             <span style="font-weight:700;">Activo</span>
             <input id="ua-es-activo" type="checkbox" checked />
-            <span style="color:#94a3b8; font-size:12px;">(OFF = solo catálogo, sin movimiento)</span>
+            <span style="color:#94a3b8; font-size:12px;">(OFF = solo cat�logo, sin movimiento)</span>
           </label>
 
           <label id="ua-cantidad-wrap" style="display:inline-flex; gap:10px; align-items:center; padding:6px 10px; border:1px solid rgba(148,163,184,0.18); border-radius:10px; background: rgba(2,6,23,0.22);">
@@ -74,7 +69,7 @@
           <label id="ua-cerrar-contenedor-wrap" style="display:inline-flex; gap:10px; align-items:center; padding:8px 10px; border:1px solid rgba(148,163,184,0.18); border-radius:10px; background: rgba(2,6,23,0.22);">
             <input id="ua-cerrar-contenedor" type="checkbox" />
             <span style="font-weight:700; color:#cbd5e1;">Cerrar contenedor</span>
-            <span style="color:#94a3b8; font-size:12px;">(bloquea agregar más materiales a este contenedor)</span>
+            <span style="color:#94a3b8; font-size:12px;">(bloquea agregar m�s materiales a este contenedor)</span>
           </label>
         </div>
 
@@ -85,7 +80,7 @@
       </div>
 
       <div id="ua-grupo-nombre-numero-contenedor" style="display:none;">
-        <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Identificación del contenedor</label>
+        <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Identificaci�n del contenedor</label>
         <div style="display:flex; gap:10px;">
           <select id="cont-tipo" class="audiovisual-input" style="width: 180px;">
             <option value="Lote">Lote</option>
@@ -93,17 +88,13 @@
             <option value="Andamio">Andamio</option>
             <option value="Cuarto">Cuarto</option>
             <option value="Patio">Patio</option>
-<<<<<<< HEAD
+
             <option value="Balde">Balde</option>
             <option value="Otro">Otro</option>
           </select>
           <input id="cont-nombre-base" class="audiovisual-input" placeholder="Nombre (Lote / Burra / Andamio/ Cuarto / Patio / Balde / Otro)" style="flex:1;" />
-=======
-            <option value="Otro">Otro</option>
-          </select>
-          <input id="cont-nombre-base" class="audiovisual-input" placeholder="Nombre (Lote / Burra / Andamio/ Cuarto / Patio / Otro)" style="flex:1;" />
->>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
-          <input id="cont-numero" class="audiovisual-input" placeholder="Número (01, 02)" style="width: 120px;" />
+
+          <input id="cont-numero" class="audiovisual-input" placeholder="N�mero (01, 02)" style="width: 120px;" />
         </div>
       </div>
 
@@ -113,14 +104,14 @@
           <input id="nombre-producto" class="audiovisual-input" placeholder="Ej: Perfil C / Tubo" required />
         </div>
         <div id="div-nombre-abrev" style="width: 220px;">
-          <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Abreviación (código)</label>
+          <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Abreviaci�n (c�digo)</label>
           <input id="nombre-abrev" class="audiovisual-input" placeholder="Ej: PRFC" maxlength="8" />
-          <div style="margin-top:6px; color:#94a3b8; font-size:12px;">Si queda vacío, se genera automática.</div>
+          <div style="margin-top:6px; color:#94a3b8; font-size:12px;">Si queda vac�o, se genera autom�tica.</div>
         </div>
         <div id="ua-codigo-host" style="width: 220px;">
           <div id="ua-codigo-group">
             <label style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; font-weight:700; color:#cbd5e1;">
-              <span>Código</span>
+              <span>C�digo</span>
               <button type="button" id="btn-config-codigo" class="bodega-export-pdf-btn" style="padding:6px 10px;">Refrescar</button>
             </label>
             <input id="codigo-material" class="audiovisual-input" value="Se genera al guardar" readonly style="background:#11182755; color:#94a3b8;" />
@@ -135,7 +126,7 @@
           <div style="display:flex; flex-direction:column; gap:8px;">
             <button type="button" id="select-photo-btn" class="audiovisual-boton audiovisual-new" style="padding: 8px 14px;">Seleccionar Foto</button>
             <input type="file" id="photo-input" accept="image/*" style="display:none;" />
-            <small style="color:#94a3b8;">Se sube a Supabase Storage si está configurado.</small>
+            <small style="color:#94a3b8;">Se sube a Supabase Storage si est� configurado.</small>
           </div>
         </div>
       </div>
@@ -161,7 +152,7 @@
         <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Unidad de medida</label>
         <div style="display:flex; gap:12px; align-items:center; color:#cbd5e1;">
           <label style="display:inline-flex; gap:6px; align-items:center;"><input type="radio" name="unidad" value="PUL" checked /> Pulgadas</label>
-          <label style="display:inline-flex; gap:6px; align-items:center;"><input type="radio" name="unidad" value="CMT" /> Centímetros</label>
+          <label style="display:inline-flex; gap:6px; align-items:center;"><input type="radio" name="unidad" value="CMT" /> Cent�metros</label>
           <label style="display:inline-flex; gap:6px; align-items:center;"><input type="radio" name="unidad" value="SIN" /> Sin medida</label>
         </div>
       </div>
@@ -201,8 +192,8 @@
         <div style="display:flex; gap:8px;">
           <select id="nuevo-campo-tipo">
             <option value="text">Texto</option>
-            <option value="number">Número</option>
-            <option value="textarea">Área de texto</option>
+            <option value="number">N�mero</option>
+            <option value="textarea">�rea de texto</option>
             <option value="date">Fecha</option>
           </select>
           <input id="nuevo-campo-nombre" placeholder="Nombre del campo" style="flex:1;" />
@@ -215,18 +206,18 @@
         <textarea id="notas" rows="3" class="audiovisual-input" placeholder="Notas u observaciones"></textarea>
       </div>
 
-      <button id="ua-btn-submit" type="submit" class="audiovisual-boton audiovisual-save" style="align-self:flex-start; padding: 12px 18px;">Guardar en catálogo</button>
+      <button id="ua-btn-submit" type="submit" class="audiovisual-boton audiovisual-save" style="align-self:flex-start; padding: 12px 18px;">Guardar en cat�logo</button>
     </form>
   </div>
 </div>
 
-<!-- Modal de configuración de orden de código -->
+<!-- Modal de configuraci�n de orden de c�digo -->
 <div id="modal-config-orden" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
   <div style="background:#1e293b; border:1px solid #334155; border-radius:10px; padding:20px; max-width:400px; width:90%;">
-    <h3 style="color:#cbd5e1; margin:0 0 15px 0;">Configurar Orden del Código</h3>
-    <p style="color:#94a3b8; font-size:14px; margin:0 0 15px 0;">Para Material: Código = Consecutivo + Apellido Contenedor + 2 campos seleccionados.<br>Arrastra o usa los botones para elegir los 2 campos adicionales.</p>
+    <h3 style="color:#cbd5e1; margin:0 0 15px 0;">Configurar Orden del C�digo</h3>
+    <p style="color:#94a3b8; font-size:14px; margin:0 0 15px 0;">Para Material: C�digo = Consecutivo + Apellido Contenedor + 2 campos seleccionados.<br>Arrastra o usa los botones para elegir los 2 campos adicionales.</p>
     <ul id="orden-lista" style="list-style:none; padding:0; margin:0 0 20px 0;">
-      <!-- Items se agregan dinámicamente -->
+      <!-- Items se agregan din�micamente -->
     </ul>
     <div style="display:flex; gap:10px; justify-content:flex-end;">
       <button type="button" id="btn-guardar-orden" class="audiovisual-boton audiovisual-save" style="padding:8px 16px;">Guardar</button>
@@ -237,7 +228,7 @@
 
 <script>
 (function() {
-  // Esperar a que Supabase esté disponible (mismo patrón que Audiovisual)
+  // Esperar a que Supabase est� disponible (mismo patr�n que Audiovisual)
   const checkSupa = () => {
     const supa = window.supabaseClient;
     if (supa) initForm();
@@ -284,9 +275,9 @@
       contenedorCodigo: null,
       itemTipo: 'EQUIPO', // 'EQUIPO' o 'ACCESORIO'
       accesorioLargo: '',
-      // CONTENEDOR: 2 partes extra (además de consecutivo + principal + secundaria)
+      // CONTENEDOR: 2 partes extra (adem�s de consecutivo + principal + secundaria)
       codigoOrdenContenedor: ['cont_nombre_base', 'cont_numero'],
-      // MATERIAL: 2 partes extra (además del código heredado del contenedor)
+      // MATERIAL: 2 partes extra (adem�s del c�digo heredado del contenedor)
       codigoOrdenMaterial: ['nombre_abrev', 'ua-accesorio-largo']
     };
 
@@ -315,13 +306,13 @@
       '#0f172a': 'Gris Oscuro',
       '#06b6d4': 'Azul Claro',
       '#ec4899': 'Rosa',
-      '#92400e': 'Marrón',
+      '#92400e': 'Marr�n',
       '#000000': 'Negro',
       '#ffffff': 'Blanco',
       '#65a30d': 'Lima',
-      '#6366f1': 'Índigo',
+      '#6366f1': '�ndigo',
       '#14b8a6': 'Verde Azulado',
-      '#f59e0b': 'Ámbar',
+      '#f59e0b': '�mbar',
       '#64748b': 'Pizarra'
     };
 
@@ -342,7 +333,7 @@
     async function addNuevaSecundaria() {
       const nombre = (document.getElementById('nueva-secundaria-nombre')?.value || '').trim();
       if (!nombre) { alert('Ingresa un nombre para la nueva secundaria'); return; }
-      if (!state.principalId) { alert('No se encontró la bodega principal'); return; }
+      if (!state.principalId) { alert('No se encontr� la bodega principal'); return; }
       const codigo = normalizeCode(nombre, 8);
       try {
         const { error } = await supa
@@ -623,7 +614,7 @@
         if (grupoUnidad) grupoUnidad.style.display = 'none';
         if (grupoDim) grupoDim.style.display = 'none';
 
-        // En alta contenedor: Activo SÍ aplica
+        // En alta contenedor: Activo S� aplica
         if (activoEl) activoEl.disabled = false;
 
         // Ocultar controles que solo aplican a MATERIAL
@@ -672,7 +663,7 @@
       const act = state.esActivo ? 'ACTIVO' : 'FICTICIO';
       const q = state.cantidad && state.cantidad > 1 ? ` x${state.cantidad}` : '';
       const closed = state.contenedorCerrado ? ' [CONTENEDOR CERRADO]' : '';
-      const closeMark = state.cerrarContenedor ? ' [SE CERRARÁ]' : '';
+      const closeMark = state.cerrarContenedor ? ' [SE CERRAR�]' : '';
       if (span) span.textContent = `P: ${p} > S: ${s}${cont} [${tipo}] [MATERIAL${q}] [${act}]${closed}${closeMark}`;
     }
 
@@ -819,7 +810,7 @@
         if (next > 999) return String(next);
         return String(next).padStart(2, '0');
       } catch (e) {
-        console.warn('No pude calcular índice hijo, uso 01', e);
+        console.warn('No pude calcular �ndice hijo, uso 01', e);
         return '01';
       }
     }
@@ -910,7 +901,7 @@
           if (data && data.length) principal = data[0];
         }
         if (!principal || !principal.id) {
-          console.warn('No se encontró bodega principal para Hierros');
+          console.warn('No se encontr� bodega principal para Hierros');
           return;
         }
         state.principalId = principal.id;
@@ -932,11 +923,9 @@
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.textContent = s.nombre;
-<<<<<<< HEAD
+
             btn.className = 'hierro-boton secundaria-btn';
-=======
-            btn.className = 'audiovisual-boton secundaria-btn';
->>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
+
             btn.dataset.secId = String(s.id);
             btn.addEventListener('click', () => selectSecundaria(s.id, s.nombre, btn));
             container.appendChild(btn);
@@ -958,15 +947,12 @@
 
       state.secundariaId = id;
       state.secundariaNombre = nombre;
-<<<<<<< HEAD
+
       document.querySelectorAll('.secundaria-btn').forEach(b => b.classList.remove('bodega-secundaria-seleccionada'));
       if (btn) btn.classList.add('bodega-secundaria-seleccionada');
-=======
-      document.querySelectorAll('.secundaria-btn').forEach(b => b.classList.remove('secundaria-selected'));
-      if (btn) btn.classList.add('secundaria-selected');
->>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
 
-      // Metodología: secundaria seleccionada pero SIN contenedor => modo CONTENEDOR
+
+      // Metodolog�a: secundaria seleccionada pero SIN contenedor => modo CONTENEDOR
       state.altaTipo = 'CONTENEDOR';
       applyAltaTipoUI();
 
@@ -1004,11 +990,9 @@
           btn.type = 'button';
           const cerrado = isContenedorCerrado(c.campos_personalizados);
           btn.textContent = cerrado ? `${c.contenedor} (CERRADO)` : c.contenedor;
-<<<<<<< HEAD
+
           btn.className = 'hierro-boton contenedor-btn';
-=======
-          btn.className = 'audiovisual-boton contenedor-btn';
->>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
+
           btn.dataset.contenedor = c.contenedor;
           btn.dataset.tipo = (c.contenedor_tipo || '').toString().trim();
           btn.dataset.codigo = c.codigo || '';
@@ -1036,7 +1020,7 @@
       document.querySelectorAll('.contenedor-btn').forEach(b => b.classList.remove('contenedor-selected'));
       if (btn) btn.classList.add('contenedor-selected');
 
-      // Metodología: secundaria + contenedor => modo MATERIAL
+      // Metodolog�a: secundaria + contenedor => modo MATERIAL
       state.altaTipo = 'MATERIAL';
       applyAltaTipoUI();
       updateResumen();
@@ -1150,12 +1134,12 @@
       // CONTENEDOR: consecutivo + principal + secundaria (fijos) + 2 extras
       const tipoAlta = String(state.altaTipo || 'MATERIAL').toUpperCase();
       if (tipoAlta === 'CONTENEDOR') {
-        if (help) help.textContent = 'Para CONTENEDOR: el código siempre incluye consecutivo + principal + secundaria, y eliges 2 partes extra.';
+        if (help) help.textContent = 'Para CONTENEDOR: el c�digo siempre incluye consecutivo + principal + secundaria, y eliges 2 partes extra.';
 
         const labels = {
           cont_tipo: 'Contenedor Tipo (4)',
           cont_nombre_base: 'Nombre Base (4)',
-          cont_numero: 'Número (2)'
+          cont_numero: 'N�mero (2)'
         };
 
         const selected = (state.codigoOrdenContenedor || []).slice(0, 2);
@@ -1182,9 +1166,9 @@
           li.innerHTML = `
             <div style="color:#cbd5e1; font-weight:700;">${labels[key] || key}</div>
             <div>
-              <button type="button" class="orden-btn-cont" data-action="up" data-index="${index}" ${index === 0 ? 'disabled' : ''}>↑</button>
-              <button type="button" class="orden-btn-cont" data-action="down" data-index="${index}" ${index === selected.length - 1 ? 'disabled' : ''}>↓</button>
-              <button type="button" class="orden-remove-cont" data-index="${index}">✖</button>
+              <button type="button" class="orden-btn-cont" data-action="up" data-index="${index}" ${index === 0 ? 'disabled' : ''}>?</button>
+              <button type="button" class="orden-btn-cont" data-action="down" data-index="${index}" ${index === selected.length - 1 ? 'disabled' : ''}>?</button>
+              <button type="button" class="orden-remove-cont" data-index="${index}">?</button>
             </div>
           `;
           lista.appendChild(li);
@@ -1227,7 +1211,7 @@
         return;
       }
 
-      if (help) help.textContent = 'Para MATERIAL: Código = Consecutivo + Apellido Contenedor + 2 campos seleccionados. Arrastra o usa los botones para elegir.';
+      if (help) help.textContent = 'Para MATERIAL: C�digo = Consecutivo + Apellido Contenedor + 2 campos seleccionados. Arrastra o usa los botones para elegir.';
 
       const options = [
         { key: 'tipo_material', label: 'Tipo material (4)' },
@@ -1267,9 +1251,9 @@
         li.innerHTML = `
           <div style="color:#cbd5e1; font-weight:700;">${options.find(o => o.key === key)?.label || key}</div>
           <div>
-            <button type="button" class="orden-btn-mat" data-action="up" data-index="${index}" ${index === 0 ? 'disabled' : ''}>↑</button>
-            <button type="button" class="orden-btn-mat" data-action="down" data-index="${index}" ${index === selected.length - 1 ? 'disabled' : ''}>↓</button>
-            <button type="button" class="orden-remove-mat" data-index="${index}">✖</button>
+            <button type="button" class="orden-btn-mat" data-action="up" data-index="${index}" ${index === 0 ? 'disabled' : ''}>?</button>
+            <button type="button" class="orden-btn-mat" data-action="down" data-index="${index}" ${index === selected.length - 1 ? 'disabled' : ''}>?</button>
+            <button type="button" class="orden-remove-mat" data-index="${index}">?</button>
           </div>
         `;
         lista.appendChild(li);
@@ -1323,7 +1307,7 @@
       const m = document.getElementById('modal-config-orden');
       if (m) m.style.display = 'none';
       updateCodigoPreview();
-      alert('✅ Orden guardado.');
+      alert('? Orden guardado.');
     }
 
     function moveItemContenedor(index, action) {
@@ -1381,12 +1365,12 @@
     async function onSubmit(ev) {
       ev.preventDefault();
 
-      // Prevenir múltiples envíos
+      // Prevenir m�ltiples env�os
       if (state.isSubmitting) {
         return;
       }
 
-      // Marcar como enviando y deshabilitar botón
+      // Marcar como enviando y deshabilitar bot�n
       state.isSubmitting = true;
       const submitBtn = document.getElementById('ua-btn-submit');
       if (submitBtn) {
@@ -1394,16 +1378,14 @@
         submitBtn.textContent = 'Guardando...';
       }
 
-      // Función para resetear el botón en caso de error
+      // Funci�n para resetear el bot�n en caso de error
       const resetSubmitButton = () => {
         state.isSubmitting = false;
         if (submitBtn) {
           submitBtn.disabled = false;
-<<<<<<< HEAD
-          submitBtn.textContent = 'Guardar en catálogo';
-=======
-          submitBtn.textContent = 'Guardar';
->>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
+
+          submitBtn.textContent = 'Guardar en cat�logo';
+
         }
       };
 
@@ -1423,7 +1405,7 @@
             return;
           }
           if (state.contenedorCerrado) {
-            alert('Este contenedor está CERRADO. No se puede agregar más material aquí.');
+            alert('Este contenedor est� CERRADO. No se puede agregar m�s material aqu�.');
             resetSubmitButton();
             return;
           }
@@ -1434,7 +1416,7 @@
 
         const codigoPreview = await updateCodigoPreview();
         if (!codigoPreview) {
-          alert('No se pudo generar el código. Revisa selección/inputs.');
+          alert('No se pudo generar el c�digo. Revisa selecci�n/inputs.');
           resetSubmitButton();
           return;
         }
@@ -1450,7 +1432,7 @@
         // Contenedor identidad
         if (tipo === 'CONTENEDOR') {
           if (!contBaseVal) { alert('Para guardar un contenedor debes llenar el Nombre Base.'); resetSubmitButton(); return; }
-          if (!numeroNorm) { alert('Para guardar un contenedor debes llenar el Número.'); resetSubmitButton(); return; }
+          if (!numeroNorm) { alert('Para guardar un contenedor debes llenar el N�mero.'); resetSubmitButton(); return; }
         }
 
         // Nombre final / contenedor final
@@ -1465,7 +1447,7 @@
           : (apodo || contenedorNombre);
 
         if (tipo === 'MATERIAL' && !nombreFinal) { alert('Para agregar material debes llenar el Nombre del Producto.'); resetSubmitButton(); return; }
-        if (tipo === 'MATERIAL' && !contenedorFinal) { alert('Selecciona un contenedor válido.'); resetSubmitButton(); return; }
+        if (tipo === 'MATERIAL' && !contenedorFinal) { alert('Selecciona un contenedor v�lido.'); resetSubmitButton(); return; }
 
         // Foto
         const fotoUrl = await uploadFotoIfNeeded();
@@ -1516,8 +1498,9 @@
             signo: 1,
             referencia_tipo: referenciaTipo || 'alta_material_activo',
             fecha_movimiento: fecha,
-                     observaciones: 'Alta automática (activo)',
-            estado: 'completado'
+                     observaciones: 'Alta autom�tica (activo)',
+            estado: 'completado',
+            usuario_id: window.currentUser?.id
           };
           return await insertConFallback(TABLE_MOVIMIENTOS, movimiento);
         }
@@ -1535,11 +1518,11 @@
           };
           const extras = (state.codigoOrdenMaterial || []).map(k => components[k]).filter(Boolean).slice(0, 2);
 
-          // Lógica según tipo de item
+          // L�gica seg�n tipo de item
           if (state.itemTipo === 'EQUIPO' && cantidad > 1) {
-            // Equipo/Estructura: múltiples registros con abreviación + número consecutivo
-<<<<<<< HEAD
-            // Para EQUIPOS, excluir 'nombre_abrev' de extras porque ya se añade al final como abrevProducto
+            // Equipo/Estructura: m�ltiples registros con abreviaci�n + n�mero consecutivo
+
+            // Para EQUIPOS, excluir 'nombre_abrev' de extras porque ya se a�ade al final como abrevProducto
             const extrasEquipo = extras.filter(e => e !== components.nombre_abrev);
             const abrevProducto = (document.getElementById('nombre-abrev')?.value || '').trim() || abrev(nombreFinal);
             const suffixBase = [base, ...extrasEquipo].filter(Boolean).join('-');
@@ -1547,10 +1530,7 @@
             const unidadesGuardadas = [];
             let errorOcurrido = false;
             let ultimoError = '';
-=======
-            const abrevProducto = (document.getElementById('nombre-abrev')?.value || '').trim() || abrev(nombreFinal);
-            const suffixBase = [base, ...extras].filter(Boolean).join('-');
->>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
+
 
             for (let i = 1; i <= cantidad; i++) {
               const numeroUnidad = String(i).padStart(2, '0');
@@ -1558,27 +1538,21 @@
               const codigo = `${loteConsecutivo}-${suffixBase}-${abrevProducto}-${numeroUnidad}`;
               const payload = { ...payloadBase, codigo, nombre: `${nombreFinal} ${numeroUnidad}` };
               const res = await insertConFallback(TABLE_CATALOGO, payload);
-<<<<<<< HEAD
+
               if (!res.ok) {
                 errorOcurrido = true;
                 ultimoError = `Error al guardar unidad ${i}: ${res.error}`;
                 break;
               }
               unidadesGuardadas.push(codigo);
-=======
-              if (!res.ok) { 
-                alert(`Error al guardar unidad ${i}: ${res.error}`); 
-                resetSubmitButton();
-                return; 
-              }
->>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
+
 
               if (state.esActivo) {
                 const resMov = await crearMovimientoIngreso({ codigo, nombre: `${nombreFinal} ${numeroUnidad}`, cantidadMov: 1 });
                 if (!resMov.ok) {
-<<<<<<< HEAD
+
                   errorOcurrido = true;
-                  ultimoError = `Se guardó la unidad ${i} en catálogo pero NO se pudo crear el movimiento de ingreso.\n${resMov.error}`;
+                  ultimoError = `Se guard� la unidad ${i} en cat�logo pero NO se pudo crear el movimiento de ingreso.\n${resMov.error}`;
                   break;
                 }
               }
@@ -1591,9 +1565,9 @@
                   for (const codigo of unidadesGuardadas) {
                     await supa.from(TABLE_CATALOGO).delete().eq('codigo', codigo);
                   }
-                  alert(`${ultimoError}\n\nSe hizo rollback: se eliminaron las ${unidadesGuardadas.length} unidades que ya se habían guardado.`);
+                  alert(`${ultimoError}\n\nSe hizo rollback: se eliminaron las ${unidadesGuardadas.length} unidades que ya se hab�an guardado.`);
                 } catch (rollbackError) {
-                  alert(`${ultimoError}\n\nERROR: No se pudo hacer rollback automático. Quedaron ${unidadesGuardadas.length} unidades guardadas parcialmente. Contacta al administrador.\nCódigos afectados: ${unidadesGuardadas.join(', ')}`);
+                  alert(`${ultimoError}\n\nERROR: No se pudo hacer rollback autom�tico. Quedaron ${unidadesGuardadas.length} unidades guardadas parcialmente. Contacta al administrador.\nC�digos afectados: ${unidadesGuardadas.join(', ')}`);
                 }
               } else {
                 alert(ultimoError);
@@ -1602,41 +1576,33 @@
               return;
             }
 
-=======
-                  alert(`Se guardó la unidad ${i} en catálogo pero NO se pudo crear el movimiento de ingreso.\n${resMov.error}`);
-                  resetSubmitButton();
-                  return;
-                }
-              }
-            }
->>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
-            alert(`Guardadas ${cantidad} unidades en catálogo con códigos consecutivos.`);
+
+            alert(`Guardadas ${cantidad} unidades en cat�logo con c�digos consecutivos.`);
           } else {
             // Pieza o cantidad = 1: un solo registro
             let filteredExtras = extras;
             if (state.itemTipo === 'ACCESORIO') {
-              // Para Piezas, no incluir nombre_abrev en extras para evitar duplicación
+              // Para Piezas, no incluir nombre_abrev en extras para evitar duplicaci�n
               filteredExtras = extras.filter(e => e !== components.nombre_abrev);
-<<<<<<< HEAD
+
             } else if (state.itemTipo === 'EQUIPO') {
-              // Para Equipos cantidad = 1, tampoco incluir nombre_abrev en extras (se añade al final)
+              // Para Equipos cantidad = 1, tampoco incluir nombre_abrev en extras (se a�ade al final)
               filteredExtras = extras.filter(e => e !== components.nombre_abrev);
-=======
->>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
+
             }
             const suffix = [base, ...filteredExtras].filter(Boolean).join('-');
             const consec = await obtenerSiguienteConsecutivo(suffix);
             let codigo;
             if (state.itemTipo === 'ACCESORIO') {
-              // Pieza: terminación abreviación + largo accesorio
+              // Pieza: terminaci�n abreviaci�n + largo accesorio
               const abrevProducto = (document.getElementById('nombre-abrev')?.value || '').trim() || abrev(nombreFinal);
-<<<<<<< HEAD
+
               const largoAccesorioRaw = (document.getElementById('ua-accesorio-largo')?.value || '').trim();
               const largoAccesorio = normalizeAccesorioLargo(largoAccesorioRaw);
               
               // Validar que el largo accesorio tenga formato correcto
               if (largoAccesorioRaw && !largoAccesorio) {
-                alert('El largo del accesorio debe contener solo letras, números y guiones (ej: 10CM, 5PULG)');
+                alert('El largo del accesorio debe contener solo letras, n�meros y guiones (ej: 10CM, 5PULG)');
                 resetSubmitButton();
                 return;
               }
@@ -1644,16 +1610,12 @@
               const terminacion = [abrevProducto, largoAccesorio].filter(Boolean).join('-');
               codigo = `${consec}-${suffix}-${terminacion}`;
             } else if (state.itemTipo === 'EQUIPO') {
-              // Equipo/Estructura cantidad = 1: añadir abreviación + número de unidad al final
+              // Equipo/Estructura cantidad = 1: a�adir abreviaci�n + n�mero de unidad al final
               const abrevProducto = (document.getElementById('nombre-abrev')?.value || '').trim() || abrev(nombreFinal);
               codigo = `${consec}-${suffix}-${abrevProducto}-01`;
-=======
-              const largoAccesorio = (document.getElementById('ua-accesorio-largo')?.value || '').trim() || '';
-              const terminacion = [abrevProducto, largoAccesorio].filter(Boolean).join('-');
-              codigo = `${consec}-${suffix}-${terminacion}`;
->>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
+
             } else {
-              // Equipo/Estructura cantidad = 1: terminación normal
+              // Equipo/Estructura cantidad = 1: terminaci�n normal
               codigo = `${consec}-${suffix}`;
             }
             const payload = { ...payloadBase, codigo };
@@ -1663,12 +1625,12 @@
             if (state.esActivo) {
               const resMov = await crearMovimientoIngreso({ codigo, nombre: nombreFinal, cantidadMov: cantidad });
               if (!resMov.ok) {
-                alert('Se guardó el catálogo pero NO se pudo crear el movimiento de ingreso.\n' + resMov.error);
+                alert('Se guard� el cat�logo pero NO se pudo crear el movimiento de ingreso.\n' + resMov.error);
                 resetSubmitButton();
                 return;
               }
             }
-            alert(`Guardado en catálogo: ${codigo}`);
+            alert(`Guardado en cat�logo: ${codigo}`);
           }
 
           if (state.cerrarContenedor) {
@@ -1690,7 +1652,7 @@
           if (state.esActivo) {
             const resMov = await crearMovimientoIngreso({ codigo, nombre: contenedorFinal || nombreFinal, cantidadMov: 1, referenciaTipo: 'alta_contenedor_activo' });
             if (!resMov.ok) {
-              alert('Se guardó el contenedor en catálogo pero NO se pudo crear el movimiento de ingreso.\n' + resMov.error);
+              alert('Se guard� el contenedor en cat�logo pero NO se pudo crear el movimiento de ingreso.\n' + resMov.error);
               resetSubmitButton();
               return;
             }
@@ -1727,12 +1689,12 @@
         updateResumen();
         updateCodigoPreview();
       } finally {
-        // Re-habilitar botón después de completar (éxito o error)
+        // Re-habilitar bot�n despu�s de completar (�xito o error)
         state.isSubmitting = false;
         const submitBtn = document.getElementById('ua-btn-submit');
         if (submitBtn) {
           submitBtn.disabled = false;
-          submitBtn.textContent = 'Guardar en catálogo';
+          submitBtn.textContent = 'Guardar en cat�logo';
         }
       }
     }
@@ -1771,11 +1733,9 @@
           btn.type = 'button';
           const cerrado = isContenedorCerrado(c.campos_personalizados);
           btn.textContent = cerrado ? `${c.contenedor} (CERRADO)` : c.contenedor;
-<<<<<<< HEAD
+
           btn.className = 'hierro-boton contenedor-btn';
-=======
-          btn.className = 'audiovisual-boton contenedor-btn';
->>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
+
           btn.dataset.contenedor = c.contenedor;
           btn.dataset.tipo = (c.contenedor_tipo || '').toString().trim();
           btn.dataset.codigo = c.codigo || '';
@@ -1804,34 +1764,24 @@
     state.contenedorCodigo = (btn && btn.dataset && btn.dataset.codigo) ? btn.dataset.codigo : null;
     state.contenedorCerrado = (btn && btn.dataset && btn.dataset.cerrado) ? (btn.dataset.cerrado === '1') : false;
 
-    // Resaltar el botón seleccionado
+    // Resaltar el bot�n seleccionado
     document.querySelectorAll('.contenedor-btn').forEach(b => b.classList.remove('contenedor-selected'));
     btn.classList.add('contenedor-selected');
 
-    // Metodología: secundaria + contenedor => modo MATERIAL
+    // Metodolog�a: secundaria + contenedor => modo MATERIAL
     applyAltaTipoUI();
     updateResumen();
     updateCodigoPreview();
   }
 
-<<<<<<< HEAD
-=======
-  function isContenedorCerrado(campos) {
-    if (!campos) return false;
-    try {
-      const parsed = typeof campos === 'string' ? JSON.parse(campos) : campos;
-      return parsed.cerrar_contenedor === true;
-    } catch (e) {
-      return false;
-    }
-  }
 
->>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
+
   // Inicializar contenedores
   loadContenedores();
 
 })();
 </script>
+
 
 
 

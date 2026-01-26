@@ -1,6 +1,6 @@
-﻿<!-- desktop/modules/bodega/universal/agregar_audiovisual.html -->
+<!-- desktop/modules/bodega/universal/agregar_audiovisual.html -->
 <style>
-<<<<<<< HEAD
+
   .bodega-secundaria-seleccionada {
     background: #10b981 !important;
     color: white !important;
@@ -10,9 +10,7 @@
     font-weight: bold !important;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
   }
-=======
-  .secundaria-selected { border-color: rgba(99,102,241,0.9) !important; background: rgba(99,102,241,0.22) !important; outline: 2px solid rgba(255,255,255,0.85); }
->>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
+
   .contenedor-selected { border-color: rgba(34,197,94,0.9) !important; background: rgba(34,197,94,0.18) !important; outline: 2px solid rgba(255,255,255,0.85); }
 </style>
 <div style="display:flex; gap:16px; height:100%;">
@@ -63,13 +61,13 @@
           <div id="ua-alta-mode-badge" style="padding:6px 10px; border:1px solid rgba(148,163,184,0.18); border-radius:10px; background: rgba(2,6,23,0.22); font-weight:700;">(pendiente)</div>
           <div id="ua-itemtipo-wrap" style="display:flex; gap:8px; align-items:center; padding:6px 10px; border:1px solid rgba(148,163,184,0.18); border-radius:10px; background: rgba(2,6,23,0.22);">
             <span style="font-weight:700;">Tipo</span>
-            <button type="button" id="ua-tipo-equipo" class="audiovisual-boton" style="padding:6px 10px;">Equipo electrónico</button>
+            <button type="button" id="ua-tipo-equipo" class="audiovisual-boton" style="padding:6px 10px;">Equipo electr�nico</button>
             <button type="button" id="ua-tipo-accesorio" class="audiovisual-boton" style="padding:6px 10px;">Accesorio</button>
           </div>
           <label style="display:inline-flex; gap:10px; align-items:center; padding:6px 10px; border:1px solid rgba(148,163,184,0.18); border-radius:10px; background: rgba(2,6,23,0.22);">
             <span style="font-weight:700;">Activo</span>
             <input id="ua-es-activo" type="checkbox" checked />
-            <span style="color:#94a3b8; font-size:12px;">(si está OFF = ficticio, no crea movimiento)</span>
+            <span style="color:#94a3b8; font-size:12px;">(si est� OFF = ficticio, no crea movimiento)</span>
           </label>
         </div>
       </div>
@@ -235,17 +233,17 @@
             <option value="29">29</option>
             <option value="30">30</option>
           </select>
-          <div style="margin-top:6px; color:#94a3b8; font-size:12px;">Equipo: crea hijos (01..N). Accesorio: 1 código + movimiento con cantidad.</div>
+          <div style="margin-top:6px; color:#94a3b8; font-size:12px;">Equipo: crea hijos (01..N). Accesorio: 1 c�digo + movimiento con cantidad.</div>
         </div>
         <div id="ua-accesorio-largo-wrap" style="width: 220px; display:none;">
-          <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Largo del accesorio (código)</label>
+          <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Largo del accesorio (c�digo)</label>
           <input id="ua-accesorio-largo" class="audiovisual-input" placeholder="Ej: 10M / 15M / 150CM" maxlength="8" />
-          <div style="margin-top:6px; color:#94a3b8; font-size:12px;">Se agrega al final del código solo en Accesorio.</div>
+          <div style="margin-top:6px; color:#94a3b8; font-size:12px;">Se agrega al final del c�digo solo en Accesorio.</div>
         </div>
         <label id="ua-cerrar-contenedor-wrap" style="display:inline-flex; gap:10px; align-items:center; padding:8px 10px; border:1px solid rgba(148,163,184,0.18); border-radius:10px; background: rgba(2,6,23,0.22);">
           <input id="ua-cerrar-contenedor" type="checkbox" />
           <span style="font-weight:700; color:#cbd5e1;">Cerrar contenedor</span>
-          <span style="color:#94a3b8; font-size:12px;">(bloquea agregar más materiales a este contenedor)</span>
+          <span style="color:#94a3b8; font-size:12px;">(bloquea agregar m�s materiales a este contenedor)</span>
         </label>
       </div>
 
@@ -254,13 +252,13 @@
   </div>
 </div>
 
-<!-- Modal de configuración de orden de código -->
+<!-- Modal de configuraci�n de orden de c�digo -->
 <div id="modal-config-orden" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
   <div style="background:#1e293b; border:1px solid #334155; border-radius:10px; padding:20px; max-width:400px; width:90%;">
-    <h3 style="color:#cbd5e1; margin:0 0 15px 0;">Configurar Orden del Código</h3>
+    <h3 style="color:#cbd5e1; margin:0 0 15px 0;">Configurar Orden del C�digo</h3>
     <p style="color:#94a3b8; font-size:14px; margin:0 0 15px 0;">Arrastra o usa los botones para reordenar los componentes.</p>
     <ul id="orden-lista" style="list-style:none; padding:0; margin:0 0 20px 0;">
-      <!-- Items se agregan dinámicamente -->
+      <!-- Items se agregan din�micamente -->
     </ul>
     <div style="display:flex; gap:10px; justify-content:flex-end;">
       <button type="button" id="btn-guardar-orden" class="audiovisual-boton audiovisual-save" style="padding:8px 16px;">Guardar</button>
@@ -273,7 +271,7 @@
 (function() {
   const palette = ['#ef4444','#fb7185','#f97316','#fb923c','#f59e0b','#eab308','#84cc16','#22c55e','#16a34a','#06b6d4','#0ea5e9','#0284c7','#6366f1','#8b5cf6','#a78bfa','#94a3b8','#475569','#0f172a'];
 
-  // Esperar a que Supabase esté disponible
+  // Esperar a que Supabase est� disponible
   const checkSupa = () => {
     const supa = window.supabaseClient;
     if (supa) {
@@ -324,13 +322,13 @@
     contenedorCodigo: null,
     contenedorId: null,
     codigoOrden: ['principal', 'secundaria', 'tipo', 'abre'],
-    // CONTENEDOR: 2 partes extra (además de consecutivo + principal + secundaria)
+    // CONTENEDOR: 2 partes extra (adem�s de consecutivo + principal + secundaria)
     codigoOrdenContenedor: ['cont_nombre_base', 'cont_numero'],
-    // MATERIAL: 2 partes extra (además del código heredado del contenedor)
+    // MATERIAL: 2 partes extra (adem�s del c�digo heredado del contenedor)
     codigoOrdenMaterial: ['tipo_material', 'abre']
   };
 
-  // Cargar configuración guardada
+  // Cargar configuraci�n guardada
   const savedOrden = localStorage.getItem('codigoOrdenAudiovisual');
   if (savedOrden) {
     try {
@@ -506,9 +504,9 @@
     const configOrden = document.getElementById('btn-config-orden');
     if (configOrden) {
       configOrden.addEventListener('click', openConfigModal);
-      console.log('Botón Config atado');
+      console.log('Bot�n Config atado');
     } else {
-      console.log('Botón Config no encontrado');
+      console.log('Bot�n Config no encontrado');
     }
 
     const addCampo = document.getElementById('btn-agregar-campo');
@@ -562,7 +560,7 @@
       return;
     }
     if (!state.principalId) {
-      alert('No se encontró la bodega principal');
+      alert('No se encontr� la bodega principal');
       return;
     }
     const codigo = normalizeCode(nombre, 8);
@@ -613,7 +611,7 @@
     if (tipo === 'CONTENEDOR') {
       if (badge) badge.textContent = 'Contenedor';
       if (titulo) titulo.textContent = '+ Agregar Contenedor (Audiovisual)';
-      if (subtitulo) subtitulo.textContent = 'Selecciona Secundaria y llena la identificación del contenedor.';
+      if (subtitulo) subtitulo.textContent = 'Selecciona Secundaria y llena la identificaci�n del contenedor.';
       if (btnSubmit) btnSubmit.textContent = 'Guardar contenedor';
 
       if (grupoCont) grupoCont.style.display = '';
@@ -639,7 +637,7 @@
       if (badge) badge.textContent = 'Material';
       if (titulo) titulo.textContent = '+ Agregar Material (Audiovisual)';
       if (subtitulo) subtitulo.textContent = 'Selecciona Secundaria + Contenedor y llena el material.';
-      if (btnSubmit) btnSubmit.textContent = 'Guardar en catálogo';
+      if (btnSubmit) btnSubmit.textContent = 'Guardar en cat�logo';
 
       if (grupoCont) grupoCont.style.display = 'none';
       if (divNombreProd) divNombreProd.style.display = '';
@@ -677,7 +675,7 @@
     const q = state.cantidad && state.cantidad > 1 ? ` x${state.cantidad}` : '';
     const l = (state.itemTipo === 'ACCESORIO' && state.accesorioLargo) ? ` L=${state.accesorioLargo}` : '';
     const closed = state.contenedorCerrado ? ' [CONTENEDOR CERRADO]' : '';
-    const closeMark = state.cerrarContenedor ? ' [SE CERRARÁ]' : '';
+    const closeMark = state.cerrarContenedor ? ' [SE CERRAR�]' : '';
     if (span) span.textContent = `P: ${p} > S: ${s}${cont} [${tipo}] [${t}${q}${l}] [${act}]${closed}${closeMark}`;
   }
 
@@ -769,7 +767,7 @@
       if (cleaned.length <= 4 && /[A-Z]/.test(cleaned)) return cleaned;
     }
 
-    // 2) Si no hay token corto, usar el último token “fuerte”.
+    // 2) Si no hay token corto, usar el �ltimo token �fuerte�.
     for (let i = tokens.length - 1; i >= 0; i--) {
       const cleaned = tokens[i].replace(/[^A-Z0-9]/g, '');
       if (!cleaned) continue;
@@ -790,7 +788,7 @@
   }
 
   async function updateCodigoPreview() {
-    console.log('Actualizando código con orden:', state.codigoOrden);
+    console.log('Actualizando c�digo con orden:', state.codigoOrden);
     const principal = 'Audiovisual';
     const secundaria = state.secundariaNombre || '';
     const tipo = state.altaTipo;
@@ -826,7 +824,7 @@
           if (!contBaseVal) { if (input) input.value = 'Falta nombre base'; return null; }
           extras.push(contBaseAb);
         } else if (k === 'cont_numero') {
-          if (!numeroNorm) { if (input) input.value = 'Falta número'; return null; }
+          if (!numeroNorm) { if (input) input.value = 'Falta n�mero'; return null; }
           extras.push(numeroNorm);
         } else if (k === 'cont_tipo') {
           extras.push(contTipoAb);
@@ -865,7 +863,7 @@
       abre
     };
 
-    // MATERIAL hereda el código del contenedor (sin consecutivo) + 2 partes configurables
+    // MATERIAL hereda el c�digo del contenedor (sin consecutivo) + 2 partes configurables
     if (!state.contenedorCodigo) {
       const input = document.getElementById('codigo-material');
       if (input) input.value = 'Seleccione un contenedor';
@@ -896,7 +894,7 @@
 
     const next = await obtenerSiguienteConsecutivo(suffix);
     const code = suffix ? `${next}-${suffix}` : `${next}`;
-    console.log('Código final:', code);
+    console.log('C�digo final:', code);
     const input = document.getElementById('codigo-material');
     if (input) input.value = code;
     return code;
@@ -966,7 +964,7 @@
       if (next > 999) return String(next);
       return String(next).padStart(2, '0');
     } catch (e) {
-      console.warn('No pude calcular índice hijo, uso 01', e);
+      console.warn('No pude calcular �ndice hijo, uso 01', e);
       return '01';
     }
   }
@@ -1008,7 +1006,7 @@
             drawSource = img;
           }
         } catch (e) {
-          console.warn('No se pudo decodificar la imagen para compresión, se sube original.', e);
+          console.warn('No se pudo decodificar la imagen para compresi�n, se sube original.', e);
           return file;
         }
 
@@ -1040,7 +1038,7 @@
 
         if (!blob) return file;
 
-        // Si por alguna razón la "compresión" salió más grande, mantener original
+        // Si por alguna raz�n la "compresi�n" sali� m�s grande, mantener original
         if (typeof file.size === 'number' && typeof blob.size === 'number' && blob.size >= file.size) {
           return file;
         }
@@ -1153,7 +1151,7 @@
         return;
       }
       if (state.contenedorCerrado) {
-        alert('Este contenedor está CERRADO. No se puede agregar más material aquí.');
+        alert('Este contenedor est� CERRADO. No se puede agregar m�s material aqu�.');
         return;
       }
     }
@@ -1164,16 +1162,16 @@
 
     const largoAccesorio = normalizeAccesorioLargo((document.getElementById('ua-accesorio-largo') || {}).value || '');
     if (altaTipo === 'MATERIAL' && state.itemTipo === 'ACCESORIO' && !largoAccesorio) {
-      alert('Para Accesorio debes llenar el Largo del accesorio (ej: 10M, 15M, 150CM) para que quede en el código.');
+      alert('Para Accesorio debes llenar el Largo del accesorio (ej: 10M, 15M, 150CM) para que quede en el c�digo.');
       return;
     }
 
     const codigoPreview = await updateCodigoPreview();
     if (!codigoPreview) {
       if (altaTipo === 'CONTENEDOR') {
-        alert('Completa la identificación del contenedor (base y número) para generar el código.');
+        alert('Completa la identificaci�n del contenedor (base y n�mero) para generar el c�digo.');
       } else {
-        alert('Selecciona un contenedor para generar el código.');
+        alert('Selecciona un contenedor para generar el c�digo.');
       }
       return;
     }
@@ -1195,7 +1193,7 @@
         return;
       }
       if (!contNumeroVal) {
-        alert('Para guardar un contenedor debes llenar el Número.');
+        alert('Para guardar un contenedor debes llenar el N�mero.');
         return;
       }
     }
@@ -1203,7 +1201,7 @@
     // Reglas nuevas:
     // - nombre: cont-tipo
     // - apodo: cont-nombre-base + cont-numero
-    // - contenedor: apodo (para listados/ubicación)
+    // - contenedor: apodo (para listados/ubicaci�n)
     let numeroNorm = contNumeroVal ? contNumeroVal.padStart(2, '0') : '';
     let apodo = [contBaseVal, numeroNorm].filter(Boolean).join(' ').trim();
     let nombreFinal = (contTipoVal || 'Contenedor').trim();
@@ -1220,7 +1218,7 @@
       numeroNorm = null;
       contenedorFinal = (contenedorNombre || '').trim();
       if (!contenedorFinal) {
-        alert('Selecciona un contenedor válido.');
+        alert('Selecciona un contenedor v�lido.');
         return;
       }
     }
@@ -1277,7 +1275,7 @@
       modelo: document.getElementById('modelo').value.trim() || null,
       notas: document.getElementById('notas').value.trim() || null,
       campos_personalizados: collectCamposExtra(),
-      // Algunas instalaciones usan BIGINT, otras UUID; evitamos 400 por cast inválido
+      // Algunas instalaciones usan BIGINT, otras UUID; evitamos 400 por cast inv�lido
       bodega_principal_id: bigintOrNull(state.principalId),
       bodega_secundaria_id: bigintOrNull(state.secundariaId),
       es_contenedor: altaTipo === 'CONTENEDOR'
@@ -1315,14 +1313,15 @@
         referencia_tipo: (String(state.altaTipo || 'MATERIAL').toUpperCase() === 'CONTENEDOR') ? 'alta_contenedor_activo' : 'alta_material_activo',
         responsable: null,
         fecha_movimiento: fecha,
-        observaciones: 'Alta automática (activo)',
-        estado: 'completado'
+        observaciones: 'Alta autom�tica (activo)',
+        estado: 'completado',
+        usuario_id: window.currentUser?.id
       };
       return await insertConFallback(TABLE_MOVIMIENTOS, movimiento);
     }
 
     if (altaTipo === 'CONTENEDOR') {
-      // Guardar contenedor (sin movimiento). El código ya viene del preview.
+      // Guardar contenedor (sin movimiento). El c�digo ya viene del preview.
       const codigo = codigoPreview;
       const payload = { ...payloadBase, codigo };
       const res = await insertConFallback(TABLE_CATALOGO, payload, 'id');
@@ -1334,7 +1333,7 @@
         if (!catalogoId) catalogoId = await getCatalogoIdByCodigo(codigo);
         const resMov = await crearMovimientoIngreso({ codigo, nombre: nombreFinal, catalogoId, cantidadMov: 1 });
         if (!resMov.ok) {
-          alert('Se guardó el contenedor pero NO se pudo crear el movimiento de ingreso.\n' + resMov.error);
+          alert('Se guard� el contenedor pero NO se pudo crear el movimiento de ingreso.\n' + resMov.error);
           return;
         }
       }
@@ -1348,14 +1347,14 @@
       if (contInput) contInput.value = (apodo || contenedorFinal || '').trim();
 
       await loadContenedores();
-      // Resaltar el botón del nuevo contenedor (si existe)
+      // Resaltar el bot�n del nuevo contenedor (si existe)
       try {
         const btn = document.querySelector(`.contenedor-btn[data-codigo="${CSS.escape(String(codigo))}"]`);
         document.querySelectorAll('.contenedor-btn').forEach(b => b.classList.remove('contenedor-selected'));
         if (btn) btn.classList.add('contenedor-selected');
       } catch (_) {}
 
-      // Cambiar a modo MATERIAL automáticamente
+      // Cambiar a modo MATERIAL autom�ticamente
       setAltaTipo('MATERIAL');
       // Limpiar inputs de material
       try {
@@ -1376,7 +1375,7 @@
     }
 
     if (state.itemTipo === 'ACCESORIO') {
-      // 1 código, movimiento con cantidad
+      // 1 c�digo, movimiento con cantidad
       const suffix = [base, ...extras, largoAccesorio].filter(Boolean).join('-');
       const consec = await obtenerSiguienteConsecutivo(suffix);
       const codigo = suffix ? `${consec}-${suffix}` : `${consec}`;
@@ -1391,7 +1390,7 @@
       if (state.esActivo) {
         const resMov = await crearMovimientoIngreso({ codigo, nombre: nombreFinal, catalogoId, cantidadMov: cantidad });
         if (!resMov.ok) {
-          alert('Se guardó el catálogo pero NO se pudo crear el movimiento de ingreso.\n' + resMov.error);
+          alert('Se guard� el cat�logo pero NO se pudo crear el movimiento de ingreso.\n' + resMov.error);
           return;
         }
       }
@@ -1401,13 +1400,13 @@
       if (state.cerrarContenedor) {
         const cierre = await cerrarContenedorActual();
         if (!cierre.ok) {
-          alert('Se guardó el material, pero NO se pudo cerrar el contenedor.\n' + cierre.error);
+          alert('Se guard� el material, pero NO se pudo cerrar el contenedor.\n' + cierre.error);
           return;
         }
         await loadContenedores();
       }
     } else {
-      // EQUIPO: crea N hijos con sufijo -01..-NN (continuando desde el último índice hijo)
+      // EQUIPO: crea N hijos con sufijo -01..-NN (continuando desde el �ltimo �ndice hijo)
       const idxStartStr = await obtenerSiguienteIndiceHijo(base, extras);
       const idxStart = parseInt(idxStartStr, 10);
       const idx0 = Number.isFinite(idxStart) && idxStart > 0 ? idxStart : 1;
@@ -1434,7 +1433,7 @@
         if (state.esActivo) {
           const resMov = await crearMovimientoIngreso({ codigo, nombre: nombreFinal, catalogoId, cantidadMov: 1 });
           if (!resMov.ok) {
-            alert(`Se guardó el catálogo (${codigo}) pero NO se pudo crear el movimiento.\n${resMov.error}`);
+            alert(`Se guard� el cat�logo (${codigo}) pero NO se pudo crear el movimiento.\n${resMov.error}`);
             return;
           }
         }
@@ -1443,12 +1442,12 @@
 
       const primero = created[0] || '';
       const ultimo = created[created.length - 1] || '';
-      alert(`Guardados ${created.length} equipos.\nPrimero: ${primero}\nÚltimo: ${ultimo}`);
+      alert(`Guardados ${created.length} equipos.\nPrimero: ${primero}\n�ltimo: ${ultimo}`);
 
       if (state.cerrarContenedor) {
         const cierre = await cerrarContenedorActual();
         if (!cierre.ok) {
-          alert('Se guardó el lote, pero NO se pudo cerrar el contenedor.\n' + cierre.error);
+          alert('Se guard� el lote, pero NO se pudo cerrar el contenedor.\n' + cierre.error);
           return;
         }
         await loadContenedores();
@@ -1477,11 +1476,9 @@
       if (largoEl2) largoEl2.value = '';
       const cerrarEl2 = document.getElementById('ua-cerrar-contenedor');
       if (cerrarEl2) cerrarEl2.checked = false;
-<<<<<<< HEAD
+
       document.querySelectorAll('.secundaria-btn').forEach(b => b.classList.remove('bodega-secundaria-seleccionada'));
-=======
-      document.querySelectorAll('.secundaria-btn').forEach(b => b.classList.remove('secundaria-selected'));
->>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
+
       document.querySelectorAll('.contenedor-btn').forEach(b => b.classList.remove('contenedor-selected'));
       renderCamposExtra();
       updateResumen();
@@ -1532,7 +1529,7 @@
         .eq('nombre', 'Audiovisual')
         .single();
       if (errPrin || !principales) {
-        console.warn('No se encontró la bodega principal "Audiovisual"', errPrin);
+        console.warn('No se encontr� la bodega principal "Audiovisual"', errPrin);
         return;
       }
       state.principalId = principales.id;
@@ -1577,14 +1574,11 @@
 
     state.secundariaId = id;
     state.secundariaNombre = nombre;
-    // Resaltar el botón seleccionado
-<<<<<<< HEAD
+    // Resaltar el bot�n seleccionado
+
     document.querySelectorAll('.secundaria-btn').forEach(b => b.classList.remove('bodega-secundaria-seleccionada'));
     btn.classList.add('bodega-secundaria-seleccionada');
-=======
-    document.querySelectorAll('.secundaria-btn').forEach(b => b.classList.remove('secundaria-selected'));
-    btn.classList.add('secundaria-selected');
->>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
+
 
     // Reset del formulario de material
     try {
@@ -1607,9 +1601,9 @@
     const preview = document.getElementById('photo-preview');
     if (preview) preview.textContent = 'Sin foto';
     const codeEl = document.getElementById('codigo-material');
-    if (codeEl) codeEl.value = 'Falta base/número';
+    if (codeEl) codeEl.value = 'Falta base/n�mero';
 
-    // Metodología: secundaria seleccionada pero SIN contenedor => modo CONTENEDOR
+    // Metodolog�a: secundaria seleccionada pero SIN contenedor => modo CONTENEDOR
     setAltaTipo('CONTENEDOR');
 
     renderCamposExtra();
@@ -1678,18 +1672,18 @@
     state.contenedorId = (btn && btn.dataset && btn.dataset.contId) ? btn.dataset.contId : null;
     state.contenedorCerrado = (btn && btn.dataset && btn.dataset.cerrado) ? (btn.dataset.cerrado === '1') : false;
 
-    // Resaltar el botón seleccionado
+    // Resaltar el bot�n seleccionado
     document.querySelectorAll('.contenedor-btn').forEach(b => b.classList.remove('contenedor-selected'));
     btn.classList.add('contenedor-selected');
 
-    // Metodología: secundaria + contenedor => modo MATERIAL
+    // Metodolog�a: secundaria + contenedor => modo MATERIAL
     setAltaTipo('MATERIAL');
     updateResumen();
     updateCodigoPreview();
   }
 
   function openConfigModal() {
-    console.log('Abriendo modal de configuración');
+    console.log('Abriendo modal de configuraci�n');
     renderOrdenLista();
     document.getElementById('modal-config-orden').style.display = 'flex';
   }
@@ -1703,12 +1697,12 @@
       contenedor: 'Contenedor (nombre)',
       cont_tipo: 'Contenedor Tipo',
       cont_nombre_base: 'Contenedor Base',
-      cont_numero: 'Contenedor Número',
+      cont_numero: 'Contenedor N�mero',
       tipo_uso: 'Tipo de Uso',
       tipo_material: 'Tipo de Material',
       marca: 'Marca',
       modelo: 'Modelo',
-      abre: 'Abreviación'
+      abre: 'Abreviaci�n'
     };
 
     // CONTENEDOR: consecutivo + principal + secundaria (fijos) + 2 campos extra
@@ -1738,9 +1732,9 @@
         li.innerHTML = `
           <span style="color:#cbd5e1;">${labels[key] || key}</span>
           <div>
-            <button type="button" class="orden-btn-cont" data-action="up" data-index="${index}" ${index === 0 ? 'disabled' : ''}>↑</button>
-            <button type="button" class="orden-btn-cont" data-action="down" data-index="${index}" ${index === selected.length - 1 ? 'disabled' : ''}>↓</button>
-            <button type="button" class="orden-remove-cont" data-index="${index}">✖</button>
+            <button type="button" class="orden-btn-cont" data-action="up" data-index="${index}" ${index === 0 ? 'disabled' : ''}>?</button>
+            <button type="button" class="orden-btn-cont" data-action="down" data-index="${index}" ${index === selected.length - 1 ? 'disabled' : ''}>?</button>
+            <button type="button" class="orden-remove-cont" data-index="${index}">?</button>
           </div>
         `;
         lista.appendChild(li);
@@ -1785,7 +1779,7 @@
       return;
     }
 
-    // MATERIAL: código base viene del contenedor (sin consecutivo) + 2 campos extra
+    // MATERIAL: c�digo base viene del contenedor (sin consecutivo) + 2 campos extra
     if (state.altaTipo === 'MATERIAL') {
       const fijo = document.createElement('li');
       fijo.style.padding = '8px';
@@ -1793,7 +1787,7 @@
       fijo.style.borderRadius = '6px';
       fijo.style.marginBottom = '6px';
       fijo.style.color = '#cbd5e1';
-      fijo.textContent = 'Código del Contenedor (sin consecutivo) (fijo)';
+      fijo.textContent = 'C�digo del Contenedor (sin consecutivo) (fijo)';
       lista.appendChild(fijo);
 
       const selected = (state.codigoOrdenMaterial || []).slice(0, 2);
@@ -1809,9 +1803,9 @@
         li.innerHTML = `
           <span style="color:#cbd5e1;">${labels[key] || key}</span>
           <div>
-            <button type="button" class="orden-btn-mat" data-action="up" data-index="${index}" ${index === 0 ? 'disabled' : ''}>↑</button>
-            <button type="button" class="orden-btn-mat" data-action="down" data-index="${index}" ${index === selected.length - 1 ? 'disabled' : ''}>↓</button>
-            <button type="button" class="orden-remove-mat" data-index="${index}">✖</button>
+            <button type="button" class="orden-btn-mat" data-action="up" data-index="${index}" ${index === 0 ? 'disabled' : ''}>?</button>
+            <button type="button" class="orden-btn-mat" data-action="down" data-index="${index}" ${index === selected.length - 1 ? 'disabled' : ''}>?</button>
+            <button type="button" class="orden-remove-mat" data-index="${index}">?</button>
           </div>
         `;
         lista.appendChild(li);
@@ -1883,9 +1877,9 @@
       li.innerHTML = `
         <span style="color:#cbd5e1;">${labels[key] || key}</span>
         <div>
-          <button type="button" class="orden-btn" data-action="up" data-index="${index}" ${index === 0 ? 'disabled' : ''}>↑</button>
-          <button type="button" class="orden-btn" data-action="down" data-index="${index}" ${index === selected.length - 1 ? 'disabled' : ''}>↓</button>
-          <button type="button" class="orden-remove" data-index="${index}">✖</button>
+          <button type="button" class="orden-btn" data-action="up" data-index="${index}" ${index === 0 ? 'disabled' : ''}>?</button>
+          <button type="button" class="orden-btn" data-action="down" data-index="${index}" ${index === selected.length - 1 ? 'disabled' : ''}>?</button>
+          <button type="button" class="orden-remove" data-index="${index}">?</button>
         </div>
       `;
       lista.appendChild(li);
@@ -2038,3 +2032,4 @@
 
 })();
 </script>
+

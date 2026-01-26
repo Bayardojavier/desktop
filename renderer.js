@@ -13,6 +13,9 @@ function getCurrentUser() {
   };
 }
 
+// Set global currentUser
+window.currentUser = getCurrentUser();
+
 function isLoggedIn() {
   return !!getCurrentUser().rol;
 }

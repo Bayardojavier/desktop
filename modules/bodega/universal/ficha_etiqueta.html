@@ -79,10 +79,9 @@
 
     <div style="border-top:1px solid rgba(148,163,184,0.15); padding-top:10px; margin-top:10px; display:flex; gap:8px;">
       <button type="button" id="fe-btn-export-pdf" class="audiovisual-boton audiovisual-new" style="padding:10px 12px; flex:1;">📄 Exportar PDF (Ficha + Etiquetas)</button>
-<<<<<<< HEAD
+
       <button type="button" id="fe-btn-export-png" class="audiovisual-boton audiovisual-new" style="padding:10px 12px; flex:1;">🖼️ Exportar PNG</button>
-=======
->>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
+
     </div>
   </div>
 
@@ -116,17 +115,12 @@
     </div>
 
     <div style="margin-top: 10px; display:flex; gap:8px;">
-<<<<<<< HEAD
+
       <input id="fe-modal-q" class="audiovisual-input" placeholder="Buscar por código, nombre, contenedor o tipo..." style="flex:1;" />
       <button type="button" id="fe-modal-buscar" class="audiovisual-boton audiovisual-new" style="padding:8px 12px;">🔎 Buscar</button>
     </div>
     <div id="fe-modal-hint" style="margin-top: 6px; color:#94a3b8; font-size:12px;">Tip: busca por código, nombre, contenedor o tipo de contenedor.</div>
-=======
-      <input id="fe-modal-q" class="audiovisual-input" placeholder="Buscar por código o nombre..." style="flex:1;" />
-      <button type="button" id="fe-modal-buscar" class="audiovisual-boton audiovisual-new" style="padding:8px 12px;">🔎 Buscar</button>
-    </div>
-    <div id="fe-modal-hint" style="margin-top: 6px; color:#94a3b8; font-size:12px;">Tip: escribe parte del código o del nombre.</div>
->>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
+
 
     <div id="fe-modal-resultados" style="margin-top: 10px; overflow:auto; padding-right:6px; display:flex; flex-direction:column; gap:8px;"></div>
 
@@ -136,7 +130,7 @@
   </div>
 </div>
 
-<<<<<<< HEAD
+
 <!-- Modal export PNG -->
 <div id="fe-modal-png" class="fe-modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
   <div class="fe-modal-content" style="background:#1e293b; border:1px solid #334155; border-radius:10px; padding:20px; max-width:500px; width:90%; max-height:80vh; overflow:auto;">
@@ -162,8 +156,7 @@
   </div>
 </div>
 
-=======
->>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
+
 <!-- Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../../../src/config/supabaseClient.js"></script>
@@ -255,11 +248,9 @@
     { value: 'DIMENSIONES', label: 'Medidas/Dimensiones' },
     { value: 'MARCA', label: 'Marca' },
     { value: 'MODELO', label: 'Modelo' },
-<<<<<<< HEAD
+
     { value: 'ESTADO', label: 'Estado (Fabricación Local/Original)' },
-=======
-    { value: 'ESTADO', label: 'Estado (Hechizo/Original)' },
->>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
+
     { value: 'FECHA', label: 'Fecha' }
   ];
 
@@ -512,22 +503,17 @@
     // IMPORTANTE: en tu data actual, los contenedores pueden tener es_contenedor=false,
     // así que la fuente de verdad aquí es tipo_alta (y es_contenedor solo ayuda si está bien).
     const selectBusqueda = isConsumibles
-<<<<<<< HEAD
+
       ? 'codigo, nombre, bodega_principal, bodega_secundaria, foto_url, campos_personalizados, contenedor, contenedor_tipo'
       : 'codigo, nombre, bodega_principal, bodega_secundaria, foto_url, es_contenedor, tipo_alta, campos_personalizados, contenedor, contenedor_tipo';
-=======
-      ? 'codigo, nombre, bodega_principal, bodega_secundaria, foto_url, campos_personalizados'
-      : 'codigo, nombre, bodega_principal, bodega_secundaria, foto_url, es_contenedor, tipo_alta, campos_personalizados';
->>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
+
 
     let { data, error } = await supa
       .from(catalogo)
       .select(selectBusqueda)
-<<<<<<< HEAD
+
       .or(`codigo.ilike.${like},nombre.ilike.${like},contenedor.ilike.${like},contenedor_tipo.ilike.${like}`)
-=======
-      .or(`codigo.ilike.${like},nombre.ilike.${like}`)
->>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
+
       .order('nombre', { ascending: true })
       .limit(80);
 
@@ -538,13 +524,10 @@
 
       const retry = await supa
         .from(catalogo)
-<<<<<<< HEAD
+
         .select('codigo, nombre, bodega_principal, bodega_secundaria, foto_url, campos_personalizados, contenedor, contenedor_tipo')
         .or(`codigo.ilike.${like},nombre.ilike.${like},contenedor.ilike.${like},contenedor_tipo.ilike.${like}`)
-=======
-        .select('codigo, nombre, bodega_principal, bodega_secundaria, foto_url, campos_personalizados')
-        .or(`codigo.ilike.${like},nombre.ilike.${like}`)
->>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
+
         .order('nombre', { ascending: true })
         .limit(80);
       if (retry.error) throw retry.error;
@@ -857,40 +840,30 @@
       const qrBlock = '';
 
       return `
-<<<<<<< HEAD
+
         <div class="fe-etiq" style="border-color:${colorAcento}; width: 384px; position: relative;">
-=======
-        <div class="fe-etiq" style="border-color:${colorAcento}; width: 384px;">
->>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
+
           <div class="fe-etiq-row" style="flex-direction:${cfg.fotoPos === 'right' ? 'row-reverse' : 'row'};">
             ${fotoBlock}
             <div class="fe-etiq-right">
               <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px;">
                 <div style="flex:1; min-width:0;">
-<<<<<<< HEAD
-=======
-                  <div class="fe-etiq-codigo" style="border-bottom-color:${colorAcento}; color:${colorAcento};">${escapeHtml(String(codigo))}</div>
->>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
+
+
                   <div class="fe-etiq-nombre">${escapeHtml(String(nombre))}</div>
                   <div class="fe-etiq-detalle">${escapeHtml(detalle)}</div>
                 </div>
                 ${qrBlock}
               </div>
               <div class="fe-etiq-footer" style="border-top-color:${colorAcento};">
-<<<<<<< HEAD
+
                 <div class="fe-etiq-codigo" style="border-bottom-color:${colorAcento}; color:${colorAcento}; font-size: 18px; font-weight: bold;">${escapeHtml(String(codigo))}</div>
               </div>
             </div>
           </div>
           <img class="fe-etiq-logo" src="./assets/logo.png" alt="Logo" style="position: absolute; top: 10px; right: 10px; width: 120px; height: auto; z-index: 10;" />
         </div>
-=======
-                <span>CATÁLOGO ABSOLUTE</span>
-                <img class="fe-etiq-logo" src="./assets/logo.png" alt="Logo" />
-              </div>
-            </div>
-          </div>
->>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
+
         </div>
       `;
     }
@@ -1067,7 +1040,7 @@
         alert('❌ No se pudo exportar a PDF: ' + (err.message || err));
       });
     });
-<<<<<<< HEAD
+
 
     document.getElementById('fe-btn-export-png')?.addEventListener('click', () => {
       abrirModalPNG();
@@ -1118,8 +1091,7 @@
     modalPNG?.addEventListener('click', (e) => {
       if (e.target === modalPNG) cerrarModalPNG();
     });
-=======
->>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
+
   }
 
   function arrayBufferToBase64(buffer) {
@@ -1318,7 +1290,7 @@
     }
   }
 
-<<<<<<< HEAD
+
   async function exportarPNG(tipo, selectedCode) {
     if (!state.material) throw new Error('Primero carga un material o contenedor.');
     if (!window.html2canvas) throw new Error('html2canvas no está disponible.');
@@ -1368,8 +1340,7 @@
     }
   }
 
-=======
->>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
+
   async function cargarMaterial(codigo) {
     if (!supa) throw new Error('Supabase no está inicializado.');
 
@@ -1650,11 +1621,9 @@
       contenedor_nombre,
       __contenedores_str,
       __dimensiones_str: buildDimensionesStr(data),
-<<<<<<< HEAD
+
       __estado_str: esHechizo ? 'Fabricación Local' : 'Original',
-=======
-      __estado_str: esHechizo ? 'Hechizo' : 'Original',
->>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
+
       __fecha_str: hoy
     };
     state.hijos = hijos;
@@ -1691,3 +1660,4 @@
 
 })();
 </script>
+
