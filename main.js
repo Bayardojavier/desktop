@@ -1,5 +1,5 @@
 // desktop/main.js
-const { app, BrowserWindow, Menu, ipcMain, session, dialog, shell, Notification } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, session, dialog, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { autoUpdater } = require('electron-updater');
@@ -153,38 +153,11 @@ async function createWindow() {
   });
 
   // Eventos de auto-updater
-  autoUpdater.on('update-available', (info) => {
-    console.log('Actualización disponible', info && info.version ? `(${info.version})` : '');
-
-    try {
-      if (Notification.isSupported()) {
-        const versionTxt = info && info.version ? ` (${info.version})` : '';
-        new Notification({
-          title: 'Actualización disponible',
-          body: `Hay una nueva versión${versionTxt}. Se descargará en segundo plano.`
-        }).show();
-      }
-    } catch (e) {
-      console.error('No se pudo mostrar notificación de update-available:', e);
-    }
-  });
-
-  autoUpdater.on('update-not-available', () => {
-    console.log('No hay actualizaciones disponibles');
+  autoUpdater.on('update-available', () => {
+    console.log('Actualización disponible');
   });
 
   autoUpdater.on('update-downloaded', () => {
-    try {
-      if (Notification.isSupported()) {
-        new Notification({
-          title: 'Actualización lista',
-          body: 'La actualización terminó de descargarse. Puede reiniciar para instalarla.'
-        }).show();
-      }
-    } catch (e) {
-      console.error('No se pudo mostrar notificación de update-downloaded:', e);
-    }
-
     dialog.showMessageBox(mainWindow, {
       type: 'info',
       title: 'Actualización lista',
