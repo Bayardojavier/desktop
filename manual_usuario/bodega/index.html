@@ -1,0 +1,672 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario - Módulo de Bodega</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary-color: #64748b;
+            --accent-color: #f59e0b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --background-primary: #0f172a;
+            --background-secondary: #1e293b;
+            --background-tertiary: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --border-hover: #475569;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--background-primary) 0%, #1e1b4b 100%);
+            color: var(--text-secondary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--background-secondary) 0%, var(--background-tertiary) 100%);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .header-text h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .header-text p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--background-tertiary);
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .nav-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            transform: translateY(-1px);
+        }
+
+        /* Breadcrumb */
+        .breadcrumb {
+            background: var(--background-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .breadcrumb-nav {
+            padding: 1rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .breadcrumb-list {
+            display: flex;
+            align-items: center;
+            list-style: none;
+            gap: 0.5rem;
+        }
+
+        .breadcrumb-item {
+            color: var(--text-muted);
+        }
+
+        .breadcrumb-item a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .breadcrumb-item a:hover {
+            color: var(--primary-color);
+        }
+
+        .breadcrumb-separator {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .breadcrumb-current {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .content-section {
+            background: var(--background-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .section-header {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-description {
+            font-size: 1.125rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        /* Module Grid */
+        .module-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .module-card {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .module-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .module-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .module-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .module-description {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        /* Feature Gallery */
+        .feature-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .feature-card {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .feature-image {
+            padding: 1.5rem;
+            background: var(--background-primary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .feature-caption {
+            padding: 1rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            text-align: center;
+            background: var(--background-secondary);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--background-secondary);
+            border-top: 1px solid var(--border-color);
+            margin-top: 3rem;
+        }
+
+        .footer-content {
+            padding: 2rem;
+            text-align: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-text {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .module-card {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .module-card:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        .module-card:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+
+        .module-card:nth-child(4) {
+            animation-delay: 0.3s;
+        }
+
+        .module-card:nth-child(5) {
+            animation-delay: 0.4s;
+        }
+
+        .module-card:nth-child(6) {
+            animation-delay: 0.5s;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .nav-buttons {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .main-content {
+                padding: 1rem;
+            }
+
+            .content-section {
+                padding: 1.5rem;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            .module-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .feature-gallery {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo">
+                    <i class="fas fa-warehouse"></i>
+                </div>
+                <div class="header-text">
+                    <h1>Módulo de Bodega</h1>
+                    <p>Manual de Usuario</p>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <a href="../index.html" class="nav-btn">
+                    <i class="fas fa-home"></i>
+                    Inicio
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <nav class="breadcrumb">
+        <div class="breadcrumb-nav">
+            <ol class="breadcrumb-list">
+                <li class="breadcrumb-item">
+                    <a href="../index.html">Inicio</a>
+                </li>
+                <li class="breadcrumb-separator">/</li>
+                <li class="breadcrumb-current">Bodega</li>
+            </ol>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <section class="content-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-warehouse"></i>
+                    Módulo de Bodega
+                </h2>
+                <p class="section-description">
+                    El módulo de Bodega permite gestionar de manera integral el inventario de materiales, equipos audiovisuales, consumibles y productos terminados. Incluye control de movimientos, dashboards de seguimiento y reportes detallados.
+                </p>
+            </div>
+
+            <div class="module-grid">
+                <a href="dashboard_general.html" class="module-card">
+                    <div class="module-icon">
+                        <i class="fas fa-tachometer-alt"></i>
+                    </div>
+                    <h3 class="module-title">Dashboard General</h3>
+                    <p class="module-description">
+                        Vista general del estado del inventario, movimientos recientes y móntricas clave de la bodega.
+                    </p>
+                </a>
+
+                <a href="dashboard_evento.html" class="module-card">
+                    <div class="module-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <h3 class="module-title">Dashboard de Eventos</h3>
+                    <p class="module-description">
+                        Seguimiento de eventos programados, entregas pendientes y actividades de bodega.
+                    </p>
+                </a>
+
+                <a href="dashboard_proveedor.html" class="module-card">
+                    <div class="module-icon">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                    <h3 class="module-title">Dashboard de Proveedores</h3>
+                    <p class="module-description">
+                        Gestión de proveedores, pedidos pendientes y control de entregas.
+                    </p>
+                </a>
+
+                <a href="historial_item.html" class="module-card">
+                    <div class="module-icon">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <h3 class="module-title">Historial de Ítems</h3>
+                    <p class="module-description">
+                        Consulta detallada del historial de movimientos de cada ítem en el inventario.
+                    </p>
+                </a>
+
+                <a href="movimiento_ingreso.html" class="module-card">
+                    <div class="module-icon">
+                        <i class="fas fa-plus-circle"></i>
+                    </div>
+                    <h3 class="module-title">Movimientos de Ingreso</h3>
+                    <p class="module-description">
+                        Registro y control de ingresos de materiales y equipos a la bodega.
+                    </p>
+                </a>
+
+                <a href="movimiento_despacho.html" class="module-card">
+                    <div class="module-icon">
+                        <i class="fas fa-truck-loading"></i>
+                    </div>
+                    <h3 class="module-title">Movimientos de Despacho</h3>
+                    <p class="module-description">
+                        Gestión de salidas y despachos de materiales desde la bodega.
+                    </p>
+                </a>
+
+                <a href="movimiento_bajas.html" class="module-card">
+                    <div class="module-icon">
+                        <i class="fas fa-minus-circle"></i>
+                    </div>
+                    <h3 class="module-title">Movimientos de Bajas</h3>
+                    <p class="module-description">
+                        Control de bajas, pónrdidas y ajustes de inventario.
+                    </p>
+                </a>
+
+                <a href="universal_ficha_etiqueta.html" class="module-card">
+                    <div class="module-icon">
+                        <i class="fas fa-tags"></i>
+                    </div>
+                    <h3 class="module-title">Fichas y Etiquetas</h3>
+                    <p class="module-description">
+                        Generación de fichas tóncnicas y etiquetas para identificación de productos.
+                    </p>
+                </a>
+            </div>
+
+            <div class="feature-gallery">
+                <div class="feature-card">
+                    <div class="feature-image">
+                        <div style="background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 20px; font-family: 'Fira Code', 'Courier New', monospace; font-size: 12px; line-height: 1.4; color: #cbd5e1;">
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+                                <h3 style="margin: 0 0 12px; color: #0f172a; font-size: 14px; font-weight: 600;">📊 Dashboard de Inventario</h3>
+
+                                <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; color: #0f172a;">
+                                    <div style="margin-bottom: 16px;">
+                                        <h4 style="margin: 0 0 8px; font-size: 13px; font-weight: 600;">Estado del Inventario - Febrero 2026</h4>
+                                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+                                            <div style="background: #dcfce7; border: 1px solid #bbf7d0; border-radius: 6px; padding: 8px; text-align: center;">
+                                                <div style="font-size: 16px; font-weight: 700; color: #166534;">1,247</div>
+                                                <div style="font-size: 10px; color: #166534;">Ítems Totales</div>
+                                            </div>
+                                            <div style="background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 6px; padding: 8px; text-align: center;">
+                                                <div style="font-size: 16px; font-weight: 700; color: #0369a1;">89.2%</div>
+                                                <div style="font-size: 10px; color: #0369a1;">Disponibilidad</div>
+                                            </div>
+                                            <div style="background: #fef3c7; border: 1px solid #fde68a; border-radius: 6px; padding: 8px; text-align: center;">
+                                                <div style="font-size: 16px; font-weight: 700; color: #d97706;">23</div>
+                                                <div style="font-size: 10px; color: #d97706;">Bajo Stock</div>
+                                            </div>
+                                            <div style="background: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 6px; padding: 8px; text-align: center;">
+                                                <div style="font-size: 16px; font-weight: 700; color: #0369a1;">156</div>
+                                                <div style="font-size: 10px; color: #0369a1;">Movimientos Hoy</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px;">
+                                        <h5 style="margin: 0 0 8px; font-size: 12px; font-weight: 600; color: #0f172a;">Categorías Principales</h5>
+                                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
+                                                <span>Hierros y Aceros</span>
+                                                <div style="display: flex; align-items: center; gap: 8px;">
+                                                    <div style="width: 60px; height: 6px; background: #e2e8f0; border-radius: 3px;">
+                                                        <div style="width: 45%; height: 100%; background: #3b82f6; border-radius: 3px;"></div>
+                                                    </div>
+                                                    <span style="font-weight: 600;">45%</span>
+                                                </div>
+                                            </div>
+                                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
+                                                <span>Consumibles</span>
+                                                <div style="display: flex; align-items: center; gap: 8px;">
+                                                    <div style="width: 60px; height: 6px; background: #e2e8f0; border-radius: 3px;">
+                                                        <div style="width: 32%; height: 100%; background: #10b981; border-radius: 3px;"></div>
+                                                    </div>
+                                                    <span style="font-weight: 600;">32%</span>
+                                                </div>
+                                            </div>
+                                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
+                                                <span>Audiovisuales</span>
+                                                <div style="display: flex; align-items: center; gap: 8px;">
+                                                    <div style="width: 60px; height: 6px; background: #e2e8f0; border-radius: 3px;">
+                                                        <div style="width: 23%; height: 100%; background: #f59e0b; border-radius: 3px;"></div>
+                                                    </div>
+                                                    <span style="font-weight: 600;">23%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="feature-caption">
+                        Fig. 1 - Dashboard principal con móntricas de inventario y distribución por categorías.
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-image">
+                        <div style="background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 20px; font-family: 'Fira Code', 'Courier New', monospace; font-size: 12px; line-height: 1.4; color: #cbd5e1;">
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+                                <h3 style="margin: 0 0 12px; color: #0f172a; font-size: 14px; font-weight: 600;">🔄 Control de Movimientos</h3>
+
+                                <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; color: #0f172a;">
+                                    <div style="margin-bottom: 16px;">
+                                        <h4 style="margin: 0 0 8px; font-size: 13px; font-weight: 600;">Últimos Movimientos - Hoy</h4>
+                                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f8fafc; border-radius: 4px; font-size: 11px;">
+                                                <div>
+                                                    <div style="font-weight: 600;">Ingreso - Hierro 3/8"</div>
+                                                    <div style="color: #64748b;">Proveedor: Metalúrgica Central</div>
+                                                </div>
+                                                <div style="text-align: right;">
+                                                    <div style="color: #059669; font-weight: 600;">+150 ud</div>
+                                                    <div style="color: #64748b;">10:30 AM</div>
+                                                </div>
+                                            </div>
+                                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f8fafc; border-radius: 4px; font-size: 11px;">
+                                                <div>
+                                                    <div style="font-weight: 600;">Despacho - Cable USB</div>
+                                                    <div style="color: #64748b;">Proyecto: Centro Educativo</div>
+                                                </div>
+                                                <div style="text-align: right;">
+                                                    <div style="color: #dc2626; font-weight: 600;">-25 ud</div>
+                                                    <div style="color: #64748b;">09:15 AM</div>
+                                                </div>
+                                            </div>
+                                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f8fafc; border-radius: 4px; font-size: 11px;">
+                                                <div>
+                                                    <div style="font-weight: 600;">Baja - Monitor LCD</div>
+                                                    <div style="color: #64748b;">Motivo: Daño irreparable</div>
+                                                </div>
+                                                <div style="text-align: right;">
+                                                    <div style="color: #dc2626; font-weight: 600;">-1 ud</div>
+                                                    <div style="color: #64748b;">08:45 AM</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 12px;">
+                                        <h5 style="margin: 0 0 8px; font-size: 12px; font-weight: 600; color: #92400e;">Alertas Activas</h5>
+                                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                                            <div style="display: flex; align-items: center; gap: 8px; font-size: 11px;">
+                                                <span style="color: #dc2626;">⚠</span>
+                                                <span>5 ítems con stock crítico</span>
+                                            </div>
+                                            <div style="display: flex; align-items: center; gap: 8px; font-size: 11px;">
+                                                <span style="color: #d97706;">🔔</span>
+                                                <span>3 pedidos pendientes de entrega</span>
+                                            </div>
+                                            <div style="display: flex; align-items: center; gap: 8px; font-size: 11px;">
+                                                <span style="color: #059669;">✓</span>
+                                                <span>Inventario actualizado correctamente</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="feature-caption">
+                        Fig. 2 - Control en tiempo real de movimientos con alertas automáticas.
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p class="footer-text">
+                <i class="fas fa-copyright"></i>
+                Manual de Usuario - Absolute de Nicaragua 2026
+            </p>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Iniciar Sesión</title>
+  <style>
+    /* Reset básico */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      padding: 0%;
+      margin: 0;
+      overflow: auto;
+    }
+
+    .login-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      width: 100%;
+      max-width: 400px;
+      padding: 32px;
+    }
+    .login-card h2 {
+      text-align: center;
+      color: #1e40af;
+      margin-bottom: 24px;
+      font-size: 24px;
+    }
+
+    .input-group {
+      margin-bottom: 18px;
+    }
+    .input-group label {
+      display: block;
+      margin-bottom: 6px;
+      color: #374151;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .input-group input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 15px;
+      transition: border-color .2s;
+    }
+    .input-group input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,.2);
+    }
+
+    .btn-login {
+      width: 100%;
+      padding: 12px;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .btn-login:hover {
+      background: #2563eb;
+    }
+
+    .face-wrap {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 12px;
+      padding: 10px;
+      background: transparent;
+    }
+    .face-img {
+      width: 120px;
+      height: 120px;
+      object-fit: contain;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      user-select: none;
+      display: block;
+      border-radius: 8px;
+      background: transparent;
+    }
+    .face-img.attentive {
+      transform: translateY(-4px) scale(1.05);
+    }
+    .face-img.cover {
+      transform: translateY(-2px) scale(1.02);
+      opacity: 0.95;
+    }
+    @keyframes bounce-slight {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+      100% { transform: translateY(0); }
+    }
+    .face-img.bounce {
+      animation: bounce-slight 600ms ease;
+    }
+
+    .footer-links {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #6b7280;
+    }
+    .footer-links a {
+      color: #3b82f6;
+      text-decoration: none;
+      margin-left: 8px;
+    }
+  </style>
+
+  </style>
+</head>
+<body>
+  <div class="login-wrapper">
+    <div class="login-card">
+      <h2>Iniciar Sesión</h2>
+      <div class="face-wrap">
+        <img id="faceImg" class="face-img" src="./assets/1.png" alt="Personaje" aria-hidden="true" />
+      </div>
+      <form id="formLogin">
+        <div class="input-group">
+          <label for="usuario">Usuario</label>
+          <input type="text" id="usuario" autocomplete="username" required />
+        </div>
+        <div class="input-group">
+          <label for="contrasena">Contraseña</label>
+          <div class="password-wrap" style="position:relative;">
+            <input type="password" id="contrasena" autocomplete="current-password" required style="padding-right:44px;" />
+            <button type="button" id="toggle-password" class="toggle-password" aria-label="Mostrar contraseña" title="Mostrar contraseña" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);border:none;background:transparent;padding:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+              <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </button>
+          </div>
+        </div>
+        <button type="submit" class="btn">Ingresar</button>
+      </form>
+      <div class="footer-links">¿No tienes cuenta? <a href="#" id="link-registro">Registrarse</a></div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../config/supabaseClient.js"></script>
+  <script src="./login.js"></script>
+</body>
+</html>

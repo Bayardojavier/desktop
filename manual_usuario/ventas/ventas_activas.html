@@ -1,0 +1,910 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario - Ventas Activas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary-color: #64748b;
+            --accent-color: #f59e0b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --background-primary: #0f172a;
+            --background-secondary: #1e293b;
+            --background-tertiary: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --border-hover: #475569;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--background-primary) 0%, #1e1b4b 100%);
+            color: var(--text-secondary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--background-secondary) 0%, var(--background-tertiary) 100%);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .header-text h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .header-text p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--background-tertiary);
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .nav-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            transform: translateY(-1px);
+        }
+
+        /* Breadcrumb */
+        .breadcrumb {
+            background: var(--background-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .breadcrumb-nav {
+            padding: 1rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .breadcrumb-list {
+            display: flex;
+            align-items: center;
+            list-style: none;
+            gap: 0.5rem;
+        }
+
+        .breadcrumb-item {
+            color: var(--text-muted);
+        }
+
+        .breadcrumb-item a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .breadcrumb-item a:hover {
+            color: var(--primary-color);
+        }
+
+        .breadcrumb-separator {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .breadcrumb-current {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .content-section {
+            background: var(--background-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .section-header {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-description {
+            font-size: 1.125rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        /* Feature Gallery */
+        .feature-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .feature-card {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .feature-image {
+            padding: 1.5rem;
+            background: var(--background-primary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .feature-caption {
+            padding: 1rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            text-align: center;
+            background: var(--background-secondary);
+        }
+
+        /* Content Blocks */
+        .content-block {
+            margin: 2rem 0;
+        }
+
+        .content-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .content-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .content-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .content-list li:last-child {
+            border-bottom: none;
+        }
+
+        .nested-list {
+            margin-left: 1.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .nested-list li {
+            border-bottom: none;
+            padding: 0.25rem 0;
+            color: var(--text-muted);
+        }
+
+        .code-inline {
+            background: var(--background-tertiary);
+            color: var(--accent-color);
+            padding: 0.2em 0.4em;
+            border-radius: var(--radius-sm);
+            font-family: 'Fira Code', 'Courier New', monospace;
+            font-size: 0.875em;
+        }
+
+        /* Table Styles */
+        .table-container {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .table-header {
+            padding: 1rem 1.5rem;
+            background: var(--background-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .table-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th {
+            padding: 1rem;
+            text-align: left;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            background: var(--background-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .table td {
+            padding: 1rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .table tbody tr:hover {
+            background: var(--background-primary);
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .status-confirmed {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .status-in-progress {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .status-completed {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .status-cancelled {
+            background: var(--error-color);
+            color: white;
+        }
+
+        /* Progress Styles */
+        .progress-section {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .progress-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .progress-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .progress-item:last-child {
+            border-bottom: none;
+        }
+
+        .progress-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .progress-icon.completed {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .progress-icon.in-progress {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .progress-icon.pending {
+            background: var(--background-secondary);
+            color: var(--text-muted);
+            border: 2px solid var(--border-color);
+        }
+
+        .progress-content h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .progress-content p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--background-secondary);
+            border-top: 1px solid var(--border-color);
+            margin-top: 3rem;
+        }
+
+        .footer-content {
+            padding: 2rem;
+            text-align: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-text {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .feature-card {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .feature-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .nav-buttons {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .main-content {
+                padding: 1rem;
+            }
+
+            .content-section {
+                padding: 1.5rem;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            .feature-gallery {
+                grid-template-columns: 1fr;
+            }
+
+            .table {
+                font-size: 0.75rem;
+            }
+
+            .table th,
+            .table td {
+                padding: 0.5rem;
+            }
+
+            .progress-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo">
+                    <i class="fas fa-play-circle"></i>
+                </div>
+                <div class="header-text">
+                    <h1>Manual de Usuario</h1>
+                    <p>Absolute de Nicaragua</p>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <a href="index.html" class="nav-btn">
+                    <i class="fas fa-arrow-left"></i>
+                    Ventas
+                </a>
+                <a href="../index.html" class="nav-btn">
+                    <i class="fas fa-home"></i>
+                    Inicio
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <nav class="breadcrumb">
+        <div class="breadcrumb-nav">
+            <ol class="breadcrumb-list">
+                <li class="breadcrumb-item">
+                    <a href="../index.html">Inicio</a>
+                </li>
+                <li class="breadcrumb-separator">/</li>
+                <li class="breadcrumb-item">
+                    <a href="index.html">Ventas</a>
+                </li>
+                <li class="breadcrumb-separator">/</li>
+                <li class="breadcrumb-current">Ventas Activas</li>
+            </ol>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <section class="content-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-play-circle"></i>
+                    Ventas Activas
+                </h2>
+                <p class="section-description">
+                    Las ventas activas representan los eventos confirmados que están en proceso de ejecución o planificación detallada. Este módulo permite hacer seguimiento del progreso de cada evento, gestionar los recursos asignados y coordinar todas las actividades necesarias para el éxito del evento.
+                </p>
+            </div>
+
+            <div class="feature-gallery">
+                <div class="feature-card">
+                    <div class="feature-image">
+                        <div style="background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 20px; font-family: 'Fira Code', 'Courier New', monospace; font-size: 12px; line-height: 1.4; color: #cbd5e1;">
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+                                <h3 style="margin: 0 0 12px; color: #0f172a; font-size: 14px; font-weight: 600;">📋 Panel de Ventas Activas</h3>
+
+                                <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; color: #0f172a;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                        <h4 style="margin: 0; font-size: 13px; font-weight: 600;">Eventos en Progreso</h4>
+                                        <div style="display: flex; gap: 8px;">
+                                            <select style="padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 6px; background: #f8fafc; font-size: 12px;">
+                                                <option>Todos los estados</option>
+                                                <option>Confirmado</option>
+                                                <option>En progreso</option>
+                                                <option>Completado</option>
+                                            </select>
+                                            <input style="padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 6px; background: #f8fafc; font-size: 12px;" placeholder="Buscar evento..." />
+                                        </div>
+                                    </div>
+
+                                    <div style="overflow: auto;">
+                                        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                                            <thead>
+                                                <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                                                    <th style="padding: 8px; text-align: left; font-weight: 600; color: #374151;">Evento</th>
+                                                    <th style="padding: 8px; text-align: left; font-weight: 600; color: #374151;">Cliente</th>
+                                                    <th style="padding: 8px; text-align: left; font-weight: 600; color: #374151;">Fecha</th>
+                                                    <th style="padding: 8px; text-align: left; font-weight: 600; color: #374151;">Progreso</th>
+                                                    <th style="padding: 8px; text-align: center; font-weight: 600; color: #374151;">Estado</th>
+                                                    <th style="padding: 8px; text-align: center; font-weight: 600; color: #374151;">Acciones</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr style="border-bottom: 1px solid #f1f5f9;">
+                                                    <td style="padding: 8px;">
+                                                        <div style="font-weight: 500;">Boda María y Carlos</div>
+                                                        <div style="font-size: 11px; color: #64748b;">200 invitados</div>
+                                                    </td>
+                                                    <td style="padding: 8px;">Eventos Elite S.A.</td>
+                                                    <td style="padding: 8px;">15/06/2026</td>
+                                                    <td style="padding: 8px;">
+                                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                                            <div style="width: 60px; height: 6px; background: #e2e8f0; border-radius: 3px;">
+                                                                <div style="width: 75%; height: 100%; background: #10b981; border-radius: 3px;"></div>
+                                                            </div>
+                                                            <span style="font-size: 11px; color: #374151;">75%</span>
+                                                        </div>
+                                                    </td>
+                                                    <td style="padding: 8px; text-align: center;">
+                                                        <span style="background: #f59e0b; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600;">EN PROGRESO</span>
+                                                    </td>
+                                                    <td style="padding: 8px; text-align: center;">
+                                                        <button style="background: #3b82f6; color: #fff; border: none; border-radius: 4px; padding: 4px 8px; font-size: 11px; margin-right: 4px;">Ver</button>
+                                                        <button style="background: #6b7280; color: #fff; border: none; border-radius: 4px; padding: 4px 8px; font-size: 11px;">Actualizar</button>
+                                                    </td>
+                                                </tr>
+                                                <tr style="border-bottom: 1px solid #f1f5f9;">
+                                                    <td style="padding: 8px;">
+                                                        <div style="font-weight: 500;">Cumpleaños Ana</div>
+                                                        <div style="font-size: 11px; color: #64748b;">50 invitados</div>
+                                                    </td>
+                                                    <td style="padding: 8px;">Fiestas Mágicas Ltda.</td>
+                                                    <td style="padding: 8px;">22/07/2026</td>
+                                                    <td style="padding: 8px;">
+                                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                                            <div style="width: 60px; height: 6px; background: #e2e8f0; border-radius: 3px;">
+                                                                <div style="width: 30%; height: 100%; background: #f59e0b; border-radius: 3px;"></div>
+                                                            </div>
+                                                            <span style="font-size: 11px; color: #374151;">30%</span>
+                                                        </div>
+                                                    </td>
+                                                    <td style="padding: 8px; text-align: center;">
+                                                        <span style="background: #10b981; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600;">CONFIRMADO</span>
+                                                    </td>
+                                                    <td style="padding: 8px; text-align: center;">
+                                                        <button style="background: #3b82f6; color: #fff; border: none; border-radius: 4px; padding: 4px 8px; font-size: 11px; margin-right: 4px;">Ver</button>
+                                                        <button style="background: #6b7280; color: #fff; border: none; border-radius: 4px; padding: 4px 8px; font-size: 11px;">Actualizar</button>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="feature-caption">
+                        Fig. 1 - Panel principal de ventas activas con tabla de eventos en progreso y barra de progreso visual.
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-image">
+                        <div style="background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 20px; font-family: 'Fira Code', 'Courier New', monospace; font-size: 12px; line-height: 1.4; color: #cbd5e1;">
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+                                <h3 style="margin: 0 0 12px; color: #0f172a; font-size: 14px; font-weight: 600;">📊 Seguimiento de Progreso</h3>
+
+                                <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; color: #0f172a;">
+                                    <div style="margin-bottom: 16px;">
+                                        <h4 style="margin: 0 0 8px; font-size: 13px; font-weight: 600;">Boda María y Carlos - Progreso General</h4>
+                                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                                            <div style="flex: 1;">
+                                                <div style="width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px;">
+                                                    <div style="width: 75%; height: 100%; background: linear-gradient(90deg, #10b981, #059669); border-radius: 4px;"></div>
+                                                </div>
+                                            </div>
+                                            <span style="font-size: 12px; font-weight: 600; color: #059669;">75% Completado</span>
+                                        </div>
+                                    </div>
+
+                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
+                                        <div style="text-align: center; padding: 8px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px;">
+                                            <div style="font-size: 18px; font-weight: 600; color: #166534;">✓</div>
+                                            <div style="font-size: 11px; color: #166534; margin-top: 4px;">Cotización</div>
+                                        </div>
+                                        <div style="text-align: center; padding: 8px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px;">
+                                            <div style="font-size: 18px; font-weight: 600; color: #166534;">✓</div>
+                                            <div style="font-size: 11px; color: #166534; margin-top: 4px;">Reserva</div>
+                                        </div>
+                                        <div style="text-align: center; padding: 8px; background: #fef3c7; border: 1px solid #fde68a; border-radius: 6px;">
+                                            <div style="font-size: 18px; font-weight: 600; color: #92400e;">●</div>
+                                            <div style="font-size: 11px; color: #92400e; margin-top: 4px;">Materiales</div>
+                                        </div>
+                                        <div style="text-align: center; padding: 8px; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 6px;">
+                                            <div style="font-size: 18px; font-weight: 600; color: #6b7280;">○</div>
+                                            <div style="font-size: 11px; color: #6b7280; margin-top: 4px;">Montaje</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="feature-caption">
+                        Fig. 2 - Vista detallada del progreso de un evento específico con checklist de tareas completadas.
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-star"></i>
+                    Funcionalidades Principales
+                </h3>
+                <ul class="content-list">
+                    <li><strong>Seguimiento en Tiempo Real:</strong> Visualización del progreso de cada evento con barras de progreso y porcentajes de completitud.</li>
+                    <li><strong>Estados de Evento:</strong> Gestión de diferentes estados (Confirmado, En Progreso, Completado, Cancelado) con colores distintivos.</li>
+                    <li><strong>Checklist de Tareas:</strong> Lista organizada de todas las actividades necesarias para la ejecución exitosa del evento.</li>
+                    <li><strong>Asignación de Recursos:</strong> Vinculación automática con materiales de bodega y coordinación con proveedores externos.</li>
+                    <li><strong>Alertas y Recordatorios:</strong> Notificaciones automáticas para fechas importantes y tareas pendientes.</li>
+                    <li><strong>Reportes de Ejecución:</strong> Documentación completa del proceso de cada evento para análisis posterior.</li>
+                </ul>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-tasks"></i>
+                    Checklist de Ejecución de Eventos
+                </h3>
+                <div class="progress-section">
+                    <h4 class="progress-title">
+                        <i class="fas fa-list-check"></i>
+                        Fases del Evento
+                    </h4>
+                    <div class="progress-item">
+                        <div class="progress-icon completed">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <div class="progress-content">
+                            <h4>Cotización y Reserva</h4>
+                            <p>Aprobación de cotización, firma de contrato y anticipo recibido.</p>
+                        </div>
+                    </div>
+                    <div class="progress-item">
+                        <div class="progress-icon completed">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <div class="progress-content">
+                            <h4>Planificación Detallada</h4>
+                            <p>Definición de cronograma, distribución de espacios y coordinación con proveedores.</p>
+                        </div>
+                    </div>
+                    <div class="progress-item">
+                        <div class="progress-icon in-progress">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="progress-content">
+                            <h4>Preparación de Materiales</h4>
+                            <p>Reserva y preparación de todos los materiales necesarios desde bodega.</p>
+                        </div>
+                    </div>
+                    <div class="progress-item">
+                        <div class="progress-icon pending">
+                            <i class="fas fa-circle"></i>
+                        </div>
+                        <div class="progress-content">
+                            <h4>Montaje y Setup</h4>
+                            <p>Instalación de decoración, equipos de sonido e iluminación en el lugar del evento.</p>
+                        </div>
+                    </div>
+                    <div class="progress-item">
+                        <div class="progress-icon pending">
+                            <i class="fas fa-circle"></i>
+                        </div>
+                        <div class="progress-content">
+                            <h4>Ejecución del Evento</h4>
+                            <p>Coordinación durante el evento, atención al cliente y resolución de imprevistos.</p>
+                        </div>
+                    </div>
+                    <div class="progress-item">
+                        <div class="progress-icon pending">
+                            <i class="fas fa-circle"></i>
+                        </div>
+                        <div class="progress-content">
+                            <h4>Desmontaje y Limpieza</h4>
+                            <p>Retiro de equipos, limpieza del lugar y devolución de materiales a bodega.</p>
+                        </div>
+                    </div>
+                    <div class="progress-item">
+                        <div class="progress-icon pending">
+                            <i class="fas fa-circle"></i>
+                        </div>
+                        <div class="progress-content">
+                            <h4>Cierre y Facturación</h4>
+                            <p>Entrega de facturas, cobro final y documentación del evento completado.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-route"></i>
+                    Gestión del Progreso
+                </h3>
+                <ol class="content-list">
+                    <li><strong>Conversión de Cotización:</strong> Una cotización aprobada se convierte automáticamente en venta activa al recibir la confirmación del cliente.</li>
+                    <li><strong>Asignación de Responsable:</strong> Cada evento activo tiene un coordinador asignado que supervisa todo el proceso.</li>
+                    <li><strong>Actualización de Estados:</strong> Los estados se actualizan automáticamente según el progreso o manualmente por el coordinador.</li>
+                    <li><strong>Control de Inventario:</strong> Reserva automática de materiales en bodega al confirmar el evento.</li>
+                    <li><strong>Coordinación con Proveedores:</strong> Gestión de contratos con proveedores externos (catering, entretenimiento, etc.).</li>
+                    <li><strong>Documentación Completa:</strong> Registro de todas las actividades, incidentes y decisiones tomadas durante la ejecución.</li>
+                </ol>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-database"></i>
+                    Estados de las Ventas Activas
+                </h3>
+                <div class="table-container">
+                    <div class="table-header">
+                        <h4 class="table-title">
+                            <i class="fas fa-info-circle"></i>
+                            Definición de Estados
+                        </h4>
+                    </div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Estado</th>
+                                <th>Descripción</th>
+                                <th>Acciones Permitidas</th>
+                                <th>Próximo Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="status-badge status-confirmed">Confirmado</span></td>
+                                <td>Cotización aprobada, contrato firmado, anticipo recibido.</td>
+                                <td>Planificación detallada, reserva de materiales.</td>
+                                <td>En Progreso</td>
+                            </tr>
+                            <tr>
+                                <td><span class="status-badge status-in-progress">En Progreso</span></td>
+                                <td>Evento en ejecución activa, materiales preparados.</td>
+                                <td>Actualización de progreso, resolución de problemas.</td>
+                                <td>Completado</td>
+                            </tr>
+                            <tr>
+                                <td><span class="status-badge status-completed">Completado</span></td>
+                                <td>Evento finalizado exitosamente, facturación completa.</td>
+                                <td>Generar reportes, archivar documentación.</td>
+                                <td>N/A</td>
+                            </tr>
+                            <tr>
+                                <td><span class="status-badge status-cancelled">Cancelado</span></td>
+                                <td>Evento cancelado por cliente o fuerza mayor.</td>
+                                <td>Devolución de materiales, gestión de reembolsos.</td>
+                                <td>N/A</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-chart-line"></i>
+                    Reportes y Análisis
+                </h3>
+                <ul class="content-list">
+                    <li><strong>Reporte de Ejecución:</strong> Documento completo con cronograma real vs planificado, costos finales y feedback del cliente.</li>
+                    <li><strong>Análisis de Rentabilidad:</strong> Comparación entre costo presupuestado y costo real de cada evento.</li>
+                    <li><strong>Métricas de Éxito:</strong> Tasa de eventos completados, satisfacción del cliente y tiempo promedio de ejecución.</li>
+                    <li><strong>Lecciones Aprendidas:</strong> Registro de problemas encontrados y soluciones implementadas para futuros eventos.</li>
+                    <li><strong>Historial de Eventos:</strong> Base de datos completa de todos los eventos realizados para referencia futura.</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p class="footer-text">
+                <i class="fas fa-copyright"></i>
+                Manual de Usuario - Absolute de Nicaragua 2026
+            </p>
+        </div>
+    </footer>
+</body>
+</html></content>
+<parameter name="filePath">c:\Users\BAYAR\absolute\desktop\manual_usuario\ventas\ventas_activas.html

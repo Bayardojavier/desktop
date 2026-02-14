@@ -1284,6 +1284,10 @@ const tables = CATALOGOS.map(c => c.table);  // Siempre cargar todos los catálo
           if (error) {
             console.error('Error al actualizar receta:', error);
             alert('❌ Error al actualizar la receta.');
+            // Mostrar notificación de error
+            if (window.showSystemNotification) {
+              window.showSystemNotification('Error al Actualizar Receta', 'No se pudo actualizar la receta. Verifique los datos.');
+            }
             return;
           }
           receta = data;
@@ -1299,6 +1303,10 @@ const tables = CATALOGOS.map(c => c.table);  // Siempre cargar todos los catálo
           if (error) {
             console.error('Error al guardar receta:', error);
             alert('❌ Error al guardar la receta.');
+            // Mostrar notificación de error
+            if (window.showSystemNotification) {
+              window.showSystemNotification('Error al Guardar Receta', 'No se pudo guardar la receta. Verifique los datos.');
+            }
             return;
           }
           receta = data;
@@ -1317,10 +1325,18 @@ const tables = CATALOGOS.map(c => c.table);  // Siempre cargar todos los catálo
         if (errorMateriales) {
           console.error('Error al guardar materiales:', errorMateriales);
           alert('❌ Error al guardar los materiales de la receta.');
+          // Mostrar notificación de error
+          if (window.showSystemNotification) {
+            window.showSystemNotification('Error al Guardar Materiales', 'No se pudieron guardar los materiales de la receta.');
+          }
           return;
         }
 
         alert(isEditing ? '✅ Receta actualizada con éxito.' : '✅ Receta guardada con éxito.');
+        // Mostrar notificación del sistema
+        if (window.showSystemNotification) {
+          window.showSystemNotification('Receta Guardada', isEditing ? 'Receta actualizada exitosamente.' : 'Nueva receta guardada exitosamente.');
+        }
         limpiarFormulario();
         cargarRecetasExistentes();
       } finally {

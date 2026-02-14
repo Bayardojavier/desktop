@@ -1,0 +1,484 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario - Fabricación de Materiales</title>
+        <title>Manual de Usuario - Fabricación de Materiales</title>
+    <style>
+        /* c:/Users/BAYAR/absolute/desktop/manual_usuario/styles/manual.css */
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            background-color: #0f172a; /* slate-900 */
+            color: #cbd5e1; /* slate-300 */
+        }
+
+        header {
+            background-color: #1e293b; /* slate-800 */
+            color: #e2e8f0; /* slate-200 */
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #334155; /* slate-700 */
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.25rem;
+            font-weight: 800;
+        }
+
+        header p {
+            margin: 0.25rem 0 0;
+            font-size: 1rem;
+            color: #94a3b8; /* slate-400 */
+        }
+
+        nav {
+            background-color: rgba(30, 41, 59, 0.5);
+            padding: 1rem 2rem;
+            text-align: center;
+            border-bottom: 1px solid #334155; /* slate-700 */
+        }
+
+        nav a {
+            color: #e2e8f0; /* slate-200 */
+            text-decoration: none;
+            margin: 0 1rem;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+
+        nav a:hover {
+            background-color: #475569; /* slate-600 */
+        }
+
+        main {
+            padding: 2rem;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        section {
+            background-color: #1e293b; /* slate-800 */
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid #334155; /* slate-700 */
+            margin-bottom: 2rem;
+        }
+
+        section h2 {
+            font-size: 1.75rem;
+            color: #f1f5f9; /* slate-100 */
+            margin-top: 0;
+            border-bottom: 2px solid #475569; /* slate-600 */
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        section h3 {
+            font-size: 1.4rem;
+            color: #e2e8f0; /* slate-200 */
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        p,
+        li {
+            color: #cbd5e1; /* slate-300 */
+            font-size: 1rem;
+        }
+
+        ul,
+        ol {
+            padding-left: 1.5rem;
+        }
+
+        ul li,
+        ol li {
+            margin-bottom: 0.75rem;
+        }
+
+        code {
+            background-color: #334155; /* slate-700 */
+            color: #f1f5f9; /* slate-100 */
+            padding: 0.2em 0.4em;
+            margin: 0;
+            font-size: 85%;
+            border-radius: 6px;
+            font-family: "Fira Code", "Courier New", monospace;
+        }
+
+        .description {
+            font-size: 1.1rem;
+            color: #94a3b8; /* slate-400 */
+            margin-bottom: 2rem;
+            border-left: 4px solid #6366f1; /* indigo-500 */
+            padding-left: 1rem;
+        }
+
+        .feature-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .feature-gallery figure {
+            margin: 0;
+            background-color: #0f172a; /* slate-900 */
+            border: 1px solid #334155; /* slate-700 */
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .feature-gallery img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .feature-gallery figcaption {
+            padding: 1rem;
+            font-size: 0.9rem;
+            color: #94a3b8; /* slate-400 */
+            text-align: center;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            color: #64748b; /* slate-500 */
+            border-top: 1px solid #334155; /* slate-700 */
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Manual de Usuario</h1>
+        <p>Sección: Bodega - Movimientos</p>
+    </header>
+
+    <nav>
+        <a href="../index.html">Volver al Índice</a>
+    </nav>
+
+    <main>
+        <section id="fabricacion">
+            <h2>🏭 Fabricación de Materiales</h2>
+            <p class="description">
+                Este módulo gestiona el proceso de manufactura interna, donde se utilizan materiales existentes del inventario (materia prima) para crear nuevos productos terminados. Al igual que las bajas, este proceso se gestiona mediante una solicitud que requiere aprobación de contabilidad para impactar el inventario.
+            </p>
+
+            <div class="feature-gallery">
+                <figure>
+                    <div style="background: linear-gradient(180deg, rgba(13, 29, 53, 0.94), rgba(10, 18, 30, 0.94)); border-radius: 10px; padding: 20px; border: 1px solid rgba(55, 148, 255, 0.22); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);">
+                        <div style="display: grid; grid-template-columns: 340px 1fr; gap: 16px; align-items: start;">
+                            <!-- Panel Lateral - Lista de Solicitudes -->
+                            <div style="background: rgba(15, 23, 42, 0.72); border: 1px solid #0f172a; border-radius: 12px; padding: 16px; box-shadow: 0 6px 14px rgba(0,0,0,0.18);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                    <div>
+                                        <h3 style="margin: 0; color: #e2e8f0; font-size: 16px;">Solicitudes</h3>
+                                        <p style="margin: 2px 0 0 0; color: #cbd5e1; font-size: 12px;">Editar o eliminar mientras estónn pendientes</p>
+                                    </div>
+                                    <button style="border-radius: 10px; padding: 6px 10px; border: 1px solid rgba(55, 148, 255, 0.22); background: rgba(255, 255, 255, 0.04); color: rgba(255, 255, 255, 0.92); font-weight: 800; cursor: pointer; font-size: 12px;">↻</button>
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto; background: rgba(255,255,255,0.04); border: 1px solid rgba(226,232,240,0.2); border-radius: 10px; padding: 10px;">
+                                    <!-- Solicitud 1 -->
+                                    <div style="border-radius: 12px; padding: 12px; border: 1px solid rgba(55, 148, 255, 0.16); background: rgba(255, 255, 255, 0.04); box-shadow: 0 8px 18px rgba(0, 0, 0, 0.20);">
+                                        <div style="font-weight: 900; font-size: 13px; color: rgba(255, 255, 255, 0.94); margin-bottom: 8px;">MAN-00123</div>
+                                        <div style="display: grid; gap: 4px; font-size: 12px; color: rgba(224, 224, 255, 0.78);">
+                                            <div><strong>Estado:</strong> <span style="color: #fbbf24;">Pendiente</span></div>
+                                            <div><strong>Fecha:</strong> 25/01/2024</div>
+                                            <div><strong>Items:</strong> 3 consumidos, 1 producido</div>
+                                        </div>
+                                        <div style="display: flex; gap: 6px; margin-top: 8px;">
+                                            <button style="border-radius: 8px; padding: 4px 8px; border: 1px solid rgba(55, 148, 255, 0.22); background: rgba(255, 255, 255, 0.04); color: rgba(255, 255, 255, 0.92); font-weight: 800; cursor: pointer; font-size: 11px;">✏️</button>
+                                            <button style="border-radius: 8px; padding: 4px 8px; border: 1px solid rgba(255, 80, 110, 0.40); background: rgba(255, 80, 110, 0.10); color: rgba(255, 255, 255, 0.92); font-weight: 800; cursor: pointer; font-size: 11px;">🗑️</button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Solicitud 2 -->
+                                    <div style="border-radius: 12px; padding: 12px; border: 1px solid rgba(55, 148, 255, 0.16); background: rgba(255, 255, 255, 0.04); box-shadow: 0 8px 18px rgba(0, 0, 0, 0.20);">
+                                        <div style="font-weight: 900; font-size: 13px; color: rgba(255, 255, 255, 0.94); margin-bottom: 8px;">MAN-00122</div>
+                                        <div style="display: grid; gap: 4px; font-size: 12px; color: rgba(224, 224, 255, 0.78);">
+                                            <div><strong>Estado:</strong> <span style="color: #10b981;">Aprobado</span></div>
+                                            <div><strong>Fecha:</strong> 20/01/2024</div>
+                                            <div><strong>Items:</strong> 2 consumidos, 2 producidos</div>
+                                        </div>
+                                        <div style="display: flex; gap: 6px; margin-top: 8px;">
+                                            <button style="border-radius: 8px; padding: 4px 8px; border: 1px solid rgba(55, 148, 255, 0.22); background: rgba(255, 255, 255, 0.04); color: rgba(255, 255, 255, 0.92); font-weight: 800; cursor: pointer; font-size: 11px;">🖨️</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Panel Principal - Formulario -->
+                            <div style="background: linear-gradient(180deg, rgba(17, 32, 56, 0.70), rgba(10, 18, 30, 0.70)); border: 1px solid rgba(55, 148, 255, 0.18); border-radius: 14px; padding: 20px; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.30);">
+                                <h2 style="margin: 0 0 6px 0; font-size: 22px; font-weight: 800; color: rgba(255, 255, 255, 0.96); text-shadow: 0 0 18px rgba(55, 148, 255, 0.16);">🏭 Fabricación de Materiales</h2>
+                                <p style="margin: 0 0 16px 0; color: rgba(224, 224, 255, 0.72); font-size: 13px;">Registre la fabricación de nuevos materiales y los materiales consumidos en el proceso</p>
+
+                                <!-- Sección de Información General -->
+                                <div style="margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(55, 148, 255, 0.12);">
+                                    <div style="display: grid; grid-template-columns: repeat(4, minmax(160px, 1fr)); gap: 12px;">
+                                        <div>
+                                            <label style="display: block; margin: 0 0 6px 0; font-size: 12px; font-weight: 700; color: rgba(224, 224, 255, 0.84);">Responsable de Manufactura</label>
+                                            <select style="width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(55, 148, 255, 0.18); background: rgba(0, 0, 0, 0.14); color: rgba(255, 255, 255, 0.92);">
+                                                <option style="background: rgba(10, 18, 30, 0.95); color: rgba(255, 255, 255, 0.92);">Carlos Rodríguez</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label style="display: block; margin: 0 0 6px 0; font-size: 12px; font-weight: 700; color: rgba(224, 224, 255, 0.84);">Fecha</label>
+                                            <input type="date" value="2024-01-25" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(55, 148, 255, 0.18); background: rgba(0, 0, 0, 0.14); color: rgba(255, 255, 255, 0.92);" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Sección Materiales Consumidos -->
+                                <div style="margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(55, 148, 255, 0.12);">
+                                    <h3 style="margin: 0 0 10px 0; font-size: 14px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; color: rgba(255, 255, 255, 0.92);">Materiales Consumidos</h3>
+                                    <p style="color: rgba(100, 116, 139, 0.90); margin-bottom: 12px; font-size: 14px;">Materiales del inventario que se utilizarán en la fabricación (serán dados de baja)</p>
+                                    
+                                    <!-- Tabla de Materiales Consumidos -->
+                                    <div style="margin-bottom: 16px;">
+                                        <!-- Fila 1 -->
+                                        <div style="display: flex; gap: 12px; align-items: flex-end; padding: 12px; border-radius: 12px; border: 1px solid rgba(55, 148, 255, 0.14); background: rgba(0, 0, 0, 0.10); margin-bottom: 10px;">
+                                            <div style="min-width: 0; flex: 1.2;">
+                                                <label style="display: block; margin: 0 0 4px 0; font-size: 12px; font-weight: 700; color: rgba(224, 224, 255, 0.84);">Código</label>
+                                                <input type="text" value="CONS-0023" readonly style="width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(55, 148, 255, 0.18); background: rgba(0, 0, 0, 0.14); color: rgba(255, 255, 255, 0.92);" />
+                                            </div>
+                                            <div style="min-width: 0; flex: 2.5;">
+                                                <label style="display: block; margin: 0 0 4px 0; font-size: 12px; font-weight: 700; color: rgba(224, 224, 255, 0.84);">Nombre</label>
+                                                <input type="text" value="Cable XLR 10m" readonly style="width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(55, 148, 255, 0.18); background: rgba(0, 0, 0, 0.14); color: rgba(255, 255, 255, 0.92);" />
+                                            </div>
+                                            <div style="min-width: 0; flex: 0.8; text-align: center;">
+                                                <label style="display: block; margin: 0 0 4px 0; font-size: 12px; font-weight: 700; color: rgba(224, 224, 255, 0.84);">Existencia</label>
+                                                <input type="number" value="15" readonly style="width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(55, 148, 255, 0.18); background: #f0fdf4; color: #047857; text-align: center;" />
+                                            </div>
+                                            <div style="min-width: 0; flex: 1; text-align: center;">
+                                                <label style="display: block; margin: 0 0 4px 0; font-size: 12px; font-weight: 700; color: rgba(224, 224, 255, 0.84);">Precio prom. ingreso</label>
+                                                <input type="text" value="$12.50" readonly style="width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(55, 148, 255, 0.18); background: #fff7ed; color: #b45309; text-align: center;" />
+                                            </div>
+                                            <div style="min-width: 0; flex: 0.8; text-align: center;">
+                                                <label style="display: block; margin: 0 0 4px 0; font-size: 12px; font-weight: 700; color: rgba(224, 224, 255, 0.84);">Cantidad</label>
+                                                <input type="number" value="3" min="1" style="width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(55, 148, 255, 0.18); background: rgba(0, 0, 0, 0.14); color: rgba(255, 255, 255, 0.92); text-align: center;" />
+                                            </div>
+                                            <div style="min-width: 0; flex: 1.5;">
+                                                <label style="display: block; margin: 0 0 4px 0; font-size: 12px; font-weight: 700; color: rgba(224, 224, 255, 0.84);">Observación</label>
+                                                <input type="text" value="Para conexiones de escenario" style="width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(55, 148, 255, 0.18); background: rgba(0, 0, 0, 0.14); color: rgba(255, 255, 255, 0.92);" />
+                                            </div>
+                                            <div style="min-width: 0; flex: 0.2; text-align: center;">
+                                                <label style="display: block; margin: 0 0 4px 0; font-size: 12px; font-weight: 700; color: rgba(224, 224, 255, 0.84);">&nbsp;</label>
+                                                <button style="border-radius: 8px; padding: 4px 8px; border: 1px solid rgba(255, 80, 110, 0.40); background: rgba(255, 80, 110, 0.10); color: rgba(255, 255, 255, 0.92); font-weight: 800; cursor: pointer; font-size: 12px;">✕</button>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Fila 2 -->
+                                        <div style="display: flex; gap: 12px; align-items: flex-end; padding: 12px; border-radius: 12px; border: 1px solid rgba(55, 148, 255, 0.14); background: rgba(0, 0, 0, 0.10);">
+                                            <div style="min-width: 0; flex: 1.2;">
+                                                <label style="display: block; margin: 0 0 4px 0; font-size: 12px; font-weight: 700; color: rgba(224, 224, 255, 0.84);">Código</label>
+                                                <input type="text" value="HIER-0005" readonly style="width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(55, 148, 255, 0.18); background: rgba(0, 0, 0, 0.14); color: rgba(255, 255, 255, 0.92);" />
+                                            </div>
+                                            <div style="min-width: 0; flex: 2.5;">
+                                                <label style="display: block; margin: 0 0 4px 0; font-size: 12px; font-weight: 700; color: rgba(224, 224, 255, 0.84);">Nombre</label>
+                                                <input type="text" value="Trípode de Aluminio" readonly style="width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(55, 148, 255, 0.18); background: rgba(0, 0, 0, 0.14); color: rgba(255, 255, 255, 0.92);" />
+                                            </div>
+                                            <div style="min-width: 0; flex: 0.8; text-align: center;">
+                                                <label style="display: block; margin: 0 0 4px 0; font-size: 12px; font-weight: 700; color: rgba(224, 224, 255, 0.84);">Existencia</label>
+                                                <input type="number" value="8" readonly style="width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(55, 148, 255, 0.18); background: #f0fdf4; color: #047857; text-align: center;" />
+                                            </div>
+                                            <div style="min-width: 0; flex: 1; text-align: center;">
+                                                <label style="display: block; margin: 0 0 4px 0; font-size: 12px; font-weight: 700; color: rgba(224, 224, 255, 0.84);">Precio prom. ingreso</label>
+                                                <input type="text" value="$45.00" readonly style="width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(55, 148, 255, 0.18); background: #fff7ed; color: #b45309; text-align: center;" />
+                                            </div>
+                                            <div style="min-width: 0; flex: 0.8; text-align: center;">
+                                                <label style="display: block; margin: 0 0 4px 0; font-size: 12px; font-weight: 700; color: rgba(224, 224, 255, 0.84);">Cantidad</label>
+                                                <input type="number" value="1" min="1" style="width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(55, 148, 255, 0.18); background: rgba(0, 0, 0, 0.14); color: rgba(255, 255, 255, 0.92); text-align: center;" />
+                                            </div>
+                                            <div style="min-width: 0; flex: 1.5;">
+                                                <label style="display: block; margin: 0 0 4px 0; font-size: 12px; font-weight: 700; color: rgba(224, 224, 255, 0.84);">Observación</label>
+                                                <input type="text" value="Base para micrófono" style="width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(55, 148, 255, 0.18); background: rgba(0, 0, 0, 0.14); color: rgba(255, 255, 255, 0.92);" />
+                                            </div>
+                                            <div style="min-width: 0; flex: 0.2; text-align: center;">
+                                                <label style="display: block; margin: 0 0 4px 0; font-size: 12px; font-weight: 700; color: rgba(224, 224, 255, 0.84);">&nbsp;</label>
+                                                <button style="border-radius: 8px; padding: 4px 8px; border: 1px solid rgba(255, 80, 110, 0.40); background: rgba(255, 80, 110, 0.10); color: rgba(255, 255, 255, 0.92); font-weight: 800; cursor: pointer; font-size: 12px;">✕</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <button style="border-radius: 10px; padding: 10px 14px; border: 1px solid rgba(55, 148, 255, 0.55); background: linear-gradient(135deg, rgba(55, 148, 255, 0.28), rgba(124, 92, 246, 0.20)); color: rgba(255, 255, 255, 0.92); font-weight: 800; cursor: pointer;">+ Seleccionar del Catálogo</button>
+                                </div>
+
+                                <!-- Sección Materiales Producidos -->
+                                <div style="margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(55, 148, 255, 0.12);">
+                                    <h3 style="margin: 0 0 10px 0; font-size: 14px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; color: rgba(255, 255, 255, 0.92);">Materiales Producidos</h3>
+                                    <p style="color: rgba(100, 116, 139, 0.90); margin-bottom: 12px; font-size: 14px;">Nuevos materiales fabricados que se agregarán al inventario cuando se aprueben</p>
+                                    
+                                    <!-- Tabla de Materiales Producidos -->
+                                    <div style="margin-bottom: 16px;">
+                                        <div style="display: flex; gap: 12px; align-items: flex-end; padding: 12px; border-radius: 12px; border: 1px solid rgba(55, 148, 255, 0.14); background: rgba(0, 0, 0, 0.10);">
+                                            <div style="min-width: 0; flex: 1.2;">
+                                                <label style="display: block; margin: 0 0 4px 0; font-size: 12px; font-weight: 700; color: rgba(224, 224, 255, 0.84);">Código</label>
+                                                <input type="text" value="AUDI-0100" readonly style="width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(55, 148, 255, 0.18); background: rgba(0, 0, 0, 0.14); color: rgba(255, 255, 255, 0.92);" />
+                                            </div>
+                                            <div style="min-width: 0; flex: 2.5;">
+                                                <label style="display: block; margin: 0 0 4px 0; font-size: 12px; font-weight: 700; color: rgba(224, 224, 255, 0.84);">Nombre</label>
+                                                <input type="text" value="Kit de Conexión Profesional" readonly style="width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(55, 148, 255, 0.18); background: rgba(0, 0, 0, 0.14); color: rgba(255, 255, 255, 0.92);" />
+                                            </div>
+                                            <div style="min-width: 0; flex: 1.2;">
+                                                <label style="display: block; margin: 0 0 4px 0; font-size: 12px; font-weight: 700; color: rgba(224, 224, 255, 0.84);">Bodega (catálogo)</label>
+                                                <input type="text" value="Audiovisual" readonly style="width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(55, 148, 255, 0.18); background: rgba(0, 0, 0, 0.14); color: rgba(255, 255, 255, 0.92);" />
+                                            </div>
+                                            <div style="min-width: 0; flex: 0.8; text-align: center;">
+                                                <label style="display: block; margin: 0 0 4px 0; font-size: 12px; font-weight: 700; color: rgba(224, 224, 255, 0.84);">Cantidad</label>
+                                                <input type="number" value="1" min="1" style="width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(55, 148, 255, 0.18); background: rgba(0, 0, 0, 0.14); color: rgba(255, 255, 255, 0.92); text-align: center;" />
+                                            </div>
+                                            <div style="min-width: 0; flex: 1.5;">
+                                                <label style="display: block; margin: 0 0 4px 0; font-size: 12px; font-weight: 700; color: rgba(224, 224, 255, 0.84);">Observación</label>
+                                                <input type="text" value="Kit ensamblado con componentes certificados" style="width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(55, 148, 255, 0.18); background: rgba(0, 0, 0, 0.14); color: rgba(255, 255, 255, 0.92);" />
+                                            </div>
+                                            <div style="min-width: 0; flex: 0.2; text-align: center;">
+                                                <label style="display: block; margin: 0 0 4px 0; font-size: 12px; font-weight: 700; color: rgba(224, 224, 255, 0.84);">&nbsp;</label>
+                                                <button style="border-radius: 8px; padding: 4px 8px; border: 1px solid rgba(255, 80, 110, 0.40); background: rgba(255, 80, 110, 0.10); color: rgba(255, 255, 255, 0.92); font-weight: 800; cursor: pointer; font-size: 12px;">✕</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <button style="border-radius: 10px; padding: 10px 14px; border: 1px solid rgba(55, 148, 255, 0.55); background: linear-gradient(135deg, rgba(55, 148, 255, 0.28), rgba(124, 92, 246, 0.20)); color: rgba(255, 255, 255, 0.92); font-weight: 800; cursor: pointer;">+ Seleccionar del Catálogo</button>
+                                </div>
+
+                                <!-- Botones de Acción -->
+                                <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; margin-top: 16px;">
+                                    <button style="border-radius: 10px; padding: 10px 14px; border: 1px solid rgba(55, 148, 255, 0.55); background: linear-gradient(135deg, rgba(55, 148, 255, 0.28), rgba(124, 92, 246, 0.20)); color: rgba(255, 255, 255, 0.92); font-weight: 800; cursor: pointer;">Enviar Solicitud</button>
+                                    <button style="border-radius: 10px; padding: 10px 14px; border: 1px solid rgba(55, 148, 255, 0.22); background: rgba(255, 255, 255, 0.04); color: rgba(255, 255, 255, 0.92); font-weight: 800; cursor: pointer;">Limpiar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <figcaption>Fig. 1 - Formulario completo de fabricación mostrando materiales consumidos y producidos con panel lateral de solicitudes.</figcaption>
+                </figure>
+                
+                <figure>
+                    <div style="background: linear-gradient(180deg, rgba(13, 29, 53, 0.94), rgba(10, 18, 30, 0.94)); border-radius: 10px; padding: 20px; border: 1px solid rgba(55, 148, 255, 0.22); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);">
+                        <!-- Modal de Selección de Materiales -->
+                        <div style="position: fixed; inset: 0; background: rgba(0, 0, 0, 0.72); z-index: 2000; display: flex; justify-content: center; align-items: center; padding: 18px;">
+                            <div style="width: min(1120px, 96vw); background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 18px; box-shadow: 0 22px 70px rgba(0, 0, 0, 0.45);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 18px 18px; border-bottom: 1px solid #e2e8f0; background: linear-gradient(180deg, rgba(219, 234, 254, 0.70), rgba(248, 250, 252, 0.90)); border-radius: 12px 12px 0 0;">
+                                    <h2 style="margin: 0; font-size: 19px; font-weight: 900; color: #1e3a8a; letter-spacing: 0.2px;">🔍 Seleccionar Materiales del Catálogo</h2>
+                                    <button style="background: #ffffff; border: 1px solid #cbd5e1; color: #334155; width: 44px; height: 44px; border-radius: 10px; font-size: 26px; line-height: 1; cursor: pointer;">✕</button>
+                                </div>
+
+                                <div style="padding: 16px 18px; border-bottom: 1px solid #e2e8f0; background: #f1f5f9;">
+                                    <div style="display: grid; grid-template-columns: 2fr 1fr auto; gap: 14px; align-items: end;">
+                                        <div>
+                                            <label style="display: block; margin: 0 0 6px 0; font-size: 13px; font-weight: 800; color: #334155;">Buscar material</label>
+                                            <input type="text" placeholder="Nombre o código del material..." style="width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; color: #0f172a; font-size: 14px;" />
+                                        </div>
+                                        <div>
+                                            <label style="display: block; margin: 0 0 6px 0; font-size: 13px; font-weight: 800; color: #334155;">Tipo</label>
+                                            <select style="width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; color: #0f172a; font-size: 14px;">
+                                                <option>Todos</option>
+                                                <option>Consumibles</option>
+                                                <option>Audiovisual</option>
+                                                <option>Hierros</option>
+                                            </select>
+                                        </div>
+                                        <button style="border-radius: 10px; padding: 10px 16px; border: 1px solid rgba(55, 148, 255, 0.55); background: linear-gradient(135deg, rgba(55, 148, 255, 0.28), rgba(124, 92, 246, 0.20)); color: rgba(255, 255, 255, 0.92); font-weight: 800; cursor: pointer;">Buscar</button>
+                                    </div>
+                                </div>
+
+                                <div style="padding: 18px;">
+                                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+                                        <!-- Material 1 -->
+                                        <div style="border-radius: 12px; padding: 16px; border: 1px solid #e2e8f0; background: #ffffff; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); cursor: pointer; transition: transform 140ms ease, box-shadow 180ms ease;">
+                                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                                                <div style="font-weight: 900; font-size: 14px; color: #0f172a;">AUDI-0001</div>
+                                                <div style="font-size: 12px; color: #64748b; background: #f1f5f9; padding: 2px 8px; border-radius: 12px;">Audiovisual</div>
+                                            </div>
+                                            <div style="font-size: 15px; color: #334155; margin-bottom: 8px; font-weight: 600;">Micrófono Shure SM58</div>
+                                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                                <div style="font-size: 13px; color: #64748b;">Existencia: <strong style="color: #059669;">12 unidades</strong></div>
+                                                <div style="font-size: 13px; color: #64748b;">$85.00</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Material 2 -->
+                                        <div style="border-radius: 12px; padding: 16px; border: 1px solid #e2e8f0; background: #ffffff; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); cursor: pointer; transition: transform 140ms ease, box-shadow 180ms ease;">
+                                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                                                <div style="font-weight: 900; font-size: 14px; color: #0f172a;">HIER-0005</div>
+                                                <div style="font-size: 12px; color: #64748b; background: #f1f5f9; padding: 2px 8px; border-radius: 12px;">Hierros</div>
+                                            </div>
+                                            <div style="font-size: 15px; color: #334155; margin-bottom: 8px; font-weight: 600;">Trípode de Aluminio</div>
+                                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                                <div style="font-size: 13px; color: #64748b;">Existencia: <strong style="color: #059669;">8 unidades</strong></div>
+                                                <div style="font-size: 13px; color: #64748b;">$45.00</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Material 3 -->
+                                        <div style="border-radius: 12px; padding: 16px; border: 1px solid #e2e8f0; background: #ffffff; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); cursor: pointer; transition: transform 140ms ease, box-shadow 180ms ease;">
+                                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                                                <div style="font-weight: 900; font-size: 14px; color: #0f172a;">CONS-0023</div>
+                                                <div style="font-size: 12px; color: #64748b; background: #f1f5f9; padding: 2px 8px; border-radius: 12px;">Consumibles</div>
+                                            </div>
+                                            <div style="font-size: 15px; color: #334155; margin-bottom: 8px; font-weight: 600;">Cable XLR 10m</div>
+                                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                                <div style="font-size: 13px; color: #64748b;">Existencia: <strong style="color: #059669;">15 unidades</strong></div>
+                                                <div style="font-size: 13px; color: #64748b;">$12.50</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <figcaption>Fig. 2 - Modal de selección de materiales del catálogo con filtros de búsqueda y tarjetas de materiales organizadas por tipo.</figcaption>
+                </figure>
+            </div>
+
+            <h3>Características Principales</h3>
+            <ul>
+                <li><strong>Doble Registro de Materiales:</strong> El formulario se divide en dos secciones clave:
+                    <ul>
+                        <li><strong>Materiales Consumidos:</strong> Lista de materias primas o componentes que se tomarán del inventario para la fabricación. Al aprobarse la solicitud, el stock de estos items <strong>disminuirá</strong>.</li>
+                        <li><strong>Materiales Producidos:</strong> Lista de los nuevos items que resultan del proceso de fabricación. Al aprobarse la solicitud, el stock de estos items <strong>aumentará</strong>.</li>
+                    </ul>
+                </li>
+                <li><strong>Flujo de Aprobación:</strong> Las solicitudes de fabricación se guardan con estado <strong>"pendiente de aprobación"</strong>. No afectan el inventario hasta que el departamento de contabilidad las aprueba.</li>
+                <li><strong>Selección desde Catálogo:</strong> Tanto los materiales a consumir como los a producir se seleccionan desde el catálogo general, asegurando la consistencia de los datos.
+                    <ul>
+                        <li>Para los <strong>consumidos</strong>, el sistema muestra el stock disponible para evitar solicitar más de lo que hay.</li>
+                        <li>Para los <strong>producidos</strong>, se selecciona el código del producto terminado que se va a crear.</li>
+                    </ul>
+                </li>
+                <li><strong>Costeo de Producción (Implícito):</strong> Al registrar los materiales consumidos con su precio promedio, el sistema tiene la base para calcular el costo del nuevo producto fabricado, información crucial para contabilidad.</li>
+                <li><strong>Gestión de Solicitudes:</strong> Un panel lateral muestra todas las solicitudes de fabricación, permitiendo <strong>editar</strong> o <strong>eliminar</strong> aquellas que aún están pendientes.</li>
+                <li><strong>Generación de Documento Formal (PDF):</strong> El sistema puede generar un PDF de la "Solicitud de Fabricación" con un número de correlativo único (ej. <code>MAN-00001</code>), que sirve como registro formal del proceso solicitado.</li>
+            </ul>
+
+            <h3>Flujo de Trabajo Típico</h3>
+            <ol>
+                <li>El usuario responsable de la manufactura selecciona su nombre y la fecha.</li>
+                <li>En la sección "Materiales Consumidos", hace clic en "Seleccionar del Catálogo" y añade la materia prima que utilizará, especificando la cantidad.</li>
+                <li>En la sección "Materiales Producidos", hace clic en "Seleccionar del Catálogo" y añade el producto terminado que va a crear, especificando la cantidad.</li>
+                <li>Una vez completadas ambas listas, hace clic en "Enviar Solicitud".</li>
+                <li>El sistema guarda la solicitud con estado "Pendiente" y genera un número de correlativo.</li>
+                <li>La solicitud queda a la espera de la revisión y aprobación por parte de contabilidad. Una vez aprobada, el sistema ajustará automáticamente el inventario (dando de baja los consumidos y de alta los producidos).</li>
+            </ol>
+        </section>
+    </main>
+
+    <footer>
+        <p>Manual de Usuario - Absolute de Nicaragua &copy; 2026</p>
+    </footer>
+
+</body>
+</html>
+

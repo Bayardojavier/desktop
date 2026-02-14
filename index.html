@@ -4,10 +4,221 @@
   <meta charset="UTF-8">
   <title>Absolute de Nicaragua</title>
   <link rel="stylesheet" href="./styles/app.css">
+  <style>
+    /* Reset básico para login */
+    .login-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .login-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      width: 100%;
+      max-width: 400px;
+      padding: 32px;
+    }
+    .login-card h2 {
+      text-align: center;
+      color: #1e40af;
+      margin-bottom: 24px;
+      font-size: 24px;
+    }
+
+    .input-group {
+      margin-bottom: 18px;
+    }
+    .input-group label {
+      display: block;
+      margin-bottom: 6px;
+      color: #374151;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .input-group input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 15px;
+      transition: border-color .2s;
+    }
+    .input-group input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,.2);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .btn:hover {
+      background: #2563eb;
+    }
+
+    .face-wrap {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 12px;
+      padding: 10px;
+      background: transparent;
+    }
+    .face-img {
+      width: 120px;
+      height: 120px;
+      object-fit: contain;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      user-select: none;
+      display: block;
+      border-radius: 8px;
+      background: transparent;
+    }
+    .face-img.attentive {
+      transform: translateY(-4px) scale(1.05);
+    }
+    .face-img.cover {
+      transform: translateY(-2px) scale(1.02);
+      opacity: 0.95;
+    }
+    @keyframes bounce-slight {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+      100% { transform: translateY(0); }
+    }
+    .face-img.bounce {
+      animation: bounce-slight 600ms ease;
+    }
+
+    .footer-links {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #6b7280;
+    }
+    .footer-links a {
+      color: #3b82f6;
+      text-decoration: none;
+      margin-left: 8px;
+    }
+    /* Network banner in tabs */
+    .tabs { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .tab-left { display:flex; gap:8px; align-items:center; }
+    .tab-right { display:flex; align-items:center; }
+    .network-banner { background: #fff3cd; color:#856404; border:1px solid #ffeeba; padding:6px 10px; border-radius:6px; display:flex; align-items:center; gap:8px; font-size:13px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    .network-banner.hidden { display:none; }
+    .network-banner-btn { background:#ffc107; border:none; color:#212529; padding:4px 8px; border-radius:4px; cursor:pointer; }
+    .network-banner-link { background:transparent; border:none; color:#856404; text-decoration:underline; cursor:pointer; padding:4px 6px; }
+  </style>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
+    </div>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const btnSet = document.getElementById('btn-set-dns');
+        const btnRestore = document.getElementById('btn-restore-dns');
+        if (btnSet) btnSet.addEventListener('click', async () => {
+          if (window.openDnsHelpModal) window.openDnsHelpModal();
+        });
+        if (btnRestore) btnRestore.addEventListener('click', async () => {
+          if (window.openDnsHelpModal) window.openDnsHelpModal();
+        });
+        
+        // Network banner helpers (global)
+        const banner = document.getElementById('network-banner');
+        const bannerMsg = document.getElementById('network-banner-msg');
+        const bannerRetry = document.getElementById('network-banner-retry');
+        const bannerHelp = document.getElementById('network-banner-help');
+
+        window.showNetworkBanner = function(message){
+          if (bannerMsg) bannerMsg.textContent = message || 'Problema de red (DNS) — algunos servicios pueden no responder.';
+          if (banner) banner.classList.remove('hidden');
+        };
+        window.hideNetworkBanner = function(){ if (banner) banner.classList.add('hidden'); };
+
+        if (bannerRetry) bannerRetry.addEventListener('click', () => {
+          // Emitir evento global para que los módulos reintenten sus operaciones
+          document.dispatchEvent(new CustomEvent('network-retry'));
+        });
+        if (bannerHelp) bannerHelp.addEventListener('click', () => {
+          if (window.openDnsHelpModal) window.openDnsHelpModal();
+        });
+        // Modal DNS controls
+        const modalDns = document.getElementById('modal-dns-help');
+        const modalDnsClose = document.getElementById('modal-dns-close');
+        const modalRunSet = document.getElementById('modal-run-set-dns');
+        const modalRunRestore = document.getElementById('modal-run-restore-dns');
+        const modalShowManual = document.getElementById('modal-show-manual');
+        const manualSteps = document.getElementById('manual-steps');
+        const manualStepsPre = document.getElementById('manual-steps-pre');
+        let dnsHelpLoaded = false;
+
+        window.openDnsHelpModal = async function(){
+          try{
+            if (modalDns) modalDns.style.display = 'block';
+            if (!dnsHelpLoaded){
+              const resp = await fetch('assets/help/dns_help.txt');
+              if (resp.ok){
+                const txt = await resp.text();
+                if (manualStepsPre) manualStepsPre.textContent = txt;
+                dnsHelpLoaded = true;
+              }
+            }
+          }catch(e){ console.error('Error loading DNS help text', e); }
+        };
+
+        if (modalDnsClose) modalDnsClose.addEventListener('click', () => { if (modalDns) modalDns.style.display = 'none'; });
+        if (modalRunSet) modalRunSet.addEventListener('click', async () => {
+          if (!confirm('Ejecutar solución automática en este equipo?')) return;
+          try {
+            const res = await window.electronAPI.runSetDns();
+            if (res && res.started) alert('Script iniciado. Consulta la consola del sistema para salida.');
+            else alert('No se pudo iniciar: ' + (res && res.error ? res.error : 'desconocido'));
+          } catch (err) { alert('Error: ' + (err && err.message ? err.message : String(err))); }
+        });
+        if (modalRunRestore) modalRunRestore.addEventListener('click', async () => {
+          if (!confirm('Restaurar DNS a configuración previa en este equipo?')) return;
+          try {
+            const res = await window.electronAPI.runRestoreDns();
+            if (res && res.started) alert('Script iniciado. Consulta la consola del sistema para salida.');
+            else alert('No se pudo iniciar: ' + (res && res.error ? res.error : 'desconocido'));
+          } catch (err) { alert('Error: ' + (err && err.message ? err.message : String(err))); }
+        });
+        const modalOpenTools = document.getElementById('modal-open-tools');
+        const modalCopyCommands = document.getElementById('modal-copy-commands');
+        if (modalOpenTools) modalOpenTools.addEventListener('click', async () => {
+          try {
+            const res = await window.electronAPI.openToolsFolder();
+            if (res && res.opened) alert('Carpeta de scripts abierta.');
+            else if (res && res.error) alert('Error: ' + res.error);
+          } catch (e) { alert('Error: ' + (e && e.message ? e.message : String(e))); }
+        });
+        if (modalCopyCommands) modalCopyCommands.addEventListener('click', async () => {
+          try {
+            const txt = manualStepsPre ? manualStepsPre.textContent : '';
+            if (!txt) { alert('No hay comandos cargados. Abre "Mostrar pasos manuales" primero.'); return; }
+            await navigator.clipboard.writeText(txt);
+            alert('Comandos copiados al portapapeles.');
+          } catch (e) { alert('No se pudo copiar: ' + (e && e.message ? e.message : String(e))); }
+        });
+        if (modalShowManual) modalShowManual.addEventListener('click', () => {
+          if (manualSteps) manualSteps.style.display = (manualSteps.style.display === 'none' || manualSteps.style.display === '') ? 'block' : 'none';
+        });
+      });
+    </script>
  <!-- Barra de título personalizada -->
 <div class="title-bar">
   <div class="app-title">
@@ -24,14 +235,54 @@
     <button id="close-btn" class="window-btn close">×</button>
   </div>
 </div>
+  <!-- Modal: Ayuda DNS / pasos manuales -->
+  <div id="modal-dns-help" class="modal-overlay" style="display: none;">
+    <div class="modal-content" style="max-width: 720px;">
+      <div class="modal-header">
+        <h3>Solución - Problemas de DNS</h3>
+        <button id="modal-dns-close" class="modal-close">✕</button>
+      </div>
+      <div class="modal-body" style="max-height:60vh; overflow:auto;">
+        <p>Si ves errores de resolución DNS (por ejemplo "DNS address could not be found"), aquí tienes dos opciones:</p>
+        <ol>
+          <li><strong>Solución automática:</strong> Ejecutar el script que actualiza los DNS del equipo a servidores públicos (Cloudflare/Google).</li>
+          <li><strong>Solución manual:</strong> Pasos para cambiar la DNS desde PowerShell (se muestran abajo).</li>
+        </ol>
 
-  <!-- Pestañas principales -->
+        <div style="display:flex; gap:10px; margin:12px 0; flex-wrap:wrap;">
+          <button id="modal-run-set-dns" class="ribbon-btn" style="background:#0d6efd;color:white;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;">Ejecutar solución automática</button>
+          <button id="modal-run-restore-dns" class="ribbon-btn" style="background:#6c757d;color:white;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;">Restaurar DNS automática</button>
+          <button id="modal-show-manual" class="ribbon-btn" style="background:transparent;border:1px solid #ddd;padding:8px 12px;border-radius:6px;">Mostrar pasos manuales</button>
+          <button id="modal-open-tools" class="ribbon-btn" style="background:#198754;color:white;border:none;padding:8px 12px;border-radius:6px;">Abrir carpeta de scripts</button>
+          <button id="modal-copy-commands" class="ribbon-btn" style="background:#0dcaf0;color:#04263a;border:none;padding:8px 12px;border-radius:6px;">Copiar comandos</button>
+        </div>
+
+        <div id="manual-steps" style="display:none; background:#f8f9fa; padding:12px; border-radius:6px; border:1px solid #eee;">
+          <h4>Pasos manuales (PowerShell)</h4>
+          <p>Abre PowerShell como Administrador y copia/pega los siguientes comandos:</p>
+          <pre id="manual-steps-pre" style="background:#fff;padding:8px;border-radius:4px;border:1px solid #e6e6e6;overflow:auto;"></pre>
+          <p>Si no tienes permisos, pide a tu administrador que ejecute los comandos o utiliza la opción automática si tu cuenta lo permite.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pestañas principales + indicador de red -->
   <div class="tabs">
-    <button class="tab active" data-tab="inicio">Inicio</button>
-    <button class="tab" data-tab="modulos">Módulos</button>
-    <button class="tab" data-tab="reportes">Reportes</button>
-    <button class="tab" data-tab="recetas">Recetas</button>
-    <button class="tab" data-tab="ayuda">Ayuda</button>
+    <div class="tab-left">
+      <button class="tab active" data-tab="inicio">Inicio</button>
+      <button class="tab" data-tab="modulos">Módulos</button>
+      <button class="tab" data-tab="reportes">Reportes</button>
+      <button class="tab" data-tab="recetas">Recetas</button>
+      <button class="tab" data-tab="ayuda">Ayuda</button>
+    </div>
+    <div class="tab-right">
+      <div id="network-banner" class="network-banner hidden" role="status" aria-live="polite">
+        <span id="network-banner-msg">Problema de red (DNS) — algunos servicios pueden no responder.</span>
+        <button id="network-banner-retry" class="network-banner-btn">Reintentar</button>
+        <button id="network-banner-help" class="network-banner-link">Ayuda</button>
+      </div>
+    </div>
   </div>
 
   <!-- Paneles desplegables -->
@@ -181,6 +432,16 @@
 
     <!-- Ayuda -->
     <div class="panel" id="panel-ayuda">
+      <button class="ribbon-btn" id="btn-juegos">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="6" width="20" height="12" rx="2" ry="2"></rect>
+          <path d="M6 12h.01"></path>
+          <path d="M10 12h.01"></path>
+          <path d="M14 10h.01"></path>
+          <path d="M18 14h.01"></path>
+        </svg>
+        <span>Juegos</span>
+      </button>
       <button class="ribbon-btn" id="btn-acerca">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"></circle>
@@ -203,7 +464,7 @@
         </svg>
         <span>Solución</span>
       </button>
-      <button class="ribbon-btn">
+      <button class="ribbon-btn" id="btn-soporte">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4-4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
           <line x1="9" y1="10" x2="15" y2="10"></line>
@@ -228,13 +489,50 @@
         </svg>
         <span>Configuración de ventana</span>
       </button>
+      <button class="ribbon-btn" id="btn-set-dns" title="Cambiar DNS a 1.1.1.1">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12h18"></path>
+          <path d="M12 3v18"></path>
+        </svg>
+        <span>Solucionar DNS</span>
+      </button>
+      <button class="ribbon-btn" id="btn-restore-dns" title="Restaurar configuración de DNS previa">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12H3"></path>
+          <path d="M12 21V3"></path>
+        </svg>
+        <span>Restaurar DNS</span>
+      </button>
     </div>
   </div>
 
   <!-- Área de contenido CON ID -->
   <div class="content-area" id="contenido-principal">
-    <h2>Bienvenido a Absolute de Nicaragua</h2>
-    <p>Selecciona una pestaña y un botón para comenzar.</p>
+    <div class="login-wrapper">
+      <div class="login-card">
+        <h2>Iniciar Sesión</h2>
+        <div class="face-wrap">
+          <img id="faceImg" class="face-img" src="./assets/1.png" alt="Personaje" aria-hidden="true" />
+        </div>
+        <form id="formLogin">
+          <div class="input-group">
+            <label for="usuario">Usuario</label>
+            <input type="text" id="usuario" autocomplete="username" required />
+          </div>
+          <div class="input-group">
+            <label for="contrasena">Contraseña</label>
+            <div class="password-wrap" style="position:relative;">
+              <input type="password" id="contrasena" autocomplete="current-password" required style="padding-right:44px;" />
+              <button type="button" id="toggle-password" class="toggle-password" aria-label="Mostrar contraseña" title="Mostrar contraseña" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);border:none;background:transparent;padding:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+                <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="btn">Ingresar</button>
+        </form>
+        <div class="footer-links">¿No tienes cuenta? <a href="#" id="link-registro">Registrarse</a></div>
+      </div>
+    </div>
   </div>
 
   <!-- Modal de configuración de ventana -->
@@ -312,8 +610,24 @@
                 } catch (e) { console.warn('failed to inject stylesheet', e); }
               });
 
-              // Extraer body y scripts
+              // Extraer body, aplicar clases del body del módulo al body principal y scripts
               const bodyHtml = doc.body.innerHTML;
+
+              // Aplicar clases del <body> del módulo al body principal para que las reglas scoped funcionen.
+              try {
+                const moduleBodyClass = doc.body.getAttribute('class') || '';
+                // Remover clases previamente añadidas por módulos anteriores
+                if (window._lastModuleBodyClasses && Array.isArray(window._lastModuleBodyClasses)) {
+                  window._lastModuleBodyClasses.forEach(c => document.body.classList.remove(c));
+                }
+                window._lastModuleBodyClasses = [];
+                if (moduleBodyClass.trim()) {
+                  const classes = moduleBodyClass.split(/\s+/).filter(Boolean);
+                  classes.forEach(c => document.body.classList.add(c));
+                  window._lastModuleBodyClasses = classes;
+                }
+              } catch (e) { console.warn('No se pudo aplicar clases de body del módulo', e); }
+
               const scripts = Array.from(doc.querySelectorAll('script'));
 
               // Insertar HTML
@@ -368,6 +682,11 @@
       });
     });
   </script>
+
+  <!-- Scripts del login -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./src/config/supabaseClient.js"></script>
+  <script src="./auth/login.js"></script>
 
   <script src="./renderer.js"></script>
   <script src="./libs/jspdf.min.js"></script>

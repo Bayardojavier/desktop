@@ -1,0 +1,842 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario - Gestión de Inventario</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary-color: #64748b;
+            --accent-color: #f59e0b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --background-primary: #0f172a;
+            --background-secondary: #1e293b;
+            --background-tertiary: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --border-hover: #475569;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--background-primary) 0%, #1e1b4b 100%);
+            color: var(--text-secondary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--background-secondary) 0%, var(--background-tertiary) 100%);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .header-text h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .header-text p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--background-tertiary);
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .nav-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            transform: translateY(-1px);
+        }
+
+        /* Breadcrumb */
+        .breadcrumb {
+            background: var(--background-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .breadcrumb-nav {
+            padding: 1rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .breadcrumb-list {
+            display: flex;
+            align-items: center;
+            list-style: none;
+            gap: 0.5rem;
+        }
+
+        .breadcrumb-item {
+            color: var(--text-muted);
+        }
+
+        .breadcrumb-item a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .breadcrumb-item a:hover {
+            color: var(--primary-color);
+        }
+
+        .breadcrumb-separator {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .breadcrumb-current {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .content-section {
+            background: var(--background-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .section-header {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-description {
+            font-size: 1.125rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        /* Feature Gallery */
+        .feature-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .feature-card {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .feature-image {
+            padding: 1.5rem;
+            background: var(--background-primary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .feature-caption {
+            padding: 1rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            text-align: center;
+            background: var(--background-secondary);
+        }
+
+        /* Content Blocks */
+        .content-block {
+            margin: 2rem 0;
+        }
+
+        .content-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .content-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .content-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .content-list li:last-child {
+            border-bottom: none;
+        }
+
+        .nested-list {
+            margin-left: 1.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .nested-list li {
+            border-bottom: none;
+            padding: 0.25rem 0;
+            color: var(--text-muted);
+        }
+
+        .highlight-box {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .highlight-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Table Styles */
+        .table-container {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .table-header {
+            background: var(--background-secondary);
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .table-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table th {
+            background: var(--background-secondary);
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .data-table td {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .data-table tr:hover td {
+            background: var(--background-primary);
+        }
+
+        .amount-cell {
+            text-align: right;
+            font-family: 'Courier New', monospace;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-md);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .status-pending {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .status-approved {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .status-rejected {
+            background: var(--error-color);
+            color: white;
+        }
+
+        /* Status Cards */
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .status-card {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .status-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .status-label {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--background-secondary);
+            border-top: 1px solid var(--border-color);
+            margin-top: 3rem;
+        }
+
+        .footer-content {
+            padding: 2rem;
+            text-align: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-text {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .feature-card {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .feature-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .nav-buttons {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .main-content {
+                padding: 1rem;
+            }
+
+            .content-section {
+                padding: 1.5rem;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            .feature-gallery {
+                grid-template-columns: 1fr;
+            }
+
+            .data-table {
+                font-size: 0.75rem;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 0.5rem;
+            }
+
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo">
+                    <i class="fas fa-warehouse"></i>
+                </div>
+                <div class="header-text">
+                    <h1>Manual de Usuario</h1>
+                    <p>Absolute de Nicaragua</p>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <a href="index.html" class="nav-btn">
+                    <i class="fas fa-arrow-left"></i>
+                    Logística
+                </a>
+                <a href="../index.html" class="nav-btn">
+                    <i class="fas fa-home"></i>
+                    Inicio
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <nav class="breadcrumb">
+        <div class="breadcrumb-nav">
+            <ol class="breadcrumb-list">
+                <li class="breadcrumb-item">
+                    <a href="../index.html">Inicio</a>
+                </li>
+                <li class="breadcrumb-separator">/</li>
+                <li class="breadcrumb-item">
+                    <a href="index.html">Logística</a>
+                </li>
+                <li class="breadcrumb-separator">/</li>
+                <li class="breadcrumb-current">Gestión de Inventario</li>
+            </ol>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <section class="content-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-warehouse"></i>
+                    Gestión de Inventario
+                </h2>
+                <p class="section-description">
+                    El sistema de gestión de inventario proporciona control total sobre los niveles de stock, ubicación de productos, movimientos y optimización automática. Incluye alertas inteligentes, pronósticos de demanda y estrategias de reposición automática.
+                </p>
+            </div>
+
+            <div class="feature-gallery">
+                <div class="feature-card">
+                    <div class="feature-image">
+                        <div style="background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 20px; font-family: 'Fira Code', 'Courier New', monospace; font-size: 12px; line-height: 1.4; color: #cbd5e1;">
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+                                <h3 style="margin: 0 0 12px; color: #0f172a; font-size: 14px; font-weight: 600;">📊 Dashboard de Inventario</h3>
+
+                                <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; color: #0f172a;">
+                                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px;">
+                                        <div style="background: linear-gradient(135deg, #10b981, #059669); color: #fff; padding: 12px; border-radius: 8px;">
+                                            <div style="font-size: 18px; font-weight: 700;">1,247</div>
+                                            <div style="font-size: 12px; opacity: 0.9;">Productos Activos</div>
+                                            <div style="font-size: 11px; opacity: 0.7; margin-top: 4px;">↗️ +23 esta semana</div>
+                                        </div>
+
+                                        <div style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; padding: 12px; border-radius: 8px;">
+                                            <div style="font-size: 18px; font-weight: 700;">C$ 2.8M</div>
+                                            <div style="font-size: 12px; opacity: 0.9;">Valor Total</div>
+                                            <div style="font-size: 11px; opacity: 0.7; margin-top: 4px;">+5.2% vs mes anterior</div>
+                                        </div>
+
+                                        <div style="background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; padding: 12px; border-radius: 8px;">
+                                            <div style="font-size: 18px; font-weight: 700;">23</div>
+                                            <div style="font-size: 12px; opacity: 0.9;">Stock Bajo</div>
+                                            <div style="font-size: 11px; opacity: 0.7; margin-top: 4px;">⚠️ Requiere atención</div>
+                                        </div>
+                                    </div>
+
+                                    <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 12px;">
+                                        <h5 style="margin: 0 0 8px; font-size: 12px; font-weight: 600; color: #92400e;">Alertas de Inventario</h5>
+                                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px; background: #fff; border-radius: 4px;">
+                                                <div style="font-size: 11px; color: #92400e;">Cemento Portland 50kg</div>
+                                                <div style="font-size: 10px; color: #dc2626; font-weight: 600;">Stock: 5/50</div>
+                                            </div>
+                                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px; background: #fff; border-radius: 4px;">
+                                                <div style="font-size: 11px; color: #92400e;">Varilla Corrugada #4</div>
+                                                <div style="font-size: 10px; color: #dc2626; font-weight: 600;">Stock: 0/100</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="feature-caption">
+                        Fig. 1 - Dashboard principal mostrando métricas clave de inventario y alertas activas.
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-image">
+                        <div style="background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 20px; font-family: 'Fira Code', 'Courier New', monospace; font-size: 12px; line-height: 1.4; color: #cbd5e1;">
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+                                <h3 style="margin: 0 0 12px; color: #0f172a; font-size: 14px; font-weight: 600;">🔍 Búsqueda y Ubicación</h3>
+
+                                <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; color: #0f172a;">
+                                    <div style="margin-bottom: 16px;">
+                                        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                                            <input style="flex: 1; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; font-size: 12px;" type="text" placeholder="Buscar producto..." />
+                                            <button style="padding: 8px 16px; border: 1px solid #3b82f6; border-radius: 6px; background: #3b82f6; color: #fff; font-size: 12px; font-weight: 600;">Buscar</button>
+                                        </div>
+
+                                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px;">
+                                            <h5 style="margin: 0 0 8px; font-size: 12px; font-weight: 600; color: #374151;">Resultado: Cemento Portland 50kg</h5>
+                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                                <div>
+                                                    <div style="font-size: 11px; color: #64748b;">Stock Disponible</div>
+                                                    <div style="font-size: 14px; font-weight: 600; color: #059669;">245 unidades</div>
+                                                </div>
+                                                <div>
+                                                    <div style="font-size: 11px; color: #64748b;">Ubicación</div>
+                                                    <div style="font-size: 14px; font-weight: 600; color: #3b82f6;">Bodega A - Estante 3-2</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                                        <button style="padding: 8px 16px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; color: #334155; font-size: 12px;">Ver Detalles</button>
+                                        <button style="padding: 8px 16px; border: 1px solid #059669; border-radius: 6px; background: #059669; color: #fff; font-size: 12px; font-weight: 600;">Reservar Stock</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="feature-caption">
+                        Fig. 2 - Sistema de búsqueda avanzada con ubicación precisa de productos en bodega.
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-chart-pie"></i>
+                    Estado del Inventario
+                </h3>
+                <div class="status-grid">
+                    <div class="status-card">
+                        <div class="status-number">1,247</div>
+                        <div class="status-label">Productos Activos</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-number">C$ 2.8M</div>
+                        <div class="status-label">Valor Total</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-number">23</div>
+                        <div class="status-label">Productos con Stock Bajo</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-number">95%</div>
+                        <div class="status-label">Disponibilidad General</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-number">4.2</div>
+                        <div class="status-label">Rotación Promedio</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-number">87%</div>
+                        <div class="status-label">Eficiencia de Espacio</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-table"></i>
+                    Productos con Stock Bajo
+                </h3>
+                <div class="table-container">
+                    <div class="table-header">
+                        <h4 class="table-title">Alertas de Inventario - Nivel Crítico</h4>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Código</th>
+                                <th>Stock Actual</th>
+                                <th>Stock Mínimo</th>
+                                <th>Última Compra</th>
+                                <th>Proveedor</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Cemento Portland 50kg</td>
+                                <td>MAT-001</td>
+                                <td class="amount-cell">5</td>
+                                <td class="amount-cell">50</td>
+                                <td>15/02/2026</td>
+                                <td>Proveedor ABC</td>
+                                <td><span class="status-badge status-rejected">Crítico</span></td>
+                            </tr>
+                            <tr>
+                                <td>Varilla Corrugada #4</td>
+                                <td>MAT-015</td>
+                                <td class="amount-cell">0</td>
+                                <td class="amount-cell">100</td>
+                                <td>10/02/2026</td>
+                                <td>AceroNica</td>
+                                <td><span class="status-badge status-rejected">Agotado</span></td>
+                            </tr>
+                            <tr>
+                                <td>Arena Fina 40kg</td>
+                                <td>MAT-023</td>
+                                <td class="amount-cell">12</td>
+                                <td class="amount-cell">30</td>
+                                <td>20/02/2026</td>
+                                <td>Distribuidora XYZ</td>
+                                <td><span class="status-badge status-pending">Bajo</span></td>
+                            </tr>
+                            <tr>
+                                <td>Pintura Látex Blanco</td>
+                                <td>MAT-045</td>
+                                <td class="amount-cell">8</td>
+                                <td class="amount-cell">25</td>
+                                <td>18/02/2026</td>
+                                <td>Pinturas del Sur</td>
+                                <td><span class="status-badge status-pending">Bajo</span></td>
+                            </tr>
+                            <tr>
+                                <td>Clavos 2" x 1000</td>
+                                <td>MAT-067</td>
+                                <td class="amount-cell">15</td>
+                                <td class="amount-cell">50</td>
+                                <td>22/02/2026</td>
+                                <td>Ferretería Central</td>
+                                <td><span class="status-badge status-pending">Bajo</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-star"></i>
+                    Funcionalidades Principales
+                </h3>
+                <ul class="content-list">
+                    <li><strong>Control Multi-Bodega:</strong> Gestión simultánea de múltiples almacenes con transferencias automáticas.</li>
+                    <li><strong>Ubicación Inteligente:</strong> Sistema de coordenadas GPS interno para localización precisa de productos.</li>
+                    <li><strong>Alertas Automáticas:</strong> Notificaciones por email/SMS cuando stock alcanza niveles críticos.</li>
+                    <li><strong>Pronósticos de Demanda:</strong> Algoritmos de machine learning para predicción de necesidades futuras.</li>
+                    <li><strong>Reposición Automática:</strong> Generación automática de órdenes de compra basadas en reglas configurables.</li>
+                    <li><strong>Control de Lotes:</strong> Seguimiento completo de números de lote, fechas de vencimiento y origen.</li>
+                    <li><strong>Análisis ABC:</strong> Clasificación automática de productos por importancia económica y frecuencia de uso.</li>
+                    <li><strong>Reportes en Tiempo Real:</strong> Dashboards interactivos con KPIs de inventario y tendencias.</li>
+                </ul>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-route"></i>
+                    Estrategias de Inventario
+                </h3>
+                <ul class="content-list">
+                    <li><strong>Inventario Justo a Tiempo (JIT):</strong> Minimización de stock manteniendo disponibilidad para producción.</li>
+                    <li><strong>Punto de Reorden Automático:</strong> Cálculo dinámico basado en consumo histórico y tiempo de entrega.</li>
+                    <li><strong>Clasificación ABC:</strong> Priorización de control según valor económico de los productos.</li>
+                    <li><strong>Gestión por Lotes:</strong> Control de calidad y trazabilidad por números de lote y fecha de fabricación.</li>
+                    <li><strong>Inventario de Seguridad:</strong> Reserva estratégica para cubrir variaciones en demanda o suministro.</li>
+                    <li><strong>Rotación FIFO/LIFO:</strong> Estrategias de salida de productos según fecha de entrada o costo.</li>
+                    <li><strong>Optimización de Espacio:</strong> Algoritmos para distribución eficiente en estanterías y bodegas.</li>
+                    <li><strong>Consolidación de Pedidos:</strong> Agrupación inteligente de órdenes para reducir costos de transporte.</li>
+                </ul>
+            </div>
+
+            <div class="highlight-box">
+                <h4 class="highlight-title">
+                    <i class="fas fa-check-circle"></i>
+                    Sistema de Alertas Inteligentes
+                </h4>
+                <ul class="content-list" style="margin: 0;">
+                    <li><strong>Alerta Roja (Crítica):</strong> Stock por debajo del 10% del mínimo - requiere acción inmediata.</li>
+                    <li><strong>Alerta Naranja (Advertencia):</strong> Stock entre 10% y 25% del mínimo - planificación de reposición.</li>
+                    <li><strong>Alerta Amarilla (Precaución):</strong> Stock entre 25% y 50% del mínimo - monitoreo continuo.</li>
+                    <li><strong>Alerta Verde (Normal):</strong> Stock por encima del 50% del mínimo - situación óptima.</li>
+                    <li><strong>Notificaciones Automáticas:</strong> Alertas por email, SMS y notificaciones push según configuración.</li>
+                    <li><strong>Escalamiento Jerárquico:</strong> Notificaciones progresivas a diferentes niveles de responsabilidad.</li>
+                </ul>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-file-contract"></i>
+                    Tipos de Inventario
+                </h3>
+                <ul class="content-list">
+                    <li><strong>Inventario de Materias Primas:</strong> Materiales básicos para producción y construcción.</li>
+                    <li><strong>Inventario de Producto Terminado:</strong> Artículos listos para venta o distribución.</li>
+                    <li><strong>Inventario de Mantenimiento:</strong> Repuestos, herramientas y equipos de servicio.</li>
+                    <li><strong>Inventario de Consumo:</strong> Materiales de oficina, limpieza y uso general.</li>
+                    <li><strong>Inventario de Seguridad:</strong> Reserva estratégica para contingencias.</li>
+                    <li><strong>Inventario en Tránsito:</strong> Mercancías en camino desde proveedores.</li>
+                    <li><strong>Inventario Consignado:</strong> Productos propiedad del proveedor almacenados localmente.</li>
+                    <li><strong>Inventario Obsoleto:</strong> Materiales con bajo movimiento que requieren disposición especial.</li>
+                </ul>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-chart-bar"></i>
+                    Reportes y Análisis
+                </h3>
+                <ul class="content-list">
+                    <li><strong>Reporte de Valoración:</strong> Valor total del inventario por categorías y ubicaciones.</li>
+                    <li><strong>Análisis de Rotación:</strong> Velocidad de movimiento de productos y eficiencia de inventario.</li>
+                    <li><strong>Reporte ABC:</strong> Clasificación de productos por importancia económica.</li>
+                    <li><strong>Análisis de Tendencias:</strong> Patrones de consumo y proyecciones futuras.</li>
+                    <li><strong>Reporte de Obsolescencia:</strong> Productos con bajo movimiento y recomendaciones de disposición.</li>
+                    <li><strong>Estadísticas de Eficiencia:</strong> Métricas de utilización de espacio y costos de almacenamiento.</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p class="footer-text">
+                <i class="fas fa-copyright"></i>
+                Manual de Usuario - Absolute de Nicaragua 2026
+            </p>
+        </div>
+    </footer>
+</body>
+</html>

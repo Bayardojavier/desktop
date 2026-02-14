@@ -1,0 +1,930 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario - Historial de Ítem</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary-color: #64748b;
+            --accent-color: #f59e0b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --background-primary: #0f172a;
+            --background-secondary: #1e293b;
+            --background-tertiary: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --border-hover: #475569;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--background-primary) 0%, #1e1b4b 100%);
+            color: var(--text-secondary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--background-secondary) 0%, var(--background-tertiary) 100%);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .header-text h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .header-text p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--background-tertiary);
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .nav-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            transform: translateY(-1px);
+        }
+
+        /* Breadcrumb */
+        .breadcrumb {
+            background: var(--background-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .breadcrumb-nav {
+            padding: 1rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .breadcrumb-list {
+            display: flex;
+            align-items: center;
+            list-style: none;
+            gap: 0.5rem;
+        }
+
+        .breadcrumb-item {
+            color: var(--text-muted);
+        }
+
+        .breadcrumb-item a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .breadcrumb-item a:hover {
+            color: var(--primary-color);
+        }
+
+        .breadcrumb-separator {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .breadcrumb-current {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .content-section {
+            background: var(--background-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .section-header {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-description {
+            font-size: 1.125rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        /* Item History Cards */
+        .history-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .history-card {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .history-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .history-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .item-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .item-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+        }
+
+        .item-details h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0 0 0.25rem 0;
+        }
+
+        .item-code {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .history-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat {
+            text-align: center;
+            padding: 0.75rem;
+            background: var(--background-secondary);
+            border-radius: var(--radius-md);
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .last-activity {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Timeline */
+        .timeline {
+            margin: 2rem 0;
+        }
+
+        .timeline-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .timeline-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .timeline-container {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .timeline-container::before {
+            content: '';
+            position: absolute;
+            left: 1rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border-color);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 1.5rem;
+            padding-left: 2rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -1.5rem;
+            top: 0.5rem;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            border: 3px solid var(--background-secondary);
+        }
+
+        .timeline-content {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1rem;
+        }
+
+        .timeline-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .timeline-event {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .timeline-date {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .timeline-details {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* Table Styles */
+        .table-container {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .table-header {
+            background: var(--background-secondary);
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .table-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table th {
+            background: var(--background-secondary);
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .data-table td {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .data-table tr:hover td {
+            background: var(--background-primary);
+        }
+
+        .movement-type {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-md);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .movement-in {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .movement-out {
+            background: var(--error-color);
+            color: white;
+        }
+
+        .movement-transfer {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        /* Content Blocks */
+        .content-block {
+            margin: 2rem 0;
+        }
+
+        .content-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .content-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .content-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .content-list li:last-child {
+            border-bottom: none;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--background-secondary);
+            border-top: 1px solid var(--border-color);
+            margin-top: 3rem;
+        }
+
+        .footer-content {
+            padding: 2rem;
+            text-align: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-text {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .nav-buttons {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .main-content {
+                padding: 1rem;
+            }
+
+            .content-section {
+                padding: 1.5rem;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            .history-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .history-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .data-table {
+                font-size: 0.75rem;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo">
+                    <i class="fas fa-history"></i>
+                </div>
+                <div class="header-text">
+                    <h1>Historial de Ítem</h1>
+                    <p>Módulo de Bodega</p>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <a href="index.html" class="nav-btn">
+                    <i class="fas fa-arrow-left"></i>
+                    Bodega
+                </a>
+                <a href="../index.html" class="nav-btn">
+                    <i class="fas fa-home"></i>
+                    Inicio
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <nav class="breadcrumb">
+        <div class="breadcrumb-nav">
+            <ol class="breadcrumb-list">
+                <li class="breadcrumb-item">
+                    <a href="../index.html">Inicio</a>
+                </li>
+                <li class="breadcrumb-separator">/</li>
+                <li class="breadcrumb-item">
+                    <a href="index.html">Bodega</a>
+                </li>
+                <li class="breadcrumb-separator">/</li>
+                <li class="breadcrumb-current">Historial de Ítem</li>
+            </ol>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <section class="content-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-history"></i>
+                    Historial de Ítem
+                </h2>
+                <p class="section-description">
+                    Seguimiento completo del ciclo de vida de cada ítem en el inventario. Monitorea movimientos, ubicaciones, estados y transacciones históricas para un control total del inventario.
+                </p>
+            </div>
+
+            <div class="history-grid">
+                <div class="history-card">
+                    <div class="history-header">
+                        <div class="item-info">
+                            <div class="item-icon">
+                                <i class="fas fa-tools"></i>
+                            </div>
+                            <div class="item-details">
+                                <h3>Varilla de Acero 1/2"</h3>
+                                <div class="item-code">Código: VR-001-012</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="history-stats">
+                        <div class="stat">
+                            <div class="stat-value">45</div>
+                            <div class="stat-label">Movimientos</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">156</div>
+                            <div class="stat-label">Stock Actual</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">98.5%</div>
+                            <div class="stat-label">Disponibilidad</div>
+                        </div>
+                    </div>
+                    <div class="last-activity">
+                        <i class="fas fa-clock"></i>
+                        Última actividad: 07 Feb 2026 - Movimiento de salida
+                    </div>
+                </div>
+
+                <div class="history-card">
+                    <div class="history-header">
+                        <div class="item-info">
+                            <div class="item-icon">
+                                <i class="fas fa-desktop"></i>
+                            </div>
+                            <div class="item-details">
+                                <h3>Monitor LED 24"</h3>
+                                <div class="item-code">Código: MON-024-001</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="history-stats">
+                        <div class="stat">
+                            <div class="stat-value">23</div>
+                            <div class="stat-label">Movimientos</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">8</div>
+                            <div class="stat-label">Stock Actual</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">72.3%</div>
+                            <div class="stat-label">Disponibilidad</div>
+                        </div>
+                    </div>
+                    <div class="last-activity">
+                        <i class="fas fa-clock"></i>
+                        Última actividad: 06 Feb 2026 - Ingreso a bodega
+                    </div>
+                </div>
+
+                <div class="history-card">
+                    <div class="history-header">
+                        <div class="item-info">
+                            <div class="item-icon">
+                                <i class="fas fa-print"></i>
+                            </div>
+                            <div class="item-details">
+                                <h3>Cartucho de Tinta</h3>
+                                <div class="item-code">Código: TIN-664-BLK</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="history-stats">
+                        <div class="stat">
+                            <div class="stat-value">67</div>
+                            <div class="stat-label">Movimientos</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">23</div>
+                            <div class="stat-label">Stock Actual</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">85.2%</div>
+                            <div class="stat-label">Disponibilidad</div>
+                        </div>
+                    </div>
+                    <div class="last-activity">
+                        <i class="fas fa-clock"></i>
+                        Última actividad: 05 Feb 2026 - Asignación a evento
+                    </div>
+                </div>
+
+                <div class="history-card">
+                    <div class="history-header">
+                        <div class="item-info">
+                            <div class="item-icon">
+                                <i class="fas fa-cable"></i>
+                            </div>
+                            <div class="item-details">
+                                <h3>Cable HDMI 2m</h3>
+                                <div class="item-code">Código: CAB-HDMI-2M</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="history-stats">
+                        <div class="stat">
+                            <div class="stat-value">34</div>
+                            <div class="stat-label">Movimientos</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">67</div>
+                            <div class="stat-label">Stock Actual</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">91.7%</div>
+                            <div class="stat-label">Disponibilidad</div>
+                        </div>
+                    </div>
+                    <div class="last-activity">
+                        <i class="fas fa-clock"></i>
+                        Última actividad: 07 Feb 2026 - Transferencia interna
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-stream"></i>
+                    Línea de Tiempo de Movimientos
+                </h3>
+                <div class="timeline">
+                    <div class="timeline-container">
+                        <div class="timeline-item">
+                            <div class="timeline-content">
+                                <div class="timeline-header">
+                                    <span class="timeline-event">Ingreso a Bodega Principal</span>
+                                    <span class="timeline-date">07 Feb 2026, 14:30</span>
+                                </div>
+                                <div class="timeline-details">
+                                    <strong>Varilla de Acero 1/2"</strong> - Cantidad: 50 unidades<br>
+                                    Proveedor: Metalúrgica Central S.A.<br>
+                                    Ubicación: Estante A-12, Nivel 3<br>
+                                    Usuario: María González
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="timeline-item">
+                            <div class="timeline-content">
+                                <div class="timeline-header">
+                                    <span class="timeline-event">Asignación a Evento</span>
+                                    <span class="timeline-date">06 Feb 2026, 09:15</span>
+                                </div>
+                                <div class="timeline-details">
+                                    <strong>Cartucho de Tinta</strong> - Cantidad: 5 unidades<br>
+                                    Evento: Conferencia Anual 2026<br>
+                                    Responsable: Carlos Rodríguez<br>
+                                    Ubicación destino: Sala de Conferencias
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="timeline-item">
+                            <div class="timeline-content">
+                                <div class="timeline-header">
+                                    <span class="timeline-event">Transferencia Interna</span>
+                                    <span class="timeline-date">05 Feb 2026, 16:45</span>
+                                </div>
+                                <div class="timeline-details">
+                                    <strong>Cable HDMI 2m</strong> - Cantidad: 10 unidades<br>
+                                    Origen: Bodega Principal<br>
+                                    Destino: Bodega Secundaria<br>
+                                    Motivo: Reorganización de inventario
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="timeline-item">
+                            <div class="timeline-content">
+                                <div class="timeline-header">
+                                    <span class="timeline-event">Salida por Mantenimiento</span>
+                                    <span class="timeline-date">04 Feb 2026, 11:20</span>
+                                </div>
+                                <div class="timeline-details">
+                                    <strong>Monitor LED 24"</strong> - Cantidad: 2 unidades<br>
+                                    Destino: Departamento de TI<br>
+                                    Solicitante: Juan Pérez<br>
+                                    Fecha estimada de retorno: 15 Feb 2026
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="timeline-item">
+                            <div class="timeline-content">
+                                <div class="timeline-header">
+                                    <span class="timeline-event">Devolución a Inventario</span>
+                                    <span class="timeline-date">03 Feb 2026, 13:10</span>
+                                </div>
+                                <div class="timeline-details">
+                                    <strong>Varilla de Acero 1/2"</strong> - Cantidad: 3 unidades<br>
+                                    Origen: Evento Corporativo<br>
+                                    Estado: Bueno<br>
+                                    Notas: Material en perfectas condiciones
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-table"></i>
+                    Registro Detallado de Movimientos
+                </h3>
+                <div class="table-container">
+                    <div class="table-header">
+                        <h4 class="table-title">Historial Completo - Últimos 30 días</h4>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha/Hora</th>
+                                <th>Tipo</th>
+                                <th>Ítem</th>
+                                <th>Cantidad</th>
+                                <th>Origen/Destino</th>
+                                <th>Usuario</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>07/02/2026 14:30</td>
+                                <td><span class="movement-type movement-in"><i class="fas fa-arrow-down"></i> Ingreso</span></td>
+                                <td>Varilla de Acero 1/2"</td>
+                                <td>+50</td>
+                                <td>Proveedor: Metalúrgica Central</td>
+                                <td>María González</td>
+                                <td>Completado</td>
+                            </tr>
+                            <tr>
+                                <td>07/02/2026 11:45</td>
+                                <td><span class="movement-type movement-out"><i class="fas fa-arrow-up"></i> Salida</span></td>
+                                <td>Cable HDMI 2m</td>
+                                <td>-15</td>
+                                <td>Evento: Conferencia Anual</td>
+                                <td>Carlos Rodríguez</td>
+                                <td>Completado</td>
+                            </tr>
+                            <tr>
+                                <td>06/02/2026 16:20</td>
+                                <td><span class="movement-type movement-transfer"><i class="fas fa-exchange-alt"></i> Transferencia</span></td>
+                                <td>Monitor LED 24"</td>
+                                <td>8</td>
+                                <td>Bodega Principal â†’ Secundaria</td>
+                                <td>Ana López</td>
+                                <td>En Proceso</td>
+                            </tr>
+                            <tr>
+                                <td>06/02/2026 09:15</td>
+                                <td><span class="movement-type movement-out"><i class="fas fa-arrow-up"></i> Salida</span></td>
+                                <td>Cartucho de Tinta</td>
+                                <td>-5</td>
+                                <td>Departamento de RRHH</td>
+                                <td>Juan Pérez</td>
+                                <td>Completado</td>
+                            </tr>
+                            <tr>
+                                <td>05/02/2026 13:30</td>
+                                <td><span class="movement-type movement-in"><i class="fas fa-arrow-down"></i> Devolución</span></td>
+                                <td>Varilla de Acero 1/2"</td>
+                                <td>+3</td>
+                                <td>Evento Corporativo</td>
+                                <td>Sofia Martínez</td>
+                                <td>Completado</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-cog"></i>
+                    Funcionalidades del Historial
+                </h3>
+                <ul class="content-list">
+                    <li><strong>Trazabilidad Completa:</strong> Seguimiento desde el ingreso hasta la salida final del sistema.</li>
+                    <li><strong>Filtros Avanzados:</strong> Búsqueda por fecha, tipo de movimiento, usuario o ubicación.</li>
+                    <li><strong>Reportes de Auditoría:</strong> Generación automática de reportes para cumplimiento normativo.</li>
+                    <li><strong>Alertas de Anomalías:</strong> Detección automática de movimientos inusuales o irregulares.</li>
+                    <li><strong>Historial de Ubicaciones:</strong> Registro completo de cambios de ubicación física.</li>
+                    <li><strong>Estados de Conservación:</strong> Seguimiento del estado físico de los ítems a lo largo del tiempo.</li>
+                    <li><strong>Integración con Eventos:</strong> Vinculación automática con eventos y proyectos espeCó­ficos.</li>
+                    <li><strong>Exportación de Datos:</strong> Exportación a Excel, PDF o CSV para análisis externos.</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p class="footer-text">
+                <i class="fas fa-copyright"></i>
+                Manual de Usuario - Absolute de Nicaragua 2026
+            </p>
+        </div>
+    </footer>
+</body>
+</html>
+

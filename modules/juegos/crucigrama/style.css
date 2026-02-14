@@ -1,0 +1,30 @@
+.cw{color:#e5e7eb;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+.cw-header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.cw-title{margin:0;font-size:18px}
+.cw-sub{margin:2px 0 0 0;color:#a7b0c0;font-size:13px}
+.cw-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.cw-select{border:1px solid rgba(148,163,184,.25);background:rgba(15,23,42,.65);color:#e5e7eb;padding:10px 12px;border-radius:10px;font-weight:800;font-size:13px}
+.cw-btn{border:1px solid rgba(148,163,184,.25);background:rgba(15,23,42,.65);color:#e5e7eb;padding:10px 12px;border-radius:10px;cursor:pointer;font-weight:800;font-size:13px}
+.cw-btn:hover{border-color:rgba(99,102,241,.55);background:rgba(30,41,59,.6)}
+
+.cw-layout{display:grid;grid-template-columns:auto 340px;gap:12px;margin-top:12px;align-items:start}
+@media (max-width:1000px){.cw-layout{grid-template-columns:1fr}}
+
+.cw-board{border:1px solid rgba(148,163,184,.18);background:rgba(2,6,23,.35);border-radius:14px;padding:12px;display:grid;grid-template-columns:repeat(9,42px);grid-auto-rows:42px;gap:6px;justify-content:start;overflow:auto}
+@media (max-width:520px){.cw-board{grid-template-columns:repeat(9,34px);grid-auto-rows:34px;gap:5px}}
+
+.cell{position:relative;border-radius:10px;border:1px solid rgba(148,163,184,.18);background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center}
+.cell.block{background:rgba(0,0,0,.35);border-color:rgba(148,163,184,.08)}
+.cell input{width:100%;height:100%;border:none;outline:none;background:transparent;color:#e5e7eb;font-weight:900;text-transform:uppercase;text-align:center;font-size:18px}
+.cell input:disabled{cursor:not-allowed}
+.cell-num{position:absolute;top:5px;left:7px;font-size:10px;color:#93a4bf;opacity:.95}
+.cell.good{border-color:rgba(34,197,94,.7);background:rgba(34,197,94,.08)}
+.cell.bad{border-color:rgba(239,68,68,.7);background:rgba(239,68,68,.08)}
+.cell.active{border-color:rgba(99,102,241,.75);box-shadow:0 0 0 3px rgba(99,102,241,.2)}
+
+.cw-side{display:flex;flex-direction:column;gap:12px}
+.cw-box{border:1px solid rgba(148,163,184,.18);background:rgba(2,6,23,.35);border-radius:14px;padding:12px}
+.cw-box h4{margin:0 0 8px 0;font-size:14px}
+.cw-box ol{margin:0;padding-left:18px;color:#cbd5e1}
+.cw-box li{margin:6px 0;font-size:13px;color:#cbd5e1}
+.cw-status{margin:0;color:#94a3b8;font-size:13px}

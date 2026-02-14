@@ -1,0 +1,878 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario - Gestión de Cotizaciones</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary-color: #64748b;
+            --accent-color: #f59e0b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --background-primary: #0f172a;
+            --background-secondary: #1e293b;
+            --background-tertiary: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --border-hover: #475569;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--background-primary) 0%, #1e1b4b 100%);
+            color: var(--text-secondary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--background-secondary) 0%, var(--background-tertiary) 100%);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .header-text h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .header-text p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--background-tertiary);
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .nav-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            transform: translateY(-1px);
+        }
+
+        /* Breadcrumb */
+        .breadcrumb {
+            background: var(--background-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .breadcrumb-nav {
+            padding: 1rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .breadcrumb-list {
+            display: flex;
+            align-items: center;
+            list-style: none;
+            gap: 0.5rem;
+        }
+
+        .breadcrumb-item {
+            color: var(--text-muted);
+        }
+
+        .breadcrumb-item a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .breadcrumb-item a:hover {
+            color: var(--primary-color);
+        }
+
+        .breadcrumb-separator {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .breadcrumb-current {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .content-section {
+            background: var(--background-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .section-header {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-description {
+            font-size: 1.125rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        /* Feature Gallery */
+        .feature-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .feature-card {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .feature-image {
+            padding: 1.5rem;
+            background: var(--background-primary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .feature-caption {
+            padding: 1rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            text-align: center;
+            background: var(--background-secondary);
+        }
+
+        /* Content Blocks */
+        .content-block {
+            margin: 2rem 0;
+        }
+
+        .content-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .content-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .content-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .content-list li:last-child {
+            border-bottom: none;
+        }
+
+        .nested-list {
+            margin-left: 1.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .nested-list li {
+            border-bottom: none;
+            padding: 0.25rem 0;
+            color: var(--text-muted);
+        }
+
+        .code-inline {
+            background: var(--background-tertiary);
+            color: var(--accent-color);
+            padding: 0.2em 0.4em;
+            border-radius: var(--radius-sm);
+            font-family: 'Fira Code', 'Courier New', monospace;
+            font-size: 0.875em;
+        }
+
+        /* Form Styles */
+        .form-section {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .form-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .form-input {
+            padding: 0.75rem;
+            background: var(--background-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 0.875rem;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn-primary {
+            padding: 0.75rem 1.5rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            padding: 0.75rem 1.5rem;
+            background: var(--background-tertiary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary:hover {
+            background: var(--background-secondary);
+            border-color: var(--border-hover);
+        }
+
+        /* Table Styles */
+        .table-container {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .table-header {
+            padding: 1rem 1.5rem;
+            background: var(--background-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .table-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th {
+            padding: 1rem;
+            text-align: left;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            background: var(--background-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .table td {
+            padding: 1rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .table tbody tr:hover {
+            background: var(--background-primary);
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .status-pending {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .status-approved {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .status-rejected {
+            background: var(--error-color);
+            color: white;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--background-secondary);
+            border-top: 1px solid var(--border-color);
+            margin-top: 3rem;
+        }
+
+        .footer-content {
+            padding: 2rem;
+            text-align: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-text {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .feature-card {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .feature-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .nav-buttons {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .main-content {
+                padding: 1rem;
+            }
+
+            .content-section {
+                padding: 1.5rem;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            .feature-gallery {
+                grid-template-columns: 1fr;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .table {
+                font-size: 0.75rem;
+            }
+
+            .table th,
+            .table td {
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo">
+                    <i class="fas fa-calculator"></i>
+                </div>
+                <div class="header-text">
+                    <h1>Manual de Usuario</h1>
+                    <p>Absolute de Nicaragua</p>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <a href="index.html" class="nav-btn">
+                    <i class="fas fa-arrow-left"></i>
+                    Ventas
+                </a>
+                <a href="../index.html" class="nav-btn">
+                    <i class="fas fa-home"></i>
+                    Inicio
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <nav class="breadcrumb">
+        <div class="breadcrumb-nav">
+            <ol class="breadcrumb-list">
+                <li class="breadcrumb-item">
+                    <a href="../index.html">Inicio</a>
+                </li>
+                <li class="breadcrumb-separator">/</li>
+                <li class="breadcrumb-item">
+                    <a href="index.html">Ventas</a>
+                </li>
+                <li class="breadcrumb-separator">/</li>
+                <li class="breadcrumb-current">Gestión de Cotizaciones</li>
+            </ol>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <section class="content-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-calculator"></i>
+                    Gestión de Cotizaciones
+                </h2>
+                <p class="section-description">
+                    El módulo de cotizaciones permite crear presupuestos detallados para eventos, calculando automáticamente los costos de materiales, servicios y logística. Cada cotización puede ser modificada, aprobada o rechazada, manteniendo un historial completo de todas las versiones.
+                </p>
+            </div>
+
+            <div class="feature-gallery">
+                <div class="feature-card">
+                    <div class="feature-image">
+                        <div style="background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 20px; font-family: 'Fira Code', 'Courier New', monospace; font-size: 12px; line-height: 1.4; color: #cbd5e1;">
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+                                <h3 style="margin: 0 0 12px; color: #0f172a; font-size: 14px; font-weight: 600;">📝 Formulario de Nueva Cotización</h3>
+
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                    <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; color: #0f172a;">
+                                        <label style="display: block; font-size: 11px; color: #64748b; margin-bottom: 4px;">Cliente *</label>
+                                        <select style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; background: #f8fafc;">
+                                            <option>Seleccionar cliente...</option>
+                                            <option>Eventos Elite S.A.</option>
+                                            <option>Fiestas Mágicas Ltda.</option>
+                                        </select>
+                                    </div>
+
+                                    <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; color: #0f172a;">
+                                        <label style="display: block; font-size: 11px; color: #64748b; margin-bottom: 4px;">Tipo de Evento *</label>
+                                        <select style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; background: #f8fafc;">
+                                            <option>Seleccionar tipo...</option>
+                                            <option>Boda</option>
+                                            <option>Cumpleaños</option>
+                                            <option>Corporativo</option>
+                                        </select>
+                                    </div>
+
+                                    <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; color: #0f172a;">
+                                        <label style="display: block; font-size: 11px; color: #64748b; margin-bottom: 4px;">Fecha del Evento *</label>
+                                        <input style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; background: #f8fafc;" type="date" />
+                                    </div>
+
+                                    <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; color: #0f172a;">
+                                        <label style="display: block; font-size: 11px; color: #64748b; margin-bottom: 4px;">Número de Invitados *</label>
+                                        <input style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; background: #f8fafc;" placeholder="Ej: 150" />
+                                    </div>
+                                </div>
+
+                                <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; color: #0f172a;">
+                                    <label style="display: block; font-size: 11px; color: #64748b; margin-bottom: 4px;">Descripción del Evento</label>
+                                    <textarea style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; background: #f8fafc; min-height: 60px;" placeholder="Detalles específicos del evento..."></textarea>
+                                </div>
+
+                                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                                    <button style="padding: 8px 16px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; color: #334155;">Cancelar</button>
+                                    <button style="padding: 8px 16px; border: 1px solid #0ea5e9; border-radius: 6px; background: #0ea5e9; color: #fff; font-weight: 600;">Crear Cotización</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="feature-caption">
+                        Fig. 1 - Formulario para crear una nueva cotización con selección de cliente y detalles del evento.
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-image">
+                        <div style="background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 20px; font-family: 'Fira Code', 'Courier New', monospace; font-size: 12px; line-height: 1.4; color: #cbd5e1;">
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+                                <h3 style="margin: 0 0 12px; color: #0f172a; font-size: 14px; font-weight: 600;">📋 Detalles de Cotización</h3>
+
+                                <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; color: #0f172a;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                        <h4 style="margin: 0; font-size: 13px; font-weight: 600;">Cotización #001 - Boda María y Carlos</h4>
+                                        <span style="background: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">PENDIENTE</span>
+                                    </div>
+
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                                        <div>
+                                            <span style="font-size: 11px; color: #64748b;">Cliente:</span>
+                                            <div style="font-weight: 500;">Eventos Elite S.A.</div>
+                                        </div>
+                                        <div>
+                                            <span style="font-size: 11px; color: #64748b;">Fecha Evento:</span>
+                                            <div style="font-weight: 500;">15/06/2026</div>
+                                        </div>
+                                        <div>
+                                            <span style="font-size: 11px; color: #64748b;">Invitados:</span>
+                                            <div style="font-weight: 500;">200 personas</div>
+                                        </div>
+                                        <div>
+                                            <span style="font-size: 11px; color: #64748b;">Total Estimado:</span>
+                                            <div style="font-weight: 600; color: #059669;">C$ 45,000.00</div>
+                                        </div>
+                                    </div>
+
+                                    <div style="border-top: 1px solid #e2e8f0; padding-top: 12px;">
+                                        <h5 style="margin: 0 0 8px; font-size: 12px; font-weight: 600;">Servicios Incluidos:</h5>
+                                        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                                            <span style="background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 3px; font-size: 10px;">Decoración</span>
+                                            <span style="background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 3px; font-size: 10px;">Iluminación</span>
+                                            <span style="background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 3px; font-size: 10px;">Sonido</span>
+                                            <span style="background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 3px; font-size: 10px;">Catering</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="feature-caption">
+                        Fig. 2 - Vista detallada de una cotización con información del cliente, servicios y total estimado.
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-star"></i>
+                    Funcionalidades Principales
+                </h3>
+                <ul class="content-list">
+                    <li><strong>Creación de Cotizaciones:</strong> Formulario intuitivo para generar presupuestos detallados con selección automática de cliente.</li>
+                    <li><strong>Cálculo Automático:</strong> Sistema inteligente que calcula costos basándose en servicios seleccionados, número de invitados y duración del evento.</li>
+                    <li><strong>Gestión de Versiones:</strong> Historial completo de modificaciones con posibilidad de crear versiones alternativas de la misma cotización.</li>
+                    <li><strong>Estados de Cotización:</strong> Seguimiento del estado (Pendiente, Aprobada, Rechazada, Modificada) con colores distintivos.</li>
+                    <li><strong>Asociación con Servicios:</strong> Vinculación automática con los servicios definidos en el módulo correspondiente.</li>
+                    <li><strong>Exportación a PDF:</strong> Generación de documentos profesionales para presentación al cliente.</li>
+                </ul>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-clipboard-list"></i>
+                    Campos del Formulario
+                </h3>
+                <div class="form-section">
+                    <h4 class="form-title">
+                        <i class="fas fa-user-plus"></i>
+                        Información Obligatoria
+                    </h4>
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <label class="form-label">Cliente *</label>
+                            <div class="form-input" style="background: var(--background-secondary); padding: 0.75rem; border-radius: var(--radius-md); color: var(--text-muted);">Selección desde lista de clientes registrados</div>
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">Tipo de Evento *</label>
+                            <div class="form-input" style="background: var(--background-secondary); padding: 0.75rem; border-radius: var(--radius-md); color: var(--text-muted);">Boda, Cumpleaños, Corporativo, etc.</div>
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">Fecha del Evento *</label>
+                            <div class="form-input" style="background: var(--background-secondary); padding: 0.75rem; border-radius: var(--radius-md); color: var(--text-muted);">Fecha programada para el evento</div>
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">Número de Invitados *</label>
+                            <div class="form-input" style="background: var(--background-secondary); padding: 0.75rem; border-radius: var(--radius-md); color: var(--text-muted);">Cantidad aproximada de asistentes</div>
+                        </div>
+                        <div class="form-field" style="grid-column: 1 / -1;">
+                            <label class="form-label">Descripción del Evento</label>
+                            <div class="form-input" style="background: var(--background-secondary); padding: 0.75rem; border-radius: var(--radius-md); color: var(--text-muted); min-height: 80px;">Detalles específicos, requerimientos especiales, ubicación, etc.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-route"></i>
+                    Proceso de Creación de Cotización
+                </h3>
+                <ol class="content-list">
+                    <li><strong>Seleccionar Cliente:</strong> Elegir el cliente desde la lista desplegable de clientes registrados.</li>
+                    <li><strong>Definir Tipo de Evento:</strong> Seleccionar la categoría del evento (Boda, Cumpleaños, Corporativo, etc.).</li>
+                    <li><strong>Establecer Parámetros:</strong> Ingresar fecha del evento, número de invitados y descripción detallada.</li>
+                    <li><strong>Seleccionar Servicios:</strong> El sistema automáticamente sugiere servicios basados en el tipo de evento.</li>
+                    <li><strong>Cálculo Automático:</strong> El sistema calcula el costo total basado en los servicios seleccionados y parámetros del evento.</li>
+                    <li><strong>Guardar Cotización:</strong> La cotización se guarda con estado "Pendiente" y queda disponible para revisión del cliente.</li>
+                </ol>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-database"></i>
+                    Gestión de Cotizaciones Existentes
+                </h3>
+                <div class="table-container">
+                    <div class="table-header">
+                        <h4 class="table-title">
+                            <i class="fas fa-list"></i>
+                            Lista de Cotizaciones
+                        </h4>
+                    </div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>N° Cotización</th>
+                                <th>Cliente</th>
+                                <th>Tipo Evento</th>
+                                <th>Fecha Evento</th>
+                                <th>Total</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>#001</td>
+                                <td>Eventos Elite S.A.</td>
+                                <td>Boda</td>
+                                <td>15/06/2026</td>
+                                <td>C$ 45,000.00</td>
+                                <td><span class="status-badge status-pending">Pendiente</span></td>
+                                <td>
+                                    <button class="btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Ver</button>
+                                    <button class="btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; margin-left: 0.25rem;">Editar</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#002</td>
+                                <td>Fiestas Mágicas Ltda.</td>
+                                <td>Cumpleaños</td>
+                                <td>22/07/2026</td>
+                                <td>C$ 12,500.00</td>
+                                <td><span class="status-badge status-approved">Aprobada</span></td>
+                                <td>
+                                    <button class="btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Ver</button>
+                                    <button class="btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; margin-left: 0.25rem;">Duplicar</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#003</td>
+                                <td>Corporación Eventos</td>
+                                <td>Corporativo</td>
+                                <td>10/08/2026</td>
+                                <td>C$ 28,750.00</td>
+                                <td><span class="status-badge status-rejected">Rechazada</span></td>
+                                <td>
+                                    <button class="btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Ver</button>
+                                    <button class="btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; margin-left: 0.25rem;">Revisar</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <ul class="content-list">
+                    <li><strong>Estados de Cotización:</strong>
+                        <ul class="nested-list">
+                            <li><strong>Pendiente:</strong> Cotización creada pero no revisada por el cliente.</li>
+                            <li><strong>Aprobada:</strong> Cotización aceptada por el cliente, puede convertirse en venta activa.</li>
+                            <li><strong>Rechazada:</strong> Cotización no aceptada, puede ser modificada o archivada.</li>
+                            <li><strong>Modificada:</strong> Cotización con cambios posteriores a la creación inicial.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Acciones Disponibles:</strong>
+                        <ul class="nested-list">
+                            <li><strong>Ver Detalles:</strong> Acceso completo a toda la información de la cotización.</li>
+                            <li><strong>Editar:</strong> Modificación de parámetros, servicios o precios (solo en estado Pendiente).</li>
+                            <li><strong>Duplicar:</strong> Crear una nueva cotización basada en una existente.</li>
+                            <li><strong>Exportar PDF:</strong> Generar documento profesional para el cliente.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p class="footer-text">
+                <i class="fas fa-copyright"></i>
+                Manual de Usuario - Absolute de Nicaragua 2026
+            </p>
+        </div>
+    </footer>
+</body>
+</html></content>
+<parameter name="filePath">c:\Users\BAYAR\absolute\desktop\manual_usuario\ventas\cotizaciones.html

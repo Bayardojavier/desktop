@@ -36,6 +36,7 @@
     <button id="btn-exportar-xbodega" class="bodega-export-pdf-btn">
       📄 Exportar Inventario
     </button>
+    <button id="btn-exportar-xbodega-xlsx" class="bodega-export-pdf-btn" style="margin-left:8px">📊 Exportar Excel</button>
   </div>
 
   <!-- CONTENEDOR PRINCIPAL CON DOS COLUMNAS -->
@@ -124,8 +125,36 @@
     bodegasPrincipales: [],
     bodegasSecundarias: [],
     secundariasPorPrincipal: new Map(),
-    autoRefreshInterval: null
+    autoRefreshInterval: null,
+    connectionErrorCount: 0
   };
+
+  // Mostrar color: si viene como hex (#rrggbb) mostrar swatch y nombre aproximado
+  function renderColorLabel(raw) {
+    const c = (raw || '').toString().trim();
+    if (!c) return '';
+
+    // Mapeo simple de hex a nombre (ampliable)
+    const colorNames = {
+      '#000000': 'Negro',
+      '#ffffff': 'Blanco',
+      '#0f172a': 'Azul oscuro',
+      '#1e40af': 'Azul',
+      '#2563eb': 'Azul claro',
+      '#16a34a': 'Verde',
+      '#dc2626': 'Rojo',
+      '#991b1b': 'Burdeos',
+      '#94a3b8': 'Gris azulado',
+      '#f8fafc': 'Gris claro'
+    };
+
+    const isHex = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(c);
+    const label = isHex ? (colorNames[c.toLowerCase()] || c) : c;
+
+    // Devolver HTML con swatch + etiqueta
+    const safeColor = isHex ? c : '#ffffff';
+    return `<span style="display:inline-flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;background:${safeColor};border:1px solid rgba(0,0,0,0.12);display:inline-block;border-radius:2px;"></span><span>${label}</span></span>`;
+  }
 
   function normalizarBodega(b) {
     return (b || '').toString().trim();
@@ -381,7 +410,18 @@
         if (result.status === 'fulfilled' && result.value.data) {
           return result.value.data.map(m => ({ ...m, tabla_origen: tipo }));
         } else {
-          console.warn(`Error cargando movimientos de ${tipo}:`, result.reason || result.value?.error);
+          const error = result.reason || result.value?.error;
+          console.warn(`Error cargando movimientos de ${tipo}:`, error);
+          // Check for connection errors
+          if (error && (error.message?.includes('ERR_CONNECTION_CLOSED') || error.message?.includes('Failed to fetch') || error.code === 'NETWORK_ERROR')) {
+            estado.connectionErrorCount++;
+            console.warn(`Connection error count: ${estado.connectionErrorCount}`);
+            if (estado.connectionErrorCount >= 3) {
+              console.warn('Too many connection errors, stopping auto refresh');
+              detenerAutoRefresh();
+              actualizarIndicadorEstado('error', 'Conexión perdida', 'Auto-refresh detenido');
+            }
+          }
           return [];
         }
       };
@@ -407,12 +447,67 @@
       // Actualizar indicador de estado
       actualizarIndicadorEstado('success', 'Conectado', `${allMovimientos.length} movimientos cargados`);
 
+      // Reset connection error count on success
+      estado.connectionErrorCount = 0;
+
     } catch (err) {
       console.error('Error general en cargarMovimientosRecientes:', err);
       document.getElementById('panel-movimientos').innerHTML = `<div style="text-align: center; color: #ef4444;">Error al cargar movimientos</div>`;
       actualizarIndicadorEstado('error', 'Error de conexión', 'No se pudieron cargar los movimientos');
+      // Check for connection errors
+      if (err.message?.includes('ERR_CONNECTION_CLOSED') || err.message?.includes('Failed to fetch') || err.code === 'NETWORK_ERROR') {
+        estado.connectionErrorCount++;
+        console.warn(`Connection error count: ${estado.connectionErrorCount}`);
+        if (estado.connectionErrorCount >= 3) {
+          detenerAutoRefresh();
+          actualizarIndicadorEstado('error', 'Conexión perdida', 'Auto-refresh detenido');
+        }
+      }
     }
   }
+
+  // === EXPORTAR INVENTARIO A EXCEL (.xlsx) ===
+  function loadXlsxLib(){
+    return new Promise((resolve, reject)=>{
+      if(window.XLSX) return resolve(window.XLSX);
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js';
+      s.onload = ()=> resolve(window.XLSX);
+      s.onerror = (e)=> reject(e);
+      document.head.appendChild(s);
+    });
+  }
+
+  async function exportXbodegaExcel(){
+    try{
+      await loadXlsxLib();
+      const inventario = estado.inventario || [];
+      if(!inventario.length) return alert('No hay datos de inventario para exportar');
+
+      // Mapear columnas
+      const rows = inventario.map(i=>({
+        Codigo: i.codigo || '',
+        Nombre: i.nombre || '',
+        BodegaPrincipal: i.bodega_principal || '',
+        BodegaSecundaria: i.bodega_secundaria || '',
+        Tipo: i.tipo || '',
+        Color: i.color || '',
+        Stock: i.stock || i.cantidad || 0
+      }));
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(rows);
+      XLSX.utils.book_append_sheet(wb, ws, 'Inventario');
+
+      const filename = `Inventario_Bodega_${new Date().toISOString().slice(0,10)}.xlsx`;
+      XLSX.writeFile(wb, filename);
+    }catch(err){
+      console.error('Error exportando XLSX xbodega:', err);
+      alert('Error exportando Excel. Revisa la consola.');
+    }
+  }
+
+  document.getElementById('btn-exportar-xbodega-xlsx')?.addEventListener('click', exportXbodegaExcel);
 
   function renderizarMovimientos() {
     const container = document.getElementById('panel-movimientos');
@@ -473,6 +568,8 @@
   }
 
   function iniciarAutoRefresh() {
+    // Reset connection error count
+    estado.connectionErrorCount = 0;
     // Actualizar movimientos cada 30 segundos
     estado.autoRefreshInterval = setInterval(async () => {
       actualizarIndicadorEstado('loading', 'Actualizando...', 'Sincronizando bodegas');
@@ -595,7 +692,7 @@
           <td>${item.nombre}</td>
           <td>${item.bodega}</td>
           <td>${item.tipo}</td>
-          <td>${item.color}</td>
+          <td>${renderColorLabel(item.color)}</td>
           <td>${existencia}</td>
           <td>${existencia > 0 ? 'Disponible' : 'Agotado'}</td>
         </tr>
@@ -689,195 +786,138 @@
     btn.disabled = false;
   });
 
-  document.getElementById('btn-exportar-xbodega').addEventListener('click', () => {
-  if (typeof html2pdf === 'undefined') {
-    alert('html2pdf no está cargado.');
-    return;
-  }
+  document.getElementById('btn-exportar-xbodega').addEventListener('click', async () => {
+    const selectPrincipal = document.getElementById('filtro-bodega-principal');
+    const selectSecundaria = document.getElementById('filtro-bodega-secundaria');
+    const valorPrincipal = selectPrincipal?.value || 'todas';
+    const valorSecundaria = selectSecundaria?.value || 'todas';
+    const textoPrincipal = selectPrincipal?.selectedOptions?.[0]?.text || 'Todas';
+    const textoSecundaria = selectSecundaria?.selectedOptions?.[0]?.text || 'Todas';
+    const fecha = new Date().toLocaleDateString('es-NI');
 
-  const selectPrincipal = document.getElementById('filtro-bodega-principal');
-  const selectSecundaria = document.getElementById('filtro-bodega-secundaria');
-  const valorPrincipal = selectPrincipal?.value || 'todas';
-  const valorSecundaria = selectSecundaria?.value || 'todas';
-  const textoPrincipal = selectPrincipal?.selectedOptions?.[0]?.text || 'Todas';
-  const textoSecundaria = selectSecundaria?.selectedOptions?.[0]?.text || 'Todas';
-  const fecha = new Date().toLocaleDateString('es-NI');
+    const grupos = {};
 
-  const grupos = {};
+    document.querySelectorAll('#tabla-inventario-bodega tbody tr').forEach(tr => {
+      const c = tr.children;
+      if (c.length < 7) return;
 
-  document.querySelectorAll('#tabla-inventario-bodega tbody tr').forEach(tr => {
-    const c = tr.children;
-    if (c.length < 7) return;
+      const bodega = c[2].textContent.trim();
+      if (!grupos[bodega]) grupos[bodega] = [];
 
-    const bodega = c[2].textContent.trim();
-    if (!grupos[bodega]) grupos[bodega] = [];
-
-    grupos[bodega].push({
-      codigo: c[0].textContent,
-      nombre: c[1].textContent,
-      tipo: c[3].textContent,
-      color: c[4].textContent,
-      existencia: c[5].textContent,
-      estado: c[6].textContent.trim()
+      grupos[bodega].push({
+        codigo: c[0].textContent,
+        nombre: c[1].textContent,
+        tipo: c[3].textContent,
+        color: c[4].textContent,
+        existencia: c[5].textContent,
+        estado: c[6].textContent.trim()
+      });
     });
-  });
 
-  const bodegas = Object.keys(grupos);
+    const bodegas = Object.keys(grupos);
 
-  let contenido = '';
+    let contenido = '';
 
-  bodegas.forEach(bodega => {
-    if (!grupos[bodega]) return;
+    bodegas.forEach(bodega => {
+      if (!grupos[bodega]) return;
 
-    let filas = '';
-    grupos[bodega].forEach(i => {
-      filas += `
-        <tr>
-          <td>${i.codigo}</td>
-          <td>${i.nombre}</td>
-          <td>${i.tipo}</td>
-          <td>${i.color}</td>
-          <td style="text-align:center;">${i.existencia}</td>
-          <td class="${i.estado === 'Disponible' ? 'ok' : 'bad'}">${i.estado}</td>
-        </tr>
+      let filas = '';
+      grupos[bodega].forEach(i => {
+        filas += `
+          <tr>
+            <td>${i.codigo}</td>
+            <td>${i.nombre}</td>
+            <td>${i.tipo}</td>
+            <td>${i.color}</td>
+            <td style="text-align:center;">${i.existencia}</td>
+            <td class="${i.estado === 'Disponible' ? 'ok' : 'bad'}">${i.estado}</td>
+          </tr>
+        `;
+      });
+
+      contenido += `
+        <h2 class="grupo-bodega">📦 ${bodega}</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Nombre</th>
+              <th>Tipo</th>
+              <th>Color</th>
+              <th>Exist.</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>${filas}</tbody>
+        </table>
       `;
     });
 
-    contenido += `
-      <h2 class="grupo-bodega">📦 ${bodega}</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Código</th>
-            <th>Nombre</th>
-            <th>Tipo</th>
-            <th>Color</th>
-            <th>Exist.</th>
-            <th>Estado</th>
-          </tr>
-        </thead>
-        <tbody>${filas}</tbody>
-      </table>
+    const html = `
+    <style>
+      body { font-family: Arial, sans-serif; color:#1f2937; margin-bottom:70px; }
+      .header { text-align:center; border-bottom:2px solid #2563eb; padding-bottom:8px; margin-bottom:18px; }
+      .header h1 { margin:0; font-size:18px; color:#1e3a8a; }
+      .header p { margin:4px 0 0; font-size:11px; color:#555; }
+      .grupo-bodega { margin:22px 0 8px; font-size:14px; color:#1e40af; border-left:4px solid #2563eb; padding-left:8px; page-break-inside: avoid; }
+      table { width:100%; border-collapse:collapse; font-size:10.5px; margin-bottom:18px; }
+      thead th { background:#2563eb; color:#fff; padding:6px; text-align:left; }
+      tbody td { padding:5px 6px; border-bottom:1px solid #e5e7eb; }
+      tbody tr:nth-child(even) { background:#f8fafc; }
+      .ok { color:#166534; font-weight:bold; }
+      .bad { color:#991b1b; font-weight:bold; }
+      .footer { position: fixed; bottom: 0; left: 0; right: 0; font-size:10px; color:#555; text-align:center; border-top:1px solid #e5e7eb; padding:6px 0; background:#fff; }
+    </style>
+
+    <div>
+      <div class="header">
+        <img src="assets/logo.png" style="height:48px;margin-bottom:4px;">
+        <h1>Inventario General por Bodega</h1>
+        <p>
+          ${
+            (valorPrincipal === 'todas' && valorSecundaria === 'todas')
+              ? 'Todas las bodegas'
+              : (valorPrincipal !== 'todas' && valorSecundaria === 'todas')
+                ? `Bodega Principal: ${textoPrincipal}`
+                : (valorPrincipal === 'todas' && valorSecundaria !== 'todas')
+                  ? `Bodega Secundaria: ${textoSecundaria}`
+                  : `Bodega Principal: ${textoPrincipal} • Secundaria: ${textoSecundaria}`
+          }
+          | Fecha: ${fecha}
+        </p>
+      </div>
+
+      ${contenido}
+
+      <div class="footer">Absolute de Nicaragua · Inventario generado automáticamente</div>
+    </div>
     `;
+
+    // Generar PDF nativo via Electron (preserva texto y carga imágenes relativas)
+    try {
+      const filename = `Inventario_${
+        (valorPrincipal === 'todas' && valorSecundaria === 'todas')
+          ? 'General'
+          : (valorPrincipal !== 'todas' && valorSecundaria === 'todas')
+            ? textoPrincipal.replace(/ /g,'_')
+            : (valorPrincipal === 'todas' && valorSecundaria !== 'todas')
+              ? textoSecundaria.replace(/ /g,'_')
+              : (textoPrincipal + '_' + textoSecundaria).replace(/ /g,'_')
+      }.pdf`;
+
+      // Envolver en documento HTML completo y pasar baseUrl para resolver rutas relativas
+      const fullHtml = `<!doctype html><html><head><meta charset="utf-8"></head><body>${html}</body></html>`;
+      const result = await window.electronAPI.renderHtmlToPdf({ filename, html: fullHtml, baseUrl: document.baseURI });
+      if (result && result.canceled === false) {
+        alert('PDF guardado en: ' + result.filePath);
+      } else {
+        console.log('Generación de PDF cancelada o no completada', result);
+      }
+    } catch (err) {
+      console.error('Error generando PDF nativo:', err);
+      alert('Error al generar PDF nativo. Revisa la consola para más detalles.');
+    }
   });
-
-  const html = `
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      color:#1f2937;
-      margin-bottom:70px;
-    }
-
-    .header {
-      text-align:center;
-      border-bottom:2px solid #2563eb;
-      padding-bottom:8px;
-      margin-bottom:18px;
-    }
-
-    .header h1 {
-      margin:0;
-      font-size:18px;
-      color:#1e3a8a;
-    }
-
-    .header p {
-      margin:4px 0 0;
-      font-size:11px;
-      color:#555;
-    }
-
-    .grupo-bodega {
-      margin:22px 0 8px;
-      font-size:14px;
-      color:#1e40af;
-      border-left:4px solid #2563eb;
-      padding-left:8px;
-      page-break-inside: avoid;
-    }
-
-    table {
-      width:100%;
-      border-collapse:collapse;
-      font-size:10.5px;
-      margin-bottom:18px;
-    }
-
-    thead th {
-      background:#2563eb;
-      color:#fff;
-      padding:6px;
-      text-align:left;
-    }
-
-    tbody td {
-      padding:5px 6px;
-      border-bottom:1px solid #e5e7eb;
-    }
-
-    tbody tr:nth-child(even) {
-      background:#f8fafc;
-    }
-
-    .ok { color:#166534; font-weight:bold; }
-    .bad { color:#991b1b; font-weight:bold; }
-
-    .footer {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      font-size:10px;
-      color:#555;
-      text-align:center;
-      border-top:1px solid #e5e7eb;
-      padding:6px 0;
-      background:#fff;
-    }
-  </style>
-
-  <div>
-    <div class="header">
-      <img src="assets/logo.png" style="height:48px;margin-bottom:4px;">
-      <h1>Inventario General por Bodega</h1>
-      <p>
-        ${
-          (valorPrincipal === 'todas' && valorSecundaria === 'todas')
-            ? 'Todas las bodegas'
-            : (valorPrincipal !== 'todas' && valorSecundaria === 'todas')
-              ? `Bodega Principal: ${textoPrincipal}`
-              : (valorPrincipal === 'todas' && valorSecundaria !== 'todas')
-                ? `Bodega Secundaria: ${textoSecundaria}`
-                : `Bodega Principal: ${textoPrincipal} • Secundaria: ${textoSecundaria}`
-        }
-        | Fecha: ${fecha}
-      </p>
-    </div>
-
-    ${contenido}
-
-    <div class="footer">
-      Absolute de Nicaragua · Inventario generado automáticamente
-    </div>
-  </div>
-  `;
-
-  html2pdf().from(html).set({
-    margin: [12, 12, 18, 12],
-    filename: `Inventario_${
-      (valorPrincipal === 'todas' && valorSecundaria === 'todas')
-        ? 'General'
-        : (valorPrincipal !== 'todas' && valorSecundaria === 'todas')
-          ? textoPrincipal.replace(/ /g,'_')
-          : (valorPrincipal === 'todas' && valorSecundaria !== 'todas')
-            ? textoSecundaria.replace(/ /g,'_')
-            : (textoPrincipal + '_' + textoSecundaria).replace(/ /g,'_')
-    }.pdf`,
-    html2canvas: { scale: 2 },
-    jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
-  }).save();
-});
 
 
 
@@ -892,5 +932,8 @@
       }
     });
   });
+
+  // Detener auto-refresh cuando la ventana se cierre
+  window.addEventListener('beforeunload', detenerAutoRefresh);
 })();
 </script>

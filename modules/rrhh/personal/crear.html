@@ -520,10 +520,18 @@ async function crearEmpleado() {
   try {
     await guardarEmpleadoSupabase(empleado);
     alert(`✅ Empleado guardado con éxito.\nCódigo: ${codigoEmpleado}`);
+    // Mostrar notificación del sistema
+    if (window.showSystemNotification) {
+      window.showSystemNotification('Empleado Creado', `Empleado ${codigoEmpleado} registrado exitosamente.`);
+    }
     resetFormulario();
   } catch (error) {
     console.error('Error al guardar:', error);
     alert('❌ Error al guardar en Supabase: ' + error.message);
+    // Mostrar notificación de error
+    if (window.showSystemNotification) {
+      window.showSystemNotification('Error al Crear Empleado', 'No se pudo registrar el empleado. Verifique los datos.');
+    }
   }
 }
 

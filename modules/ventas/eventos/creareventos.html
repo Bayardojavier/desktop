@@ -361,6 +361,10 @@
       }
 
       alert(`✅ Evento "${eventoData.nombre}" creado exitosamente.`);
+      // Mostrar notificación del sistema
+      if (window.showSystemNotification) {
+        window.showSystemNotification('Evento Creado', `Evento "${eventoData.nombre}" programado exitosamente.`);
+      }
 
       // Volver a la lista
       document.getElementById('lista-cotizaciones').style.display = 'block';
@@ -370,6 +374,10 @@
     } catch (err) {
       console.error('Error:', err);
       alert('❌ Error al guardar el evento.');
+      // Mostrar notificación de error
+      if (window.showSystemNotification) {
+        window.showSystemNotification('Error al Crear Evento', 'No se pudo crear el evento. Verifique los datos.');
+      }
     }
   }
 

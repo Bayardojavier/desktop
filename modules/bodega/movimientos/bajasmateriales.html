@@ -102,8 +102,15 @@
         <input type="text" id="buscarMaterial" class="mov-form-input" placeholder="🔎 Buscar material por nombre o código..." style="width: 100%; padding: 12px 16px; border-radius: 8px; border: 2px solid #e5e7eb; font-size: 14px;">
       </div>
 
-      <div id="listaMateriales">
-        <!-- Los materiales se cargarán aquí dinámicamente -->
+      <div id="listaMateriales" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div style="min-width: 0;">
+          <h3 style="margin: 0 0 10px 0; color: #b91c1c; font-size: 15px; font-weight: 800;">🧯 Materiales Dañados</h3>
+          <div id="listaMaterialesDanados"></div>
+        </div>
+        <div style="min-width: 0;">
+          <h3 style="margin: 0 0 10px 0; color: #92400e; font-size: 15px; font-weight: 800;">🔎 Materiales Faltantes</h3>
+          <div id="listaMaterialesFaltantes"></div>
+        </div>
       </div>
 
       <div class="mov-modal-buttons" style="margin-top: 24px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
@@ -118,7 +125,9 @@
     // 🔹 CARGAR DATOS REALES DE SUPABASE
     // =============================================================================
     window.empleados = [];
-    window.materialesCatalogo = [];
+    window.materialesDanados = [];
+    window.materialesFaltantes = [];
+    window.materialesDarBajaCargados = false;
     window.estado = { itemsSolicitudBaja: [], pdfData: null };
     window.modoEdicion = false;
     window.idSolicitudEdicion = null;
@@ -143,21 +152,60 @@
     }
 
     async function cargarMateriales() {
+      window.materialesDarBajaCargados = false;
       try {
-        const { data, error } = await window.supabaseClient
-          .from('stock_actual_con_precio')
-          .select('material_codigo, material_nombre, existencia, bodega_principal')
-          .gt('existencia', 0) // Solo materiales con stock disponible
-          .order('material_nombre');
+        const { data: danados, error: errorDanados } = await window.supabaseClient
+          .from('materiales_danados')
+          .select('id, material_codigo, material_nombre, cantidad, numero_despacho, evento, fecha_devolucion, observacion_detalle, responsable_devolucion')
+          .order('id', { ascending: false })
+          .limit(500);
 
-        if (error) {
-          console.error('Error cargando materiales:', error);
-          return;
+        if (errorDanados) {
+          console.error('Error cargando materiales_danados:', errorDanados);
+          window.materialesDanados = [];
+        } else {
+          window.materialesDanados = danados || [];
         }
 
-        window.materialesCatalogo = data || [];
+        // materiales_faltantes: en algunas BD existe fecha_devolucion y en otras no.
+        let faltantes = null;
+        let errorFaltantes = null;
+        try {
+          const r1 = await window.supabaseClient
+            .from('materiales_faltantes')
+            .select('id, material_codigo, material_nombre, cantidad_faltante, numero_despacho, evento, fecha_devolucion, observacion_detalle, responsable_devolucion')
+            .order('id', { ascending: false })
+            .limit(500);
+          faltantes = r1.data;
+          errorFaltantes = r1.error;
+        } catch (e) {
+          errorFaltantes = e;
+        }
+
+        if (errorFaltantes && (errorFaltantes.code === '42703' || /fecha_devolucion/i.test(errorFaltantes.message || ''))) {
+          const r2 = await window.supabaseClient
+            .from('materiales_faltantes')
+            .select('id, material_codigo, material_nombre, cantidad_faltante, numero_despacho, evento, observacion_detalle, responsable_devolucion')
+            .order('id', { ascending: false })
+            .limit(500);
+          faltantes = r2.data;
+          errorFaltantes = r2.error;
+        }
+
+        if (errorFaltantes) {
+          console.error('Error cargando materiales_faltantes:', errorFaltantes);
+          window.materialesFaltantes = [];
+        } else {
+          window.materialesFaltantes = faltantes || [];
+        }
+
+        window.materialesDarBajaCargados = true;
       } catch (error) {
         console.error('Error en cargarMateriales:', error);
+        window.materialesDanados = [];
+        window.materialesFaltantes = [];
+      } finally {
+        window.materialesDarBajaCargados = true;
       }
     }
 
@@ -170,7 +218,7 @@
         const { data: bajas, error } = await window.supabaseClient
           .from('bajas_logistica')
           .select('numero_baja')
-          .order('creado_en', { ascending: false })
+          .order('numero_baja', { ascending: false })
           .limit(1);
 
         let ultimoNumero = 0;
@@ -228,18 +276,20 @@
       }
 
       var filas = window.estado.itemsSolicitudBaja.map(function(item, idx) {
-        var materialInfo = window.materialesCatalogo.find(m => m.material_codigo === item.materialId);
-        var nombreMaterial = materialInfo ? `${materialInfo.material_codigo} – ${materialInfo.material_nombre}` : 'Material no encontrado';
-        var stockDisponible = materialInfo ? materialInfo.existencia : 0;
+        var nombreMaterial = `${item.materialId} – ${item.materialNombre || 'Desconocido'}`;
+        var stockDisponible = Number(item.cantidadDisponible || 0);
+        var maxAttr = stockDisponible > 0 ? `max="${stockDisponible}"` : '';
+        var origenLabel = item.sourceTable === 'materiales_danados' ? 'Dañado' : (item.sourceTable === 'materiales_faltantes' ? 'Faltante' : '');
+        var badge = origenLabel ? `<span style="display:inline-block; margin-left:8px; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:700; color:#fff; background:${origenLabel==='Dañado' ? '#b91c1c' : '#92400e'};">${origenLabel}</span>` : '';
 
         var cantidad = item.cantidad || '';
         var obs = (item.observacion || '').toString().replace(/"/g, '&quot;');
 
         return `<tr>
-            <td style="width: 35%; font-weight: 500;">${nombreMaterial}</td>
+            <td style="width: 35%; font-weight: 500;">${nombreMaterial}${badge}</td>
             <td style="width: 15%; text-align:center;">
-              <input type="number" class="mov-form-input" data-tipo="cantidad" data-idx="${idx}" min="1" max="${stockDisponible}" value="${cantidad}" placeholder="Cant." />
-              <small style="color: #666; display: block;">Stock: ${stockDisponible}</small>
+              <input type="number" class="mov-form-input" data-tipo="cantidad" data-idx="${idx}" min="1" ${maxAttr} value="${cantidad}" placeholder="Cant." />
+              <small style="color: #666; display: block;">Disponible: ${stockDisponible > 0 ? stockDisponible : 'N/D'}</small>
             </td>
             <td style="width: 35%;">
               <input type="text" class="mov-form-input" data-tipo="obs" data-idx="${idx}" placeholder="Observación específica" value="${obs}" />
@@ -414,6 +464,7 @@
           fecha: formatDate(solicitud.fecha_baja),
           itemsBaja: solicitud.items_baja_logistica.map(item => ({
             materialId: item.codigo_material,
+            materialNombre: item.nombre_material || item.codigo_material,
             cantidad: item.cantidad_solicitada,
             observacion: item.observacion || ''
           }))
@@ -452,6 +503,8 @@
         // Cargar items
         window.estado.itemsSolicitudBaja = solicitud.items_baja_logistica.map(item => ({
           materialId: item.codigo_material,
+          materialNombre: item.nombre_material || item.codigo_material,
+          cantidadDisponible: Number(item.cantidad_solicitada || 0),
           cantidad: item.cantidad_solicitada,
           observacion: item.observacion || ''
         }));
@@ -512,74 +565,108 @@
         alert('Error al eliminar la solicitud');
       }
     }
-    function renderModalMateriales(materialesFiltrados) {
-      var lista = document.getElementById("listaMateriales");
-      if (!lista) return;
+    function renderModalMateriales(resultadoFiltro) {
+      var contDanados = document.getElementById('listaMaterialesDanados');
+      var contFaltantes = document.getElementById('listaMaterialesFaltantes');
+      if (!contDanados || !contFaltantes) return;
 
-      if (!materialesFiltrados || materialesFiltrados.length === 0) {
-        lista.innerHTML = '<p class="mov-empty">No se encontraron materiales disponibles.</p>';
-        return;
+      var danados = (resultadoFiltro && resultadoFiltro.danados) ? resultadoFiltro.danados : [];
+      var faltantes = (resultadoFiltro && resultadoFiltro.faltantes) ? resultadoFiltro.faltantes : [];
+
+      function renderTabla(contenedor, filas, tipo) {
+        if (!filas || filas.length === 0) {
+          contenedor.innerHTML = '<p class="mov-empty">No hay registros.</p>';
+          return;
+        }
+
+        contenedor.innerHTML = `
+          <table class="mov-table" style="font-size: 12px;">
+            <thead>
+              <tr>
+                <th style="width: 20%;">Código</th>
+                <th style="width: 40%;">Material</th>
+                <th style="width: 15%; text-align:center;">Cantidad</th>
+                <th style="width: 25%;">Referencia</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filas.map(function(r) {
+                var codigo = String(r.material_codigo || '').trim();
+                var nombre = r.material_nombre || codigo || 'Desconocido';
+                var cantidad = tipo === 'Dañado' ? Number(r.cantidad || 0) : Number(r.cantidad_faltante || 0);
+                var ref = (r.numero_despacho ? `Despacho: ${r.numero_despacho}` : '') + (r.evento ? `${r.numero_despacho ? ' · ' : ''}${r.evento}` : '');
+                var yaSel = window.estado.itemsSolicitudBaja.some(it => it.sourceTable === (tipo === 'Dañado' ? 'materiales_danados' : 'materiales_faltantes') && String(it.sourceRowId) === String(r.id));
+                return `
+                  <tr style="opacity:${yaSel ? 0.5 : 1};">
+                    <td style="font-family: 'Courier New', monospace; font-weight: 700; color:#111827;">${codigo}</td>
+                    <td style="font-weight: 600; color:#111827;">${nombre}</td>
+                    <td style="text-align:center; font-weight: 800; color:${tipo === 'Dañado' ? '#b91c1c' : '#92400e'};">${cantidad}</td>
+                    <td style="display:flex; align-items:center; gap:8px; justify-content: space-between;">
+                      <span style="color:#374151; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width: 210px;" title="${(ref || '').replace(/"/g, '&quot;')}">${ref || '—'}</span>
+                      <button type="button" class="mov-btn mov-btn-primary" data-accion="seleccionar" data-tipo="${tipo}" data-id="${r.id}" ${yaSel ? 'disabled' : ''} style="padding:6px 10px; border-radius:8px; font-weight:700;">
+                        ${yaSel ? '✅' : '➕'}
+                      </button>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        `;
       }
 
-      lista.innerHTML = materialesFiltrados.map(function(mat) {
-        var yaSeleccionado = window.estado.itemsSolicitudBaja.some(item => item.materialId === mat.material_codigo);
-        var claseSeleccionado = yaSeleccionado ? 'style="opacity: 0.5; pointer-events: none;"' : '';
+      renderTabla(contDanados, danados, 'Dañado');
+      renderTabla(contFaltantes, faltantes, 'Faltante');
 
-        return `<div class="tarjeta-material-baja ${yaSeleccionado ? 'seleccionado' : ''}" data-codigo="${mat.material_codigo}">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
-              <div style="flex: 1;">
-                <h4 style="margin: 0 0 8px 0; color: #08278a; font-size: 16px; font-weight: 700; line-height: 1.3;">${mat.material_nombre}</h4>
-                <p style="margin: 0; color: #08278a; font-size: 13px; font-weight: 500;">Código: <span style="color:#09ed2f; font-family: 'Courier New', monospace; font-weight: 700;">${mat.material_codigo}</span></p>
-              </div>
-              <div style="text-align: right;">
-                <div style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; display: inline-block; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);">
-                  📦 ${mat.existencia} disponibles
-                </div>
-              </div>
-            </div>
-            <div style="display: flex; align-items: center; justify-content: space-between;">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; padding: 4px 10px; border-radius: 16px; font-size: 11px; font-weight: 600; box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);">
-                  🏭 ${mat.bodega_principal || 'Principal'}
-                </span>
-              </div>
-              <button class="mov-btn mov-btn-primary" style="padding: 10px 20px; border-radius: 8px; font-weight: 600; transition: all 0.2s;" ${yaSeleccionado ? 'disabled' : ''}>
-                ${yaSeleccionado ? '✅ Seleccionado' : '➕ Seleccionar'}
-              </button>
-            </div>
-          </div>`;
-      }).join('');
+      // Delegación de eventos para ambas tablas
+      [contDanados, contFaltantes].forEach(function(cont) {
+        cont.querySelectorAll('button[data-accion="seleccionar"]:not([disabled])').forEach(function(btn) {
+          btn.addEventListener('click', function(e) {
+            var b = e.target.closest('button');
+            var tipo = b.dataset.tipo;
+            var id = b.dataset.id;
 
-      // Event listeners para seleccionar materiales
-      lista.querySelectorAll('.tarjeta-material-baja button:not([disabled])').forEach(function(btn) {
-        btn.addEventListener('click', function(e) {
-          var card = e.target.closest('.tarjeta-material-baja');
-          var codigo = card.dataset.codigo;
+            var lista = (tipo === 'Dañado') ? (window.materialesDanados || []) : (window.materialesFaltantes || []);
+            var fila = lista.find(function(x) { return String(x.id) === String(id); });
+            if (!fila) return;
 
-          // Agregar material a la lista
-          window.estado.itemsSolicitudBaja.push({
-            materialId: codigo,
-            cantidad: 1,
-            observacion: ''
+            var codigo = String(fila.material_codigo || '').trim();
+            var nombre = fila.material_nombre || codigo || 'Desconocido';
+            var disponible = tipo === 'Dañado' ? Number(fila.cantidad || 0) : Number(fila.cantidad_faltante || 0);
+            var detalle = (fila.observacion_detalle || '').toString().trim();
+            var obs = tipo + (detalle ? `: ${detalle}` : '');
+
+            window.estado.itemsSolicitudBaja.push({
+              sourceTable: (tipo === 'Dañado') ? 'materiales_danados' : 'materiales_faltantes',
+              sourceRowId: fila.id,
+              materialId: codigo,
+              materialNombre: nombre,
+              cantidadDisponible: disponible,
+              cantidad: disponible > 0 ? disponible : 1,
+              observacion: obs
+            });
+
+            document.getElementById('modalMateriales').style.display = 'none';
+            renderTablaBaja();
           });
-
-          // Cerrar modal y actualizar tabla
-          document.getElementById("modalMateriales").style.display = "none";
-          renderTablaBaja();
         });
       });
     }
 
     function filtrarMateriales(termino) {
-      if (!termino || termino.trim() === '') {
-        return window.materialesCatalogo;
+      var t = (termino || '').toString().trim().toLowerCase();
+      function match(r) {
+        var codigo = String(r.material_codigo || '').toLowerCase();
+        var nombre = String(r.material_nombre || '').toLowerCase();
+        var despacho = String(r.numero_despacho || '').toLowerCase();
+        var evento = String(r.evento || '').toLowerCase();
+        return !t || codigo.includes(t) || nombre.includes(t) || despacho.includes(t) || evento.includes(t);
       }
 
-      var terminoLower = termino.toLowerCase();
-      return window.materialesCatalogo.filter(function(mat) {
-        return mat.material_codigo.toLowerCase().includes(terminoLower) ||
-               mat.material_nombre.toLowerCase().includes(terminoLower);
-      });
+      return {
+        danados: (window.materialesDanados || []).filter(match),
+        faltantes: (window.materialesFaltantes || []).filter(match)
+      };
     }
 
     // =============================================================================
@@ -601,28 +688,57 @@
       }
     }
 
+    function extraerNumeroBaja(numeroBaja) {
+      const m = String(numeroBaja || '').trim().match(/^BAJ-(\d+)$/);
+      return m ? (parseInt(m[1], 10) || 0) : 0;
+    }
+
+    function formatearNumeroBaja(numero) {
+      return `BAJ-${String(numero).padStart(5, '0')}`;
+    }
+
     async function crearSolicitudBaja(baja) {
-      // Generar número de baja
-      const numeroBaja = await generarNumeroBaja();
+      const maxIntentos = 20;
+      const numeroInicial = extraerNumeroBaja(await generarNumeroBaja());
+      let bajaCreada = null;
+      let numeroBajaUsado = null;
 
-      // Crear registro principal de baja como solicitud pendiente
-      const bajaData = {
-        numero_baja: numeroBaja,
-        fecha_baja: new Date().toISOString(),
-        estado: 'pendiente', // Cambiado a pendiente para aprobación
-        observaciones: baja.obsGeneral || null,
-        procesado_por: baja.personal
-      };
+      for (let intento = 0; intento < maxIntentos; intento++) {
+        const numeroBaja = formatearNumeroBaja(numeroInicial + intento);
 
-      const { data: bajaCreada, error: errorBaja } = await window.supabaseClient
-        .from('bajas_logistica')
-        .insert(bajaData)
-        .select('id')
-        .single();
+        // Crear registro principal de baja como solicitud pendiente
+        const bajaData = {
+          numero_baja: numeroBaja,
+          fecha_baja: new Date().toISOString(),
+          estado: 'pendiente', // Cambiado a pendiente para aprobación
+          observaciones: baja.obsGeneral || null,
+          procesado_por: baja.personal
+        };
 
-      if (errorBaja) {
-        console.error('Error al crear baja:', errorBaja);
-        alert('❌ Error al registrar la solicitud en el sistema.');
+        const { data, error: errorBaja } = await window.supabaseClient
+          .from('bajas_logistica')
+          .insert(bajaData)
+          .select('id')
+          .single();
+
+        if (errorBaja) {
+          const esDuplicado = errorBaja.code === '23505';
+          if (esDuplicado) {
+            console.warn('Conflicto de numero_baja, reintentando...', { numeroBaja, intento: intento + 1, error: errorBaja });
+            continue;
+          }
+          console.error('Error al crear baja:', errorBaja);
+          alert('❌ Error al registrar la solicitud en el sistema.');
+          return false;
+        }
+
+        bajaCreada = data;
+        numeroBajaUsado = numeroBaja;
+        break;
+      }
+
+      if (!bajaCreada) {
+        alert('❌ No se pudo generar un número de baja único. Intente nuevamente.');
         return false;
       }
 
@@ -630,7 +746,7 @@
       const itemsData = baja.materiales.map(item => ({
         baja_id: bajaCreada.id,
         codigo_material: item.materialId,
-        nombre_material: window.materialesCatalogo.find(m => m.material_codigo === item.materialId)?.material_nombre || 'Desconocido',
+        nombre_material: item.materialNombre || item.materialId || 'Desconocido',
         cantidad_solicitada: item.cantidad,
         cantidad_bajada: 0, // Aún no se ha bajado
         estado: 'pendiente', // Cambiado a pendiente
@@ -647,7 +763,7 @@
         return false;
       }
 
-      return { numeroBaja, bajaCreada };
+      return { numeroBaja: numeroBajaUsado, bajaCreada };
     }
 
     async function actualizarSolicitudBaja(id, baja) {
@@ -685,7 +801,7 @@
       const itemsData = baja.materiales.map(item => ({
         baja_id: id,
         codigo_material: item.materialId,
-        nombre_material: window.materialesCatalogo.find(m => m.material_codigo === item.materialId)?.material_nombre || 'Desconocido',
+        nombre_material: item.materialNombre || item.materialId || 'Desconocido',
         cantidad_solicitada: item.cantidad,
         cantidad_bajada: 0,
         estado: 'pendiente',
@@ -708,9 +824,43 @@
     // =============================================================================
     // 🔹 PDF GENERATION
     // =============================================================================
-    function generarDocumentoPDF(data) {
-      if (!window.html2pdf) {
-        alert("html2pdf no está cargado.");
+    async function obtenerLogoPdfSrc() {
+      try {
+        if (window.__logoPdfSrc) return window.__logoPdfSrc;
+        if (window.__logoPdfSrcPromise) return await window.__logoPdfSrcPromise;
+
+        const logoUrl = new URL('../../../assets/logo.png', window.location.href).href;
+        if (window.electronAPI && typeof window.electronAPI.getAssetDataUrl === 'function') {
+          window.__logoPdfSrcPromise = window.electronAPI.getAssetDataUrl({ path: 'logo.png' })
+            .then((r) => {
+              if (r && r.ok && r.dataUrl) return r.dataUrl;
+              throw new Error((r && r.error) ? r.error : 'No se pudo leer asset');
+            })
+            .then((dataUrl) => {
+              window.__logoPdfSrc = dataUrl;
+              return dataUrl;
+            })
+            .catch((err) => {
+              console.warn('Logo IPC falló, usando URL directa:', err);
+              window.__logoPdfSrc = logoUrl;
+              return logoUrl;
+            });
+        } else {
+          // Fallback (puede fallar en file://): usar URL directa
+          window.__logoPdfSrcPromise = Promise.resolve(logoUrl);
+        }
+
+        return await window.__logoPdfSrcPromise;
+      } catch (e) {
+        console.warn('Logo fallback:', e);
+        return new URL('../../../assets/logo.png', window.location.href).href;
+      }
+    }
+
+    async function generarDocumentoPDF(data) {
+      const usarPdfNativo = !!(window.electronAPI && typeof window.electronAPI.renderHtmlToPdf === 'function');
+      if (!usarPdfNativo && !window.html2pdf) {
+        alert("No se encontró generador de PDF (Electron/HTML2PDF).");
         return;
       }
       var copias = [
@@ -719,6 +869,7 @@
         { leyenda: "Copia – Gerencia" },
         { leyenda: "Copia – Archivo" }
       ];
+      const logoSrc = await obtenerLogoPdfSrc();
       var contenidoCompleto = "";
       copias.forEach(function(copia) {
         var titulo = "SOLICITUD DE BAJA DE MATERIALES";
@@ -731,10 +882,11 @@
           <p><strong>Fecha de Solicitud:</strong> ' + data.fecha + '</p>\
         ';
         var tablaFilasBaja = data.itemsBaja.map(function(item) {
-          var mat = window.materialesCatalogo.find(function(m) { return m.material_codigo === item.materialId; });
+          var matCodigo = item.materialId;
+          var matNombre = item.materialNombre || item.materialId || 'Desconocido';
           return '\
             <tr style="font-size: 9pt;">\
-              <td style="padding: 6pt; border: 1px solid #ddd;">' + (mat ? mat.material_codigo + ' – ' + mat.material_nombre : "Desconocido") + '</td>\
+              <td style="padding: 6pt; border: 1px solid #ddd;">' + (matCodigo ? (matCodigo + ' – ' + matNombre) : "Desconocido") + '</td>\
               <td style="padding: 6pt; border: 1px solid #ddd; text-align: center;">' + item.cantidad + '</td>\
               <td style="padding: 6pt; border: 1px solid #ddd;">' + (item.observacion || "") + '</td>\
             </tr>\
@@ -756,7 +908,7 @@
         contenidoCompleto += '\
         <div style="width: 185mm; font-family: Arial, sans-serif; color: #333; line-height: 1.3; font-size: 10pt; page-break-after: always;">\
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10pt; border-bottom: 2px solid ' + colorHeader + '; padding-bottom: 6pt;">\
-            <img src="assets/logo.png" alt="Logo" style="height: 20mm; margin-right: 8mm;">\
+            <img src="' + logoSrc + '" alt="Logo" style="height: 20mm; margin-right: 8mm;">\
             <div style="text-align: center; flex: 1;">\
               <h1 style="color: ' + colorHeader + '; margin: 0; font-size: 16pt;">' + titulo + '</h1>\
               <p style="margin: 3pt 0 0 0; color: #555; font-size: 9pt;">\
@@ -795,9 +947,46 @@
       if (contenidoCompleto.endsWith('page-break-after: always;">')) {
         contenidoCompleto = contenidoCompleto.slice(0, -'page-break-after: always;">'.length) + '">';
       }
+      const filename = 'SolicitudBaja_' + data.numeroRegistro + '.pdf';
+
+      if (usarPdfNativo) {
+        const html = `<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>${filename}</title>
+  <style>
+    @page { size: Letter; margin: 12mm; }
+    body { margin: 0; background: #fff; }
+    table { page-break-inside: auto; }
+    tr { page-break-inside: avoid; page-break-after: auto; }
+  </style>
+</head>
+<body>${contenidoCompleto}</body>
+</html>`;
+
+        window.electronAPI.renderHtmlToPdf({
+          filename,
+          html,
+          // Permite resolver recursos relativos si existieran
+          baseUrl: window.location.href
+        }).then((r) => {
+          if (r && r.canceled) {
+            if (r.error) console.error('PDF nativo cancelado/error:', r.error);
+            return;
+          }
+        }).catch((e) => {
+          console.error('Error generando PDF nativo:', e);
+          alert('❌ No se pudo generar el PDF.');
+        });
+        return;
+      }
+
+      // Fallback: html2pdf/html2canvas
       var options = {
         margin: [15, 15, 15, 15],
-        filename: 'SolicitudBaja_' + data.numeroRegistro + '.pdf',
+        filename,
         image: { type: 'jpeg', quality: 0.95 },
         html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
         jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
@@ -810,13 +999,12 @@
     // =============================================================================
     function inicializarEventos() {
       document.getElementById("btnAgregarBaja").addEventListener("click", function() {
-        // Verificar que los materiales estén cargados
-        if (!window.materialesCatalogo || window.materialesCatalogo.length === 0) {
-          alert("Cargando catálogo de materiales, por favor espere...");
+        if (!window.materialesDarBajaCargados) {
+          alert("Cargando materiales (dañados/faltantes), por favor espere...");
           return;
         }
         // Mostrar modal de selección de materiales
-        renderModalMateriales(window.materialesCatalogo);
+        renderModalMateriales(filtrarMateriales(''));
         document.getElementById("modalMateriales").style.display = "flex";
         document.getElementById("buscarMaterial").value = "";
       });
@@ -832,8 +1020,7 @@
 
       document.getElementById("buscarMaterial").addEventListener("input", function(e) {
         var termino = e.target.value;
-        var materialesFiltrados = filtrarMateriales(termino);
-        renderModalMateriales(materialesFiltrados);
+        renderModalMateriales(filtrarMateriales(termino));
       });
 
       // Cerrar modal al hacer click fuera
@@ -844,6 +1031,7 @@
       });
 
       document.getElementById("btnGuardar").addEventListener("click", async function() {
+        const eraEdicion = window.modoEdicion;
         var personal = document.getElementById("personalEntrega").value;
         var fecha = document.getElementById("fechaSalida").value;
         var motivoGeneral = document.getElementById("motivoBajaGeneral").value;
@@ -894,7 +1082,7 @@
           };
 
           // Limpiar formulario después de éxito
-          window.estado = { itemsSolicitudBaja: [], pdfData: null };
+          window.estado.itemsSolicitudBaja = [];
           document.getElementById("tablaBaja").innerHTML = "";
           document.getElementById("motivoBajaGeneral").value = "";
           document.getElementById("obsBajaGeneral").value = "";
@@ -906,7 +1094,7 @@
           document.getElementById("btnGuardar").textContent = "📤 Enviar Solicitud a Contabilidad";
 
           document.getElementById("modalImprimir").style.display = "flex";
-          alert(window.modoEdicion ? "✅ Solicitud actualizada exitosamente." : "✅ Solicitud de baja enviada exitosamente a contabilidad.");
+          alert(eraEdicion ? "✅ Solicitud actualizada exitosamente." : "✅ Solicitud de baja enviada exitosamente a contabilidad.");
         } catch (error) {
           console.error("Error al enviar solicitud:", error);
           alert("❌ Error al enviar la solicitud. Intente nuevamente.");
@@ -928,6 +1116,14 @@
 
       document.getElementById("btnNoImprimir").addEventListener("click", function() {
         document.getElementById("modalImprimir").style.display = "none";
+      });
+
+      document.getElementById("btnImprimir").addEventListener("click", function() {
+        if (!window.estado || !window.estado.pdfData) {
+          alert('No hay un documento para imprimir. Envíe una solicitud primero.');
+          return;
+        }
+        generarDocumentoPDF(window.estado.pdfData);
       });
 
       document.getElementById("btnLimpiar").addEventListener("click", function() {

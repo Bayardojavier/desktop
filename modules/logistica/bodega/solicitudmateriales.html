@@ -81,7 +81,8 @@
       },
       materialesEspecificos: [],
       plantillasAdicionales: [],
-      itemsPorItem: []
+      itemsPorItem: [],
+      consumiblesSeleccionados: []
     };
 
     // =============================================================================
@@ -162,13 +163,10 @@
         try {
           const CATALOGOS = [
             { table: 'catalogo_hierros' },
-            { table: 'catalogo_audiovisual' },
-            { table: 'catalogo_consumibles' }
+            { table: 'catalogo_audiovisual' }
           ];
           for (const c of CATALOGOS) {
-            const selectStr = c.table === 'catalogo_consumibles'
-              ? 'codigo, nombre, dimensiones, color, unidad_medida, campos_personalizados'
-              : 'codigo, nombre, dimensiones, color, unidad_medida, campos_personalizados';
+            const selectStr = 'codigo, nombre, dimensiones, color, unidad_medida, campos_personalizados';
             const { data, error } = await window.supabaseClient
               .from(c.table)
               .select(selectStr)
@@ -281,6 +279,7 @@
           <div style="display: flex; gap: 12px; justify-content: center;">
             <button id="btn-material-especifico" style="padding: 12px 20px; background: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">Material Específico</button>
             <button id="btn-material-plantilla" style="padding: 12px 20px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">Material de Plantilla</button>
+            <button id="btn-material-consumible" style="padding: 12px 20px; background: #ffc107; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">Consumible/Herramienta</button>
           </div>
           <button id="btn-cerrar-modal" style="margin-top: 16px; background: none; border: none; color: #6c757d; cursor: pointer; font-size: 14px;">Cancelar</button>
         </div>
@@ -295,6 +294,11 @@
       modal.querySelector('#btn-material-plantilla').addEventListener('click', () => {
         document.body.removeChild(modal);
         abrirModalPlantillas();
+      });
+
+      modal.querySelector('#btn-material-consumible').addEventListener('click', () => {
+        document.body.removeChild(modal);
+        abrirModalAgregarConsumibles();
       });
 
       modal.querySelector('#btn-cerrar-modal').addEventListener('click', () => {
@@ -426,8 +430,9 @@
             if (!m) return;
             const existe = estado.materialesEspecificos.find(i => i.codigo === cod);
             if (existe) {
-              mostrarNotificacion(`❌ Material ${m.nom} (${cod}) ya está en la lista. No se permiten duplicados.`, 'error');
-              return;
+              // Permitir duplicados para cubrir cantidades faltantes con el mismo material
+              existe.cantidad += 1;
+              mostrarNotificacion(`➕ Cantidad aumentada: ${m.nom} (${cod}) ahora tiene ${existe.cantidad} unidades.`, 'info');
             } else {
               if (estado.recetasSeleccionadas) {
                 // Verificar si el material ya está en alguna receta seleccionada
@@ -518,8 +523,9 @@
             // Agregar como material adicional de tipo GRUPO
             const existe = estado.plantillasAdicionales.find(i => i.codigo === clave);
             if (existe) {
-              mostrarNotificacion(`❌ Plantilla ${plantilla.nombre_plantilla} ya está en la lista. No se permiten duplicados.`, 'error');
-              return;
+              // Permitir duplicados para plantillas
+              existe.cantidad += 1;
+              mostrarNotificacion(`➕ Cantidad aumentada: ${plantilla.nombre_plantilla} ahora tiene ${existe.cantidad} unidades.`, 'info');
             } else {
               estado.plantillasAdicionales.push({
                 codigo: clave,
@@ -552,6 +558,146 @@
       modal.onclick = (e) => {
         if (e.target === modal) document.body.removeChild(modal);
       };
+    }
+
+    async function abrirModalAgregarConsumibles() {
+      if (document.getElementById('modal-agregar-consumibles')) return;
+
+      // Cargar consumibles desde catálogo y stock
+      let consumibles = [];
+      try {
+        // Primero cargar desde catálogo
+        const { data: catalogData, error: catError } = await window.supabaseClient
+          .from('catalogo_consumibles')
+          .select('codigo, nombre, dimensiones, color, unidad_medida, campos_personalizados')
+          .eq('es_contenedor', false)
+          .order('codigo', { ascending: true });
+        if (catError) throw catError;
+
+        // Luego obtener stock para estos códigos
+        const codes = (catalogData || []).map(c => c.codigo);
+        const { data: stockData, error: stockError } = await window.supabaseClient
+          .from('stock_consumibles')
+          .select('material_codigo, stock_actual')
+          .in('material_codigo', codes);
+        if (stockError) {
+          console.warn('Error al cargar stock, usando 0:', stockError);
+        }
+
+        // Crear mapa de stock
+        const stockMap = new Map((stockData || []).map(s => [s.material_codigo, s.stock_actual || 0]));
+
+        // Combinar datos
+        consumibles = (catalogData || []).map(c => ({
+          ...c,
+          stock_actual: stockMap.get(c.codigo) || 0
+        }));
+
+        // Determinar tipo basado en campos_personalizados
+        consumibles.forEach(c => {
+          const campos = c.campos_personalizados ? (typeof c.campos_personalizados === 'string' ? JSON.parse(c.campos_personalizados) : c.campos_personalizados) : {};
+          c.tipo = campos.tipo_material || 'CONSUMIBLE'; // Default a CONSUMIBLE
+        });
+      } catch (err) {
+        console.error('Error al cargar consumibles:', err);
+        alert('❌ Error al cargar consumibles.');
+        return;
+      }
+
+      const modal = document.createElement('div');
+      modal.id = 'modal-agregar-consumibles';
+      modal.style = `
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+      `;
+      modal.innerHTML = `
+        <div style="background: white; width: 90%; max-width: 800px; border-radius: 12px; padding: 24px; max-height: 80vh; overflow-y: auto;">
+          <h3 style="margin: 0 0 20px 0; font-size: 18px; color: #1a365d;">Seleccionar Consumibles/Herramientas</h3>
+          
+          <div style="margin-bottom: 16px;">
+            <input type="text" id="busqueda-consumibles" placeholder="Buscar por código o nombre..." style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+          </div>
+
+          <div id="lista-consumibles" style="max-height: 300px; overflow-y: auto; border: 1px solid #eee; border-radius: 4px; margin-bottom: 16px;">
+            ${consumibles.map(c => `
+              <div class="item-consumible" data-codigo="${c.codigo}" style="padding: 8px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; gap: 12px;">
+                <input type="checkbox" class="chk-consumible" data-codigo="${c.codigo}" ${c.stock_actual <= 0 ? 'disabled' : ''}>
+                <div style="flex: 1;">
+                  <strong>${c.nombre}</strong><br>
+                  <small>Código: ${c.codigo} | Stock: ${c.stock_actual}</small>
+                </div>
+                <input type="number" class="cant-consumible" data-codigo="${c.codigo}" min="1" max="${c.stock_actual}" value="1" style="width: 60px; padding: 4px;" disabled>
+              </div>
+            `).join('')}
+          </div>
+
+          <div style="display: flex; gap: 12px; justify-content: flex-end;">
+            <button id="btn-agregar-seleccionados" style="padding: 12px 20px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">Agregar Seleccionados</button>
+            <button id="btn-cancelar-seleccion" style="padding: 12px 20px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">Cancelar</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      // Event listeners
+      const busqueda = modal.querySelector('#busqueda-consumibles');
+      const lista = modal.querySelector('#lista-consumibles');
+
+      busqueda.addEventListener('input', () => {
+        const filtro = busqueda.value.toLowerCase();
+        lista.querySelectorAll('.item-consumible').forEach(item => {
+          const texto = item.textContent.toLowerCase();
+          item.style.display = texto.includes(filtro) ? 'flex' : 'none';
+        });
+      });
+
+      lista.addEventListener('change', (e) => {
+        if (e.target.classList.contains('chk-consumible')) {
+          const codigo = e.target.dataset.codigo;
+          const cantInput = lista.querySelector(`.cant-consumible[data-codigo="${codigo}"]`);
+          cantInput.disabled = !e.target.checked;
+        }
+      });
+
+      modal.querySelector('#btn-agregar-seleccionados').addEventListener('click', () => {
+        const seleccionados = [];
+        lista.querySelectorAll('.chk-consumible:checked').forEach(chk => {
+          const codigo = chk.dataset.codigo;
+          const cant = parseInt(lista.querySelector(`.cant-consumible[data-codigo="${codigo}"]`).value) || 1;
+          const consumible = consumibles.find(c => c.codigo === codigo);
+          if (consumible) {
+            // Verificar si ya está seleccionado
+            const existente = estado.consumiblesSeleccionados.find(item => item.codigo === codigo);
+            if (existente) {
+              existente.cantidad += cant;
+              mostrarNotificacion(`➕ Cantidad aumentada: ${consumible.nombre} ahora tiene ${existente.cantidad} unidades.`, 'info');
+            } else {
+              estado.consumiblesSeleccionados.push({
+                codigo: consumible.codigo,
+                nombre: consumible.nombre,
+                cantidad: cant,
+                tipo: consumible.tipo
+              });
+              mostrarNotificacion(`✅ Consumible/Herramienta agregado: ${consumible.nombre}.`, 'success');
+            }
+          }
+        });
+        document.body.removeChild(modal);
+        renderTablaConsumibles();
+      });
+
+      modal.querySelector('#btn-cancelar-seleccion').addEventListener('click', () => {
+        document.body.removeChild(modal);
+      });
+
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) document.body.removeChild(modal);
+      });
     }
 
     function renderPlantillas(plantillasList) {
@@ -780,6 +926,26 @@
                 </div>
               </div>
             </div>
+
+            <!-- Consumibles/Herramientas -->
+            <div style="flex: 1; display: flex; flex-direction: column;">
+              <h4 style="font-size: 12px; margin: 0 0 8px 0; color: #1a365d;">Consumibles/Herramientas</h4>
+              <div style="border: 1px solid var(--accent); border-radius: 8px; background: white; flex: 1; display: flex; flex-direction: column;">
+                <div style="overflow-y: auto; flex: 1;">
+                  <table class="solicitud-table" style="font-size: 12px;">
+                    <thead>
+                      <tr style="background: rgba(40, 167, 69, 0.05);">
+                        <th style="width: 60%;">Descripción</th>
+                        <th style="width: 20%;">Cant.</th>
+                        <th style="width: 20%; text-align: center;">Quitar</th>
+                      </tr>
+                    </thead>
+                    <tbody id="ped-consumibles-body"></tbody>
+                  </table>
+                  <div id="msg-consumibles-vacio" style="padding: 16px; text-align: center; color: #94a3b8; font-style: italic; font-size: 12px; display: block;">No hay consumibles/herramientas.</div>
+                </div>
+              </div>
+            </div>
           </div>
 
         </div>
@@ -789,6 +955,7 @@
       renderResumenRecetasEspecificas();
       renderResumenEspecificos();
       renderResumenPlantillas();
+      renderTablaConsumibles();
 
       document.querySelector('.logistica-container #btn-abrir-modal-recetas').addEventListener("click", () => {
         abrirModalRecetas();
@@ -969,7 +1136,9 @@
         return;
       }
       msg.style.display = 'none';
-      tbody.innerHTML = estado.materialesEspecificos.map((item, idx) => `
+      tbody.innerHTML = estado.materialesEspecificos.map((item, idx) => {
+        const mat = getMaterial(item.codigo);
+        return `
         <tr>
           <td>
             <strong>${item.nombre}</strong><br>
@@ -982,7 +1151,7 @@
             <button class="btn-remove" data-index="${idx}" style="width: 24px; height: 24px; padding: 0; font-size: 12px;">✕</button>
           </td>
         </tr>
-      `).join('');
+      `}).join('');
       document.querySelectorAll('.logistica-container #ped-especificos-body [data-index]').forEach(el => {
         if (el.tagName === 'INPUT') {
           el.addEventListener('input', (e) => {
@@ -1046,10 +1215,66 @@
       });
     }
 
+    function renderTablaConsumibles() {
+      if (!estado.consumiblesSeleccionados) estado.consumiblesSeleccionados = [];
+      const tbody = document.querySelector('.logistica-container #ped-consumibles-body');
+      const msg = document.querySelector('.logistica-container #msg-consumibles-vacio');
+      if (estado.consumiblesSeleccionados.length === 0) {
+        tbody.innerHTML = '';
+        msg.style.display = 'block';
+        return;
+      }
+      msg.style.display = 'none';
+      tbody.innerHTML = estado.consumiblesSeleccionados.map((item, idx) => `
+        <tr>
+          <td>
+            <strong>${item.nombre}</strong><br>
+            <small>Código: ${item.codigo} | Tipo: ${item.tipo === 'RENTABLE' ? 'Herramienta' : 'Consumible'}</small>
+          </td>
+          <td>
+            <input type="number" class="log-input" min="1" value="${item.cantidad}" data-index="${idx}" style="width: 60px; padding: 4px; font-size: 12px;" />
+          </td>
+          <td style="text-align: center;">
+            <button class="btn-remove" data-index="${idx}" style="width: 24px; height: 24px; padding: 0; font-size: 12px;">✕</button>
+          </td>
+        </tr>
+      `).join('');
+      document.querySelectorAll('.logistica-container #ped-consumibles-body [data-index]').forEach(el => {
+        if (el.tagName === 'INPUT') {
+          el.addEventListener('input', (e) => {
+            const idx = parseInt(e.target.dataset.index);
+            let val = parseInt(e.target.value) || 1;
+            estado.consumiblesSeleccionados[idx].cantidad = val;
+          });
+        } else if (el.classList.contains('btn-remove')) {
+          el.addEventListener('click', (e) => {
+            const idx = parseInt(e.currentTarget.dataset.index);
+            estado.consumiblesSeleccionados.splice(idx, 1);
+            renderTablaConsumibles();
+          });
+        }
+      });
+    }
+
     function renderModoItem(contenedor) {
       contenedor.innerHTML = `
         <h3 class="log-titulo" style="font-size: 15px; margin: 12px 0 10px 0; color: #fefcff;">Catálogo de Inventario</h3>
-        
+
+        <!-- Controles de búsqueda y filtro -->
+        <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 16px; background: rgba(0, 0, 0, 0.767); padding: 12px; border-radius: 8px;">
+          <div style="flex: 1;">
+            <input type="text" id="busqueda-catalogo-item" placeholder="Buscar por código o nombre..." style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 14px; background: white; color: #333;">
+          </div>
+          <div style="min-width: 180px;">
+            <select id="filtro-bodega-item" style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 14px; background: white; color: #333;">
+              <option value="">Todas las bodegas</option>
+              <option value="Hierros">Hierros</option>
+              <option value="Audiovisual">Audiovisual</option>
+              <option value="Consumibles">Consumibles</option>
+            </select>
+          </div>
+        </div>
+
         <!-- División en dos columnas -->
         <div style="display: flex; gap: 20px; height: 620px; overflow: hidden;">
 
@@ -1076,7 +1301,7 @@
           <!-- Columna derecha: resumen del pedido -->
           <div style="flex: 1; display: flex; flex-direction: column; gap: 14px; background: white; padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0;">
             <h3 class="log-titulo" style="font-size: 13px; margin: 0 0 8px 0; color: #1a365d;">Resumen de Pedido</h3>
-            <div style="border: 1px solid var(--accent); border-radius: 8px; overflow: hidden; background: white; flex: 1;">
+            <div style="border: 1px solid var(--accent); border-radius: 8px; overflow-y: auto; background: white; flex: 1;">
               <table class="solicitud-table" style="font-size: 12px;">
                 <thead>
                   <tr style="background: rgba(55, 148, 255, 0.05);">
@@ -1097,11 +1322,36 @@
       `;
       renderCatalogoItem();
       renderResumenItem();
+
+      // Agregar event listeners para los controles de filtro
+      document.getElementById('busqueda-catalogo-item').addEventListener('input', renderCatalogoItem);
+      document.getElementById('filtro-bodega-item').addEventListener('change', renderCatalogoItem);
     }
 
     function renderCatalogoItem() {
       const tbody = document.querySelector('.logistica-container #cat-item-body');
-      tbody.innerHTML = materialesCatalogo.map(m => `
+
+      // Obtener valores de los filtros
+      const busquedaInput = document.getElementById('busqueda-catalogo-item');
+      const filtroBodegaSelect = document.getElementById('filtro-bodega-item');
+
+      const busqueda = busquedaInput ? busquedaInput.value.toLowerCase().trim() : '';
+      const filtroBodega = filtroBodegaSelect ? filtroBodegaSelect.value : '';
+
+      // Filtrar materiales según búsqueda y bodega
+      const materialesFiltrados = materialesCatalogo.filter(m => {
+        // Filtro de búsqueda (código o nombre)
+        const matchBusqueda = !busqueda ||
+          m.cod.toLowerCase().includes(busqueda) ||
+          m.nom.toLowerCase().includes(busqueda);
+
+        // Filtro de bodega
+        const matchBodega = !filtroBodega || m.bodegaPrincipal === filtroBodega;
+
+        return matchBusqueda && matchBodega;
+      });
+
+      tbody.innerHTML = materialesFiltrados.map(m => `
         <tr>
           <td><span class="code-badge" style="font-size: 11px;">${m.cod}</span></td>
           <td>${m.nom}</td>
@@ -1114,6 +1364,7 @@
           </td>
         </tr>
       `).join('');
+
       tbody.querySelectorAll('[data-cod]').forEach(btn => {
         btn.addEventListener('click', (e) => {
           const cod = e.currentTarget.dataset.cod;
@@ -1224,9 +1475,7 @@
           { table: 'catalogo_consumibles' }
         ];
         for (const c of CATALOGOS) {
-          const selectStr = c.table === 'catalogo_consumibles'
-            ? 'codigo, nombre, dimensiones, color, unidad_medida, campos_personalizados'
-            : 'codigo, nombre, dimensiones, color, unidad_medida, campos_personalizados';
+          const selectStr = 'codigo, nombre, dimensiones, color, unidad_medida, campos_personalizados';
           const { data, error } = await window.supabaseClient
             .from(c.table)
             .select(selectStr)
@@ -1645,6 +1894,18 @@
             color: ""
           });
         });
+
+        estado.consumiblesSeleccionados.forEach(item => {
+          addOrSum({
+            codigo: item.codigo,
+            nombre: item.nombre,
+            cantidad: item.cantidad,
+            estado: "pendiente",
+            observacion: `${item.tipo === 'RENTABLE' ? 'Herramienta' : 'Consumible'} adicional (fuera de receta)`,
+            medidas: "",
+            color: ""
+          });
+        });
       } else {
         estado.itemsPorItem.forEach(item => {
           addOrSum({
@@ -1664,39 +1925,64 @@
 
     async function generarIdSolicitud() {
       try {
-        // Buscar el ID más alto existente que empiece con SOL-
-        const { data, error } = await window.supabaseClient
+        // Estrategia más robusta: buscar un ID disponible empezando desde un número alto
+        // Primero intentar obtener el último ID existente
+        const { data: existingData, error: existingError } = await window.supabaseClient
           .from('solicitudes_logistica')
           .select('id')
           .like('id', 'SOL-%')
           .order('id', { ascending: false })
           .limit(1);
 
-        if (error) {
-          console.error('Error al obtener último ID:', error);
-          // Si hay error, usar 1 como fallback
-          return 'SOL-00001';
-        }
-
-        let nextNumber = 1;
-        if (data && data.length > 0) {
-          // Extraer el número del ID (SOL-XXXXX)
-          const lastId = data[0].id;
+        let startNumber = 1;
+        if (!existingError && existingData && existingData.length > 0) {
+          const lastId = existingData[0].id;
           const match = lastId.match(/^SOL-(\d+)$/);
           if (match) {
-            nextNumber = parseInt(match[1]) + 1;
+            startNumber = parseInt(match[1]) + 1;
           }
         }
 
-        // Formatear con 5 dígitos, cero-padded
-        return `SOL-${nextNumber.toString().padStart(5, '0')}`;
+        console.log('generarIdSolicitud - Starting search from number:', startNumber);
+
+        // Buscar un ID disponible
+        for (let attempt = 0; attempt < 100; attempt++) {
+          const candidateId = `SOL-${(startNumber + attempt).toString().padStart(5, '0')}`;
+
+          // Verificar si este ID ya existe
+          const { data: checkData, error: checkError } = await window.supabaseClient
+            .from('solicitudes_logistica')
+            .select('id')
+            .eq('id', candidateId)
+            .limit(1);
+
+          if (checkError) {
+            console.error('Error checking ID existence:', checkError);
+            continue;
+          }
+
+          if (!checkData || checkData.length === 0) {
+            // ID disponible
+            console.log('generarIdSolicitud - Found available ID:', candidateId);
+            return candidateId;
+          } else {
+            console.log('generarIdSolicitud - ID already exists:', candidateId);
+          }
+        }
+
+        // Si no encontramos ninguno, usar timestamp como fallback
+        const timestampId = `SOL-${Date.now().toString().slice(-5)}`;
+        console.log('generarIdSolicitud - Using timestamp fallback:', timestampId);
+        return timestampId;
+
       } catch (err) {
         console.error('Error al generar ID:', err);
-        return 'SOL-00001';
+        // Fallback con timestamp
+        return `SOL-${Date.now().toString().slice(-5)}`;
       }
     }
 
-    async function enviarSolicitudFinal() {
+    async function iniciarEnvioSolicitud() {
       const evento = document.getElementById('sol-evento').value;
       if (!evento) {
         alert("⚠️ Seleccione un evento.");
@@ -1717,7 +2003,205 @@
         return;
       }
 
-      await procesarEnvioSolicitud(items, evento);
+      // Mostrar modal para preguntar si necesita agregar consumibles/herramientas
+      mostrarModalAgregarConsumibles(items, evento);
+    }
+
+    function mostrarModalAgregarConsumibles(items, evento) {
+      if (document.getElementById('modal-agregar-consumibles')) return;
+
+      const modal = document.createElement('div');
+      modal.id = 'modal-agregar-consumibles';
+      modal.style = `
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+      `;
+      modal.innerHTML = `
+        <div style="background: white; width: 90%; max-width: 400px; border-radius: 12px; padding: 24px; text-align: center;">
+          <h3 style="margin: 0 0 20px 0; font-size: 18px; color: #1a365d;">¿Necesita agregar consumibles o herramientas?</h3>
+          <div style="display: flex; gap: 12px; justify-content: center;">
+            <button id="btn-si-agregar" style="padding: 12px 20px; background: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">Sí</button>
+            <button id="btn-no-agregar" style="padding: 12px 20px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">No</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      modal.querySelector('#btn-si-agregar').addEventListener('click', () => {
+        document.body.removeChild(modal);
+        mostrarModalSeleccionConsumibles(items, evento);
+      });
+
+      modal.querySelector('#btn-no-agregar').addEventListener('click', () => {
+        document.body.removeChild(modal);
+        procesarEnvioSolicitud(items, evento);
+      });
+
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) document.body.removeChild(modal);
+      });
+    }
+
+    async function mostrarModalSeleccionConsumibles(items, evento) {
+      if (document.getElementById('modal-seleccion-consumibles')) return;
+
+      // Cargar consumibles desde catálogo y stock
+      let consumibles = [];
+      try {
+        // Primero cargar desde catálogo
+        const { data: catalogData, error: catError } = await window.supabaseClient
+          .from('catalogo_consumibles')
+          .select('codigo, nombre, dimensiones, color, unidad_medida, campos_personalizados')
+          .eq('es_contenedor', false)
+          .order('codigo', { ascending: true });
+        if (catError) throw catError;
+
+        // Luego obtener stock para estos códigos
+        const codes = (catalogData || []).map(c => c.codigo);
+        const { data: stockData, error: stockError } = await window.supabaseClient
+          .from('stock_consumibles')
+          .select('material_codigo, stock_actual')
+          .in('material_codigo', codes);
+        if (stockError) {
+          console.warn('Error al cargar stock, usando 0:', stockError);
+        }
+
+        // Crear mapa de stock
+        const stockMap = new Map((stockData || []).map(s => [s.material_codigo, s.stock_actual || 0]));
+
+        // Combinar datos
+        consumibles = (catalogData || []).map(c => ({
+          ...c,
+          stock_actual: stockMap.get(c.codigo) || 0
+        }));
+
+        // Determinar tipo basado en campos_personalizados
+        consumibles.forEach(c => {
+          const campos = c.campos_personalizados ? (typeof c.campos_personalizados === 'string' ? JSON.parse(c.campos_personalizados) : c.campos_personalizados) : {};
+          c.tipo = campos.tipo_material || 'CONSUMIBLE'; // Default a CONSUMIBLE
+        });
+      } catch (err) {
+        console.error('Error al cargar consumibles:', err);
+        alert('❌ Error al cargar consumibles.');
+        return;
+      }
+
+      const modal = document.createElement('div');
+      modal.id = 'modal-seleccion-consumibles';
+      modal.style = `
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+      `;
+      modal.innerHTML = `
+        <div style="background: white; width: 90%; max-width: 800px; border-radius: 12px; padding: 24px; max-height: 80vh; overflow-y: auto;">
+          <h3 style="margin: 0 0 20px 0; font-size: 18px; color: #1a365d;">Seleccionar Consumibles/Herramientas</h3>
+          
+          <div style="margin-bottom: 16px;">
+            <input type="text" id="busqueda-consumibles" placeholder="Buscar por código o nombre..." style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+          </div>
+
+          <div id="lista-consumibles" style="max-height: 300px; overflow-y: auto; border: 1px solid #eee; border-radius: 4px; margin-bottom: 16px;">
+            ${consumibles.map(c => `
+              <div class="item-consumible" data-codigo="${c.codigo}" style="padding: 8px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; gap: 12px;">
+                <input type="checkbox" class="chk-consumible" data-codigo="${c.codigo}" ${c.stock_actual <= 0 ? 'disabled' : ''}>
+                <div style="flex: 1;">
+                  <strong>${c.nombre}</strong><br>
+                  <small>Código: ${c.codigo} | Stock: ${c.stock_actual}</small>
+                </div>
+                <input type="number" class="cant-consumible" data-codigo="${c.codigo}" min="1" max="${c.stock_actual}" value="1" style="width: 60px; padding: 4px;" disabled>
+              </div>
+            `).join('')}
+          </div>
+
+          <div style="display: flex; gap: 12px; justify-content: flex-end;">
+            <button id="btn-agregar-seleccionados" style="padding: 12px 20px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">Agregar Seleccionados</button>
+            <button id="btn-cancelar-seleccion" style="padding: 12px 20px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">Cancelar</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      // Event listeners
+      const busqueda = modal.querySelector('#busqueda-consumibles');
+      const lista = modal.querySelector('#lista-consumibles');
+
+      busqueda.addEventListener('input', () => {
+        const filtro = busqueda.value.toLowerCase();
+        lista.querySelectorAll('.item-consumible').forEach(item => {
+          const texto = item.textContent.toLowerCase();
+          item.style.display = texto.includes(filtro) ? 'flex' : 'none';
+        });
+      });
+
+      lista.addEventListener('change', (e) => {
+        if (e.target.classList.contains('chk-consumible')) {
+          const codigo = e.target.dataset.codigo;
+          const cantInput = lista.querySelector(`.cant-consumible[data-codigo="${codigo}"]`);
+          cantInput.disabled = !e.target.checked;
+        }
+      });
+
+      modal.querySelector('#btn-agregar-seleccionados').addEventListener('click', () => {
+        const seleccionados = [];
+        lista.querySelectorAll('.chk-consumible:checked').forEach(chk => {
+          const codigo = chk.dataset.codigo;
+          const cant = parseInt(lista.querySelector(`.cant-consumible[data-codigo="${codigo}"]`).value) || 1;
+          const consumible = consumibles.find(c => c.codigo === codigo);
+          if (consumible) {
+            seleccionados.push({
+              codigo: consumible.codigo,
+              nombre: consumible.nombre,
+              cantidad: cant,
+              tipo: consumible.tipo
+            });
+          }
+        });
+        estado.consumiblesSeleccionados = seleccionados;
+        document.body.removeChild(modal);
+        renderTablaConsumibles();
+        // Ahora proceder con el envío incluyendo consumibles
+        procesarEnvioSolicitudConConsumibles(items, evento);
+      });
+
+      modal.querySelector('#btn-cancelar-seleccion').addEventListener('click', () => {
+        document.body.removeChild(modal);
+        procesarEnvioSolicitud(items, evento);
+      });
+
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) document.body.removeChild(modal);
+      });
+    }
+
+    async function procesarEnvioSolicitudConConsumibles(items, evento) {
+      // Combinar items normales con consumibles
+      const todosLosItems = [...items];
+      if (estado.consumiblesSeleccionados && estado.consumiblesSeleccionados.length > 0) {
+        // Agregar consumibles como items adicionales
+        estado.consumiblesSeleccionados.forEach(consumible => {
+          todosLosItems.push({
+            codigo: consumible.codigo,
+            nombre: consumible.nombre,
+            cantidad: consumible.cantidad,
+            estado: 'pendiente',
+            observacion: `${consumible.tipo === 'RENTABLE' ? 'Herramienta' : 'Consumible'} adicional`,
+            medidas: '',
+            color: '',
+            ubicacionNombre: 'Bodega Principal' // o determinar ubicación
+          });
+        });
+      }
+      await procesarEnvioSolicitud(todosLosItems, evento);
     }
 
     async function mostrarResolucionDuplicados(items) {
@@ -1810,36 +2294,73 @@
     async function procesarEnvioSolicitud(items, evento) {
 
       try {
-        // Generar ID secuencial para la solicitud
-        const idSolicitud = await generarIdSolicitud();
+        // Validar parámetros de entrada
+        if (!items || !Array.isArray(items) || items.length === 0) {
+          alert('❌ Error: No hay items para enviar en la solicitud.');
+          return;
+        }
 
-        const responsable = document.getElementById('sol-responsable').value;
+        if (!evento || evento.trim() === '') {
+          alert('❌ Error: Debe seleccionar un evento antes de enviar la solicitud.');
+          return;
+        }
 
-        // Insertar solicitud principal
-        const { data: solicitud, error: errorSolicitud } = await window.supabaseClient
-          .from('solicitudes_logistica')
-          .insert({
-            id: idSolicitud,
-            tipo: "despacho",
-            estado: "pendiente_bodega",
-            evento: evento,
-            encargado_evento: responsable,
-            prioridad: "Normal",
-            modo_ingreso: estado.modoIngreso,
-            fecha_solicitud: new Date().toISOString(),
-            usuario_id: window.currentUser?.id
-          })
-          .select()
-          .single();
+        // Generar ID único para la solicitud con retry en caso de duplicate
+        let idSolicitud;
+        let attempts = 0;
+        const maxAttempts = 5;
+        // Declarar responsable aquí para que esté disponible fuera del bloque del loop
+        let responsable = 'Sin especificar';
 
-        if (errorSolicitud) {
-          console.error('Error al guardar solicitud:', errorSolicitud);
-          alert('❌ Error al guardar la solicitud.');
+        while (attempts < maxAttempts) {
+          // Generar un nuevo ID en cada intento (ahora más robusto)
+          idSolicitud = await generarIdSolicitud();
+
+          // Obtener el responsable con validación
+          const responsableElement = document.getElementById('sol-responsable');
+          responsable = responsableElement ? responsableElement.value.trim() : 'Sin especificar';
+
+          // Intentar insertar solicitud principal
+          const { data: solicitud, error: errorSolicitud } = await window.supabaseClient
+            .from('solicitudes_logistica')
+            .insert({
+              id: idSolicitud,
+              tipo: "despacho",
+              estado: "pendiente_bodega",
+              evento: evento,
+              encargado_evento: responsable,
+              prioridad: "Normal",
+              modo_ingreso: estado.modoIngreso,
+              fecha_solicitud: new Date().toISOString(),
+              usuario_id: window.currentUser?.id
+            })
+            .select()
+            .single();
+
+          if (errorSolicitud) {
+            if (errorSolicitud.code === '23505' && errorSolicitud.message.includes('duplicate key value')) {
+              // Duplicate key, retry with new ID
+              attempts++;
+              console.warn(`Duplicate ID ${idSolicitud}, retrying (${attempts}/${maxAttempts})`);
+              continue;
+            } else {
+              console.error('Error al guardar solicitud:', errorSolicitud);
+              alert('❌ Error al guardar la solicitud.');
+              return;
+            }
+          }
+
+          // Éxito, salir del loop
+          break;
+        }
+
+        if (attempts >= maxAttempts) {
+          alert('❌ Error: No se pudo generar un ID único para la solicitud después de varios intentos.');
           return;
         }
 
         // Log de auditoría para solicitud
-        await window.logAuditoria('INSERT', 'solicitudes_logistica', idSolicitud, {
+        await window.logAuditoria('INSERT', 'solicitudes_logistica', null, {
           id: idSolicitud,
           tipo: "despacho",
           estado: "pendiente_bodega",
@@ -1879,7 +2400,11 @@
           window.logAuditoria('INSERT', 'items_solicitud_logistica', null, item);
         });
 
-        alert(`✅ Solicitud ${idSolicitud} enviada a Bodega.`);
+        alert(`✅ Solicitud ${idSolicitud.substring(0, 8)} enviada a Bodega.`);
+        // Mostrar notificación del sistema
+        if (window.showSystemNotification) {
+          window.showSystemNotification('Solicitud Enviada', `Solicitud ${idSolicitud.substring(0, 8)} enviada exitosamente a Bodega.`);
+        }
 
         // Reiniciar estado
         estado = { 
@@ -1890,7 +2415,8 @@
           },
           materialesEspecificos: [],
           plantillasAdicionales: [],
-          itemsPorItem: []
+          itemsPorItem: [],
+          consumiblesSeleccionados: []
         };
         renderContenidoDinamico();
         document.getElementById('sol-evento').value = "";
@@ -1900,6 +2426,10 @@
       } catch (err) {
         console.error('Error al enviar solicitud:', err);
         alert('❌ Error al enviar la solicitud.');
+        // Mostrar notificación de error
+        if (window.showSystemNotification) {
+          window.showSystemNotification('Error al Enviar Solicitud', 'No se pudo enviar la solicitud a Bodega. Verifique los datos.');
+        }
       }
     }
 
@@ -1919,7 +2449,7 @@
       });
     });
 
-    document.getElementById('btn-enviar').addEventListener('click', enviarSolicitudFinal);
+    document.getElementById('btn-enviar').addEventListener('click', iniciarEnvioSolicitud);
 
     // =============================================================================
     // 🔹 SOPORTE PARA EDICIÓN
@@ -1968,12 +2498,13 @@
           },
           materialesEspecificos: [],
           plantillasAdicionales: [],
-          itemsPorItem: []
+          itemsPorItem: [],
+          consumiblesSeleccionados: []
         };
 
         // Reconstruir el estado desde los items guardados
         solicitud.items_solicitud_logistica.forEach(item => {
-          if (item.observacion === "Material adicional (fuera de receta)") {
+          if (item.observacion === "Material adicional específico (fuera de receta)") {
             estado.materialesEspecificos.push({
               codigo: item.codigo_material,
               nombre: item.nombre_material,
@@ -1988,6 +2519,13 @@
               medidas: item.medidas,
               color: item.color,
               cantidad: item.cantidad_solicitada
+            });
+          } else if (item.observacion === "Herramienta adicional (fuera de receta)" || item.observacion === "Consumible adicional (fuera de receta)") {
+            estado.consumiblesSeleccionados.push({
+              codigo: item.codigo_material,
+              nombre: item.nombre_material,
+              cantidad: item.cantidad_solicitada,
+              tipo: item.observacion.includes("Herramienta") ? "RENTABLE" : "CONSUMIBLE"
             });
           } else {
             // Intentar encontrar la receta correspondiente (primero en plantillas, luego en específicas)

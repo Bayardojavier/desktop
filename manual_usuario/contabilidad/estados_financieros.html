@@ -1,0 +1,942 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario - Estados Financieros</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary-color: #64748b;
+            --accent-color: #f59e0b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --background-primary: #0f172a;
+            --background-secondary: #1e293b;
+            --background-tertiary: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --border-hover: #475569;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--background-primary) 0%, #1e1b4b 100%);
+            color: var(--text-secondary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--background-secondary) 0%, var(--background-tertiary) 100%);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .header-text h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .header-text p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--background-tertiary);
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .nav-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            transform: translateY(-1px);
+        }
+
+        /* Breadcrumb */
+        .breadcrumb {
+            background: var(--background-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .breadcrumb-nav {
+            padding: 1rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .breadcrumb-list {
+            display: flex;
+            align-items: center;
+            list-style: none;
+            gap: 0.5rem;
+        }
+
+        .breadcrumb-item {
+            color: var(--text-muted);
+        }
+
+        .breadcrumb-item a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .breadcrumb-item a:hover {
+            color: var(--primary-color);
+        }
+
+        .breadcrumb-separator {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .breadcrumb-current {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .content-section {
+            background: var(--background-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .section-header {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-description {
+            font-size: 1.125rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        /* Feature Gallery */
+        .feature-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .feature-card {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .feature-image {
+            padding: 1.5rem;
+            background: var(--background-primary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .feature-caption {
+            padding: 1rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            text-align: center;
+            background: var(--background-secondary);
+        }
+
+        /* Content Blocks */
+        .content-block {
+            margin: 2rem 0;
+        }
+
+        .content-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .content-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .content-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .content-list li:last-child {
+            border-bottom: none;
+        }
+
+        .nested-list {
+            margin-left: 1.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .nested-list li {
+            border-bottom: none;
+            padding: 0.25rem 0;
+            color: var(--text-muted);
+        }
+
+        .highlight-box {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .highlight-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Table Styles */
+        .table-container {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .table-header {
+            background: var(--background-secondary);
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .table-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table th {
+            background: var(--background-secondary);
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .data-table td {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .data-table tr:hover td {
+            background: var(--background-primary);
+        }
+
+        .amount-cell {
+            text-align: right;
+            font-family: 'Courier New', monospace;
+        }
+
+        .total-row {
+            background: var(--background-secondary);
+            font-weight: 600;
+        }
+
+        .positive-amount {
+            color: var(--success-color);
+        }
+
+        .negative-amount {
+            color: var(--error-color);
+        }
+
+        /* Report Cards */
+        .report-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .report-card {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .report-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .report-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .report-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .report-description {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        .report-period {
+            font-size: 0.875rem;
+            color: var(--accent-color);
+            font-weight: 500;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--background-secondary);
+            border-top: 1px solid var(--border-color);
+            margin-top: 3rem;
+        }
+
+        .footer-content {
+            padding: 2rem;
+            text-align: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-text {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .feature-card {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .feature-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .nav-buttons {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .main-content {
+                padding: 1rem;
+            }
+
+            .content-section {
+                padding: 1.5rem;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            .feature-gallery {
+                grid-template-columns: 1fr;
+            }
+
+            .data-table {
+                font-size: 0.75rem;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 0.5rem;
+            }
+
+            .report-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="header-text">
+                    <h1>Manual de Usuario</h1>
+                    <p>Absolute de Nicaragua</p>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <a href="index.html" class="nav-btn">
+                    <i class="fas fa-arrow-left"></i>
+                    Contabilidad
+                </a>
+                <a href="../index.html" class="nav-btn">
+                    <i class="fas fa-home"></i>
+                    Inicio
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <nav class="breadcrumb">
+        <div class="breadcrumb-nav">
+            <ol class="breadcrumb-list">
+                <li class="breadcrumb-item">
+                    <a href="../index.html">Inicio</a>
+                </li>
+                <li class="breadcrumb-separator">/</li>
+                <li class="breadcrumb-item">
+                    <a href="index.html">Contabilidad</a>
+                </li>
+                <li class="breadcrumb-separator">/</li>
+                <li class="breadcrumb-current">Estados Financieros</li>
+            </ol>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <section class="content-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    Estados Financieros
+                </h2>
+                <p class="section-description">
+                    Los estados financieros proporcionan una visión completa de la situación económica y financiera de Absolute de Nicaragua. Incluyen balance general, estado de resultados y flujo de efectivo, generados automáticamente a partir del libro diario y otros registros contables.
+                </p>
+            </div>
+
+            <div class="feature-gallery">
+                <div class="feature-card">
+                    <div class="feature-image">
+                        <div style="background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 20px; font-family: 'Fira Code', 'Courier New', monospace; font-size: 12px; line-height: 1.4; color: #cbd5e1;">
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+                                <h3 style="margin: 0 0 12px; color: #0f172a; font-size: 14px; font-weight: 600;">📊 Generador de Estados Financieros</h3>
+
+                                <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; color: #0f172a;">
+                                    <div style="margin-bottom: 16px;">
+                                        <h4 style="margin: 0 0 8px; font-size: 13px; font-weight: 600;">Configuración del Reporte</h4>
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px;">
+                                                <label style="display: block; font-size: 11px; color: #64748b; margin-bottom: 4px;">Tipo de Estado</label>
+                                                <select style="width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; font-size: 12px;">
+                                                    <option>Balance General</option>
+                                                    <option>Estado de Resultados</option>
+                                                    <option>Flujo de Efectivo</option>
+                                                    <option>Estado de Cambios en Patrimonio</option>
+                                                </select>
+                                            </div>
+
+                                            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px;">
+                                                <label style="display: block; font-size: 11px; color: #64748b; margin-bottom: 4px;">Período</label>
+                                                <select style="width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; font-size: 12px;">
+                                                    <option>31 de Enero 2026</option>
+                                                    <option>31 de Diciembre 2025</option>
+                                                    <option>31 de Diciembre 2024</option>
+                                                    <option>Período personalizado</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                                        <button style="padding: 8px 16px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; color: #334155; font-size: 12px;">Vista Previa</button>
+                                        <button style="padding: 8px 16px; border: 1px solid #3b82f6; border-radius: 6px; background: #3b82f6; color: #fff; font-size: 12px; font-weight: 600;">Generar PDF</button>
+                                        <button style="padding: 8px 16px; border: 1px solid #10b981; border-radius: 6px; background: #10b981; color: #fff; font-size: 12px; font-weight: 600;">Exportar Excel</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="feature-caption">
+                        Fig. 1 - Interfaz para generar estados financieros con selección de tipo y período.
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-image">
+                        <div style="background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 20px; font-family: 'Fira Code', 'Courier New', monospace; font-size: 12px; line-height: 1.4; color: #cbd5e1;">
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+                                <h3 style="margin: 0 0 12px; color: #0f172a; font-size: 14px; font-weight: 600;">📈 Dashboard Financiero</h3>
+
+                                <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; color: #0f172a;">
+                                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px;">
+                                        <div style="background: linear-gradient(135deg, #10b981, #059669); color: #fff; padding: 12px; border-radius: 8px;">
+                                            <div style="font-size: 18px; font-weight: 700;">C$ 245,000</div>
+                                            <div style="font-size: 12px; opacity: 0.9;">Utilidad Neta</div>
+                                            <div style="font-size: 11px; opacity: 0.7; margin-top: 4px;">↗️ +15% vs año anterior</div>
+                                        </div>
+
+                                        <div style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: #fff; padding: 12px; border-radius: 8px;">
+                                            <div style="font-size: 18px; font-weight: 700;">C$ 1,850,000</div>
+                                            <div style="font-size: 12px; opacity: 0.9;">Activos Totales</div>
+                                            <div style="font-size: 11px; opacity: 0.7; margin-top: 4px;">↗️ +8% crecimiento</div>
+                                        </div>
+
+                                        <div style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; padding: 12px; border-radius: 8px;">
+                                            <div style="font-size: 18px; font-weight: 700;">45.2%</div>
+                                            <div style="font-size: 12px; opacity: 0.9;">Margen Bruto</div>
+                                            <div style="font-size: 11px; opacity: 0.7; margin-top: 4px;">○ Estable</div>
+                                        </div>
+
+                                        <div style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: #fff; padding: 12px; border-radius: 8px;">
+                                            <div style="font-size: 18px; font-weight: 700;">12.8</div>
+                                            <div style="font-size: 12px; opacity: 0.9;">Rotación de Inventario</div>
+                                            <div style="font-size: 11px; opacity: 0.7; margin-top: 4px;">↗️ +3% eficiencia</div>
+                                        </div>
+                                    </div>
+
+                                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px;">
+                                        <h5 style="margin: 0 0 8px; font-size: 12px; font-weight: 600; color: #374151;">Evolución de Utilidades - Últimos 12 Meses</h5>
+                                        <div style="height: 80px; background: linear-gradient(90deg, #e2e8f0 0%, #10b981 100%); border-radius: 4px; display: flex; align-items: end; justify-content: center;">
+                                            <div style="font-size: 11px; color: #059669; font-weight: 600;">Tendencia Positiva</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="feature-caption">
+                        Fig. 2 - Dashboard con indicadores financieros clave y tendencias de rendimiento.
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-star"></i>
+                    Estados Financieros Disponibles
+                </h3>
+                <div class="report-grid">
+                    <div class="report-card">
+                        <div class="report-icon">
+                            <i class="fas fa-balance-scale"></i>
+                        </div>
+                        <h4 class="report-name">Balance General</h4>
+                        <p class="report-description">
+                            Muestra la situación financiera en un momento específico, incluyendo activos, pasivos y patrimonio.
+                        </p>
+                        <div class="report-period">Generado mensualmente</div>
+                    </div>
+
+                    <div class="report-card">
+                        <div class="report-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <h4 class="report-name">Estado de Resultados</h4>
+                        <p class="report-description">
+                            Presenta los ingresos, costos y gastos en un período determinado, resultando en utilidad o pérdida.
+                        </p>
+                        <div class="report-period">Generado mensualmente</div>
+                    </div>
+
+                    <div class="report-card">
+                        <div class="report-icon">
+                            <i class="fas fa-cash-register"></i>
+                        </div>
+                        <h4 class="report-name">Flujo de Efectivo</h4>
+                        <p class="report-description">
+                            Analiza los movimientos de efectivo por actividades operativas, de inversión y financiamiento.
+                        </p>
+                        <div class="report-period">Generado trimestralmente</div>
+                    </div>
+
+                    <div class="report-card">
+                        <div class="report-icon">
+                            <i class="fas fa-landmark"></i>
+                        </div>
+                        <h4 class="report-name">Estado de Cambios en Patrimonio</h4>
+                        <p class="report-description">
+                            Muestra las variaciones en el patrimonio neto durante el período contable.
+                        </p>
+                        <div class="report-period">Generado anualmente</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-balance-scale"></i>
+                    Estructura del Balance General
+                </h3>
+                <div class="table-container">
+                    <div class="table-header">
+                        <h4 class="table-title">Balance General - Absolute de Nicaragua (31 de Enero 2026)</h4>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Cuenta</th>
+                                <th>Saldo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>ACTIVO CORRIENTE</strong></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td>&nbsp;&nbsp;Caja y Bancos</td>
+                                <td class="amount-cell positive-amount">C$ 450,000</td>
+                            </tr>
+                            <tr>
+                                <td>&nbsp;&nbsp;Cuentas por Cobrar</td>
+                                <td class="amount-cell positive-amount">C$ 125,000</td>
+                            </tr>
+                            <tr>
+                                <td>&nbsp;&nbsp;Inventario</td>
+                                <td class="amount-cell positive-amount">C$ 280,000</td>
+                            </tr>
+                            <tr class="total-row">
+                                <td><strong>Total Activo Corriente</strong></td>
+                                <td class="amount-cell positive-amount"><strong>C$ 855,000</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>ACTIVO FIJO</strong></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td>&nbsp;&nbsp;Equipo de Oficina</td>
+                                <td class="amount-cell positive-amount">C$ 995,000</td>
+                            </tr>
+                            <tr class="total-row">
+                                <td><strong>Total Activo Fijo</strong></td>
+                                <td class="amount-cell positive-amount"><strong>C$ 995,000</strong></td>
+                            </tr>
+                            <tr class="total-row">
+                                <td><strong>TOTAL ACTIVO</strong></td>
+                                <td class="amount-cell positive-amount"><strong>C$ 1,850,000</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>PASIVO CORRIENTE</strong></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td>&nbsp;&nbsp;Cuentas por Pagar</td>
+                                <td class="amount-cell negative-amount">C$ 180,000</td>
+                            </tr>
+                            <tr class="total-row">
+                                <td><strong>Total Pasivo Corriente</strong></td>
+                                <td class="amount-cell negative-amount"><strong>C$ 180,000</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>PATRIMONIO</strong></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td>&nbsp;&nbsp;Capital Social</td>
+                                <td class="amount-cell positive-amount">C$ 1,425,000</td>
+                            </tr>
+                            <tr>
+                                <td>&nbsp;&nbsp;Utilidades Acumuladas</td>
+                                <td class="amount-cell positive-amount">C$ 245,000</td>
+                            </tr>
+                            <tr class="total-row">
+                                <td><strong>Total Patrimonio</strong></td>
+                                <td class="amount-cell positive-amount"><strong>C$ 1,670,000</strong></td>
+                            </tr>
+                            <tr class="total-row">
+                                <td><strong>TOTAL PASIVO + PATRIMONIO</strong></td>
+                                <td class="amount-cell positive-amount"><strong>C$ 1,850,000</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-chart-bar"></i>
+                    Estado de Resultados
+                </h3>
+                <div class="table-container">
+                    <div class="table-header">
+                        <h4 class="table-title">Estado de Resultados - Enero 2026</h4>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Cuenta</th>
+                                <th>Monto</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>INGRESOS</strong></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td>&nbsp;&nbsp;Ventas de Servicios</td>
+                                <td class="amount-cell positive-amount">C$ 425,000</td>
+                            </tr>
+                            <tr>
+                                <td>&nbsp;&nbsp;Otros Ingresos</td>
+                                <td class="amount-cell positive-amount">C$ 15,000</td>
+                            </tr>
+                            <tr class="total-row">
+                                <td><strong>Total Ingresos</strong></td>
+                                <td class="amount-cell positive-amount"><strong>C$ 440,000</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>COSTOS Y GASTOS</strong></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td>&nbsp;&nbsp;Costo de Ventas</td>
+                                <td class="amount-cell negative-amount">C$ 235,000</td>
+                            </tr>
+                            <tr>
+                                <td>&nbsp;&nbsp;Gastos Administrativos</td>
+                                <td class="amount-cell negative-amount">C$ 85,000</td>
+                            </tr>
+                            <tr>
+                                <td>&nbsp;&nbsp;Gastos de Ventas</td>
+                                <td class="amount-cell negative-amount">C$ 45,000</td>
+                            </tr>
+                            <tr>
+                                <td>&nbsp;&nbsp;Impuestos</td>
+                                <td class="amount-cell negative-amount">C$ 35,000</td>
+                            </tr>
+                            <tr class="total-row">
+                                <td><strong>Total Costos y Gastos</strong></td>
+                                <td class="amount-cell negative-amount"><strong>C$ 400,000</strong></td>
+                            </tr>
+                            <tr class="total-row">
+                                <td><strong>UTILIDAD NETA</strong></td>
+                                <td class="amount-cell positive-amount"><strong>C$ 40,000</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-route"></i>
+                    Proceso de Generación
+                </h3>
+                <ul class="content-list">
+                    <li><strong>Selección de Período:</strong> Elegir la fecha de corte para el estado financiero (fin de mes, trimestre, año).</li>
+                    <li><strong>Validación de Datos:</strong> El sistema verifica que todos los asientos estén registrados y balanceados.</li>
+                    <li><strong>Cálculo Automático:</strong> Los totales se calculan automáticamente a partir del libro diario y auxiliares.</li>
+                    <li><strong>Formato Estándar:</strong> Los estados siguen los formatos contables estándar y normativas vigentes.</li>
+                    <li><strong>Vista Previa:</strong> Revisar el estado antes de generarlo para verificar precisión de los datos.</li>
+                    <li><strong>Generación Final:</strong> Crear el documento en formato PDF o Excel con firma digital opcional.</li>
+                </ul>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-file-export"></i>
+                    Exportación y Compartir
+                </h3>
+                <ul class="content-list">
+                    <li><strong>Formatos Disponibles:</strong>
+                        <ul class="nested-list">
+                            <li><strong>PDF:</strong> Formato oficial para presentaciones y archivos permanentes.</li>
+                            <li><strong>Excel:</strong> Para análisis detallado y modificaciones posteriores.</li>
+                            <li><strong>CSV:</strong> Para importación en otros sistemas contables.</li>
+                            <li><strong>Impresión:</strong> Formatos optimizados para impresión en papel.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Compartición Segura:</strong>
+                        <ul class="nested-list">
+                            <li><strong>Email Encriptado:</strong> Envío seguro a stakeholders autorizados.</li>
+                            <li><strong>Portal del Cliente:</strong> Acceso restringido para clientes y proveedores.</li>
+                            <li><strong>Firma Digital:</strong> Validación electrónica de la autenticidad del documento.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Historial de Versiones:</strong> Control de versiones y cambios realizados a los estados financieros.</li>
+                </ul>
+            </div>
+
+            <div class="highlight-box">
+                <h4 class="highlight-title">
+                    <i class="fas fa-shield-alt"></i>
+                    Cumplimiento Normativo
+                </h4>
+                <p style="margin: 0 0 1rem 0; color: var(--text-secondary);">
+                    Los estados financieros cumplen con las normativas contables nicaragüenses y estándares internacionales de información financiera (NIIF).
+                </p>
+                <ul class="content-list" style="margin: 0;">
+                    <li><strong>Principio de Empresa en Marcha:</strong> Los estados asumen que la empresa continuará operando.</li>
+                    <li><strong>Devengado:</strong> Los ingresos y gastos se registran cuando se devengan, no cuando se pagan.</li>
+                    <li><strong>Importancia Relativa:</strong> Los estados reflejan información relevante para la toma de decisiones.</li>
+                    <li><strong>Comparabilidad:</strong> Los estados permiten comparación con períodos anteriores.</li>
+                    <li><strong>Integridad:</strong> Todos los aspectos económicos significativos están incluidos.</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p class="footer-text">
+                <i class="fas fa-copyright"></i>
+                Manual de Usuario - Absolute de Nicaragua 2026
+            </p>
+        </div>
+    </footer>
+</body>
+</html>

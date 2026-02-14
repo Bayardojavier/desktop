@@ -1,0 +1,653 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario - Solicitud de Baja de Materiales</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary-color: #64748b;
+            --accent-color: #f59e0b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --background-primary: #0f172a;
+            --background-secondary: #1e293b;
+            --background-tertiary: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --border-hover: #475569;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--background-primary) 0%, #1e1b4b 100%);
+            color: var(--text-secondary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--background-secondary) 0%, var(--background-tertiary) 100%);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .header-text h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .header-text p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--background-tertiary);
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .nav-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            transform: translateY(-1px);
+        }
+
+        /* Breadcrumb */
+        .breadcrumb {
+            background: var(--background-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .breadcrumb-nav {
+            padding: 1rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .breadcrumb-list {
+            display: flex;
+            align-items: center;
+            list-style: none;
+            gap: 0.5rem;
+        }
+
+        .breadcrumb-item {
+            color: var(--text-muted);
+        }
+
+        .breadcrumb-item a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .breadcrumb-item a:hover {
+            color: var(--primary-color);
+        }
+
+        .breadcrumb-separator {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .breadcrumb-current {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .content-section {
+            background: var(--background-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .section-header {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-description {
+            font-size: 1.125rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+            border-left: 4px solid var(--primary-color);
+            padding-left: 1.5rem;
+        }
+
+        /* Feature Gallery */
+        .feature-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin: 2.5rem 0;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-xl);
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border-color: var(--primary-color);
+        }
+
+        .feature-image {
+            padding: 2rem;
+            background: linear-gradient(135deg, rgba(17, 24, 39, 0.9) 0%, rgba(10, 18, 30, 0.9) 100%);
+        }
+
+        .feature-caption {
+            padding: 1.5rem;
+            background: var(--background-tertiary);
+            border-top: 1px solid var(--border-color);
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        /* Content Sections */
+        .content-block {
+            margin-bottom: 2.5rem;
+        }
+
+        .content-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .content-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .content-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .content-list li:last-child {
+            border-bottom: none;
+        }
+
+        .content-list li strong {
+            color: var(--text-primary);
+        }
+
+        .nested-list {
+            margin-left: 1.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .nested-list li {
+            border-bottom: none;
+            padding: 0.25rem 0;
+        }
+
+        .code-inline {
+            background: var(--background-tertiary);
+            color: var(--accent-color);
+            padding: 0.25rem 0.5rem;
+            border-radius: var(--radius-sm);
+            font-family: 'Fira Code', monospace;
+            font-size: 0.875em;
+        }
+
+        /* Workflow */
+        .workflow-steps {
+            counter-reset: step-counter;
+        }
+
+        .workflow-step {
+            counter-increment: step-counter;
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+        }
+
+        .step-number {
+            width: 2rem;
+            height: 2rem;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.875rem;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+            color: var(--text-secondary);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--background-secondary);
+            border-top: 1px solid var(--border-color);
+            padding: 2rem 0;
+            margin-top: 4rem;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            text-align: center;
+        }
+
+        .footer-text {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header-content {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .nav-buttons {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .main-content {
+                padding: 1rem;
+            }
+
+            .content-section {
+                padding: 1.5rem;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            .feature-gallery {
+                grid-template-columns: 1fr;
+            }
+
+            .workflow-step {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .content-section {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .feature-card {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .feature-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo">
+                    <i class="fas fa-boxes"></i>
+                </div>
+                <div class="header-text">
+                    <h1>Manual de Usuario</h1>
+                    <p>Absolute de Nicaragua</p>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <a href="../index.html" class="nav-btn">
+                    <i class="fas fa-home"></i>
+                    Inicio
+                </a>
+                <a href="dashboard_general.html" class="nav-btn">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Bodega
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <nav class="breadcrumb">
+        <div class="breadcrumb-nav">
+            <ol class="breadcrumb-list">
+                <li class="breadcrumb-item">
+                    <a href="../index.html">Inicio</a>
+                </li>
+                <li class="breadcrumb-separator">/</li>
+                <li class="breadcrumb-item">
+                    <a href="dashboard_general.html">Bodega</a>
+                </li>
+                <li class="breadcrumb-separator">/</li>
+                <li class="breadcrumb-current">Solicitud de Baja de Materiales</li>
+            </ol>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <section class="content-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-clipboard-list"></i>
+                    Solicitud de Baja de Materiales
+                </h2>
+                <p class="section-description">
+                    Este módulo se utiliza para formalizar la solicitud de retiro permanente de materiales del inventario. No realiza la baja de forma inmediata, sino que genera una solicitud formal que debe ser aprobada por el departamento de contabilidad. Esto asegura un control adecuado sobre los activos de la empresa.
+                </p>
+            </div>
+
+            <div class="feature-gallery">
+                <div class="feature-card">
+                    <div class="feature-image">
+                        <div style="background: linear-gradient(180deg, rgba(13, 29, 53, 0.94), rgba(10, 18, 30, 0.94)); border-radius: 10px; padding: 20px; border: 1px solid rgba(55, 148, 255, 0.22); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);">
+                            <div style="background: linear-gradient(180deg, rgba(17, 32, 56, 0.70), rgba(10, 18, 30, 0.70)); border: 1px solid rgba(55, 148, 255, 0.18); border-radius: 14px; padding: 20px; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.30);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                    <div>
+                                        <h2 style="margin: 0 0 6px 0; font-size: 22px; font-weight: 800; color: rgba(255, 255, 255, 0.96); text-shadow: 0 0 18px rgba(55, 148, 255, 0.16);">📋 Solicitud de Baja de Materiales</h2>
+                                        <p style="margin: 0 0 16px 0; color: rgba(224, 224, 255, 0.72); font-size: 13px;">Registra y envía solicitudes de baja de materiales para aprobación de contabilidad</p>
+                                    </div>
+                                    <button style="border-radius: 10px; padding: 10px 16px; border: 1px solid rgba(55, 148, 255, 0.22); background: rgba(255, 255, 255, 0.04); color: rgba(255, 255, 255, 0.92); font-weight: 800; cursor: pointer;">📋 Ver Solicitudes</button>
+                                </div>
+
+                                <!-- Sección de Información General -->
+                                <div style="margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(55, 148, 255, 0.12);">
+                                    <div style="display: grid; grid-template-columns: repeat(4, minmax(160px, 1fr)); gap: 12px;">
+                                        <div>
+                                            <label style="display: block; margin: 0 0 6px 0; font-size: 12px; font-weight: 700; color: rgba(224, 224, 255, 0.84);">Personal que Solicita</label>
+                                            <select style="width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(55, 148, 255, 0.18); background: rgba(0, 0, 0, 0.14); color: rgba(255, 255, 255, 0.92);">
+                                                <option style="background: rgba(10, 18, 30, 0.95); color: rgba(255, 255, 255, 0.92);">María González</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label style="display: block; margin: 0 0 6px 0; font-size: 12px; font-weight: 700; color: rgba(224, 224, 255, 0.84);">Fecha</label>
+                                            <input type="date" value="2024-01-25" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(55, 148, 255, 0.18); background: rgba(0, 0, 0, 0.14); color: rgba(255, 255, 255, 0.92);" />
+                                        </div>
+                                        <div>
+                                            <label style="display: block; margin: 0 0 6px 0; font-size: 12px; font-weight: 700; color: rgba(224, 224, 255, 0.84);">Motivo General</label>
+                                            <select style="width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(55, 148, 255, 0.18); background: rgba(0, 0, 0, 0.14); color: rgba(255, 255, 255, 0.92);">
+                                                <option style="background: rgba(10, 18, 30, 0.95); color: rgba(255, 255, 255, 0.92);" value="">Daño Irreversible</option>
+                                                <option style="background: rgba(10, 18, 30, 0.95); color: rgba(255, 255, 255, 0.92);" value="Daño Irreversible">Daño Irreversible</option>
+                                                <option style="background: rgba(10, 18, 30, 0.95); color: rgba(255, 255, 255, 0.92);" value="Obsolescencia">Obsolescencia</option>
+                                                <option style="background: rgba(10, 18, 30, 0.95); color: rgba(255, 255, 255, 0.92);" value="Pónrdida">Pónrdida</option>
+                                                <option style="background: rgba(10, 18, 30, 0.95); color: rgba(255, 255, 255, 0.92);" value="Robo">Robo</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label style="display: block; margin: 0 0 6px 0; font-size: 12px; font-weight: 700; color: rgba(224, 224, 255, 0.84);">Observación General</label>
+                                            <input type="text" placeholder="Detalles adicionales" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(55, 148, 255, 0.18); background: rgba(0, 0, 0, 0.14); color: rgba(255, 255, 255, 0.92);" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Sección de Materiales -->
+                                <div style="margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(55, 148, 255, 0.12);">
+                                    <h3 style="margin: 0 0 10px 0; font-size: 14px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; color: rgba(255, 255, 255, 0.92);">Materiales a Dar de Baja</h3>
+
+                                    <!-- Tabla de Materiales -->
+                                    <div style="width: 100%; border-collapse: separate; border-spacing: 0; overflow: hidden; border-radius: 12px; border: 1px solid rgba(55, 148, 255, 0.14); background: rgba(0, 0, 0, 0.10); margin-bottom: 16px;">
+                                        <div style="text-align: left; font-size: 12px; letter-spacing: 0.6px; text-transform: uppercase; padding: 10px 12px; color: rgba(255, 255, 255, 0.92); background: rgba(55, 148, 255, 0.10); border-bottom: 1px solid rgba(55, 148, 255, 0.14); display: flex;">
+                                            <div style="width: 35%;">Material</div>
+                                            <div style="width: 15%; text-align: center;">Cantidad</div>
+                                            <div style="width: 35%;">Observación</div>
+                                            <div style="width: 15%; text-align: center;">Acción</div>
+                                        </div>
+                                        <div style="padding: 10px 12px; border-bottom: 1px solid rgba(55, 148, 255, 0.10); color: rgba(224, 224, 255, 0.88); display: flex; align-items: center;">
+                                            <div style="width: 35%; font-weight: 500;">AUDI-0001 – Micrófono Shure SM58<span style="display:inline-block; margin-left:8px; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:700; color:#fff; background:#b91c1c;">Dañado</span></div>
+                                            <div style="width: 15%; text-align: center;">
+                                                <input type="number" value="1" min="1" max="1" style="width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(55, 148, 255, 0.18); background: rgba(0, 0, 0, 0.14); color: rgba(255, 255, 255, 0.92); text-align: center;" />
+                                                <small style="color: rgba(224, 224, 255, 0.70); display: block; font-size: 11px;">Disponible: 1</small>
+                                            </div>
+                                            <div style="width: 35%;">
+                                                <input type="text" placeholder="Observación específica" value="Daño en la cápsula del micrófono" style="width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(55, 148, 255, 0.18); background: rgba(0, 0, 0, 0.14); color: rgba(255, 255, 255, 0.92);" />
+                                            </div>
+                                            <div style="width: 15%; text-align: center;">
+                                                <button style="border-radius: 8px; padding: 6px 10px; border: 1px solid rgba(55, 148, 255, 0.22); background: rgba(0, 0, 0, 0.12); color: rgba(255, 255, 255, 0.92); font-weight: 800; cursor: pointer;">🗑️</button>
+                                            </div>
+                                        </div>
+                                        <div style="padding: 10px 12px; border-bottom: 1px solid rgba(55, 148, 255, 0.10); color: rgba(224, 224, 255, 0.88); display: flex; align-items: center;">
+                                            <div style="width: 35%; font-weight: 500;">HIER-0005 – Trípode de Aluminio<span style="display:inline-block; margin-left:8px; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:700; color:#fff; background:#92400e;">Faltante</span></div>
+                                            <div style="width: 15%; text-align: center;">
+                                                <input type="number" value="1" min="1" max="1" style="width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(55, 148, 255, 0.18); background: rgba(0, 0, 0, 0.14); color: rgba(255, 255, 255, 0.92); text-align: center;" />
+                                                <small style="color: rgba(224, 224, 255, 0.70); display: block; font-size: 11px;">Disponible: 1</small>
+                                            </div>
+                                            <div style="width: 35%;">
+                                                <input type="text" placeholder="Observación específica" value="No localizado en inventario físico" style="width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(55, 148, 255, 0.18); background: rgba(0, 0, 0, 0.14); color: rgba(255, 255, 255, 0.92);" />
+                                            </div>
+                                            <div style="width: 15%; text-align: center;">
+                                                <button style="border-radius: 8px; padding: 6px 10px; border: 1px solid rgba(55, 148, 255, 0.22); background: rgba(0, 0, 0, 0.12); color: rgba(255, 255, 255, 0.92); font-weight: 800; cursor: pointer;">🗑️</button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button style="border-radius: 10px; padding: 10px 14px; border: 1px solid rgba(55, 148, 255, 0.22); background: rgba(255, 255, 255, 0.04); color: rgba(255, 255, 255, 0.92); font-weight: 800; cursor: pointer;">➕ Seleccionar Material</button>
+                                </div>
+
+                                <!-- Botones de Acción -->
+                                <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; margin-top: 16px;">
+                                    <button style="border-radius: 10px; padding: 10px 14px; border: 1px solid rgba(55, 148, 255, 0.55); background: linear-gradient(135deg, rgba(55, 148, 255, 0.28), rgba(124, 92, 246, 0.20)); color: rgba(255, 255, 255, 0.92); font-weight: 800; cursor: pointer;">📤 Enviar Solicitud a Contabilidad</button>
+                                    <button style="border-radius: 10px; padding: 10px 14px; border: 1px solid rgba(55, 148, 255, 0.22); background: rgba(255, 255, 255, 0.04); color: rgba(255, 255, 255, 0.92); font-weight: 800; cursor: pointer;">Limpiar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="feature-caption">
+                        Fig. 1 - Formulario completo para crear una nueva solicitud de baja con materiales seleccionados.
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-star"></i>
+                    Características Principales
+                </h3>
+                <ul class="content-list">
+                    <li><strong>Flujo de Aprobación:</strong> La característica fundamental es que las bajas no son directas. Se crea una "solicitud" con estado <strong>pendiente</strong> que requiere la aprobación de contabilidad para hacerse efectiva.</li>
+                    <li><strong>Origen de los Materiales:</strong> Los materiales a dar de baja se seleccionan desde dos listas predefinidas:
+                        <ul class="nested-list">
+                            <li><strong>Materiales Dañados:</strong> Items que fueron registrados como "Dañado" durante el proceso de devolución.</li>
+                            <li><strong>Materiales Faltantes:</strong> Items que fueron registrados como "Faltante" durante el proceso de devolución.</li>
+                        </ul>
+                        Esto asegura que solo se pueda solicitar la baja de materiales cuyo estado ya ha sido previamente documentado.
+                    </li>
+                    <li><strong>Justificación Requerida:</strong> Cada solicitud debe incluir un motivo general (Daño Irreversible, Obsolescencia, Pónrdida, Robo) y permite añadir observaciones específicas para cada material.</li>
+                    <li><strong>Panel de Solicitudes:</strong> Un panel lateral muestra un historial de todas las solicitudes de baja, permitiendo ver su estado (Pendiente o Aprobada) y realizar acciones sobre ellas.</li>
+                    <li><strong>Acciones sobre Solicitudes:</strong>
+                        <ul class="nested-list">
+                            <li><strong>Editar:</strong> Permite modificar una solicitud que aún está en estado "Pendiente".</li>
+                            <li><strong>Eliminar:</strong> Permite borrar una solicitud "Pendiente" que fue creada por error.</li>
+                            <li><strong>Exportar PDF:</strong> Genera un documento formal de la "Solicitud de Baja" que puede ser impreso para archivo y firmas.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Generación de Documento Formal (PDF):</strong> El sistema crea un PDF detallado de la solicitud, con un número de correlativo único (ej. <span class="code-inline">BAJ-00001</span>), listo para ser presentado para su aprobación.</li>
+                </ul>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-route"></i>
+                    Flujo de Trabajo Típico
+                </h3>
+                <ol class="workflow-steps">
+                    <li class="workflow-step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">El usuario de bodega abre el formulario de "Solicitud de Baja".</div>
+                    </li>
+                    <li class="workflow-step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">Selecciona su nombre, la fecha y el motivo general de la baja.</div>
+                    </li>
+                    <li class="workflow-step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">Selecciona los materiales que desea incluir en la solicitud desde las listas de materiales dañados y faltantes disponibles.</div>
+                    </li>
+                    <li class="workflow-step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">Para cada material, puede ajustar la cantidad (si es menor a la registrada) y añadir una observación específica.</div>
+                    </li>
+                    <li class="workflow-step">
+                        <div class="step-number">5</div>
+                        <div class="step-content">Una vez completada la lista, hace clic en "Enviar Solicitud a Contabilidad".</div>
+                    </li>
+                    <li class="workflow-step">
+                        <div class="step-number">6</div>
+                        <div class="step-content">El sistema guarda la solicitud con estado "Pendiente" y genera un número de correlativo.</div>
+                    </li>
+                    <li class="workflow-step">
+                        <div class="step-number">7</div>
+                        <div class="step-content">Opcionalmente, se puede imprimir el comprobante en PDF.</div>
+                    </li>
+                    <li class="workflow-step">
+                        <div class="step-number">8</div>
+                        <div class="step-content">La solicitud ahora es visible en el panel lateral y queda a la espera de que el departamento de contabilidad la revise y apruebe en su módulo correspondiente.</div>
+                    </li>
+                </ol>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p class="footer-text">
+                <i class="fas fa-copyright"></i>
+                Manual de Usuario - Absolute de Nicaragua 2026
+            </p>
+        </div>
+    </footer>
+</body>
+</html>
+

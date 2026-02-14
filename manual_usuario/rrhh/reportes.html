@@ -1,0 +1,970 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario - Reportes de RRHH</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary-color: #64748b;
+            --accent-color: #f59e0b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --background-primary: #0f172a;
+            --background-secondary: #1e293b;
+            --background-tertiary: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --border-hover: #475569;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--background-primary) 0%, #1e1b4b 100%);
+            color: var(--text-secondary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--background-secondary) 0%, var(--background-tertiary) 100%);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .header-text h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .header-text p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--background-tertiary);
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .nav-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            transform: translateY(-1px);
+        }
+
+        /* Breadcrumb */
+        .breadcrumb {
+            background: var(--background-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .breadcrumb-nav {
+            padding: 1rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .breadcrumb-list {
+            display: flex;
+            align-items: center;
+            list-style: none;
+            gap: 0.5rem;
+        }
+
+        .breadcrumb-item {
+            color: var(--text-muted);
+        }
+
+        .breadcrumb-item a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .breadcrumb-item a:hover {
+            color: var(--primary-color);
+        }
+
+        .breadcrumb-separator {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .breadcrumb-current {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .content-section {
+            background: var(--background-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .section-header {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-description {
+            font-size: 1.125rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        /* Feature Gallery */
+        .feature-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .feature-card {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .feature-image {
+            padding: 1.5rem;
+            background: var(--background-primary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .feature-caption {
+            padding: 1rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            text-align: center;
+            background: var(--background-secondary);
+        }
+
+        /* Content Blocks */
+        .content-block {
+            margin: 2rem 0;
+        }
+
+        .content-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .content-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .content-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .content-list li:last-child {
+            border-bottom: none;
+        }
+
+        .nested-list {
+            margin-left: 1.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .nested-list li {
+            border-bottom: none;
+            padding: 0.25rem 0;
+            color: var(--text-muted);
+        }
+
+        .highlight-box {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .highlight-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Table Styles */
+        .table-container {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .table-header {
+            background: var(--background-secondary);
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .table-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table th {
+            background: var(--background-secondary);
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .data-table td {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .data-table tr:hover td {
+            background: var(--background-primary);
+        }
+
+        .percentage-cell {
+            text-align: center;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-md);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .status-high {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .status-medium {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .status-low {
+            background: var(--error-color);
+            color: white;
+        }
+
+        /* Report Grid */
+        .report-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .report-card {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .report-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .report-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .report-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .report-description {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        /* Status Cards */
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .status-card {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .status-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .status-label {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--background-secondary);
+            border-top: 1px solid var(--border-color);
+            margin-top: 3rem;
+        }
+
+        .footer-content {
+            padding: 2rem;
+            text-align: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-text {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .feature-card {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .feature-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .nav-buttons {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .main-content {
+                padding: 1rem;
+            }
+
+            .content-section {
+                padding: 1.5rem;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            .feature-gallery {
+                grid-template-columns: 1fr;
+            }
+
+            .report-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .data-table {
+                font-size: 0.75rem;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 0.5rem;
+            }
+
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <div class="header-text">
+                    <h1>Manual de Usuario</h1>
+                    <p>Absolute de Nicaragua</p>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <a href="index.html" class="nav-btn">
+                    <i class="fas fa-arrow-left"></i>
+                    RRHH
+                </a>
+                <a href="../index.html" class="nav-btn">
+                    <i class="fas fa-home"></i>
+                    Inicio
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <nav class="breadcrumb">
+        <div class="breadcrumb-nav">
+            <ol class="breadcrumb-list">
+                <li class="breadcrumb-item">
+                    <a href="../index.html">Inicio</a>
+                </li>
+                <li class="breadcrumb-separator">/</li>
+                <li class="breadcrumb-item">
+                    <a href="index.html">RRHH</a>
+                </li>
+                <li class="breadcrumb-separator">/</li>
+                <li class="breadcrumb-current">Reportes y Análisis</li>
+            </ol>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <section class="content-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    Reportes y Análisis de RRHH
+                </h2>
+                <p class="section-description">
+                    El sistema proporciona una amplia gama de reportes y análisis para la toma de decisiones estratégicas en Recursos Humanos, incluyendo métricas de personal, asistencia, nóminas y tendencias organizacionales.
+                </p>
+            </div>
+
+            <div class="report-grid">
+                <div class="report-card">
+                    <div class="report-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3 class="report-title">Personal y Nóminas</h3>
+                    <p class="report-description">
+                        Reportes de estructura organizacional, distribución salarial, antigüedad y composición del personal.
+                    </p>
+                </div>
+
+                <div class="report-card">
+                    <div class="report-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <h3 class="report-title">Asistencia y Puntualidad</h3>
+                    <p class="report-description">
+                        Análisis de asistencia, tardanzas, ausencias justificadas e indicadores de puntualidad por empleado y departamento.
+                    </p>
+                </div>
+
+                <div class="report-card">
+                    <div class="report-icon">
+                        <i class="fas fa-umbrella-beach"></i>
+                    </div>
+                    <h3 class="report-title">Vacaciones y Ausencias</h3>
+                    <p class="report-description">
+                        Control de vacaciones pendientes, licencias médicas y permisos especiales con fechas y duración.
+                    </p>
+                </div>
+
+                <div class="report-card">
+                    <div class="report-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="report-title">Tendencias y Métricas</h3>
+                    <p class="report-description">
+                        Análisis de rotación, productividad, costos laborales y proyecciones futuras basadas en datos históricos.
+                    </p>
+                </div>
+
+                <div class="report-card">
+                    <div class="report-icon">
+                        <i class="fas fa-file-excel"></i>
+                    </div>
+                    <h3 class="report-title">Exportación de Datos</h3>
+                    <p class="report-description">
+                        Exportación completa de datos de RRHH a Excel para análisis externos y reportes personalizados.
+                    </p>
+                </div>
+
+                <div class="report-card">
+                    <div class="report-icon">
+                        <i class="fas fa-balance-scale"></i>
+                    </div>
+                    <h3 class="report-title">Cumplimiento Legal</h3>
+                    <p class="report-description">
+                        Reportes de cumplimiento con leyes laborales, INSS, impuestos y regulaciones de seguridad social.
+                    </p>
+                </div>
+            </div>
+
+            <div class="feature-gallery">
+                <div class="feature-card">
+                    <div class="feature-image">
+                        <div style="background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 20px; font-family: 'Fira Code', 'Courier New', monospace; font-size: 12px; line-height: 1.4; color: #cbd5e1;">
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+                                <h3 style="margin: 0 0 12px; color: #0f172a; font-size: 14px; font-weight: 600;">📊 Dashboard Ejecutivo de RRHH</h3>
+
+                                <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; color: #0f172a;">
+                                    <div style="margin-bottom: 16px;">
+                                        <h4 style="margin: 0 0 8px; font-size: 13px; font-weight: 600;">Indicadores Clave - Febrero 2026</h4>
+                                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+                                            <div style="background: #dcfce7; border: 1px solid #bbf7d0; border-radius: 6px; padding: 8px; text-align: center;">
+                                                <div style="font-size: 16px; font-weight: 700; color: #166534;">47</div>
+                                                <div style="font-size: 10px; color: #166534;">Empleados Activos</div>
+                                            </div>
+                                            <div style="background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 6px; padding: 8px; text-align: center;">
+                                                <div style="font-size: 16px; font-weight: 700; color: #0369a1;">94.2%</div>
+                                                <div style="font-size: 10px; color: #0369a1;">Asistencia</div>
+                                            </div>
+                                            <div style="background: #fef3c7; border: 1px solid #fde68a; border-radius: 6px; padding: 8px; text-align: center;">
+                                                <div style="font-size: 16px; font-weight: 700; color: #d97706;">2.1</div>
+                                                <div style="font-size: 10px; color: #d97706;">Rotación Anual</div>
+                                            </div>
+                                            <div style="background: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 6px; padding: 8px; text-align: center;">
+                                                <div style="font-size: 16px; font-weight: 700; color: #0369a1;">C$ 29,450</div>
+                                                <div style="font-size: 10px; color: #0369a1;">Salario Promedio</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px;">
+                                        <h5 style="margin: 0 0 8px; font-size: 12px; font-weight: 600; color: #0f172a;">Distribución por Departamento</h5>
+                                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
+                                                <span>Ventas</span>
+                                                <div style="display: flex; align-items: center; gap: 8px;">
+                                                    <div style="width: 60px; height: 6px; background: #e2e8f0; border-radius: 3px;">
+                                                        <div style="width: 35%; height: 100%; background: #3b82f6; border-radius: 3px;"></div>
+                                                    </div>
+                                                    <span style="font-weight: 600;">35%</span>
+                                                </div>
+                                            </div>
+                                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
+                                                <span>Bodega</span>
+                                                <div style="display: flex; align-items: center; gap: 8px;">
+                                                    <div style="width: 60px; height: 6px; background: #e2e8f0; border-radius: 3px;">
+                                                        <div style="width: 25%; height: 100%; background: #10b981; border-radius: 3px;"></div>
+                                                    </div>
+                                                    <span style="font-weight: 600;">25%</span>
+                                                </div>
+                                            </div>
+                                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
+                                                <span>Contabilidad</span>
+                                                <div style="display: flex; align-items: center; gap: 8px;">
+                                                    <div style="width: 60px; height: 6px; background: #e2e8f0; border-radius: 3px;">
+                                                        <div style="width: 20%; height: 100%; background: #f59e0b; border-radius: 3px;"></div>
+                                                    </div>
+                                                    <span style="font-weight: 600;">20%</span>
+                                                </div>
+                                            </div>
+                                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
+                                                <span>Logística</span>
+                                                <div style="display: flex; align-items: center; gap: 8px;">
+                                                    <div style="width: 60px; height: 6px; background: #e2e8f0; border-radius: 3px;">
+                                                        <div style="width: 20%; height: 100%; background: #ef4444; border-radius: 3px;"></div>
+                                                    </div>
+                                                    <span style="font-weight: 600;">20%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="feature-caption">
+                        Fig. 1 - Dashboard ejecutivo con métricas clave y distribución organizacional.
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-image">
+                        <div style="background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 20px; font-family: 'Fira Code', 'Courier New', monospace; font-size: 12px; line-height: 1.4; color: #cbd5e1;">
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+                                <h3 style="margin: 0 0 12px; color: #0f172a; font-size: 14px; font-weight: 600;">📈 Análisis de Tendencias</h3>
+
+                                <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; color: #0f172a;">
+                                    <div style="margin-bottom: 16px;">
+                                        <h4 style="margin: 0 0 8px; font-size: 13px; font-weight: 600;">Evolución de Indicadores - Últimos 6 Meses</h4>
+                                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+                                            <div style="text-align: center;">
+                                                <div style="font-size: 20px; font-weight: 700; color: #059669;">↗️ 2.3%</div>
+                                                <div style="font-size: 11px; color: #64748b;">Asistencia</div>
+                                                <div style="font-size: 10px; color: #059669;">Mejorando</div>
+                                            </div>
+                                            <div style="text-align: center;">
+                                                <div style="font-size: 20px; font-weight: 700; color: #dc2626;">↗️ 8.7%</div>
+                                                <div style="font-size: 11px; color: #64748b;">Rotación</div>
+                                                <div style="font-size: 10px; color: #dc2626;">Aumentando</div>
+                                            </div>
+                                            <div style="text-align: center;">
+                                                <div style="font-size: 20px; font-weight: 700; color: #059669;">↗️ 4.2%</div>
+                                                <div style="font-size: 11px; color: #64748b;">Productividad</div>
+                                                <div style="font-size: 10px; color: #059669;">Mejorando</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 12px;">
+                                        <h5 style="margin: 0 0 8px; font-size: 12px; font-weight: 600; color: #92400e;">Recomendaciones del Sistema</h5>
+                                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                                            <div style="display: flex; align-items: center; gap: 8px; font-size: 11px;">
+                                                <span style="color: #059669;">✓</span>
+                                                <span>Implementar programa de retención de talento</span>
+                                            </div>
+                                            <div style="display: flex; align-items: center; gap: 8px; font-size: 11px;">
+                                                <span style="color: #d97706;">⚠</span>
+                                                <span>Revisar políticas de compensación en Logística</span>
+                                            </div>
+                                            <div style="display: flex; align-items: center; gap: 8px; font-size: 11px;">
+                                                <span style="color: #059669;">✓</span>
+                                                <span>Mejorar programas de capacitación y desarrollo</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="feature-caption">
+                        Fig. 2 - Análisis de tendencias con recomendaciones automáticas para mejora.
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-chart-pie"></i>
+                    Métricas de Recursos Humanos
+                </h3>
+                <div class="status-grid">
+                    <div class="status-card">
+                        <div class="status-number">94.2%</div>
+                        <div class="status-label">Tasa de Asistencia Global</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-number">2.1%</div>
+                        <div class="status-label">Tasa de Rotación Anual</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-number">8.5 min</div>
+                        <div class="status-label">Tardanza Promedio</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-number">2.1 años</div>
+                        <div class="status-label">Antigüedad Promedio</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-number">C$ 29,450</div>
+                        <div class="status-label">Salario Promedio Mensual</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-number">15.0%</div>
+                        <div class="status-label">Incremento Salarial Anual</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-table"></i>
+                    Reporte de Asistencia por Departamento
+                </h3>
+                <div class="table-container">
+                    <div class="table-header">
+                        <h4 class="table-title">Análisis de Asistencia - Febrero 2026</h4>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Departamento</th>
+                                <th>Empleados</th>
+                                <th>Asistencia</th>
+                                <th>Tardanzas</th>
+                                <th>Ausencias</th>
+                                <th>Horas Extras</th>
+                                <th>Calificación</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Ventas</td>
+                                <td>17</td>
+                                <td class="percentage-cell">96.5%</td>
+                                <td>3</td>
+                                <td>1</td>
+                                <td>45h</td>
+                                <td><span class="status-badge status-high">Excelente</span></td>
+                            </tr>
+                            <tr>
+                                <td>Bodega</td>
+                                <td>12</td>
+                                <td class="percentage-cell">92.8%</td>
+                                <td>5</td>
+                                <td>2</td>
+                                <td>67h</td>
+                                <td><span class="status-badge status-high">Muy Bueno</span></td>
+                            </tr>
+                            <tr>
+                                <td>Contabilidad</td>
+                                <td>9</td>
+                                <td class="percentage-cell">98.2%</td>
+                                <td>1</td>
+                                <td>0</td>
+                                <td>12h</td>
+                                <td><span class="status-badge status-high">Excelente</span></td>
+                            </tr>
+                            <tr>
+                                <td>Logística</td>
+                                <td>9</td>
+                                <td class="percentage-cell">89.4%</td>
+                                <td>8</td>
+                                <td>3</td>
+                                <td>89h</td>
+                                <td><span class="status-badge status-medium">Regular</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-star"></i>
+                    Tipos de Reportes Disponibles
+                </h3>
+                <ul class="content-list">
+                    <li><strong>Reporte de Personal:</strong> Lista completa de empleados con datos personales, laborales y de contacto.</li>
+                    <li><strong>Reporte de Nóminas:</strong> Detalle de salarios, deducciones, bonos y comprobantes de pago por período.</li>
+                    <li><strong>Reporte de Asistencia:</strong> Registro diario de entradas, salidas, tardanzas y ausencias por empleado.</li>
+                    <li><strong>Reporte de Vacaciones:</strong> Estado de vacaciones pendientes, utilizadas y programadas por empleado.</li>
+                    <li><strong>Reporte de Rotación:</strong> Análisis de empleados que ingresaron y salieron en un período determinado.</li>
+                    <li><strong>Reporte Salarial:</strong> Distribución de salarios por departamento, cargo y rango salarial.</li>
+                    <li><strong>Reporte de Capacitación:</strong> Historial de cursos, certificaciones y desarrollo profesional.</li>
+                    <li><strong>Reporte Ejecutivo:</strong> Dashboard consolidado con KPIs principales para dirección.</li>
+                </ul>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-file-export"></i>
+                    Exportación de Datos
+                </h3>
+                <ul class="content-list">
+                    <li><strong>Exportar a Excel:</strong> Función completa para descargar datos de RRHH en formato Excel con múltiples hojas.</li>
+                    <li><strong>Reportes Personalizados:</strong> Creación de consultas específicas con filtros avanzados por fecha, departamento o empleado.</li>
+                    <li><strong>Datos para Contabilidad:</strong> Información salarial lista para integración con sistemas contables.</li>
+                    <li><strong>Backup de Información:</strong> Copias de seguridad completas de toda la base de datos de RRHH.</li>
+                    <li><strong>Reportes Regulatorios:</strong> Información requerida por entidades gubernamentales (INSS, MTSS, etc.).</li>
+                    <li><strong>Análisis Estadísticos:</strong> Datos procesados para análisis de tendencias y proyecciones.</li>
+                </ul>
+            </div>
+
+            <div class="highlight-box">
+                <h4 class="highlight-title">
+                    <i class="fas fa-lightbulb"></i>
+                    Análisis Predictivo
+                </h4>
+                <ul class="content-list" style="margin: 0;">
+                    <li><strong>Predicción de Rotación:</strong> Identificación de empleados con alto riesgo de renunciar basado en patrones históricos.</li>
+                    <li><strong>Proyección de Costos:</strong> Estimación de gastos salariales futuros considerando incrementos y nuevos ingresos.</li>
+                    <li><strong>Análisis de Productividad:</strong> Correlación entre asistencia, capacitación y desempeño laboral.</li>
+                    <li><strong>Recomendaciones Automáticas:</strong> Sugerencias del sistema para mejorar indicadores de RRHH.</li>
+                    <li><strong>Alertas Tempranas:</strong> Notificaciones sobre tendencias negativas antes de que se conviertan en problemas.</li>
+                    <li><strong>Planificación Estratégica:</strong> Datos para toma de decisiones sobre contrataciones, capacitación y compensación.</li>
+                </ul>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-balance-scale"></i>
+                    Cumplimiento y Auditoría
+                </h3>
+                <ul class="content-list">
+                    <li><strong>Cumplimiento Legal:</strong> Verificación automática de cumplimiento con leyes laborales y contratos colectivos.</li>
+                    <li><strong>Auditoría de Cambios:</strong> Registro detallado de todas las modificaciones realizadas al sistema.</li>
+                    <li><strong>Reportes Regulatorios:</strong> Información específica requerida por entidades de control.</li>
+                    <li><strong>Control de Privacidad:</strong> Protección de datos personales conforme a regulaciones de privacidad.</li>
+                    <li><strong>Backup y Recuperación:</strong> Sistemas de respaldo automático y procedimientos de recuperación de datos.</li>
+                    <li><strong>Certificación de Procesos:</strong> Validación periódica de la integridad y precisión de los datos.</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p class="footer-text">
+                <i class="fas fa-copyright"></i>
+                Manual de Usuario - Absolute de Nicaragua 2026
+            </p>
+        </div>
+    </footer>
+</body>
+</html>

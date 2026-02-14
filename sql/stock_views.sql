@@ -82,3 +82,67 @@ left join (
   from public.movimientos_bodega_consumibles
   order by material_codigo, id desc
 ) p on s.material_codigo = p.material_codigo;
+
+-- Vista unificada de stock para todas las bodegas
+-- Importante: si ya existe la TABLA cache public.stock_actual_con_precio, no crear una vista con el mismo nombre.
+DO $$
+begin
+  if not exists (
+    select 1
+    from pg_class c
+    join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'public'
+      and c.relname = 'stock_actual_con_precio'
+      and c.relkind = 'r'
+  ) then
+    execute 'drop view if exists public.stock_actual_con_precio cascade';
+    execute $v$
+      create or replace view public.stock_actual_con_precio as
+      select
+        material_codigo,
+        material_nombre,
+        precio,
+        stock_actual,
+        bodega_principal,
+        bodega_secundaria,
+        contenedor,
+        ubicacion_nombre,
+        fecha_compra,
+        ''hierros'' as tabla_origen
+      from stock_hierros
+      where stock_actual > 0
+
+      union all
+
+      select
+        material_codigo,
+        material_nombre,
+        precio,
+        stock_actual,
+        bodega_principal,
+        bodega_secundaria,
+        contenedor,
+        ubicacion_nombre,
+        fecha_compra,
+        ''audiovisual'' as tabla_origen
+      from stock_audiovisual
+      where stock_actual > 0
+
+      union all
+
+      select
+        material_codigo,
+        material_nombre,
+        precio,
+        stock_actual,
+        bodega_principal,
+        bodega_secundaria,
+        contenedor,
+        ubicacion_nombre,
+        fecha_compra,
+        ''consumibles'' as tabla_origen
+      from stock_consumibles
+      where stock_actual > 0
+    $v$;
+  end if;
+end $$;

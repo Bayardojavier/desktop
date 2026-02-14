@@ -1,0 +1,343 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario - Agregar Material Consumible</title>
+    <style>
+        /* c:/Users/BAYAR/absolute/desktop/manual_usuario/styles/manual.css */
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            background-color: #0f172a; /* slate-900 */
+            color: #cbd5e1; /* slate-300 */
+        }
+
+        header {
+            background-color: #1e293b; /* slate-800 */
+            color: #e2e8f0; /* slate-200 */
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #334155; /* slate-700 */
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.25rem;
+            font-weight: 800;
+        }
+
+        header p {
+            margin: 0.25rem 0 0;
+            font-size: 1rem;
+            color: #94a3b8; /* slate-400 */
+        }
+
+        nav {
+            background-color: rgba(30, 41, 59, 0.5);
+            padding: 1rem 2rem;
+            text-align: center;
+            border-bottom: 1px solid #334155; /* slate-700 */
+        }
+
+        nav a {
+            color: #e2e8f0; /* slate-200 */
+            text-decoration: none;
+            margin: 0 1rem;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+
+        nav a:hover {
+            background-color: #475569; /* slate-600 */
+        }
+
+        main {
+            padding: 2rem;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        section {
+            background-color: #1e293b; /* slate-800 */
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid #334155; /* slate-700 */
+            margin-bottom: 2rem;
+        }
+
+        section h2 {
+            font-size: 1.75rem;
+            color: #f1f5f9; /* slate-100 */
+            margin-top: 0;
+            border-bottom: 2px solid #475569; /* slate-600 */
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        section h3 {
+            font-size: 1.4rem;
+            color: #e2e8f0; /* slate-200 */
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        p,
+        li {
+            color: #cbd5e1; /* slate-300 */
+            font-size: 1rem;
+        }
+
+        ul,
+        ol {
+            padding-left: 1.5rem;
+        }
+
+        ul li,
+        ol li {
+            margin-bottom: 0.75rem;
+        }
+
+        code {
+            background-color: #334155; /* slate-700 */
+            color: #f1f5f9; /* slate-100 */
+            padding: 0.2em 0.4em;
+            margin: 0;
+            font-size: 85%;
+            border-radius: 6px;
+            font-family: "Fira Code", "Courier New", monospace;
+        }
+
+        .description {
+            font-size: 1.1rem;
+            color: #94a3b8; /* slate-400 */
+            margin-bottom: 2rem;
+            border-left: 4px solid #6366f1; /* indigo-500 */
+            padding-left: 1rem;
+        }
+
+        .feature-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .feature-gallery figure {
+            margin: 0;
+            background-color: #0f172a; /* slate-900 */
+            border: 1px solid #334155; /* slate-700 */
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .feature-gallery img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .feature-gallery figcaption {
+            padding: 1rem;
+            font-size: 0.9rem;
+            color: #94a3b8; /* slate-400 */
+            text-align: center;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            color: #64748b; /* slate-500 */
+            border-top: 1px solid #334155; /* slate-700 */
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Módulo de Bodega: Agregar Material Consumible</h1>
+    </header>
+    <nav>
+        <a href="../index.html">Volver al Índice</a>
+    </nav>
+    <main>
+        <section>
+            <h2>Agregar Material Consumible</h2>
+            <p>Esta interfaz permite dar de alta nuevos materiales consumibles en el inventario de la bodega. Los consumibles son materiales que se utilizan y desgastan durante el proceso productivo, como cintas adhesivas, brochas, repuestos, pinturas, adhesivos, y otros artículos similares.</p>
+            <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 20px; margin: 20px 0; font-family: monospace; color: #cbd5e1;">
+                <div style="color: #94a3b8; margin-bottom: 10px;">[Vista de la interfaz basada en el código HTML/CSS]</div>
+                <div style="display: flex; gap: 20px;">
+                    <div style="width: 35%; background: rgba(20, 30, 60, 0.45); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; padding: 12px;">
+                        <div style="font-weight: 800; color: #cbd5e1; margin-bottom: 8px;">PANEL IZQUIERDO</div>
+                        <div style="color: #94a3b8; font-size: 12px; margin-bottom: 10px;">Bodegas • Modo: Consumibles</div>
+                        <div style="border-top: 1px solid rgba(148,163,184,0.15); padding-top: 8px;">
+                            <div style="font-weight: 700; color: #cbd5e1;">Principal</div>
+                            <div style="color: #94a3b8;">(cargando...)</div>
+                        </div>
+                        <div style="border-top: 1px solid rgba(148,163,184,0.15); padding-top: 8px; margin-top: 8px;">
+                            <div style="font-weight: 700; color: #cbd5e1;">Secundaria</div>
+                            <div style="color: #64748b; font-size: 11px; margin: 4px 0;">[Botones de secundarias]</div>
+                            <div style="display: flex; gap: 4px; margin-top: 6px;">
+                                <input placeholder="Nueva secundaria" style="flex: 1; padding: 4px; background: #334155; border: 1px solid #475569; color: #cbd5e1; border-radius: 4px;" />
+                                <button style="padding: 4px 8px; background: #3b82f6; color: white; border: none; border-radius: 4px;">+ Agregar</button>
+                            </div>
+                        </div>
+                        <div style="border-top: 1px solid rgba(148,163,184,0.15); padding-top: 8px; margin-top: 8px;">
+                            <div style="font-weight: 700; color: #cbd5e1;">Contenedor</div>
+                            <input placeholder="Seleccione un contenedor" readonly style="width: 100%; padding: 4px; background: #334155; border: 1px solid #475569; color: #cbd5e1; border-radius: 4px;" />
+                            <div style="color: #64748b; font-size: 11px; margin-top: 4px;">[Botones de tipos de contenedor]</div>
+                        </div>
+                    </div>
+                    <div style="flex: 1; background: rgba(15,23,42,0.22); border: 1px solid rgba(148,163,184,0.15); border-radius: 10px; padding: 15px;">
+                        <div style="font-weight: 800; color: #cbd5e1; margin-bottom: 8px;">PANEL PRINCIPAL</div>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                            <h1 style="margin: 0; color: #f1f5f9; font-size: 1.5em;">+ Agregar (Consumibles)</h1>
+                            <button style="padding: 6px 10px; background: #dc2626; color: white; border: none; border-radius: 4px;">Config</button>
+                        </div>
+                        <div style="color: #94a3b8; margin-bottom: 15px;">Selecciona Secundaria + Contenedor y llena el material.</div>
+                        <div style="background: rgba(15,23,42,0.22); border: 1px solid rgba(148,163,184,0.15); border-radius: 10px; padding: 10px; margin-bottom: 15px;">
+                            <div style="font-weight: 800; color: #cbd5e1; margin-bottom: 6px;">Tipo de alta</div>
+                            <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
+                                <span style="color: #cbd5e1;">Modo automático: Crea contenedor si no hay seleccionado, agrega material si hay.</span>
+                                <div style="display: flex; gap: 8px; align-items: center; padding: 6px 10px; border: 1px solid rgba(148,163,184,0.18); border-radius: 10px;">
+                                    <span style="font-weight: 700;">Tipo</span>
+                                    <button style="padding: 6px 10px; background: #3b82f6; color: white; border: none; border-radius: 6px;">Equipo/Estructura</button>
+                                    <button style="padding: 6px 10px; background: #6b7280; color: white; border: none; border-radius: 6px;">Piezas</button>
+                                </div>
+                                <label style="display: flex; gap: 10px; align-items: center; padding: 6px 10px; border: 1px solid rgba(148,163,184,0.18); border-radius: 10px;">
+                                    <span style="font-weight: 700;">Activo</span>
+                                    <input type="checkbox" checked />
+                                </label>
+                                <label style="display: flex; gap: 10px; align-items: center; padding: 6px 10px; border: 1px solid rgba(148,163,184,0.18); border-radius: 10px;">
+                                    <span style="font-weight: 700;">Cantidad</span>
+                                    <input type="number" value="1" style="width: 60px; padding: 2px; background: #334155; border: 1px solid #475569; color: #cbd5e1;" />
+                                </label>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                            <div style="flex: 1;">
+                                <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #cbd5e1;">Nombre del Producto</label>
+                                <input placeholder="Ej: Cinta adhesiva 3M" style="width: 100%; padding: 6px; background: #334155; border: 1px solid #475569; color: #cbd5e1; border-radius: 4px;" />
+                            </div>
+                            <div style="width: 150px;">
+                                <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #cbd5e1;">Abreviación</label>
+                                <input placeholder="Ej: CINTA" maxlength="8" style="width: 100%; padding: 6px; background: #334155; border: 1px solid #475569; color: #cbd5e1; border-radius: 4px;" />
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                            <div style="flex: 1;">
+                                <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #cbd5e1;">Tipo de Uso</label>
+                                <input placeholder="Ej: Empaque" style="width: 100%; padding: 6px; background: #334155; border: 1px solid #475569; color: #cbd5e1; border-radius: 4px;" />
+                            </div>
+                            <div style="flex: 1;">
+                                <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #cbd5e1;">Tipo de Material</label>
+                                <input placeholder="Ej: Adhesivo" style="width: 100%; padding: 6px; background: #334155; border: 1px solid #475569; color: #cbd5e1; border-radius: 4px;" />
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #cbd5e1;">Unidad de medida</label>
+                            <div style="display: flex; gap: 12px;">
+                                <label><input type="radio" name="unidad" value="UND" checked /> UND</label>
+                                <label><input type="radio" name="unidad" value="PAR" /> PAR</label>
+                                <label><input type="radio" name="unidad" value="CAJ" /> CAJ</label>
+                                <label><input type="radio" name="unidad" value="SIN" /> SIN</label>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                            <div style="flex: 1;">
+                                <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #cbd5e1;">Cantidad por unidad</label>
+                                <input type="number" step="0.01" style="width: 100%; padding: 6px; background: #334155; border: 1px solid #475569; color: #cbd5e1; border-radius: 4px;" />
+                            </div>
+                            <div style="flex: 1;">
+                                <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #cbd5e1;">Precio unitario</label>
+                                <input type="number" step="0.01" style="width: 100%; padding: 6px; background: #334155; border: 1px solid #475569; color: #cbd5e1; border-radius: 4px;" />
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #cbd5e1;">Foto (opcional)</label>
+                            <div style="display: flex; align-items: flex-start; gap: 12px;">
+                                <div style="width: 80px; height: 80px; border: 2px dashed rgba(148,163,184,0.35); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #94a3b8;">Sin foto</div>
+                                <div>
+                                    <button style="padding: 8px 14px; background: #3b82f6; color: white; border: none; border-radius: 6px; margin-bottom: 4px;">Seleccionar Foto</button>
+                                    <div style="color: #94a3b8; font-size: 12px;">Se sube a Supabase Storage</div>
+                                </div>
+                            </div>
+                        </div>
+                        <button style="padding: 10px 16px; background: #10b981; color: white; border: none; border-radius: 6px;">Guardar Material</button>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Características Principales</h3>
+            <ul>
+                <li><strong>Modo Automático:</strong> El sistema opera en modo automático, creando un contenedor si no hay ninguno seleccionado, o agregando material al contenedor existente.</li>
+                <li><strong>Gestión de Cantidad:</strong> Permite especificar la cantidad inicial del material consumible que se está agregando al inventario.</li>
+                <li><strong>Unidades de Medida:</strong> Soporta diferentes unidades como Unidad, Par, Caja, o Sin medida específica.</li>
+                <li><strong>Cantidad por Unidad:</strong> Permite especificar la cantidad contenida en cada unidad (ej. una caja contiene 50 unidades).</li>
+                <li><strong>Producto Fabricado Local:</strong> Opción para marcar si el producto fue fabricado localmente.</li>
+                <li><strong>Cierre de Contenedor:</strong> Opción para bloquear un contenedor y evitar que se agreguen más materiales a ónl.</li>
+            </ul>
+
+            <h3>Flujo de Trabajo</h3>
+            <ol>
+                <li><strong>Selección de Ubicación:</strong>
+                    <ul>
+                        <li>Seleccionar una bodega secundaria existente o crear una nueva.</li>
+                        <li>Seleccionar o crear un contenedor dentro de la secundaria (Caja, Estante, Gabeta, Rack, etc.).</li>
+                    </ul>
+                </li>
+                <li><strong>Configuración del Material:</strong>
+                    <ul>
+                        <li>Ingresar el nombre del producto consumible.</li>
+                        <li>Especificar una abreviación para el código (opcional, se genera automáticamente si se deja vacío).</li>
+                        <li>Seleccionar el tipo de uso y tipo de material.</li>
+                        <li>Elegir la unidad de medida apropiada.</li>
+                        <li>Especificar la cantidad por unidad y el precio unitario.</li>
+                    </ul>
+                </li>
+                <li><strong>Información Adicional:</strong>
+                    <ul>
+                        <li>Subir una foto del material (opcional).</li>
+                        <li>Seleccionar un color representativo.</li>
+                        <li>Ingresar marca y modelo si aplica.</li>
+                        <li>Agregar campos personalizados si es necesario.</li>
+                    </ul>
+                </li>
+                <li><strong>Guardado:</strong>
+                    <ul>
+                        <li>Si "Activo" está marcado, se crea tanto el registro en el catálogo como un movimiento de ingreso en el inventario.</li>
+                        <li>Si "Activo" está desmarcado, solo se crea el registro en el catálogo sin afectar el stock.</li>
+                        <li>Si se marca "Cerrar contenedor", se bloquea para evitar agregar más materiales.</li>
+                    </ul>
+                </li>
+            </ol>
+
+            <h3>Generación de Códigos</h3>
+            <p>El sistema genera códigos únicos para los materiales consumibles siguiendo una estructura jerárquica similar a otros módulos, heredando el código del contenedor y añadiendo componentes específicos del material.</p>
+            <p><strong>Ejemplo de código:</strong> <code>00123-CONSUM-CAJA-01-ADHES-CINTA</code></p>
+
+            <h3>Diferencias con Otros Módulos</h3>
+            <ul>
+                <li><strong>Unidades de Medida:</strong> Más flexibles que audiovisual (Unidad, Par, Caja, Sin medida).</li>
+                <li><strong>Cantidad por Unidad:</strong> Permite especificar subdivisiones (ej. una caja contiene X unidades).</li>
+                <li><strong>Producto Fabricado Local:</strong> Campo específico para consumibles producidos internamente.</li>
+                <li><strong>Tipos de Contenedor:</strong> Adaptados para consumibles (Caja, Estante, Gabeta, Rack).</li>
+            </ul>
+
+            <h3>Puntos Importantes</h3>
+            <ul>
+                <li>Los consumibles son materiales que se agotan con el uso, por lo que el control de inventario es crítico.</li>
+                <li>La correcta clasificación por tipo de uso y material facilita la búsqueda y el reporte.</li>
+                <li>El precio unitario es importante para el cálculo de costos en producciones.</li>
+                <li>Los campos personalizados permiten adaptar la información a necesidades específicas de cada tipo de consumible.</li>
+            </ul>
+        </section>
+    </main>
+</body>
+</html>
+

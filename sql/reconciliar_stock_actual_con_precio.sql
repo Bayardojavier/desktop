@@ -1,0 +1,205 @@
+-- Reconciliar stock_actual_con_precio desde movimientos (útil si instalaste triggers DESPUÉS de que ya existían movimientos)
+-- OJO: esto es un backfill/rebuild manual. No hace falta ejecutarlo siempre.
+-- Recomendado: correrlo 1 vez tras instalar triggers, o cuando detectes que la cache se desincronizó.
+
+-- OPCIÓN A) Reconciliar SOLO un código (rápido)
+-- Cambia el código aquí:
+--\set codigo '01581-HIER-PERF-LOTE-12-TEBAMBA-150CM'
+-- En Supabase SQL editor no siempre soporta \set; si no, reemplaza el literal directo.
+
+-- delete from public.stock_actual_con_precio where material_codigo = :'codigo';
+
+-- insert into public.stock_actual_con_precio (
+--   material_codigo,
+--   material_nombre,
+--   bodega_principal,
+--   bodega_secundaria,
+--   existencia,
+--   precio_promedio,
+--   updated_at
+-- )
+-- with all_movs as (
+--   select
+--     material_codigo,
+--     material_nombre,
+--     coalesce(nullif(trim(bodega_principal),''), 'Hierros') as bodega_principal,
+--     coalesce(nullif(trim(bodega_secundaria),''), 'General') as bodega_secundaria,
+--     cantidad,
+--     signo,
+--     coalesce(precio, 0) as precio,
+--     estado,
+--     id
+--   from public.movimientos_bodega_hierros
+--   where material_codigo = :'codigo'
+--     and coalesce(estado, 'completado') = 'completado'
+--
+--   union all
+--
+--   select
+--     material_codigo,
+--     material_nombre,
+--     coalesce(nullif(trim(bodega_principal),''), 'Audiovisual') as bodega_principal,
+--     coalesce(nullif(trim(bodega_secundaria),''), 'General') as bodega_secundaria,
+--     cantidad,
+--     signo,
+--     coalesce(precio, 0) as precio,
+--     estado,
+--     id
+--   from public.movimientos_bodega_audiovisual
+--   where material_codigo = :'codigo'
+--     and coalesce(estado, 'completado') = 'completado'
+--
+--   union all
+--
+--   select
+--     material_codigo,
+--     material_nombre,
+--     coalesce(nullif(trim(bodega_principal),''), 'Consumibles') as bodega_principal,
+--     coalesce(nullif(trim(bodega_secundaria),''), 'General') as bodega_secundaria,
+--     cantidad,
+--     signo,
+--     coalesce(precio, 0) as precio,
+--     estado,
+--     id
+--   from public.movimientos_bodega_consumibles
+--   where material_codigo = :'codigo'
+--     and coalesce(estado, 'completado') = 'completado'
+-- ), agg as (
+--   select
+--     material_codigo,
+--     max(nullif(trim(material_nombre),'')) as material_nombre,
+--     bodega_principal,
+--     bodega_secundaria,
+--     greatest(0, sum((cantidad::numeric) * (signo::numeric))) as existencia
+--   from all_movs
+--   group by material_codigo, bodega_principal, bodega_secundaria
+-- ), last_price as (
+--   select distinct on (material_codigo, bodega_principal, bodega_secundaria)
+--     material_codigo,
+--     bodega_principal,
+--     bodega_secundaria,
+--     coalesce(nullif(precio,0), 0) as precio
+--   from all_movs
+--   order by material_codigo, bodega_principal, bodega_secundaria, id desc
+-- )
+-- select
+--   a.material_codigo,
+--   a.material_nombre,
+--   a.bodega_principal,
+--   a.bodega_secundaria,
+--   a.existencia,
+--   lp.precio as precio_promedio,
+--   now()
+-- from agg a
+-- left join last_price lp
+--   on lp.material_codigo = a.material_codigo
+--  and lp.bodega_principal = a.bodega_principal
+--  and lp.bodega_secundaria = a.bodega_secundaria
+-- on conflict (material_codigo, bodega_principal, bodega_secundaria)
+-- do update set
+--   material_nombre = excluded.material_nombre,
+--   existencia = excluded.existencia,
+--   precio_promedio = excluded.precio_promedio,
+--   updated_at = excluded.updated_at;
+
+-- OPCIÓN B) Rebuild COMPLETO (más fuerte)
+-- Esto reconstruye toda la cache desde movimientos completados (o estado null tratado como completado).
+-- Si quieres empezar desde cero:
+-- truncate table public.stock_actual_con_precio;
+
+-- insert into public.stock_actual_con_precio (
+--   material_codigo,
+--   material_nombre,
+--   bodega_principal,
+--   bodega_secundaria,
+--   existencia,
+--   precio_promedio,
+--   updated_at
+-- )
+-- with all_movs as (
+--   select
+--     material_codigo,
+--     material_nombre,
+--     coalesce(nullif(trim(bodega_principal),''), 'Hierros') as bodega_principal,
+--     coalesce(nullif(trim(bodega_secundaria),''), 'General') as bodega_secundaria,
+--     cantidad,
+--     signo,
+--     coalesce(precio, 0) as precio,
+--     estado,
+--     id
+--   from public.movimientos_bodega_hierros
+--   where coalesce(estado, 'completado') = 'completado'
+--
+--   union all
+--
+--   select
+--     material_codigo,
+--     material_nombre,
+--     coalesce(nullif(trim(bodega_principal),''), 'Audiovisual') as bodega_principal,
+--     coalesce(nullif(trim(bodega_secundaria),''), 'General') as bodega_secundaria,
+--     cantidad,
+--     signo,
+--     coalesce(precio, 0) as precio,
+--     estado,
+--     id
+--   from public.movimientos_bodega_audiovisual
+--   where coalesce(estado, 'completado') = 'completado'
+--
+--   union all
+--
+--   select
+--     material_codigo,
+--     material_nombre,
+--     coalesce(nullif(trim(bodega_principal),''), 'Consumibles') as bodega_principal,
+--     coalesce(nullif(trim(bodega_secundaria),''), 'General') as bodega_secundaria,
+--     cantidad,
+--     signo,
+--     coalesce(precio, 0) as precio,
+--     estado,
+--     id
+--   from public.movimientos_bodega_consumibles
+--   where coalesce(estado, 'completado') = 'completado'
+-- ), agg as (
+--   select
+--     material_codigo,
+--     max(nullif(trim(material_nombre),'')) as material_nombre,
+--     bodega_principal,
+--     bodega_secundaria,
+--     greatest(0, sum((cantidad::numeric) * (signo::numeric))) as existencia
+--   from all_movs
+--   group by material_codigo, bodega_principal, bodega_secundaria
+-- ), last_price as (
+--   select distinct on (material_codigo, bodega_principal, bodega_secundaria)
+--     material_codigo,
+--     bodega_principal,
+--     bodega_secundaria,
+--     coalesce(nullif(precio,0), 0) as precio
+--   from all_movs
+--   order by material_codigo, bodega_principal, bodega_secundaria, id desc
+-- )
+-- select
+--   a.material_codigo,
+--   a.material_nombre,
+--   a.bodega_principal,
+--   a.bodega_secundaria,
+--   a.existencia,
+--   lp.precio as precio_promedio,
+--   now()
+-- from agg a
+-- left join last_price lp
+--   on lp.material_codigo = a.material_codigo
+--  and lp.bodega_principal = a.bodega_principal
+--  and lp.bodega_secundaria = a.bodega_secundaria
+-- on conflict (material_codigo, bodega_principal, bodega_secundaria)
+-- do update set
+--   material_nombre = excluded.material_nombre,
+--   existencia = excluded.existencia,
+--   precio_promedio = excluded.precio_promedio,
+--   updated_at = excluded.updated_at;
+
+-- Verificación rápida
+-- select material_codigo, sum(existencia) as total_existencia
+-- from public.stock_actual_con_precio
+-- group by material_codigo
+-- order by total_existencia desc
+-- limit 50;

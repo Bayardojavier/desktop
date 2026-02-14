@@ -1,0 +1,821 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario - Movimiento de Ingreso</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary-color: #64748b;
+            --accent-color: #f59e0b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --background-primary: #0f172a;
+            --background-secondary: #1e293b;
+            --background-tertiary: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --border-hover: #475569;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--background-primary) 0%, #1e1b4b 100%);
+            color: var(--text-secondary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--background-secondary) 0%, var(--background-tertiary) 100%);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .header-text h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .header-text p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--background-tertiary);
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .nav-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            transform: translateY(-1px);
+        }
+
+        /* Breadcrumb */
+        .breadcrumb {
+            background: var(--background-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .breadcrumb-nav {
+            padding: 1rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .breadcrumb-list {
+            display: flex;
+            align-items: center;
+            list-style: none;
+            gap: 0.5rem;
+        }
+
+        .breadcrumb-item {
+            color: var(--text-muted);
+        }
+
+        .breadcrumb-item a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .breadcrumb-item a:hover {
+            color: var(--primary-color);
+        }
+
+        .breadcrumb-separator {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .breadcrumb-current {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .content-section {
+            background: var(--background-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .section-header {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-description {
+            font-size: 1.125rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        /* Process Steps */
+        .process-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .step-card {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .step-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .step-number {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin: 0 auto 1rem;
+        }
+
+        .step-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .step-description {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .step-arrow {
+            position: absolute;
+            right: -1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary-color);
+            font-size: 1.25rem;
+            display: none;
+        }
+
+        @media (min-width: 768px) {
+            .step-arrow {
+                display: block;
+            }
+            .step-card:last-child .step-arrow {
+                display: none;
+            }
+        }
+
+        /* Form Sections */
+        .form-section {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .form-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .field-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .field-input {
+            padding: 0.75rem;
+            background: var(--background-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 0.875rem;
+        }
+
+        .field-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* Table Styles */
+        .table-container {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .table-header {
+            background: var(--background-secondary);
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .table-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table th {
+            background: var(--background-secondary);
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .data-table td {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .data-table tr:hover td {
+            background: var(--background-primary);
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-md);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .status-pending {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .status-approved {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .status-rejected {
+            background: var(--error-color);
+            color: white;
+        }
+
+        /* Content Blocks */
+        .content-block {
+            margin: 2rem 0;
+        }
+
+        .content-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .content-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .content-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .content-list li:last-child {
+            border-bottom: none;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+            margin: 1.5rem 0;
+        }
+
+        .highlight-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .highlight-text {
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--background-secondary);
+            border-top: 1px solid var(--border-color);
+            margin-top: 3rem;
+        }
+
+        .footer-content {
+            padding: 2rem;
+            text-align: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-text {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .nav-buttons {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .main-content {
+                padding: 1rem;
+            }
+
+            .content-section {
+                padding: 1.5rem;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            .process-steps {
+                grid-template-columns: 1fr;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .data-table {
+                font-size: 0.75rem;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo">
+                    <i class="fas fa-arrow-down"></i>
+                </div>
+                <div class="header-text">
+                    <h1>Movimiento de Ingreso</h1>
+                    <p>Món³dulo de Bodega</p>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <a href="index.html" class="nav-btn">
+                    <i class="fas fa-arrow-left"></i>
+                    Bodega
+                </a>
+                <a href="../index.html" class="nav-btn">
+                    <i class="fas fa-home"></i>
+                    Inicio
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <nav class="breadcrumb">
+        <div class="breadcrumb-nav">
+            <ol class="breadcrumb-list">
+                <li class="breadcrumb-item">
+                    <a href="../index.html">Inicio</a>
+                </li>
+                <li class="breadcrumb-separator">/</li>
+                <li class="breadcrumb-item">
+                    <a href="index.html">Bodega</a>
+                </li>
+                <li class="breadcrumb-separator">/</li>
+                <li class="breadcrumb-current">Movimiento de Ingreso</li>
+            </ol>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <section class="content-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-arrow-down"></i>
+                    Movimiento de Ingreso
+                </h2>
+                <p class="section-description">
+                    Proceso completo para registrar la entrada de materiales al sistema de inventario. Incluye validación³n de proveedores, control de calidad y asignación³n de ubicaciones en bodega.
+                </p>
+            </div>
+
+            <div class="process-steps">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <h3 class="step-title">Recepción³n</h3>
+                    <p class="step-description">Verificación³n fón­sica de los materiales recibidos y comparación³n con la orden de compra.</p>
+                    <div class="step-arrow"><i class="fas fa-arrow-right"></i></div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <h3 class="step-title">Validación³n</h3>
+                    <p class="step-description">Control de calidad, verificación³n de cantidades y estado de conservación³n de los ón­tems.</p>
+                    <div class="step-arrow"><i class="fas fa-arrow-right"></i></div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <h3 class="step-title">Registro</h3>
+                    <p class="step-description">Ingreso de datos en el sistema con asignación³n automática de Có³digos y ubicaciones.</p>
+                    <div class="step-arrow"><i class="fas fa-arrow-right"></i></div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">4</div>
+                    <h3 class="step-title">Confirmación³n</h3>
+                    <p class="step-description">Validación³n final y actualización³n automática del inventario disponible.</p>
+                </div>
+            </div>
+
+            <div class="highlight-box">
+                <h3 class="highlight-title">
+                    <i class="fas fa-lightbulb"></i>
+                    Proceso Optimizado
+                </h3>
+                <p class="highlight-text">
+                    El sistema de ingresos estón¡ diseón±ado para minimizar errores y maximizar la eficiencia. Utiliza Có³digos de barras, validaciones automáticas y asignación³n inteligente de ubicaciones para reducir el tiempo de procesamiento en un 60%.
+                </p>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-file-invoice"></i>
+                    Formulario de Ingreso
+                </h3>
+
+                <div class="form-section">
+                    <h4 class="form-title">
+                        <i class="fas fa-truck"></i>
+                        Información³n del Proveedor
+                    </h4>
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <label class="field-label">Proveedor</label>
+                            <select class="field-input">
+                                <option>Seleccionar proveedor...</option>
+                                <option>Metalónºrgica Central S.A.</option>
+                                <option>Tecnologón­a Avanzada Ltda.</option>
+                                <option>Consumibles Profesionales</option>
+                                <option>Distribuidora Industrial</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label class="field-label">Nónºmero de Orden</label>
+                            <input type="text" class="field-input" placeholder="OC-2026-00123">
+                        </div>
+                        <div class="form-field">
+                            <label class="field-label">Fecha de Recepción³n</label>
+                            <input type="date" class="field-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="field-label">Factura/Remito</label>
+                            <input type="text" class="field-input" placeholder="FAC-2026-00456">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h4 class="form-title">
+                        <i class="fas fa-boxes"></i>
+                        Detalles de los Materiales
+                    </h4>
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <label class="field-label">Có³digo del Producto</label>
+                            <input type="text" class="field-input" placeholder="VR-001-012">
+                        </div>
+                        <div class="form-field">
+                            <label class="field-label">Descripción³n</label>
+                            <input type="text" class="field-input" placeholder="Varilla de Acero 1/2 pulgada">
+                        </div>
+                        <div class="form-field">
+                            <label class="field-label">Cantidad Recibida</label>
+                            <input type="number" class="field-input" placeholder="50">
+                        </div>
+                        <div class="form-field">
+                            <label class="field-label">Unidad de Medida</label>
+                            <select class="field-input">
+                                <option>Unidades</option>
+                                <option>Kilogramos</option>
+                                <option>Metros</option>
+                                <option>Litros</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label class="field-label">Estado de Conservación³n</label>
+                            <select class="field-input">
+                                <option>Excelente</option>
+                                <option>Bueno</option>
+                                <option>Regular</option>
+                                <option>Malo</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label class="field-label">Ubicación³n en Bodega</label>
+                            <input type="text" class="field-input" placeholder="Estante A-12, Nivel 3">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-list-check"></i>
+                    Ingresos Pendientes de Procesar
+                </h3>
+                <div class="table-container">
+                    <div class="table-header">
+                        <h4 class="table-title">ón“rdenes de Compra Recibidas - Febrero 2026</h4>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Proveedor</th>
+                                <th>Orden</th>
+                                <th>Producto</th>
+                                <th>Cantidad</th>
+                                <th>Fecha Recibida</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Metalónºrgica Central S.A.</td>
+                                <td>OC-2026-00123</td>
+                                <td>Varilla de Acero 1/2"</td>
+                                <td>50 unidades</td>
+                                <td>07 Feb 2026</td>
+                                <td><span class="status-badge status-pending">Pendiente</span></td>
+                                <td>
+                                    <button class="action-btn process-btn">
+                                        <i class="fas fa-play"></i> Procesar
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Tecnologón­a Avanzada Ltda.</td>
+                                <td>OC-2026-00124</td>
+                                <td>Monitor LED 24"</td>
+                                <td>15 unidades</td>
+                                <td>06 Feb 2026</td>
+                                <td><span class="status-badge status-approved">Aprobado</span></td>
+                                <td>
+                                    <button class="action-btn complete-btn">
+                                        <i class="fas fa-check"></i> Completar
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Consumibles Profesionales</td>
+                                <td>OC-2026-00125</td>
+                                <td>Cartucho de Tinta</td>
+                                <td>25 unidades</td>
+                                <td>05 Feb 2026</td>
+                                <td><span class="status-badge status-pending">Pendiente</span></td>
+                                <td>
+                                    <button class="action-btn process-btn">
+                                        <i class="fas fa-play"></i> Procesar
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Distribuidora Industrial</td>
+                                <td>OC-2026-00126</td>
+                                <td>Cable HDMI 2m</td>
+                                <td>100 unidades</td>
+                                <td>04 Feb 2026</td>
+                                <td><span class="status-badge status-approved">Aprobado</span></td>
+                                <td>
+                                    <button class="action-btn complete-btn">
+                                        <i class="fas fa-check"></i> Completar
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-shield-alt"></i>
+                    Controles de Calidad
+                </h3>
+                <ul class="content-list">
+                    <li><strong>Verificación³n Fón­sica:</strong> Conteo manual y comparación³n con la documentación³n de envón­o.</li>
+                    <li><strong>Control de Calidad:</strong> Inspección³n visual del estado de conservación³n y funcionamiento.</li>
+                    <li><strong>Validación³n de Documentos:</strong> Verificación³n de facturas, remitos y certificados de calidad.</li>
+                    <li><strong>Registro Fotogrón¡fico:</strong> Captura de evidencias del estado de los materiales recibidos.</li>
+                    <li><strong>Có³digos de Barras:</strong> Generación³n automática de Có³digos ónºnicos para trazabilidad.</li>
+                    <li><strong>Asignación³n de Ubicaciones:</strong> Sistema inteligente de ubicación³n basado en tipo de material y rotación³n.</li>
+                    <li><strong>Alertas de Desviaciones:</strong> Notificaciones automáticas cuando hay diferencias con lo esperado.</li>
+                    <li><strong>Aprobación³n Jerón¡rquica:</strong> Flujo de aprobación³n basado en montos y tipo de material.</li>
+                </ul>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-cog"></i>
+                    Funcionalidades Avanzadas
+                </h3>
+                <ul class="content-list">
+                    <li><strong>Ingreso Masivo:</strong> Carga de mónºltiples ón­tems desde archivo Excel o integración³n con sistemas externos.</li>
+                    <li><strong>Có³digos QR:</strong> Generación³n automática de Có³digos QR para identificación³n rón¡pida.</li>
+                    <li><strong>Integración³n con Proveedores:</strong> Conexión³n directa con sistemas de proveedores para ón³rdenes automáticas.</li>
+                    <li><strong>Control de Lotes:</strong> Seguimiento por lotes de fabricación³n con fechas de vencimiento.</li>
+                    <li><strong>Recepción³n Parcial:</strong> Posibilidad de recibir pedidos parcialmente y registrar diferencias.</li>
+                    <li><strong>Devoluciones Automáticas:</strong> Sistema de devolución³n integrado para materiales defectuosos.</li>
+                    <li><strong>Reportes de Recepción³n:</strong> Generación³n automática de reportes para proveedores y dirección³n.</li>
+                    <li><strong>Dashboard de Recepción³n:</strong> Visualización³n en tiempo real del estado de todas las recepciones.</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p class="footer-text">
+                <i class="fas fa-copyright"></i>
+                Manual de Usuario - Absolute de Nicaragua 2026
+            </p>
+        </div>
+    </footer>
+</body>
+</html>
+

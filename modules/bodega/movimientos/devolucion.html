@@ -3,6 +3,149 @@
 <head>
   <meta charset="UTF-8" />
   <title>Devolución de Materiales</title>
+  <style>
+    /* Estilos para modales */
+    .devolucion-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .devolucion-modal-content {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    .devolucion-modal-title {
+      margin: 0 0 16px 0;
+      color: #1e40af;
+      font-size: 20px;
+    }
+    .devolucion-modal-body {
+      margin-bottom: 20px;
+    }
+    .devolucion-tipo-btn {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      padding: 16px;
+      margin-bottom: 12px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .devolucion-tipo-btn:hover {
+      border-color: #3b82f6;
+      background: #f8fafc;
+    }
+    .devolucion-tipo-icon {
+      font-size: 24px;
+      margin-right: 16px;
+    }
+    .devolucion-tipo-info h3 {
+      margin: 0 0 4px 0;
+      color: #1e40af;
+    }
+    .devolucion-tipo-info p {
+      margin: 0;
+      color: #6b7280;
+      font-size: 14px;
+    }
+    .devolucion-modal-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+    .devolucion-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .devolucion-btn-primary {
+      background: #3b82f6;
+      color: white;
+    }
+    .devolucion-btn-secondary {
+      background: #6b7280;
+      color: white;
+    }
+    .devolucion-lista-contenedor {
+      max-height: 400px;
+      overflow-y: auto;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+    }
+    .devolucion-lista {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .devolucion-lista li {
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .devolucion-lista li:last-child {
+      border-bottom: none;
+    }
+    .btn-seleccionar-despacho, .btn-seleccionar-evento {
+      width: 100%;
+      padding: 12px 16px;
+      border: none;
+      background: white;
+      text-align: left;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      border-radius: 0;
+    }
+    .btn-seleccionar-despacho:hover, .btn-seleccionar-evento:hover {
+      background: #f8fafc;
+    }
+    .btn-seleccionar-despacho strong, .btn-seleccionar-evento strong {
+      color: #1e40af;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .btn-seleccionar-despacho small, .btn-seleccionar-evento small {
+      color: #6b7280;
+      font-size: 12px;
+    }
+    .devolucion-pendiente-acciones {
+      margin-top: 8px;
+      text-align: right;
+    }
+    .devolucion-btn-reimprimir {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: background-color 0.2s;
+    }
+    .devolucion-btn-reimprimir:hover {
+      background: #2563eb;
+    }
+    /* Estilos para la tabla de devolución con scroll */
+    .devolucion-table-filas-contenedor {
+      max-height: 600px;
+      overflow-y: auto;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+    }
+  </style>
 </head>
 <body>
   <div class="movimientos-view">
@@ -17,6 +160,7 @@
         <div class="devolucion-panel-lateral-pestanas">
           <button id="tabLateralDespachos" class="devolucion-panel-lateral-pestana devolucion-panel-lateral-pestana-activa">📦 Despachos</button>
           <button id="tabLateralEventos" class="devolucion-panel-lateral-pestana">🎪 Eventos</button>
+          <button id="tabLateralDevoluciones" class="devolucion-panel-lateral-pestana">↩️ Devoluciones</button>
         </div>
 
         <div id="pendientesContainer" class="devolucion-pendientes-seccion">
@@ -31,6 +175,13 @@
           <div id="contenidoLateralEventos" class="devolucion-panel-lateral-contenido" style="display: none;">
             <div id="eventosLista" class="devolucion-pendientes-lista">
               <!-- Los eventos con pendientes se cargarán aquí dinámicamente -->
+            </div>
+          </div>
+
+          <!-- Contenido de Devoluciones Realizadas -->
+          <div id="contenidoLateralDevoluciones" class="devolucion-panel-lateral-contenido" style="display: none;">
+            <div id="devolucionesLista" class="devolucion-pendientes-lista">
+              <!-- Las devoluciones realizadas se cargarán aquí dinámicamente -->
             </div>
           </div>
 
@@ -65,23 +216,50 @@
           <h2 class="devolucion-section-title">Origen de la Devolución</h2>
           <div class="devolucion-row">
             <div class="devolucion-col">
-              <label class="devolucion-label">Número de Despacho</label>
-              <select id="numeroDespacho" class="devolucion-select" required>
-                <option value="">Seleccione un despacho...</option>
-              </select>
+              <label class="devolucion-label">Tipo de Devolución</label>
             </div>
             <div class="devolucion-col">
-              <label class="devolucion-label">Evento / Préstamo</label>
-              <input type="text" id="eventoDevolucion" class="devolucion-input" readonly />
+              <label class="devolucion-label">Referencia Seleccionada</label>
+              <input type="text" id="referenciaSeleccionada" class="devolucion-input" readonly />
             </div>
           </div>
         </div>
         <div id="tablaDevolucion"></div>
         <div class="devolucion-actions">
-          <button id="btnGuardar" class="devolucion-boton-primario">Guardar Devolución</button>
+          <button id="btnGuardar" class="devolucion-boton-primario" disabled>Guardar Devolución</button>
           <button id="btnLimpiar" class="devolucion-boton-secundario">Limpiar</button>
           <button id="btnImprimir" class="devolucion-boton-secundario" style="display: none;">🖨️ Imprimir</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Selección de Despacho -->
+  <div id="modalSeleccionDespacho" class="devolucion-modal-overlay" style="display: none;">
+    <div class="devolucion-modal-content">
+      <h2 class="devolucion-modal-title">Seleccionar Despacho</h2>
+      <div class="devolucion-modal-body">
+        <div class="devolucion-lista-contenedor">
+          <ul id="listaDespachos" class="devolucion-lista"></ul>
+        </div>
+      </div>
+      <div class="devolucion-modal-buttons">
+        <button id="btnCerrarModalDespacho" class="devolucion-btn devolucion-btn-secondary">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Selección de Evento -->
+  <div id="modalSeleccionEvento" class="devolucion-modal-overlay" style="display: none;">
+    <div class="devolucion-modal-content">
+      <h2 class="devolucion-modal-title">Seleccionar Evento</h2>
+      <div class="devolucion-modal-body">
+        <div class="devolucion-lista-contenedor">
+          <ul id="listaEventos" class="devolucion-lista"></ul>
+        </div>
+      </div>
+      <div class="devolucion-modal-buttons">
+        <button id="btnCerrarModalEvento" class="devolucion-btn devolucion-btn-secondary">Cerrar</button>
       </div>
     </div>
   </div>
@@ -97,6 +275,24 @@
       </div>
     </div>
   </div>
+
+  <!-- Modal de Espera -->
+  <div id="modalEspera" class="devolucion-modal-overlay" style="display: none;">
+    <div class="devolucion-modal-content">
+      <div class="devolucion-modal-body" style="text-align: center;">
+        <div class="spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 16px;"></div>
+        <h3 class="devolucion-modal-title">Procesando Devolución</h3>
+        <p>Por favor espere mientras se registra la devolución y se actualiza el inventario...</p>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
   <script>
     // =============================================================================
     // 🔹 FUNCIONES DE SUPABASE
@@ -104,6 +300,34 @@
     const supabaseUrl = 'https://uquwfiepdryqmgjhstpd.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxdXdmaWVwZHJ5cW1namhzdHBkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5NzUzMTgsImV4cCI6MjA4MTU1MTMxOH0.XXdexL2w0di7o2xZo6TU8AQLxrkKzsMp60ozXJLsTjE';
     const supabase = window.supabaseClient || supabase.createClient(supabaseUrl, supabaseKey);
+
+    // =============================================================================
+    // 🔹 FUNCIONES UTILITARIAS
+    // =============================================================================
+    function getTablaMovimientos(materialCodigo) {
+        const code = (materialCodigo || '').toString().toUpperCase().trim();
+        const parts = code.split('-');
+        const prefix = parts.length > 1 ? parts[1] : '';
+        
+        if (prefix === 'AUDI') {
+            return 'movimientos_bodega_audiovisual';
+        } else if (prefix === 'HIER') {
+            return 'movimientos_bodega_hierros';
+        } else {
+            return 'movimientos_bodega_consumibles';
+        }
+    }
+
+    function getBodegasPorDefecto(materialCodigo) {
+        const tabla = getTablaMovimientos(materialCodigo);
+        if (tabla === 'movimientos_bodega_audiovisual') {
+            return { principal: 'Audiovisual', secundaria: 'General' };
+        } else if (tabla === 'movimientos_bodega_hierros') {
+            return { principal: 'Hierros', secundaria: 'General' };
+        } else {
+            return { principal: 'Consumibles', secundaria: 'General' };
+        }
+    }
 
     // =============================================================================
     // 🔹 CARGAR DATOS DE SUPABASE
@@ -125,26 +349,42 @@
 
     async function cargarDespachosPendientes() {
       try {
-        // Obtener despachos con items que tienen cantidad pendiente
+        // Obtener todos los despachos con sus items
         const { data, error } = await supabase
           .from('despachos_logistica')
           .select(`
             id, numero_despacho, evento, fecha_despacho,
             items_despacho_logistica (
-              id, material_codigo, material_nombre, cantidad, cantidad_devuelta
+              id, codigo_material, nombre_material, cantidad_despachada, cantidad_devuelta, estado
             )
-          `)
-          .not('items_despacho_logistica', 'is', null);
-        
+          `);
+
         if (error) throw error;
-        
+
+        console.log('Despachos obtenidos:', data?.length || 0);
+
         // Filtrar despachos que tienen items con cantidad pendiente
-        const despachosPendientes = data.filter(despacho => 
-          despacho.items_despacho_logistica.some(item => 
-            (item.cantidad - (item.cantidad_devuelta || 0)) > 0
-          )
-        );
-        
+        const despachosPendientes = data.filter(despacho => {
+          // Verificar que el despacho tenga items
+          if (!despacho.items_despacho_logistica || despacho.items_despacho_logistica.length === 0) {
+            console.log(`Despacho ${despacho.numero_despacho}: sin items`);
+            return false;
+          }
+
+          console.log(`Despacho ${despacho.numero_despacho}: ${despacho.items_despacho_logistica.length} items`);
+
+          return despacho.items_despacho_logistica.some(item => {
+            const pendiente = item.cantidad_despachada - (item.cantidad_devuelta || 0);
+            const tienePendiente = pendiente > 0 && item.estado !== 'devuelto';
+
+            console.log(`  Item ${item.codigo_material}: ${item.cantidad_despachada} despachados, ${item.cantidad_devuelta || 0} devueltos, estado=${item.estado}, pendiente=${pendiente}, tienePendiente=${tienePendiente}`);
+
+            return tienePendiente;
+          });
+        });
+
+        console.log('Despachos pendientes filtrados:', despachosPendientes?.length || 0);
+
         return despachosPendientes || [];
       } catch (error) {
         console.error('Error cargando despachos pendientes:', error);
@@ -169,9 +409,10 @@
             });
           }
           
-          const pendientes = despacho.items_despacho_logistica.filter(item => 
-            (item.cantidad - (item.cantidad_devuelta || 0)) > 0
-          ).length;
+          const pendientes = despacho.items_despacho_logistica.filter(item => {
+            const pendiente = item.cantidad_despachada - (item.cantidad_devuelta || 0);
+            return pendiente > 0 && item.estado !== 'devuelto';
+          }).length;
           
           eventosMap.get(evento).despachos.push(despacho);
           eventosMap.get(evento).totalItemsPendientes += pendientes;
@@ -205,13 +446,42 @@
     // =============================================================================
     // 🔹 ESTADO Y UTILIDADES
     // =============================================================================
-    let contadorDevolucion = 1;
     let estado = {
       pestanaLateralActual: 'despachos',
       itemsDevolucion: [], // { id, codigo, nombre, cantidadDespachada, cantidadRecibida, observacion, observacionDetalle }
       pdfData: null,
       despachoSeleccionado: null
     };
+
+    // Función para generar correlativo único de devoluciones
+    async function generarCorrelativoDevolucion() {
+        try {
+            // Obtener el último correlativo desde Supabase
+            const { data: devoluciones, error } = await supabase
+                .from('devoluciones')
+                .select('id')
+                .order('fecha_registro', { ascending: false })
+                .limit(1);
+
+            let ultimoNumero = 0;
+            if (!error && devoluciones && devoluciones.length > 0) {
+                // Extraer el número del formato "DEV-XXXX"
+                const match = devoluciones[0].id.match(/DEV-(\d+)/);
+                if (match) {
+                    ultimoNumero = parseInt(match[1]);
+                }
+            }
+
+            // Generar el siguiente número
+            const nuevoNumero = ultimoNumero + 1;
+            return `DEV-${nuevoNumero.toString().padStart(4, '0')}`;
+        } catch (error) {
+            console.error('Error generando correlativo de devolución:', error);
+            // Fallback: generar basado en timestamp
+            const timestamp = Date.now();
+            return `DEV-${(timestamp % 10000).toString().padStart(4, '0')}`;
+        }
+    }
 
     function formatDate(dateString) {
       return new Date(dateString).toLocaleDateString("es-ES");
@@ -221,7 +491,7 @@
     // 🔹 RENDERIZADO
     // =============================================================================
     async function renderEncargadoYFecha() {
-      const hoy = new Date().toISOString().split("T")[0];
+      const hoy = new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(new Date().getDate()).padStart(2, '0');
       document.getElementById("fechaIngreso").value = hoy;
       const select = document.getElementById("encargadoIngreso");
       
@@ -235,6 +505,220 @@
           select.appendChild(opt);
         }
       });
+    }
+
+    // =============================================================================
+    // 🔹 FUNCIONES DE MODALES
+    // =============================================================================
+    async function mostrarModalDespacho() {
+      const listaDespachos = document.getElementById('listaDespachos');
+      listaDespachos.innerHTML = '<li>Cargando despachos...</li>';
+
+      try {
+        const despachos = await cargarDespachosPendientes();
+        console.log('Despachos a mostrar:', despachos);
+
+        listaDespachos.innerHTML = '';
+
+        if (despachos.length === 0) {
+          listaDespachos.innerHTML = '<li>No hay despachos pendientes de devolución</li>';
+          return;
+        }
+
+        despachos.forEach(despacho => {
+          const li = document.createElement('li');
+          li.innerHTML = `
+            <button class="btn-seleccionar-despacho" data-numero="${despacho.numero_despacho}">
+              <strong>Despacho ${despacho.numero_despacho}</strong><br>
+            <small>Evento: ${despacho.evento || 'Sin evento'}</small>
+          </button>
+        `;
+        listaDespachos.appendChild(li);
+      });
+      
+      // Agregar event listeners a los botones de despacho
+      const botonesDespacho = listaDespachos.querySelectorAll('.btn-seleccionar-despacho');
+      botonesDespacho.forEach(btn => {
+        btn.addEventListener('click', function() {
+          const numeroDespacho = this.dataset.numero;
+          seleccionarDespacho(numeroDespacho);
+        });
+      });
+      
+      console.log('Mostrando modal de despachos...');
+      document.getElementById('modalSeleccionDespacho').style.display = 'flex';
+      } catch (error) {
+        console.error('Error al mostrar modal de despachos:', error);
+        listaDespachos.innerHTML = '<li>Error al cargar despachos</li>';
+      }
+    }
+
+    function ocultarModalDespacho() {
+      document.getElementById('modalSeleccionDespacho').style.display = 'none';
+    }
+
+    async function mostrarModalEvento() {
+      const listaEventos = document.getElementById('listaEventos');
+      listaEventos.innerHTML = '<li>Cargando eventos...</li>';
+
+      try {
+        const eventos = await cargarEventosPendientes();
+        console.log('Eventos a mostrar:', eventos);
+
+        listaEventos.innerHTML = '';
+
+        if (eventos.length === 0) {
+          listaEventos.innerHTML = '<li>No hay eventos con materiales pendientes de devolución</li>';
+          return;
+        }
+
+        eventos.forEach(evento => {
+          const li = document.createElement('li');
+          li.innerHTML = `
+          <button class="btn-seleccionar-evento" data-evento="${evento.nombre}">
+            <strong>${evento.nombre}</strong><br>
+            <small>${evento.totalItemsPendientes} items pendientes</small>
+          </button>
+        `;
+        listaEventos.appendChild(li);
+      });
+      
+      // Agregar event listeners a los botones de evento
+      const botonesEvento = listaEventos.querySelectorAll('.btn-seleccionar-evento');
+      botonesEvento.forEach(btn => {
+        btn.addEventListener('click', function() {
+          const nombreEvento = this.dataset.evento;
+          seleccionarEvento(nombreEvento);
+        });
+      });
+      
+      document.getElementById('modalSeleccionEvento').style.display = 'flex';
+      } catch (error) {
+        console.error('Error al mostrar modal de eventos:', error);
+        listaEventos.innerHTML = '<li>Error al cargar eventos</li>';
+      }
+    }
+
+    function ocultarModalEvento() {
+      document.getElementById('modalSeleccionEvento').style.display = 'none';
+    }
+
+    async function seleccionarDespacho(numeroDespacho) {
+      try {
+        const { data, error } = await supabase
+          .from('despachos_logistica')
+          .select(`
+            id, numero_despacho, evento, fecha_despacho,
+            items_despacho_logistica (
+              id, codigo_material, nombre_material, cantidad_despachada, cantidad_devuelta, estado
+            )
+          `)
+          .eq('numero_despacho', numeroDespacho)
+          .single();
+        
+        if (error) throw error;
+        
+        estado.tipoDevolucion = 'despacho';
+        estado.despachoSeleccionado = data;
+        estado.eventoSeleccionado = null;
+        
+        const referenciaInput = document.getElementById('referenciaSeleccionada');
+        if (referenciaInput) {
+          referenciaInput.value = `Despacho ${data.numero_despacho} - ${data.evento || 'Sin evento'}`;
+        }
+        
+        const btnGuardar = document.getElementById('btnGuardar');
+        if (btnGuardar) {
+          btnGuardar.disabled = false;
+        }
+        
+        // Transformar los datos para que coincidan con lo que espera renderTablaDevolucion
+        const itemsTransformados = data.items_despacho_logistica.map(item => {
+          const cantidadDevuelta = item.cantidad_devuelta || 0;
+          const cantidadPendiente = item.cantidad_despachada - cantidadDevuelta;
+          
+          return {
+            id: item.id,
+            codigo: item.codigo_material,
+            nombre: item.nombre_material,
+            cantidadDespachada: item.cantidad_despachada,
+            cantidadPendiente: cantidadPendiente,
+            cantidadRecibida: 0,
+            observacion: '',
+            detalle: '',
+            despacho_id: data.id,
+            numero_despacho: data.numero_despacho
+          };
+        }).filter(item => item.cantidadPendiente > 0);
+        
+        estado.itemsDevolucion = itemsTransformados;
+        console.log('Items asignados al estado:', estado.itemsDevolucion);
+        renderTablaDevolucion();
+        
+        // Cerrar modal
+        document.getElementById('modalSeleccionDespacho').style.display = 'none';
+      } catch (error) {
+        console.error('Error seleccionando despacho:', error);
+        alert('Error al cargar el despacho seleccionado');
+      }
+    }
+
+    async function seleccionarEvento(eventoNombre) {
+      try {
+        const eventos = await cargarEventosPendientes();
+        const eventoSeleccionado = eventos.find(e => e.nombre === eventoNombre);
+        
+        if (!eventoSeleccionado) throw new Error('Evento no encontrado');
+        
+        estado.tipoDevolucion = 'evento';
+        estado.eventoSeleccionado = eventoSeleccionado;
+        estado.despachoSeleccionado = null;
+        
+        const referenciaInput = document.getElementById('referenciaSeleccionada');
+        if (referenciaInput) {
+          referenciaInput.value = `Evento: ${eventoNombre}`;
+        }
+        
+        const btnGuardar = document.getElementById('btnGuardar');
+        if (btnGuardar) {
+          btnGuardar.disabled = false;
+        }
+        
+        // Recopilar todos los items de todos los despachos del evento
+        const todosItems = [];
+        eventoSeleccionado.despachos.forEach(despacho => {
+          despacho.items_despacho_logistica.forEach(item => {
+            const cantidadDevuelta = item.cantidad_devuelta || 0;
+            const cantidadPendiente = item.cantidad_despachada - cantidadDevuelta;
+            
+            if (cantidadPendiente > 0) {
+              todosItems.push({
+                id: item.id,
+                codigo: item.codigo_material,
+                nombre: item.nombre_material,
+                cantidadPendiente: cantidadPendiente,
+                cantidadRecibida: 0,
+                observacion: '',
+                detalle: '',
+                despacho_id: despacho.id,
+                numero_despacho: despacho.numero_despacho,
+                origenDespacho: despacho.numero_despacho,
+                origenFecha: despacho.fecha_despacho
+              });
+            }
+          });
+        });
+        
+        estado.itemsDevolucion = todosItems;
+        console.log('Items de evento asignados al estado:', estado.itemsDevolucion);
+        renderTablaDevolucion();
+        
+        // Cerrar modal
+        document.getElementById('modalSeleccionEvento').style.display = 'none';
+      } catch (error) {
+        console.error('Error seleccionando evento:', error);
+        alert('Error al cargar el evento seleccionado');
+      }
     }
 
     async function renderEventosUnicos() {
@@ -253,8 +737,10 @@
     function renderContenedorLateral() {
       if (estado.pestanaLateralActual === 'despachos') {
         renderDespachosPendientes();
-      } else {
+      } else if (estado.pestanaLateralActual === 'eventos') {
         renderEventosPendientes();
+      } else if (estado.pestanaLateralActual === 'devoluciones') {
+        renderDevolucionesRealizadas();
       }
     }
 
@@ -272,7 +758,7 @@
       despachos.forEach(despacho => {
         const item = document.createElement("div");
         item.className = "devolucion-pendiente-item";
-        item.onclick = () => seleccionarDespacho(despacho);
+        item.onclick = () => seleccionarDespacho(despacho.numero_despacho);
         
         const pendientes = despacho.items_despacho_logistica.filter(item => 
           (item.cantidad - (item.cantidad_devuelta || 0)) > 0
@@ -305,7 +791,7 @@
       eventos.forEach(evento => {
         const item = document.createElement("div");
         item.className = "devolucion-pendiente-item";
-        item.onclick = () => seleccionarEvento(evento);
+        item.onclick = () => seleccionarEvento(evento.nombre);
         
         item.innerHTML = `
           <div class="devolucion-pendiente-titulo">🎪 ${evento.nombre}</div>
@@ -319,76 +805,133 @@
       });
     }
 
-    function seleccionarEvento(evento) {
-      estado.modoSeleccion = 'evento';
-      estado.eventoSeleccionado = evento;
-      estado.despachoSeleccionado = null;
+    async function renderDevolucionesRealizadas() {
+      const container = document.getElementById("devolucionesLista");
+      const devoluciones = await cargarDevolucionesRealizadas();
 
-      const nombreEvento = evento?.nombre || 'Evento sin nombre';
-      document.getElementById("eventoDevolucion").value = nombreEvento;
+      container.innerHTML = "";
 
-      // En modo evento, el número de despacho será "VARIOS"
-      const selectDespacho = document.getElementById("numeroDespacho");
-      const valorVarios = 'VARIOS';
-      if (selectDespacho && !Array.from(selectDespacho.options).some(o => o.value === valorVarios)) {
-        const opt = document.createElement('option');
-        opt.value = valorVarios;
-        opt.textContent = 'VARIOS (por evento)';
-        selectDespacho.appendChild(opt);
+      if (devoluciones.length === 0) {
+        container.innerHTML = '<div class="devolucion-estado-vacio"><p>No hay devoluciones realizadas.</p></div>';
+        return;
       }
-      if (selectDespacho) selectDespacho.value = valorVarios;
 
-      // Unificar items pendientes de todos los despachos del evento
-      const itemsPendientes = (evento?.despachos || [])
-        .flatMap(despacho => {
-          const numero = despacho.numero_despacho;
-          const fecha = despacho.fecha_despacho;
-          return (despacho.items_despacho_logistica || [])
-            .filter(item => (item.cantidad - (item.cantidad_devuelta || 0)) > 0)
-            .map(item => ({
-              id: item.id,
-              codigo: item.material_codigo,
-              nombre: item.material_nombre,
-              cantidadDespachada: item.cantidad,
-              cantidadRecibida: "",
-              observacion: "",
-              observacionDetalle: "",
-              cantidadPendiente: item.cantidad - (item.cantidad_devuelta || 0),
-              origenDespacho: numero,
-              origenFecha: fecha
-            }));
-        });
+      devoluciones.forEach(devolucion => {
+        const item = document.createElement("div");
+        item.className = "devolucion-pendiente-item";
 
-      estado.itemsDevolucion = itemsPendientes;
-      renderTablaDevolucion();
+        item.innerHTML = `
+          <div class="devolucion-pendiente-titulo">↩️ ${devolucion.id}</div>
+          <div class="devolucion-pendiente-detalles">
+            <div><strong>Fecha:</strong> ${formatDate(devolucion.fecha)}</div>
+            <div><strong>Encargado:</strong> ${devolucion.encargadoIngreso}</div>
+            <div><strong>Referencia:</strong> ${devolucion.numeroDespacho || devolucion.evento}</div>
+            <div><strong>Items:</strong> ${devolucion.itemsEntrada?.length || 0}</div>
+          </div>
+          <div class="devolucion-pendiente-acciones">
+            <button class="devolucion-btn-reimprimir" onclick="event.stopPropagation(); reimprimirDevolucion('${devolucion.id}')">
+              🖨️ Reimprimir
+            </button>
+          </div>
+        `;
+
+        container.appendChild(item);
+      });
     }
 
-    function seleccionarDespacho(despacho) {
-      estado.modoSeleccion = 'despacho';
-      estado.eventoSeleccionado = null;
-      estado.despachoSeleccionado = despacho;
-      document.getElementById("numeroDespacho").value = despacho.numero_despacho;
-      document.getElementById("eventoDevolucion").value = despacho.evento || 'Evento no especificado';
-      
-      // Filtrar items pendientes
-      const itemsPendientes = despacho.items_despacho_logistica
-        .filter(item => (item.cantidad - (item.cantidad_devuelta || 0)) > 0)
-        .map(item => ({
-          id: item.id,
-          codigo: item.material_codigo,
-          nombre: item.material_nombre,
-          cantidadDespachada: item.cantidad,
-          cantidadRecibida: "",
-          observacion: "",
-          observacionDetalle: "",
-          cantidadPendiente: item.cantidad - (item.cantidad_devuelta || 0)
-        }));
-      
-      estado.itemsDevolucion = itemsPendientes;
-      renderTablaDevolucion();
+    async function cargarDevolucionesRealizadas() {
+      try {
+        console.log('Cargando devoluciones realizadas...');
+
+        // Consultar la tabla devoluciones ordenadas por fecha descendente
+        const { data: devoluciones, error } = await supabase
+          .from('devoluciones')
+          .select('*')
+          .order('fecha_registro', { ascending: false });
+
+        if (error) {
+          console.error('Error consultando devoluciones:', error);
+          return [];
+        }
+
+        console.log('Devoluciones encontradas:', devoluciones?.length || 0);
+        return devoluciones || [];
+      } catch (error) {
+        console.error('Error cargando devoluciones realizadas:', error);
+        return [];
+      }
     }
+
+    async function reimprimirDevolucion(numeroRegistro) {
+      try {
+        console.log('Reimprimiendo devolución:', numeroRegistro);
+
+        // Consultar la devolución específica
+        const { data: devolucion, error: errorDevolucion } = await supabase
+          .from('devoluciones')
+          .select('*')
+          .eq('id', numeroRegistro)
+          .single();
+
+        if (errorDevolucion || !devolucion) {
+          console.error('Error consultando devolución:', errorDevolucion);
+          alert('No se pudo encontrar la devolución especificada.');
+          return;
+        }
+
+        // Crear el objeto de datos para el PDF
+        const datosPDF = {
+          numeroRegistro: devolucion.id,
+          fechaIngreso: formatDate(new Date()), // Usar fecha actual para reimpresión
+          encargadoIngreso: devolucion.encargado_ingreso,
+          numeroDespacho: devolucion.numero_despacho,
+          evento: devolucion.evento,
+          encargadoEvento: "Encargado del Evento",
+          itemsEntrada: devolucion.items,
+          esDevolucion: true
+        };
+
+        // Calcular pendiente restante para cada item en reimpresión.
+        // Preferir el valor almacenado; si no existe, consultar estado actual en la BD.
+        for (const item of datosPDF.itemsEntrada) {
+          if (item.cantidadPendienteRestante === undefined || item.cantidadPendienteRestante === null) {
+            try {
+              const { data: itemActual, error: errItem } = await supabase
+                .from('items_despacho_logistica')
+                .select('cantidad_devuelta, cantidad_despachada')
+                .eq('id', item.id)
+                .single();
+
+              if (!errItem && itemActual) {
+                const cantidadDevuelta = itemActual.cantidad_devuelta || 0;
+                const cantidadDespachada = itemActual.cantidad_despachada || (item.cantidadDespachada || 0);
+                item.cantidadPendienteRestante = Math.max(0, cantidadDespachada - cantidadDevuelta);
+              } else {
+                // Fallback a cálculo local si no se puede consultar
+                const cantidadDesp = item.cantidadDespachada || 0;
+                const cantidadRec = item.cantidadRecibida || 0;
+                item.cantidadPendienteRestante = Math.max(0, cantidadDesp - cantidadRec);
+              }
+            } catch (e) {
+              console.warn('No se pudo calcular pendiente para reimpresión, usando fallback:', e);
+              item.cantidadPendienteRestante = item.cantidadPendienteRestante ?? 0;
+            }
+          }
+        }
+
+        generarActaDeRecepcionPDF(datosPDF);
+
+      } catch (error) {
+        console.error('Error reimprimiendo devolución:', error);
+        alert('Error al reimprimir la devolución: ' + error.message);
+      }
+    }
+
+    // Hacer la función global para que sea accesible desde el DOM
+    window.reimprimirDevolucion = reimprimirDevolucion;
 
     function renderTablaDevolucion() {
+      console.log('Renderizando tabla de devolución con', estado.itemsDevolucion.length, 'items');
       const contenedor = document.getElementById("tablaDevolucion");
       if (estado.itemsDevolucion.length === 0) {
         contenedor.innerHTML = "";
@@ -398,7 +941,7 @@
       contenedor.innerHTML = `
         <div class="devolucion-section">
           <h2 class="devolucion-section-title">Detalles de la Devolución</h2>
-          <div class="devolucion-table">
+          <div class="devolucion-tabla-custom">
             <div class="devolucion-table-header">
               <div>Material</div>
               <div style="text-align:center;">Pendiente</div>
@@ -406,7 +949,9 @@
               <div>Observación</div>
               <div>Detalle</div>
             </div>
-            <div id="filasDevolucion"></div>
+            <div class="devolucion-filas-contenedor-custom">
+              <div id="filasDevolucion"></div>
+            </div>
           </div>
         </div>
       `;
@@ -465,25 +1010,91 @@
       // Intentar devolver a las mismas bodegas (y ubicación) de donde se despachó.
       // Esto mantiene el stock consistente en el modelo por bodega.
       let despachosPorCodigo = new Map();
-      try {
-        const { data: movsDesp, error: errMovsDesp } = await supabase
-          .from('movimientos_bodega')
-          .select('material_codigo, bodega_principal, bodega_secundaria, cantidad, signo, ubicacion_codigo, ubicacion_nombre')
-          .eq('referencia_documento', referenciaDocumento)
-          .eq('tipo_movimiento', 'despacho');
-        if (errMovsDesp) throw errMovsDesp;
+      
+      // Consultar información del catálogo para completar datos de movimientos
+      const codigosUnicos = Array.from(new Set(itemsDevolucion.map(i => i.codigo).filter(Boolean)));
+      let catalogoData = new Map();
+      
+      if (codigosUnicos.length > 0) {
+        const tablasCatalogo = ['catalogo_audiovisual', 'catalogo_hierros', 'catalogo_consumibles'];
 
-        (movsDesp || []).forEach(m => {
+        for (const tabla of tablasCatalogo) {
+          const { data: catData, error: catErr } = await supabase
+            .from(tabla)
+            .select('codigo, nombre_base, nombre_numero, precio, fecha_compra, bodega_secundaria, contenedor')
+            .in('codigo', codigosUnicos);
+
+          if (catErr) {
+            console.warn(`No se pudo cargar catálogo de ${tabla}:`, catErr);
+            continue;
+          }
+
+          (catData || []).forEach(item => {
+            catalogoData.set(item.codigo, {
+              material_nombre_base: item.nombre_base,
+              material_nombre_numero: item.nombre_numero,
+              precio: item.precio,
+              fecha_compra: item.fecha_compra,
+              bodega_secundaria: item.bodega_secundaria,
+              contenedor: item.contenedor
+            });
+          });
+        }
+      }
+      
+      try {
+        // Obtener el número de despacho para buscar movimientos originales
+        const numeroDespacho = estado.despachoSeleccionado?.numero_despacho || 
+                              (referenciaDocumento.includes(' ') ? referenciaDocumento.split(' ')[1] : referenciaDocumento);
+        
+        // Consultar movimientos de despacho en las 3 tablas separadas
+        const tablasMovimientos = ['movimientos_bodega_audiovisual', 'movimientos_bodega_hierros', 'movimientos_bodega_consumibles'];
+        let movsDesp = [];
+
+        for (const tabla of tablasMovimientos) {
+          const { data: movData, error: errMov } = await supabase
+            .from(tabla)
+            .select('material_codigo, bodega_principal, bodega_secundaria, cantidad, signo, ubicacion_codigo, ubicacion_nombre, estado, material_nombre_base, material_nombre_numero, precio, fecha_compra, usuario_id')
+            .eq('referencia_documento', numeroDespacho)  // Usar número de despacho real
+            .eq('tipo_movimiento', 'despacho');
+
+          if (errMov) {
+            console.warn(`Error consultando ${tabla}:`, errMov);
+            continue;
+          }
+
+          movsDesp = movsDesp.concat(movData || []);
+        }
+
+        movsDesp.forEach(m => {
           const c = (m?.material_codigo || '').toString().trim();
           if (!c) return;
           const arr = despachosPorCodigo.get(c) || [];
+
+          // Si el movimiento de despacho no tiene ubicación, intentar obtenerla de movimientos anteriores
+          let ubicacion_codigo = m.ubicacion_codigo;
+          let ubicacion_nombre = m.ubicacion_nombre;
+
+          if (!ubicacion_codigo || !ubicacion_nombre) {
+            // Buscar ubicación en movimientos anteriores del mismo material
+            // Nota: Esta es una búsqueda síncrona simplificada, en producción podría optimizarse
+            console.warn(`Movimiento de despacho ${m.id} no tiene ubicación, intentando buscar en movimientos anteriores`);
+          }
+
           arr.push({
-            bodega_principal: m.bodega_principal || 'Principal',
-            bodega_secundaria: m.bodega_secundaria || 'General',
-            ubicacion_codigo: m.ubicacion_codigo || null,
-            ubicacion_nombre: m.ubicacion_nombre || null,
+            bodega_principal: m.bodega_principal || getBodegasPorDefecto(c).principal,
+            bodega_secundaria: m.bodega_secundaria || catalogoData.get(c)?.bodega_secundaria || 'General',
+            ubicacion_codigo: ubicacion_codigo || catalogoData.get(c)?.contenedor,
+            ubicacion_nombre: ubicacion_nombre || catalogoData.get(c)?.contenedor,
             // cantidad despachada en esa bodega (normalmente signo=-1)
-            cantidad_abs: Math.abs(Number(m.cantidad) || 0)
+            cantidad_abs: Math.abs(Number(m.cantidad) || 0),
+            // Campos adicionales del movimiento original, con fallback al catálogo
+            estado: m.estado,
+            material_nombre_base: m.material_nombre_base,
+            material_nombre_numero: m.material_nombre_numero,
+            precio: m.precio,
+            fecha_compra: m.fecha_compra,
+            usuario_id: m.usuario_id
           });
           despachosPorCodigo.set(c, arr);
         });
@@ -496,6 +1107,91 @@
         const cantidad = parseInt(item.cantidadRecibida);
         if (!cantidad || cantidad <= 0) continue;
 
+        // Determinar el tipo de devolución basado en la observación
+        const tipoObservacion = item.observacion || '';
+
+        if (tipoObservacion === 'Dañado') {
+          // Insertar en tabla de materiales dañados
+          try {
+            const datosDanado = {
+              material_codigo: String(item.codigo || '').trim(),
+              material_nombre: item.nombre || item.material_nombre || item.codigo,
+              cantidad: cantidad,
+              numero_despacho: referenciaDocumento.split(' ')[1] || referenciaDocumento, // Extraer número del despacho
+              evento: estado.despachoSeleccionado?.evento || estado.eventoSeleccionado?.nombre || 'N/A',
+              encargado_evento: estado.despachoSeleccionado?.encargado_evento || 'N/A',
+              fecha_despacho: estado.despachoSeleccionado?.fecha_despacho || null,
+              fecha_devolucion: fechaMovimiento,
+              responsable_devolucion: responsable,
+              observacion: 'Dañado',
+              observacion_detalle: item.observacionDetalle || '',
+              usuario_id: null
+            };
+
+            const { error: errorDanado } = await supabase
+              .from('materiales_danados')
+              .insert(datosDanado);
+
+            if (errorDanado) {
+              console.error('Error insertando material dañado:', errorDanado);
+              throw new Error(`Error al registrar material dañado ${item.nombre}`);
+            }
+
+            console.log(`✅ Material dañado registrado: ${item.nombre}`);
+          } catch (error) {
+            console.error('Error procesando material dañado:', error);
+            throw error;
+          }
+          continue; // No procesar como devolución normal
+        }
+
+        if (tipoObservacion === 'Faltante') {
+          // Insertar en tabla de materiales faltantes
+          try {
+            const datosFaltanteBase = {
+              material_codigo: String(item.codigo || '').trim(),
+              material_nombre: item.nombre || item.material_nombre || item.codigo,
+              cantidad_faltante: cantidad,
+              cantidad_despachada: item.cantidadDespachada || cantidad, // Cantidad que se despachó originalmente
+              numero_despacho: referenciaDocumento.split(' ')[1] || referenciaDocumento,
+              evento: estado.despachoSeleccionado?.evento || estado.eventoSeleccionado?.nombre || 'N/A',
+              encargado_evento: estado.despachoSeleccionado?.encargado_evento || 'N/A',
+              fecha_despacho: estado.despachoSeleccionado?.fecha_despacho || null,
+              responsable_devolucion: responsable,
+              observacion: 'Faltante',
+              observacion_detalle: item.observacionDetalle || '',
+              usuario_id: null
+            };
+
+            let errorFaltante = null;
+            // 1) Intentar con fecha_devolucion si existe
+            const { error: error1 } = await supabase
+              .from('materiales_faltantes')
+              .insert({ ...datosFaltanteBase, fecha_devolucion: fechaMovimiento });
+            errorFaltante = error1;
+
+            // 2) Si la columna no existe, reintentar sin ella
+            if (errorFaltante && (errorFaltante.code === '42703' || /fecha_devolucion/i.test(errorFaltante.message || ''))) {
+              const { error: error2 } = await supabase
+                .from('materiales_faltantes')
+                .insert(datosFaltanteBase);
+              errorFaltante = error2;
+            }
+
+            if (errorFaltante) {
+              console.error('Error insertando material faltante:', errorFaltante);
+              throw new Error(`Error al registrar material faltante ${item.nombre}`);
+            }
+
+            console.log(`✅ Material faltante registrado: ${item.nombre}`);
+          } catch (error) {
+            console.error('Error procesando material faltante:', error);
+            throw error;
+          }
+          continue; // No procesar como devolución normal
+        }
+
+        // Procesamiento normal para materiales en buen estado
         try {
           const codigo = String(item.codigo || '').trim();
           const nombre = item.nombre || item.material_nombre || codigo;
@@ -511,6 +1207,9 @@
             const disp = Number(o.cantidad_abs) || 0;
             if (disp <= 0) continue;
             const usar = Math.min(restante, disp);
+            // Obtener datos del catálogo para este material
+            const datosCatalogo = catalogoData.get(codigo) || {};
+            
             movimientos.push({
               material_codigo: codigo,
               material_nombre: nombre,
@@ -525,18 +1224,58 @@
               fecha_movimiento: fechaMovimiento,
               observaciones: item.observacion || item.observacionDetalle || observacionesBase || 'Devolución',
               ubicacion_codigo: o.ubicacion_codigo,
-              ubicacion_nombre: o.ubicacion_nombre
+              ubicacion_nombre: o.ubicacion_nombre,
+              // Campos adicionales copiados del movimiento original, con fallback al catálogo
+              estado: o.estado || 'completado',
+              material_nombre_base: o.material_nombre_base || datosCatalogo.material_nombre_base,
+              material_nombre_numero: o.material_nombre_numero || datosCatalogo.material_nombre_numero,
+              precio: o.precio || datosCatalogo.precio || 0,
+              fecha_compra: o.fecha_compra || datosCatalogo.fecha_compra,
+              usuario_id: o.usuario_id
             });
             restante -= usar;
           }
 
           // Fallback si no se encontró origen por bodega
           if (movimientos.length === 0) {
+            const bodegasDefecto = getBodegasPorDefecto(codigo);
+
+            // Intentar obtener ubicación desde movimientos recientes del mismo material
+            let ubicacionEncontrada = { codigo: null, nombre: null };
+            try {
+              const tablaUbicacion = getTablaMovimientos(codigo);
+              const { data: ultimosMovs, error: errUbic } = await supabase
+                .from(tablaUbicacion)
+                .select('ubicacion_codigo, ubicacion_nombre')
+                .eq('material_codigo', codigo)
+                .neq('ubicacion_codigo', null)
+                .order('created_at', { ascending: false })
+                .limit(1);
+
+              if (!errUbic && ultimosMovs && ultimosMovs.length > 0) {
+                ubicacionEncontrada = {
+                  codigo: ultimosMovs[0].ubicacion_codigo,
+                  nombre: ultimosMovs[0].ubicacion_nombre
+                };
+              }
+            } catch (e) {
+              console.warn('No se pudo obtener ubicación del material:', e);
+            }
+
+            // Obtener datos del catálogo para este material
+            const datosCatalogo = catalogoData.get(codigo) || {};
+
+            // Si no se encontró ubicación en movimientos, usar el contenedor del catálogo
+            if (!ubicacionEncontrada.nombre && datosCatalogo.contenedor) {
+              ubicacionEncontrada.nombre = datosCatalogo.contenedor;
+              ubicacionEncontrada.codigo = datosCatalogo.contenedor; // Usar contenedor como código también
+            }
+
             movimientos.push({
               material_codigo: codigo,
               material_nombre: nombre,
-              bodega_principal: 'Principal',
-              bodega_secundaria: 'General',
+              bodega_principal: bodegasDefecto.principal,
+              bodega_secundaria: datosCatalogo.bodega_secundaria || bodegasDefecto.secundaria,
               tipo_movimiento: 'devolucion',
               cantidad: restante,
               signo: 1,
@@ -545,18 +1284,52 @@
               responsable: responsable || 'No especificado',
               fecha_movimiento: fechaMovimiento,
               observaciones: item.observacion || item.observacionDetalle || observacionesBase || 'Devolución',
-              ubicacion_codigo: null,
-              ubicacion_nombre: null
+              ubicacion_codigo: ubicacionEncontrada.codigo,
+              ubicacion_nombre: ubicacionEncontrada.nombre,
+              // Campos adicionales con valores por defecto
+              estado: 'completado',
+              material_nombre_base: datosCatalogo.material_nombre_base,
+              material_nombre_numero: datosCatalogo.material_nombre_numero,
+              precio: datosCatalogo.precio || 0,
+              fecha_compra: datosCatalogo.fecha_compra,
+              usuario_id: null
             });
             restante = 0;
           }
 
-          const { error: movimientoError } = await supabase
-            .from('movimientos_bodega')
-            .insert(movimientos);
+          // 3. Insertar movimientos en las tablas separadas según el tipo de material
+          const movimientosPorTabla = {
+            movimientos_bodega_audiovisual: [],
+            movimientos_bodega_hierros: [],
+            movimientos_bodega_consumibles: []
+          };
 
-          if (movimientoError) {
-            console.error('Error registrando movimiento devolución:', movimientoError);
+          // Agrupar movimientos por tabla
+          movimientos.forEach(mov => {
+            const tabla = getTablaMovimientos(mov.material_codigo);
+            movimientosPorTabla[tabla].push(mov);
+          });
+
+          // Insertar en cada tabla
+          let movimientosInsertados = [];
+          for (const [tabla, movs] of Object.entries(movimientosPorTabla)) {
+            if (movs.length > 0) {
+              const { data: insertados, error: errorTabla } = await supabase
+                .from(tabla)
+                .insert(movs)
+                .select();
+
+              if (errorTabla) {
+                console.error(`Error al registrar movimientos en ${tabla}:`, errorTabla);
+              } else {
+                console.log(`✅ Movimientos registrados en ${tabla}:`, insertados);
+                movimientosInsertados = movimientosInsertados.concat(insertados || []);
+              }
+            }
+          }
+
+          if (movimientosInsertados.length === 0) {
+            console.warn('No se registraron movimientos en ninguna tabla');
           }
         } catch (error) {
           console.error('Error actualizando inventario (devolución):', error);
@@ -570,33 +1343,67 @@
     async function actualizarItemsDespacho(itemsDevolucion) {
       for (const item of itemsDevolucion) {
         if (!item.cantidadRecibida || parseInt(item.cantidadRecibida) <= 0) continue;
-        
+
         try {
-          // Obtener cantidad_devuelta actual
+          // Obtener cantidad_devuelta actual, cantidad_despachada y estado
           const { data: itemActual, error: errorSelect } = await supabase
             .from('items_despacho_logistica')
-            .select('cantidad_devuelta')
+            .select('cantidad_devuelta, cantidad_despachada, estado')
             .eq('id', item.id)
             .single();
-          
+
           if (errorSelect) {
             console.error('Error obteniendo item despacho:', errorSelect);
-            continue;
+            throw new Error(`Error al consultar el item ${item.nombre}`);
           }
-          
-          const nuevaCantidadDevuelta = (itemActual.cantidad_devuelta || 0) + parseInt(item.cantidadRecibida);
-          
-          // Actualizar cantidad_devuelta
+
+          // Verificar estado antes de procesar
+          if (itemActual.estado === 'devuelto') {
+            throw new Error(`El item ${item.nombre} ya ha sido completamente devuelto`);
+          }
+
+          if (itemActual.estado === 'bloqueado') {
+            throw new Error(`El item ${item.nombre} está temporalmente bloqueado por otro proceso`);
+          }
+
+          const cantidadDevueltaActual = itemActual.cantidad_devuelta || 0;
+          const cantidadDespachada = itemActual.cantidad_despachada || 0;
+          const cantidadPendienteActual = cantidadDespachada - cantidadDevueltaActual;
+          const cantidadRecibida = parseInt(item.cantidadRecibida);
+
+          // VALIDACIÓN CRÍTICA: Verificar que no se exceda la cantidad pendiente actual
+          if (cantidadRecibida > cantidadPendienteActual) {
+            throw new Error(`Intento de devolver más de lo pendiente para ${item.nombre}. Pendiente: ${cantidadPendienteActual}, Intentando devolver: ${cantidadRecibida}`);
+          }
+
+          const nuevaCantidadDevuelta = cantidadDevueltaActual + cantidadRecibida;
+
+          // Validar que no se exceda la cantidad originalmente despachada
+          if (nuevaCantidadDevuelta > cantidadDespachada) {
+            throw new Error(`La cantidad devuelta total (${nuevaCantidadDevuelta}) no puede exceder la cantidad despachada (${cantidadDespachada}) para ${item.nombre}`);
+          }
+
+          // Si se devuelve completamente, marcar como devuelto
+          const nuevoEstado = (nuevaCantidadDevuelta >= cantidadDespachada) ? 'devuelto' : 'parcialmente_devuelto';
+
+          // Actualizar cantidad_devuelta y estado
           const { error: errorUpdate } = await supabase
             .from('items_despacho_logistica')
-            .update({ cantidad_devuelta: nuevaCantidadDevuelta })
+            .update({
+              cantidad_devuelta: nuevaCantidadDevuelta,
+              estado: nuevoEstado
+            })
             .eq('id', item.id);
-          
+
           if (errorUpdate) {
             console.error('Error actualizando item despacho:', errorUpdate);
+            throw new Error(`Error al actualizar cantidad devuelta para ${item.nombre}: ${errorUpdate.message}`);
           }
+
+          console.log(`✅ Item ${item.nombre} actualizado: ${cantidadDevueltaActual} → ${nuevaCantidadDevuelta} devuelto`);
         } catch (error) {
           console.error('Error actualizando item despacho:', error);
+          throw error; // Re-lanzar el error para que sea manejado por el código que llama
         }
       }
     }
@@ -621,11 +1428,9 @@
     // =============================================================================
     // 🔹 PDF GENERATION
     // =============================================================================
-    function generarActaDeRecepcionPDF(data) {
-      if (!window.html2pdf) {
-        alert("html2pdf no está cargado.");
-        return;
-      }
+    async function generarActaDeRecepcionPDF(data) {
+      // Preferir la generación nativa en Electron (main.js dispone de handler `render-html-to-pdf`).
+      const useElectron = window.electronAPI && typeof window.electronAPI.renderHtmlToPdf === 'function';
       const entrega = data.encargadoEvento || "Encargado del Evento";
       const recibe = "Bodega";
       const copias = [
@@ -636,59 +1441,62 @@
       let contenidoCompleto = "";
       copias.forEach(copia => {
         const tablaEncabezados = `
-          <tr style="background-color: #4b5563; color: white; font-size: 10pt;">
-            <th style="padding: 6pt; border: 1px solid #ddd;">Material</th>
-            <th style="padding: 6pt; border: 1px solid #ddd;">Cant. Despachada</th>
-            <th style="padding: 6pt; border: 1px solid #ddd;">Cant. Recibida</th>
-            <th style="padding: 6pt; border: 1px solid #ddd;">Observación</th>
+          <tr style="background-color: #4b5563; color: white; font-size: 8pt;">
+            <th style="padding: 4.8pt; border: 1px solid #ddd;">Material</th>
+            <th style="padding: 4.8pt; border: 1px solid #ddd;">Cant. Original Despachada</th>
+            <th style="padding: 4.8pt; border: 1px solid #ddd;">Cant. Devuelta en Esta Transacción</th>
+            <th style="padding: 4.8pt; border: 1px solid #ddd;">Cant. Pendiente Restante</th>
+            <th style="padding: 4.8pt; border: 1px solid #ddd;">Observación</th>
           </tr>
         `;
         const tablaFilas = data.itemsEntrada.map(item => `
-          <tr style="font-size: 9pt;">
-            <td style="padding: 6pt; border: 1px solid #ddd;">${item.codigo} – ${item.nombre}</td>
-            <td style="padding: 6pt; border: 1px solid #ddd; text-align: center;">${item.cantidadDespachada}</td>
-            <td style="padding: 6pt; border: 1px solid #ddd; text-align: center;">${item.cantidadRecibida}</td>
-            <td style="padding: 6pt; border: 1px solid #ddd;">${item.observacion} ${item.observacionDetalle ? "- " + item.observacionDetalle : ""}</td>
+          <tr style="font-size: 7.2pt;">
+            <td style="padding: 4.8pt; border: 1px solid #ddd;">${item.codigo} – ${item.nombre}</td>
+            <td style="padding: 4.8pt; border: 1px solid #ddd; text-align: center;">${item.cantidadDespachada}</td>
+            <td style="padding: 4.8pt; border: 1px solid #ddd; text-align: center;">${item.cantidadRecibida}</td>
+            <td style="padding: 4.8pt; border: 1px solid #ddd; text-align: center;">${item.cantidadPendienteRestante || 0}</td>
+            <td style="padding: 4.8pt; border: 1px solid #ddd;">${item.observacion} ${item.observacionDetalle ? "- " + item.observacionDetalle : ""}</td>
           </tr>
         `).join("");
         contenidoCompleto += `
-        <div style="width: 185mm; font-family: Arial, sans-serif; color: #333; line-height: 1.3; font-size: 10pt; page-break-after: always;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10pt; border-bottom: 2px solid #4b5563; padding-bottom: 6pt;">
-            <img src="assets/logo.png" alt="Logo" style="height: 20mm; margin-right: 8mm;">
+        <div style="width: 185mm; font-family: Arial, sans-serif; color: #333; line-height: 1.3; font-size: 8pt; page-break-after: always;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6.4pt; border-bottom: 2px solid #4b5563; padding-bottom: 3.84pt;">
+            <img src="assets/logo.png" alt="Logo" style="height: 16mm; margin-right: 6.4mm;">
             <div style="text-align: center; flex: 1;">
-              <h1 style="color: #4b5563; margin: 0; font-size: 16pt;">Acta de Recepción – Devolución</h1>
-              <p style="margin: 3pt 0 0 0; color: #555; font-size: 9pt;">
+              <h1 style="color: #4b5563; margin: 0; font-size: 12.8pt;">Acta de Recepción – Devolución</h1>
+              <p style="margin: 2.4pt 0 0 0; color: #555; font-size: 7.2pt;">
                 Fecha: ${data.fechaIngreso}
               </p>
             </div>
             <div style="text-align: right;">
-              <div style="font-size: 24pt; font-weight: bold; color: #4b5563; letter-spacing: 1px;">${data.numeroRegistro}</div>
+              <div style="font-size: 19.2pt; font-weight: bold; color: #4b5563; letter-spacing: 1px;">${data.numeroRegistro}</div>
             </div>
           </div>
-          <div style="background: #f0f8ff; padding: 6pt; border-radius: 4pt; margin: 8pt 0; font-size: 9pt;">
+          <div style="background: #f0f8ff; padding: 4.8pt; border-radius: 4pt; margin: 6.4pt 0; font-size: 7.2pt;">
             <p><strong>Número de Despacho:</strong> ${data.numeroDespacho}</p>
             <p><strong>Evento / Préstamo:</strong> ${data.evento}</p>
             <p><strong>Encargado de Ingreso:</strong> ${data.encargadoIngreso}</p>
           </div>
-          <h3 style="color: #4b5563; margin: 12pt 0 6pt 0; font-size: 12pt; border-bottom: 1px solid #ccc; padding-bottom: 3pt;">Detalles de la Devolución</h3>
-          <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
+          <h3 style="color: #4b5563; margin: 9.6pt 0 4.8pt 0; font-size: 9.6pt; border-bottom: 1px solid #ccc; padding-bottom: 2.4pt;">Detalles de la Devolución</h3>
+          <table style="width: 100%; border-collapse: collapse; font-size: 7.2pt;">
             <thead>${tablaEncabezados}</thead>
             <tbody>${tablaFilas}</tbody>
           </table>
-          <div style="display: flex; justify-content: space-around; margin-top: 20mm;">
+          <p style="font-size: 6.4pt; color: #666; margin: 4.8pt 0;">Nota: Esta acta registra la recepción de materiales devueltos en esta transacción. El estado acumulado de devoluciones y pendientes puede variar según transacciones previas. Consulte el sistema de inventario para el estado completo.</p>
+          <div style="display: flex; justify-content: space-around; margin-top: 16mm;">
             <div style="text-align: center; width: 45%;">
-              <div style="border-top: 1px solid black; padding-top: 5pt; font-weight: bold;">${entrega}</div>
-              <p style="margin: 5pt 0 0 0; font-size: 8pt;">Entrega</p>
+              <div style="border-top: 1px solid black; padding-top: 4pt; font-weight: bold;">${entrega}</div>
+              <p style="margin: 4pt 0 0 0; font-size: 6.4pt;">Entrega</p>
             </div>
             <div style="text-align: center; width: 45%;">
-              <div style="border-top: 1px solid black; padding-top: 5pt; font-weight: bold;">${recibe}</div>
-              <p style="margin: 5pt 0 0 0; font-size: 8pt;">Recibe</p>
+              <div style="border-top: 1px solid black; padding-top: 4pt; font-weight: bold;">${recibe}</div>
+              <p style="margin: 4pt 0 0 0; font-size: 6.4pt;">Recibe</p>
             </div>
           </div>
-          <div style="margin-top: 10mm; text-align: center; font-size: 9pt; color: #666; border-top: 1px solid #eee; padding-top: 4pt;">
+          <div style="margin-top: 8mm; text-align: center; font-size: 7.2pt; color: #666; border-top: 1px solid #eee; padding-top: 3.2pt;">
             ${copia.leyenda}
           </div>
-          <div style="background: #dcfce7; color: #166534; padding: 4pt; font-size: 9pt; text-align: center; border: 1px solid #bbf7d0; margin-top: 8pt;">
+          <div style="background: #dcfce7; color: #166534; padding: 3.2pt; font-size: 7.2pt; text-align: center; border: 1px solid #bbf7d0; margin-top: 6.4pt;">
             ✅ DEVOLUCIÓN REGISTRADA – INVENTARIO ACTUALIZADO
           </div>
         </div>
@@ -697,29 +1505,56 @@
       if (contenidoCompleto.endsWith('page-break-after: always;">')) {
         contenidoCompleto = contenidoCompleto.slice(0, -'page-break-after: always;">'.length) + '">';
       }
+      const filename = `Devolucion_${data.numeroRegistro}.pdf`;
+
+      if (useElectron) {
+        try {
+          const payload = {
+            html: contenidoCompleto,
+            filename,
+            baseUrl: document.baseURI
+          };
+          const res = await window.electronAPI.renderHtmlToPdf(payload);
+          if (res && res.canceled === false) {
+            return { ok: true, filePath: res.filePath };
+          }
+          return { ok: false, canceled: true };
+        } catch (e) {
+          console.error('Error generando PDF nativo:', e);
+          // Si falla, caemos al fallback HTML2PDF
+        }
+      }
+
+      // Fallback a html2pdf en entornos donde no haya Electron API disponible
+      if (!window.html2pdf) {
+        alert("html2pdf no está cargado y no está disponible la API nativa de Electron.");
+        return { ok: false, error: 'html2pdf missing' };
+      }
+
       const options = {
         margin: [15, 15, 15, 15],
-        filename: `Devolucion_${data.numeroRegistro}.pdf`,
+        filename,
         image: { type: 'jpeg', quality: 0.95 },
         html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
         jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
       };
-      html2pdf().from(contenidoCompleto).set(options).save();
+      await html2pdf().from(contenidoCompleto).set(options).save();
+      return { ok: true };
     }
-
-    // =============================================================================
     // 🔹 LÓGICA PRINCIPAL
     // =============================================================================
     async function inicializarEventos() {
       // Eventos de pestañas del panel lateral
       document.getElementById("tabLateralDespachos").addEventListener("click", () => cambiarPestanaLateral('despachos'));
       document.getElementById("tabLateralEventos").addEventListener("click", () => cambiarPestanaLateral('eventos'));
+      document.getElementById("tabLateralDevoluciones").addEventListener("click", () => cambiarPestanaLateral('devoluciones'));
 
       // Evento del botón guardar
       document.getElementById("btnGuardar").addEventListener("click", async () => {
+        const btnGuardar = document.getElementById("btnGuardar");
         const encargado = document.getElementById("encargadoIngreso").value;
         const fecha = document.getElementById("fechaIngreso").value;
-        const numeroDespacho = document.getElementById("numeroDespacho").value;
+        const numeroDespacho = estado.despachoSeleccionado ? estado.despachoSeleccionado.numero_despacho : null;
 
         const modo = estado.modoSeleccion || (estado.despachoSeleccionado ? 'despacho' : null);
         const tieneSeleccion = (modo === 'despacho' && Boolean(estado.despachoSeleccionado) && Boolean(numeroDespacho))
@@ -738,38 +1573,121 @@
           return;
         }
 
-        // Validar que no se reciba más de lo pendiente
-        const itemInvalido = itemsValidos.find(item => {
-          const recibido = parseInt(item.cantidadRecibida);
-          const pendiente = item.cantidadPendiente;
-          return recibido > pendiente;
-        });
+        // Validar que no se reciba más de lo pendiente (consulta en tiempo real)
+        for (const item of itemsValidos) {
+          try {
+            const { data: itemActual, error: errorSelect } = await supabase
+              .from('items_despacho_logistica')
+              .select('cantidad_devuelta, cantidad_despachada, estado')
+              .eq('id', item.id)
+              .single();
 
-        if (itemInvalido) {
-          alert(`⚠️ No puede recibir más de lo pendiente para ${itemInvalido.nombre}.`);
-          return;
+            if (errorSelect) {
+              console.error('Error consultando item actual:', errorSelect);
+              alert(`❌ Error al validar ${item.nombre}. El item podría haber sido modificado. Recargue la página e intente nuevamente.`);
+              return;
+            }
+
+            // Verificar que el item aún esté en estado válido para devolución
+            if (itemActual.estado === 'devuelto') {
+              alert(`⚠️ El item ${item.nombre} ya ha sido completamente devuelto y no puede devolverse nuevamente.`);
+              return;
+            }
+
+            // Verificar que no esté bloqueado por otro proceso
+            if (itemActual.estado === 'bloqueado') {
+              alert(`⚠️ El item ${item.nombre} está temporalmente bloqueado. Espere unos momentos e intente nuevamente.`);
+              return;
+            }
+
+            const cantidadDevueltaActual = itemActual.cantidad_devuelta || 0;
+            const cantidadDespachada = itemActual.cantidad_despachada || 0;
+            const cantidadPendienteActual = cantidadDespachada - cantidadDevueltaActual;
+            const cantidadRecibida = parseInt(item.cantidadRecibida);
+
+            if (cantidadRecibida > cantidadPendienteActual) {
+              alert(`⚠️ No puede devolver más de lo pendiente para ${item.nombre}.\nPendiente actual: ${cantidadPendienteActual}, Intentando devolver: ${cantidadRecibida}\n\nPosible causa: Otra devolución fue procesada mientras usted trabajaba.`);
+              return;
+            }
+
+            // Verificar que la cantidad pendiente no sea cero
+            if (cantidadPendienteActual <= 0) {
+              alert(`⚠️ El item ${item.nombre} ya no tiene cantidad pendiente para devolver.`);
+              return;
+            }
+            // Calcular y almacenar la cantidad pendiente restante después de procesar
+            try {
+              const pendienteDespues = Math.max(0, (cantidadDespachada - (cantidadDevueltaActual + (Number.isFinite(cantidadRecibida) ? cantidadRecibida : 0))));
+              item.cantidadPendienteRestante = pendienteDespues;
+            } catch (e) {
+              console.warn('No se pudo calcular pendiente restante para', item, e);
+              item.cantidadPendienteRestante = 0;
+            }
+          } catch (error) {
+            console.error('Error en validación:', error);
+            alert(`❌ Error al validar ${item.nombre}. Intente nuevamente.`);
+            return;
+          }
         }
 
-        const numeroRegistro = `DEV-${String(contadorDevolucion++).padStart(4, '0')}`;
+        function extraerNumeroDevolucion(idDev) {
+          const m = String(idDev || '').trim().match(/^DEV-(\d+)$/);
+          return m ? (parseInt(m[1], 10) || 0) : 0;
+        }
 
-        // Crear objeto de devolución
+        function formatearIdDevolucion(numero) {
+          return `DEV-${String(numero).padStart(4, '0')}`;
+        }
+
+        let numeroRegistro = await generarCorrelativoDevolucion();
+
+        // Crear objeto base de devolución
         const numeroDespachoFinal = (modo === 'evento') ? 'VARIOS' : numeroDespacho;
-        const devolucion = {
-          id: numeroRegistro,
+        const eventoNombre = modo === 'despacho' ? estado.despachoSeleccionado.evento : estado.eventoSeleccionado.nombre;
+        const devolucionBase = {
           fecha: fecha,
           fecha_registro: new Date().toISOString(),
           encargado_ingreso: encargado,
           numero_despacho: numeroDespachoFinal,
-          evento: document.getElementById("eventoDevolucion").value,
+          evento: eventoNombre,
           items: itemsValidos,
           estado: 'completada'
         };
 
-        try {
-          // Guardar en Supabase
-          await guardarDevolucion(devolucion);
+        // Desactivar botón para evitar duplicados
+        btnGuardar.disabled = true;
+        btnGuardar.textContent = "Procesando...";
 
-          // Actualizar inventario (vía movimientos_bodega)
+        // Mostrar modal de espera
+        document.getElementById("modalEspera").style.display = "flex";
+
+        try {
+          // Guardar en Supabase (con reintentos por posible duplicado de PK)
+          const maxIntentos = 20;
+          let guardado = false;
+          for (let intento = 0; intento < maxIntentos; intento++) {
+            const devolucion = { ...devolucionBase, id: numeroRegistro };
+            try {
+              await guardarDevolucion(devolucion);
+              guardado = true;
+              break;
+            } catch (e) {
+              const esDuplicado = e && e.code === '23505';
+              if (esDuplicado) {
+                const n = extraerNumeroDevolucion(numeroRegistro);
+                numeroRegistro = n > 0 ? formatearIdDevolucion(n + 1) : await generarCorrelativoDevolucion();
+                console.warn('Conflicto de id DEV-xxxx, reintentando...', { numeroRegistro, intento: intento + 1, error: e });
+                continue;
+              }
+              throw e;
+            }
+          }
+
+          if (!guardado) {
+            throw new Error('No se pudo generar un ID DEV único. Intente nuevamente.');
+          }
+
+          // Actualizar inventario (vía tablas de movimientos separadas)
           await actualizarInventario(
             itemsValidos,
             numeroRegistro,
@@ -781,42 +1699,126 @@
           // Actualizar items del despacho
           await actualizarItemsDespacho(itemsValidos);
 
+          // Calcular pendiente restante para cada item consultando el estado final en la BD
+          for (const item of itemsValidos) {
+            try {
+              const { data: itemActualFinal, error: errFinal } = await supabase
+                .from('items_despacho_logistica')
+                .select('cantidad_devuelta, cantidad_despachada')
+                .eq('id', item.id)
+                .single();
+
+              if (errFinal || !itemActualFinal) {
+                // Si no se pudo consultar, mantener el cálculo previo o fallback a 0
+                item.cantidadPendienteRestante = item.cantidadPendienteRestante ?? 0;
+              } else {
+                const cantidadDevueltaFinal = itemActualFinal.cantidad_devuelta || 0;
+                const cantidadDespachadaFinal = itemActualFinal.cantidad_despachada || 0;
+                item.cantidadPendienteRestante = Math.max(0, cantidadDespachadaFinal - cantidadDevueltaFinal);
+              }
+            } catch (e) {
+              console.warn('No se pudo obtener estado final para item al calcular pendiente:', item, e);
+              item.cantidadPendienteRestante = item.cantidadPendienteRestante ?? 0;
+            }
+          }
+
           const datosPDF = {
             numeroRegistro,
-            fechaIngreso: formatDate(fecha),
+            fechaIngreso: formatDate(new Date()), // Usar fecha actual
             encargadoIngreso: encargado,
             numeroDespacho: numeroDespachoFinal,
-            evento: document.getElementById("eventoDevolucion").value,
+            evento: eventoNombre,
             encargadoEvento: "Encargado del Evento",
             itemsEntrada: itemsValidos,
             esDevolucion: true
           };
 
           estado.pdfData = datosPDF;
+
+          // Ocultar modal de espera
+          document.getElementById("modalEspera").style.display = "none";
+
           document.getElementById("modalImprimir").style.display = "flex";
 
           // Mostrar mensaje de éxito
           alert(`✅ Devolución ${numeroRegistro} registrada exitosamente.\nInventario actualizado.`);
+          // Mostrar notificación del sistema
+          if (window.showSystemNotification) {
+            window.showSystemNotification('Devolución Registrada', `Devolución ${numeroRegistro} procesada exitosamente. Inventario actualizado.`);
+          }
 
           // Recargar contenedor lateral
           renderContenedorLateral();
 
         } catch (error) {
           console.error('Error guardando devolución:', error);
-          alert('❌ Error al guardar la devolución. Intente nuevamente.');
+
+          // Reactivar botón en caso de error
+          btnGuardar.disabled = false;
+          btnGuardar.textContent = "Guardar Devolución";
+
+          // Ocultar modal de espera
+          document.getElementById("modalEspera").style.display = "none";
+
+          // Mostrar mensaje específico según el tipo de error
+          if (error.message && error.message.includes('Intento de devolver más de lo pendiente')) {
+            alert(`❌ ${error.message}\n\nLa devolución no se procesó para evitar inconsistencias en el inventario.`);
+            // Mostrar notificación de error
+            if (window.showSystemNotification) {
+              window.showSystemNotification('Error en Devolución', 'Intento de devolver más de lo pendiente. Verifique las cantidades.');
+            }
+          } else if (error.message && error.message.includes('no puede exceder')) {
+            alert(`❌ ${error.message}\n\nLa devolución no se procesó para evitar inconsistencias en el inventario.`);
+            // Mostrar notificación de error
+            if (window.showSystemNotification) {
+              window.showSystemNotification('Error en Devolución', 'La cantidad excede el límite permitido. Verifique las cantidades.');
+            }
+          } else if (error.message && error.message.includes('Error al actualizar')) {
+            alert(`❌ Error al actualizar el inventario: ${error.message}\n\nLa devolución podría haberse guardado parcialmente. Consulte con el administrador.`);
+            // Mostrar notificación de error
+            if (window.showSystemNotification) {
+              window.showSystemNotification('Error en Inventario', 'Error al actualizar el inventario. Consulte con el administrador.');
+            }
+          } else {
+            alert('❌ Error al guardar la devolución. Intente nuevamente.');
+            // Mostrar notificación de error
+            if (window.showSystemNotification) {
+              window.showSystemNotification('Error al Guardar Devolución', 'No se pudo guardar la devolución. Intente nuevamente.');
+            }
+          }
         }
       });
 
-      document.getElementById("btnSiImprimir").addEventListener("click", () => {
+      document.getElementById("btnSiImprimir").addEventListener("click", async () => {
         if (estado.pdfData) {
-          generarActaDeRecepcionPDF(estado.pdfData);
+          await generarActaDeRecepcionPDF(estado.pdfData);
           document.getElementById("modalImprimir").style.display = "none";
           document.getElementById("btnImprimir").style.display = "inline-block";
+
+          // Ocultar modal de espera y resetear selección
+          document.getElementById("modalEspera").style.display = "none";
+          estado.despachoSeleccionado = null;
+          estado.eventoSeleccionado = null;
+          estado.modoSeleccion = null;
+          estado.itemsDevolucion = [];
+          document.getElementById("referenciaSeleccionada").value = "";
+          document.getElementById("tablaDevolucion").innerHTML = "";
+          document.getElementById("btnGuardar").disabled = true;
         }
       });
 
       document.getElementById("btnNoImprimir").addEventListener("click", () => {
         document.getElementById("modalImprimir").style.display = "none";
+
+        // Ocultar modal de espera y resetear selección
+        document.getElementById("modalEspera").style.display = "none";
+        estado.despachoSeleccionado = null;
+        estado.eventoSeleccionado = null;
+        estado.modoSeleccion = null;
+        estado.itemsDevolucion = [];
+        document.getElementById("referenciaSeleccionada").value = "";
+        document.getElementById("tablaDevolucion").innerHTML = "";
+        document.getElementById("btnGuardar").disabled = true;
       });
 
       document.getElementById("btnLimpiar").addEventListener("click", () => {
@@ -828,8 +1830,7 @@
           pdfData: null,
           despachoSeleccionado: null
         };
-        document.getElementById("numeroDespacho").value = "";
-        document.getElementById("eventoDevolucion").value = "";
+        document.getElementById("referenciaSeleccionada").value = "";
         document.getElementById("btnImprimir").style.display = "none";
         renderTablaDevolucion();
       });
@@ -841,10 +1842,12 @@
       // Actualizar botones de pestañas
       document.getElementById("tabLateralDespachos").classList.toggle("panel-lateral-pestana-activa", pestana === 'despachos');
       document.getElementById("tabLateralEventos").classList.toggle("panel-lateral-pestana-activa", pestana === 'eventos');
+      document.getElementById("tabLateralDevoluciones").classList.toggle("panel-lateral-pestana-activa", pestana === 'devoluciones');
 
       // Mostrar/ocultar contenido
       document.getElementById("contenidoLateralDespachos").style.display = pestana === 'despachos' ? 'block' : 'none';
       document.getElementById("contenidoLateralEventos").style.display = pestana === 'eventos' ? 'block' : 'none';
+      document.getElementById("contenidoLateralDevoluciones").style.display = pestana === 'devoluciones' ? 'block' : 'none';
 
       // Renderizar el contenido correspondiente
       renderContenedorLateral();
@@ -868,6 +1871,39 @@
         renderEventosUnicos();
       }
     }
+
+    // =============================================================================
+    // 🔹 EVENT LISTENERS PARA MODALES
+    // =============================================================================
+    document.addEventListener('DOMContentLoaded', function() {
+      // Botones de cerrar modales
+      const btnCerrarModalDespacho = document.getElementById('btnCerrarModalDespacho');
+      if (btnCerrarModalDespacho) {
+        btnCerrarModalDespacho.addEventListener('click', function() {
+          document.getElementById('modalSeleccionDespacho').style.display = 'none';
+        });
+      }
+
+      const btnCerrarModalEvento = document.getElementById('btnCerrarModalEvento');
+      if (btnCerrarModalEvento) {
+        btnCerrarModalEvento.addEventListener('click', function() {
+          document.getElementById('modalSeleccionEvento').style.display = 'none';
+        });
+      }
+
+      // Cerrar modales al hacer clic fuera
+      document.getElementById('modalSeleccionDespacho').addEventListener('click', function(e) {
+        if (e.target === this) {
+          this.style.display = 'none';
+        }
+      });
+
+      document.getElementById('modalSeleccionEvento').addEventListener('click', function(e) {
+        if (e.target === this) {
+          this.style.display = 'none';
+        }
+      });
+    });
 
     // =============================================================================
     // 🔹 INICIO

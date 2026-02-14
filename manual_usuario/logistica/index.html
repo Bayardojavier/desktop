@@ -1,0 +1,541 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario - Módulo de Logística</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary-color: #64748b;
+            --accent-color: #f59e0b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --background-primary: #0f172a;
+            --background-secondary: #1e293b;
+            --background-tertiary: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --border-hover: #475569;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--background-primary) 0%, #1e1b4b 100%);
+            color: var(--text-secondary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--background-secondary) 0%, var(--background-tertiary) 100%);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .header-text h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .header-text p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--background-tertiary);
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .nav-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            transform: translateY(-1px);
+        }
+
+        /* Breadcrumb */
+        .breadcrumb {
+            background: var(--background-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .breadcrumb-nav {
+            padding: 1rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .breadcrumb-list {
+            display: flex;
+            align-items: center;
+            list-style: none;
+            gap: 0.5rem;
+        }
+
+        .breadcrumb-item {
+            color: var(--text-muted);
+        }
+
+        .breadcrumb-item a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .breadcrumb-item a:hover {
+            color: var(--primary-color);
+        }
+
+        .breadcrumb-separator {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .breadcrumb-current {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .content-section {
+            background: var(--background-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .section-header {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-description {
+            font-size: 1.125rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        /* Modules Grid */
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .module-card {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .module-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .module-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .module-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .module-description {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        /* Content Blocks */
+        .content-block {
+            margin: 2rem 0;
+        }
+
+        .content-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .content-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .content-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .content-list li:last-child {
+            border-bottom: none;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--background-secondary);
+            border-top: 1px solid var(--border-color);
+            margin-top: 3rem;
+        }
+
+        .footer-content {
+            padding: 2rem;
+            text-align: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-text {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .module-card {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .module-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .module-card:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .nav-buttons {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .main-content {
+                padding: 1rem;
+            }
+
+            .content-section {
+                padding: 1.5rem;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            .modules-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo">
+                    <i class="fas fa-truck"></i>
+                </div>
+                <div class="header-text">
+                    <h1>Manual de Usuario</h1>
+                    <p>Absolute de Nicaragua</p>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <a href="index.html" class="nav-btn">
+                    <i class="fas fa-arrow-left"></i>
+                    Logística
+                </a>
+                <a href="../index.html" class="nav-btn">
+                    <i class="fas fa-home"></i>
+                    Inicio
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <nav class="breadcrumb">
+        <div class="breadcrumb-nav">
+            <ol class="breadcrumb-list">
+                <li class="breadcrumb-item">
+                    <a href="../index.html">Inicio</a>
+                </li>
+                <li class="breadcrumb-separator">/</li>
+                <li class="breadcrumb-current">Logística</li>
+            </ol>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <section class="content-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-truck"></i>
+                    Módulo de Logística
+                </h2>
+                <p class="section-description">
+                    El módulo de logística proporciona herramientas completas para la gestión integral de la cadena de suministro, desde la recepción de mercancías hasta la entrega final al cliente. Optimiza rutas, controla inventarios en tránsito y asegura entregas puntuales.
+                </p>
+            </div>
+
+            <div class="modules-grid">
+                <a href="ordenes_compra.html" class="module-card">
+                    <div class="module-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <h3 class="module-title">Órdenes de Compra</h3>
+                    <p class="module-description">
+                        Creación y seguimiento de órdenes de compra a proveedores con control de entregas y recepciones.
+                    </p>
+                </a>
+
+                <a href="recepcion_mercancias.html" class="module-card">
+                    <div class="module-icon">
+                        <i class="fas fa-box-open"></i>
+                    </div>
+                    <h3 class="module-title">Recepción de Mercancías</h3>
+                    <p class="module-description">
+                        Control de calidad y registro de mercancías recibidas con verificación automática de pedidos.
+                    </p>
+                </a>
+
+                <a href="gestion_inventario.html" class="module-card">
+                    <div class="module-icon">
+                        <i class="fas fa-warehouse"></i>
+                    </div>
+                    <h3 class="module-title">Gestión de Inventario</h3>
+                    <p class="module-description">
+                        Control de stock, ubicaciones y movimientos de inventario con alertas automáticas.
+                    </p>
+                </a>
+
+                <a href="rutas_distribucion.html" class="module-card">
+                    <div class="module-icon">
+                        <i class="fas fa-route"></i>
+                    </div>
+                    <h3 class="module-title">Rutas de Distribución</h3>
+                    <p class="module-description">
+                        Optimización de rutas de entrega y asignación eficiente de vehículos y recursos.
+                    </p>
+                </a>
+
+                <a href="seguimiento_envios.html" class="module-card">
+                    <div class="module-icon">
+                        <i class="fas fa-shipping-fast"></i>
+                    </div>
+                    <h3 class="module-title">Seguimiento de Envíos</h3>
+                    <p class="module-description">
+                        Monitoreo en tiempo real de entregas con notificaciones automáticas a clientes.
+                    </p>
+                </a>
+
+                <a href="proveedores.html" class="module-card">
+                    <div class="module-icon">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                    <h3 class="module-title">Gestión de Proveedores</h3>
+                    <p class="module-description">
+                        Base de datos de proveedores con evaluación de desempeño y contratos.
+                    </p>
+                </a>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-star"></i>
+                    Características Principales del Módulo
+                </h3>
+                <ul class="content-list">
+                    <li><strong>Integración Completa:</strong> Conexión automática con módulos de compras, ventas y bodega para flujo continuo de información.</li>
+                    <li><strong>Optimización de Rutas:</strong> Algoritmos inteligentes para minimizar costos de transporte y tiempos de entrega.</li>
+                    <li><strong>Control de Calidad:</strong> Verificación automática de mercancías recibidas contra especificaciones de orden de compra.</li>
+                    <li><strong>Seguimiento GPS:</strong> Monitoreo en tiempo real de vehículos y entregas con integración de GPS.</li>
+                    <li><strong>Alertas Automáticas:</strong> Notificaciones de retrasos, problemas de calidad o cambios en el estado de entregas.</li>
+                    <li><strong>Reportes de Eficiencia:</strong> Análisis de rendimiento de proveedores, rutas y tiempos de entrega.</li>
+                    <li><strong>Gestión de Devoluciones:</strong> Procesamiento eficiente de productos devueltos con análisis de causas.</li>
+                    <li><strong>Planificación de Demanda:</strong> Pronósticos automáticos basados en historial de ventas y tendencias.</li>
+                </ul>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-route"></i>
+                    Flujo de Trabajo Logístico
+                </h3>
+                <ul class="content-list">
+                    <li><strong>Planificación de Compras:</strong> Análisis de demanda y creación automática de sugerencias de orden de compra.</li>
+                    <li><strong>Emisión de Órdenes:</strong> Generación de órdenes de compra con aprobación automática basada en reglas.</li>
+                    <li><strong>Seguimiento de Proveedores:</strong> Comunicación automática con proveedores y confirmación de entregas.</li>
+                    <li><strong>Recepción y Verificación:</strong> Control de calidad al recibir mercancías con registro fotográfico opcional.</li>
+                    <li><strong>Almacenamiento:</strong> Asignación automática de ubicaciones óptimas en bodega.</li>
+                    <li><strong>Preparación de Pedidos:</strong> Picking automatizado y empaquetado eficiente para entregas.</li>
+                    <li><strong>Despacho y Transporte:</strong> Asignación de rutas óptimas y seguimiento en tiempo real.</li>
+                    <li><strong>Entrega y Confirmación:</strong> Verificación de entrega con firma digital del receptor.</li>
+                </ul>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-shield-alt"></i>
+                    Seguridad y Control
+                </h3>
+                <ul class="content-list">
+                    <li><strong>Acceso Restringido:</strong> Control granular de permisos por tipo de operación logística.</li>
+                    <li><strong>Auditoría Completa:</strong> Registro de todas las operaciones con trazabilidad completa.</li>
+                    <li><strong>Backup Automático:</strong> Copias de seguridad continuas de datos logísticos críticos.</li>
+                    <li><strong>Validaciones Automáticas:</strong> Prevención de errores en recepciones y despachos.</li>
+                    <li><strong>Alertas de Seguridad:</strong> Notificaciones de intentos de acceso no autorizado o actividades sospechosas.</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p class="footer-text">
+                <i class="fas fa-copyright"></i>
+                Manual de Usuario - Absolute de Nicaragua 2026
+            </p>
+        </div>
+    </footer>
+</body>
+</html>

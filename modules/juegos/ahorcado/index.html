@@ -1,0 +1,57 @@
+<div class="game">
+  <div class="game-header">
+    <div>
+      <h3 class="game-title">Ahorcado</h3>
+      <p class="game-sub">Adivina la palabra antes de quedarte sin intentos.</p>
+    </div>
+    <div class="game-controls">
+      <div class="game-pill" title="Modo">Aleatorio</div>
+      <button id="hangman-new" class="game-btn">Nueva palabra</button>
+    </div>
+  </div>
+
+  <div class="hangman-hud" aria-label="HUD de marcadores">
+    <div class="hangman-hud-grid">
+      <div class="hangman-hud-item">
+        <span>Récord</span>
+        <strong id="hangman-best-score">0</strong>
+      </div>
+      <div class="hangman-hud-item">
+        <span>Tiempo jugado</span>
+        <strong id="hangman-elapsed">0s</strong>
+      </div>
+      <div class="hangman-hud-item">
+        <span>Última</span>
+        <strong id="hangman-last-solve">—</strong>
+      </div>
+      <div class="hangman-hud-item">
+        <span>Mejor</span>
+        <strong id="hangman-best-solve">—</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="hangman-layout">
+    <div class="hangman-panel">
+      <div id="hangman-drawing" class="hangman-drawing hangman-visual" role="img" aria-label="Ahorcado"></div>
+      <div class="hangman-stats">
+        <div class="stat stat-accent"><span>Tiempo</span><strong id="hangman-time">120</strong></div>
+        <div class="stat"><span>Puntos</span><strong id="hangman-score">0</strong></div>
+        <div class="stat"><span>Racha</span><strong id="hangman-streak">0</strong></div>
+        <div class="stat"><span>Fallos</span><strong id="hangman-fails">0</strong></div>
+      </div>
+    </div>
+
+    <div class="hangman-panel">
+      <div class="hangman-word" id="hangman-word" aria-label="Palabra"></div>
+      <p class="hangman-hint" id="hangman-hint"></p>
+
+      <div class="hangman-kbd" id="hangman-kbd" aria-label="Teclado"></div>
+
+      <div class="hangman-footer">
+        <p class="hangman-msg" id="hangman-msg"></p>
+        <p class="hangman-tip">Tip: también puedes escribir con el teclado.</p>
+      </div>
+    </div>
+  </div>
+</div>

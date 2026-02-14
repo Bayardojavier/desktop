@@ -24,11 +24,23 @@
     <div class="bodega-filtros">
       <div class="bodega-filtro-grupo">
         <label for="filtro-item">Ítem</label>
-        <select id="filtro-item" class="dashboard-select">
-          <option value="">Seleccione un ítem...</option>
-        </select>
+        <button id="btn-buscar-item" class="bodega-export-pdf-btn">🔍 Buscar Ítem</button>
       </div>
       <button id="btn-exportar-xitem" class="bodega-export-pdf-btn">📄 Exportar Historial</button>
+    </div>
+
+    <!-- MODAL DE BÚSQUEDA -->
+    <div id="modal-buscar-item" class="modal-overlay" style="display: none;">
+      <div class="modal-content">
+        <h3>Buscar Ítem</h3>
+        <input type="text" id="modal-search-input" placeholder="Buscar por código o nombre..." class="dashboard-select">
+        <div id="modal-results" class="modal-results">
+          <!-- Resultados se poblarán aquí -->
+        </div>
+        <div class="modal-buttons">
+          <button id="btn-modal-cancelar" class="bodega-export-pdf-btn">Cancelar</button>
+        </div>
+      </div>
     </div>
 
     <!-- TABLA DE MOVIMIENTOS -->
@@ -58,6 +70,60 @@
   color: #64b5f6;
   margin: 4px 0 0 0;
 }
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: rgba(20, 30, 60, 0.9);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 70%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-content h3 {
+  margin: 0 0 15px 0;
+  color: #cbd5e1;
+}
+
+.modal-results {
+  flex: 1;
+  overflow-y: auto;
+  margin: 10px 0;
+}
+
+.modal-result-item {
+  padding: 10px;
+  border-bottom: 1px solid rgba(156, 163, 175, 0.2);
+  cursor: pointer;
+  color: #cbd5e1;
+}
+
+.modal-result-item:hover {
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
 </style>
 
 <script>
@@ -65,6 +131,38 @@
   const supa = window.supabaseClient;
   if (!supa) {
     console.error('❌ Supabase no está inicializado (window.supabaseClient).');
+  }
+
+  async function obtenerLogoPdfSrc() {
+    try {
+      if (window.__xitemLogoPdfSrc) return window.__xitemLogoPdfSrc;
+      if (window.__xitemLogoPdfSrcPromise) return await window.__xitemLogoPdfSrcPromise;
+
+      const fallbackUrl = new URL('../../../assets/logo.png', window.location.href).href;
+      if (window.electronAPI && typeof window.electronAPI.getAssetDataUrl === 'function') {
+        window.__xitemLogoPdfSrcPromise = window.electronAPI.getAssetDataUrl({ path: 'logo.png' })
+          .then((r) => {
+            if (r && r.ok && r.dataUrl) return r.dataUrl;
+            throw new Error((r && r.error) ? r.error : 'No se pudo leer asset');
+          })
+          .then((dataUrl) => {
+            window.__xitemLogoPdfSrc = dataUrl;
+            return dataUrl;
+          })
+          .catch((err) => {
+            console.warn('Logo IPC falló (xitem), usando URL directa:', err);
+            window.__xitemLogoPdfSrc = fallbackUrl;
+            return fallbackUrl;
+          });
+      } else {
+        window.__xitemLogoPdfSrcPromise = Promise.resolve(fallbackUrl);
+      }
+
+      return await window.__xitemLogoPdfSrcPromise;
+    } catch (e) {
+      console.warn('Logo fallback (xitem):', e);
+      return new URL('../../../assets/logo.png', window.location.href).href;
+    }
   }
 
   const estado = {
@@ -87,12 +185,8 @@
   }
 
   function formatearOrigenDestino(m) {
-    // m = fila de movimientos_bodega
+    // m = fila unificada desde movimientos_bodega_*
     if (m.tipo_movimiento === 'ingreso') {
-      const prov = (m.proveedor || '').toString().trim();
-      const fac = (m.numero_factura || '').toString().trim();
-      if (prov && fac) return `Compra ${prov} (${fac})`;
-      if (prov) return `Compra ${prov}`;
       return 'Ingreso';
     }
     if (m.tipo_movimiento === 'venta') {
@@ -106,39 +200,106 @@
 
   async function cargarCatalogoParaSelect() {
     if (!supa) return;
-    const sel = document.getElementById('filtro-item');
-    if (!sel) return;
 
-    sel.innerHTML = '<option value="">Cargando ítems…</option>';
+    const tablas = [
+      'movimientos_bodega_audiovisual',
+      'movimientos_bodega_hierros',
+      'movimientos_bodega_consumibles'
+    ];
 
-    const { data, error } = await supa
-      .from('catalogo')
-      .select('codigo, nombre, bodega_principal, bodega_secundaria')
-      .eq('es_contenedor', false)
-      .order('codigo', { ascending: true });
+    // Consultar todas las tablas de movimientos para obtener códigos y nombres únicos
+    const results = await Promise.all(tablas.map(async (t) => {
+      const { data, error } = await supa
+        .from(t)
+        .select('material_codigo, material_nombre')
+        .order('material_codigo', { ascending: true });
+      if (error) {
+        console.error(`Error cargando ${t}:`, error);
+        return [];
+      }
+      return (data || []).map(r => ({
+        codigo: String(r.material_codigo || '').trim(),
+        nombre: (r.material_nombre || '').toString().trim()
+      }));
+    }));
 
-    if (error) {
-      console.error('Error cargando catalogo:', error);
-      sel.innerHTML = '<option value="">Error cargando ítems</option>';
-      return;
+    const allData = results.flat();
+
+    // Unificar por codigo
+    const map = new Map();
+    allData.forEach(r => {
+      const codigo = r.codigo;
+      if (!codigo) return;
+      if (!map.has(codigo)) {
+        map.set(codigo, {
+          codigo,
+          nombre: r.nombre || codigo,
+          bodegas: new Set()
+        });
+      } else {
+        const prev = map.get(codigo);
+        if (!prev.nombre && r.nombre) prev.nombre = r.nombre;
+      }
+    });
+
+    // Opcional: agregar info de bodega desde stock_actual_con_precio si existe
+    try {
+      const { data: stockData } = await supa
+        .from('stock_actual_con_precio')
+        .select('material_codigo, bodega_principal, bodega_secundaria');
+      (stockData || []).forEach(r => {
+        const codigo = String(r.material_codigo || '').trim();
+        if (map.has(codigo)) {
+          const principal = (r.bodega_principal || '').toString().trim();
+          const secundaria = (r.bodega_secundaria || '').toString().trim();
+          const bodega = secundaria || principal;
+          if (bodega) map.get(codigo).bodegas.add(bodega);
+        }
+      });
+    } catch (e) {
+      console.warn('No se pudo cargar info de bodega:', e);
     }
 
-    estado.catalogo = (data || []).map(it => {
-      const principal = (it.bodega_principal || '').toString().trim();
-      const secundaria = (it.bodega_secundaria || '').toString().trim();
-      return {
-        ...it,
-        bodega: secundaria || principal
-      };
-    });
+    estado.catalogo = Array.from(map.values())
+      .map(it => ({
+        codigo: it.codigo,
+        nombre: it.nombre,
+        bodega: (it.bodegas.size > 1) ? Array.from(it.bodegas).join(' / ') : (Array.from(it.bodegas)[0] || '–')
+      }));
+  }
 
-    const opts = ['<option value="">Seleccione un ítem...</option>'];
-    (estado.catalogo || []).forEach(it => {
-      const codigo = String(it.codigo || '').trim();
-      if (!codigo) return;
-      opts.push(`<option value="${codigo}">${codigo}</option>`);
+  function mostrarModalBusqueda() {
+    const modal = document.getElementById('modal-buscar-item');
+    const input = document.getElementById('modal-search-input');
+    const results = document.getElementById('modal-results');
+    input.value = '';
+    results.innerHTML = '';
+    modal.style.display = 'flex';
+    input.focus();
+  }
+
+  function ocultarModalBusqueda() {
+    const modal = document.getElementById('modal-buscar-item');
+    modal.style.display = 'none';
+  }
+
+  function filtrarResultados(query) {
+    const results = document.getElementById('modal-results');
+    const q = query.toLowerCase().trim();
+    const filtrados = estado.catalogo.filter(it =>
+      it.codigo.toLowerCase().includes(q) || it.nombre.toLowerCase().includes(q)
+    ).sort((a, b) => a.codigo.localeCompare(b.codigo));
+    results.innerHTML = '';
+    filtrados.forEach(it => {
+      const div = document.createElement('div');
+      div.className = 'modal-result-item';
+      div.textContent = `${it.codigo} — ${it.nombre}`;
+      div.onclick = () => {
+        ocultarModalBusqueda();
+        renderizarHistorial(it.codigo);
+      };
+      results.appendChild(div);
     });
-    sel.innerHTML = opts.join('');
   }
 
   async function obtenerExistenciaActual(codigo) {
@@ -159,18 +320,33 @@
   async function cargarMovimientosPorItem(codigo) {
     if (!supa || !codigo) return [];
 
-    const { data, error } = await supa
-      .from('movimientos_bodega')
-      .select('fecha_movimiento, tipo_movimiento, referencia_documento, referencia_tipo, responsable, proveedor, numero_factura, cantidad, signo, observaciones')
-      .eq('material_codigo', codigo)
-      .order('fecha_movimiento', { ascending: false });
+    const tablas = [
+      'movimientos_bodega_audiovisual',
+      'movimientos_bodega_hierros',
+      'movimientos_bodega_consumibles'
+    ];
 
-    if (error) {
-      console.error('Error cargando movimientos_bodega:', error);
-      throw error;
-    }
+    const selectCols = 'created_at, fecha_movimiento, tipo_movimiento, referencia_documento, referencia_tipo, responsable, cantidad, signo, observaciones, bodega_principal, bodega_secundaria, estado';
 
-    return data || [];
+    const results = await Promise.all(tablas.map(async (t) => {
+      const { data, error } = await supa
+        .from(t)
+        .select(selectCols)
+        .eq('material_codigo', codigo);
+      if (error) {
+        console.error(`Error cargando ${t}:`, error);
+        return [];
+      }
+      return (data || []).map(r => ({ ...r, __tabla: t }));
+    }));
+
+    const merged = results.flat();
+    merged.sort((a, b) => {
+      const ta = new Date(a.created_at || a.fecha_movimiento || 0).getTime();
+      const tb = new Date(b.created_at || b.fecha_movimiento || 0).getTime();
+      return tb - ta;
+    });
+    return merged;
   }
 
   async function renderizarHistorial(codigo) {
@@ -211,7 +387,7 @@
     document.getElementById('kpi-despachos').textContent = despachos;
 
     const historial = movimientos.map(m => {
-      const { fecha, hora } = fmtFechaHora(m.fecha_movimiento);
+      const { fecha, hora } = fmtFechaHora(m.created_at || m.fecha_movimiento);
       const qty = Number(m.cantidad) || 0;
       const signo = Number(m.signo);
       return {
@@ -273,33 +449,41 @@
       </table>`;
   }
 
-  document.getElementById('filtro-item').addEventListener('change', e => {
-    renderizarHistorial(e.target.value);
+  document.getElementById('btn-buscar-item').addEventListener('click', mostrarModalBusqueda);
+
+  document.getElementById('modal-search-input').addEventListener('input', e => {
+    filtrarResultados(e.target.value);
+  });
+
+  document.getElementById('btn-modal-cancelar').addEventListener('click', ocultarModalBusqueda);
+
+  // Cerrar modal al hacer clic fuera
+  document.getElementById('modal-buscar-item').addEventListener('click', e => {
+    if (e.target.id === 'modal-buscar-item') {
+      ocultarModalBusqueda();
+    }
   });
     // === FUNCIÓN DE EXPORTACIÓN A PDF COMPLETA ===
-  document.getElementById('btn-exportar-xitem').addEventListener('click', () => {
+  document.getElementById('btn-exportar-xitem').addEventListener('click', async () => {
     if (typeof html2pdf === 'undefined') {
       alert('html2pdf no está cargado.');
       return;
     }
 
-    const codigoItem = document.getElementById('filtro-item').value;
-    if (!codigoItem) {
-      alert('Por favor, seleccione un ítem primero.');
-      return;
-    }
-
     const item = estado.itemActual;
-    if (!item || item.codigo !== codigoItem) {
-      alert('Seleccione el ítem y espere a que cargue el historial.');
+    if (!item) {
+      alert('Por favor, busque un ítem primero.');
       return;
     }
 
+    const codigoItem = item.codigo;
     const historial = estado.historialActual || [];
     if (!historial.length) {
       alert('No hay movimientos para exportar.');
       return;
     }
+
+    const logoSrc = await obtenerLogoPdfSrc();
 
     // === CONSTRUIR EL CONTENIDO DE LA TABLA PARA EL PDF ===
     let filasPDF = '';
@@ -323,7 +507,7 @@
     const htmlPDF = `
       <div style="font-family: Arial, sans-serif; padding: 20px; color: #000; width: 100%;">
         <div style="text-align: center; margin-bottom: 24px;">
-          <img src="assets/logo.png" style="height: 60px; margin-bottom: 16px;">
+          <img src="${logoSrc}" style="height: 60px; margin-bottom: 16px;">
           <h2 style="color: #1e40af; margin: 0; font-size: 22px;">Historial de Movimientos por Ítem</h2>
           <p style="margin: 8px 0 0 0; color: #333; font-size: 14px;">
             <strong>Ítem:</strong> ${item.codigo} – ${item.nombre}<br>

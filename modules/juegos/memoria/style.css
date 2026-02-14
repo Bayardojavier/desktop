@@ -1,0 +1,26 @@
+.mem{color:#e5e7eb;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+.mem-header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.mem-title{margin:0;font-size:18px}
+.mem-sub{margin:2px 0 0 0;color:#a7b0c0;font-size:13px}
+.mem-actions{display:flex;gap:10px;flex-wrap:wrap}
+.mem-btn{border:1px solid rgba(148,163,184,.25);background:rgba(15,23,42,.65);color:#e5e7eb;padding:10px 12px;border-radius:10px;cursor:pointer;font-weight:900;font-size:13px}
+.mem-btn:hover{border-color:rgba(99,102,241,.55);background:rgba(30,41,59,.6)}
+
+.mem-metrics{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+.metric{flex:1;min-width:160px;border:1px solid rgba(148,163,184,.14);background:rgba(15,23,42,.35);border-radius:12px;padding:10px;display:flex;justify-content:space-between;align-items:center}
+.metric span{color:#a7b0c0;font-size:12px}
+.metric strong{font-size:18px}
+
+.mem-grid{margin-top:12px;display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:10px}
+@media (max-width:900px){.mem-grid{grid-template-columns:repeat(2,minmax(140px,1fr))}}
+
+.card{border:1px solid rgba(148,163,184,.18);background:rgba(2,6,23,.35);border-radius:14px;padding:12px;min-height:92px;cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center;user-select:none;transition:transform .08s ease, border-color .08s ease}
+.card:hover{border-color:rgba(99,102,241,.55)}
+.card:active{transform:scale(.98)}
+.card.faceup{background:rgba(15,23,42,.55)}
+.card.matched{border-color:rgba(34,197,94,.7);background:rgba(34,197,94,.08);cursor:default}
+
+.card-text{font-weight:900;text-align:center;line-height:1.2}
+.card-type{position:absolute;top:8px;left:10px;font-size:10px;color:#94a3b8;border:1px solid rgba(148,163,184,.18);background:rgba(15,23,42,.55);padding:3px 7px;border-radius:999px}
+
+.mem-msg{margin:10px 0 0 0;color:#cbd5e1;font-weight:900}

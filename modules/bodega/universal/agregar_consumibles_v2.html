@@ -427,15 +427,21 @@
     state.tipoMaterial = principal;
 
     if (principal === 'herramienta') {
+      state.tipoMaterial = 'RENTABLE';
       const sub = (document.querySelector('input[name="subtipo-herramienta"]:checked')?.value || '').trim();
       if (!sub) {
         alert('Selecciona el subtipo de herramienta (Eléctrica o Manual).');
         return;
       }
       state.subtipoHerramienta = sub;
+      // Llenar automáticamente el campo tipo-material
+      document.getElementById('tipo-material').value = 'Herramienta ' + (sub === 'electrica' ? 'Eléctrica' : 'Manual');
     } else {
+      state.tipoMaterial = 'CONSUMIBLE';  // consumible o insumo
       state.subtipoHerramienta = null;
       state.tipoHerramienta = null;
+      // Llenar automáticamente
+      document.getElementById('tipo-material').value = principal === 'consumible' ? 'Material Consumible' : 'Insumo';
     }
 
     applyAltaTipoUI();
@@ -445,6 +451,8 @@
     const m = document.getElementById('modal-tipo-material');
     if (m) m.style.display = 'none';
   }
+
+
 
   function renderPaleta() {
     const host = document.getElementById('paleta-colores');
@@ -923,7 +931,7 @@
     }
   }
 
-  async function crearMovimientoIngreso({ codigo, nombre, cantidadMov, referenciaTipo, ubicacionCodigo, ubicacionNombre }) {
+  async function crearMovimientoIngreso({ codigo, nombre, cantidadMov, referenciaTipo, ubicacionCodigo, ubicacionNombre, requiere_devolucion }) {
     const hoy = new Date();
     const fecha = hoy.toISOString().slice(0, 10);
     const movimiento = {
@@ -940,7 +948,8 @@
       fecha_movimiento: fecha,
       observaciones: 'Alta automática (activo)',
       estado: 'completado',
-      usuario_id: window.currentUser?.id
+      usuario_id: window.currentUser?.id,
+      requiere_devolucion: (state.tipoMaterial === 'RENTABLE')  // TRUE para rentables, FALSE para consumibles
     };
     return await insertConFallback(TABLE_MOVIMIENTOS, movimiento);
   }
@@ -1354,6 +1363,9 @@
     const extras = collectCamposExtra();
     const campos = {};
     campos.tipo_alta = tipo;
+    // Guardar la descripción del tipo de material editada por el digitador
+    const tipoMaterialDesc = (document.getElementById('tipo-material')?.value || '').trim();
+    if (tipoMaterialDesc) campos.tipo_material_descripcion = tipoMaterialDesc;
     campos.contenedor_tipo = (tipo === 'CONTENEDOR') ? (contTipoVal || null) : (state.contenedorRow?.campos_personalizados?.contenedor_tipo || null);
     if (tipo === 'CONTENEDOR') {
       campos.nombre_base = contBaseVal || null;
@@ -1398,7 +1410,7 @@
       bodega_principal: state.principalNombre || 'Consumibles',
       bodega_secundaria: state.secundariaNombre || null,
       tipo_uso: (document.getElementById('tipo-uso')?.value || '').trim() || null,
-      tipo_material: (document.getElementById('tipo-material')?.value || '').trim() || null,
+      tipo_material: state.tipoMaterial,  // 'RENTABLE' o 'CONSUMIBLE'
       color: state.color || null,
       unidad_medida: (tipo === 'CONTENEDOR') ? null : unidadMedida,
       es_hechizo: !!document.getElementById('producto-hechizo')?.checked,

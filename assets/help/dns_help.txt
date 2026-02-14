@@ -1,0 +1,56 @@
+Problemas de DNS — Guía rápida
+
+Si tu aplicación falla al resolver el host del servicio (mensajes como "DNS address could not be found"), prueba lo siguiente:
+
+1) Solución rápida (automática)
+- Ejecutar desde la aplicación el script que configura DNS públicos (Cloudflare 1.1.1.1 y Google 8.8.8.8).
+- Requiere permisos si tu usuario no tiene privilegios; la app intentará ejecutarlo con el contexto de usuario.
+
+2) Solución manual (PowerShell, como Administrador)
+- Abrir PowerShell como Administrador y ejecutar:
+
+# Cambiar DNS a Cloudflare y Google
+Get-NetAdapter | Where-Object { $_.Status -eq 'Up' } | ForEach-Object { netsh interface ip set dns name="$($_.Name)" static 1.1.1.1; netsh interface ip add dns name="$($_.Name)" 8.8.8.8 index=2 }
+
+# Restaurar DNS a DHCP
+Get-NetAdapter | Where-Object { $_.Status -eq 'Up' } | ForEach-Object { netsh interface ip set dns name="$($_.Name)" dhcp }
+
+3) Comprobaciones adicionales
+- Verifica con: nslookup <tu-host> 1.1.1.1
+- Si nslookup con 1.1.1.1 resuelve, pero con tus DNS no, considera cambiar los DNS de tu equipo o de tu router.
+
+4) Si no puedes cambiar DNS
+- Usa una red alternativa (datos móviles o VPN) temporalmente.
+- Contacta al administrador de red/IT para resolver el problema de proveedor DNS.
+
+5) Qué hacer en la app
+- Si el problema persiste, usa el botón 'Reintentar' en la barra superior para reintentar las cargas.
+- La app ofrece una opción para cargar datos en caché (si está implementada) para lecturas mientras se resuelve la conectividad.
+
+Notas:
+- Estos pasos son recomendaciones de mitigación. El servicio sigue funcionando; el problema es la resolución DNS desde tu red.
+- Mantén esta ventana abierta y copia los comandos para compartirlos con soporte o el administrador.
+
+---
+
+Opción GUI (Panel de Control) — cambiar DNS desde Propiedades del adaptador (Windows)
+
+Si prefieres usar la interfaz gráfica en lugar de PowerShell, sigue estos pasos (Windows 10/11):
+
+1. Abre el Panel de Control (puedes buscar "Panel de control" en el menú Inicio).
+2. Ve a "Redes e Internet" → "Centro de redes y recursos compartidos".
+3. En la columna izquierda selecciona "Cambiar configuración del adaptador" (o en Configuración: "Red e Internet" → "Estado" → "Cambiar opciones del adaptador").
+4. Haz clic derecho sobre el adaptador de red activo (por ejemplo "Ethernet" o "Wi-Fi") y selecciona "Propiedades".
+5. Selecciona "Protocolo de Internet versión 4 (TCP/IPv4)" y haz clic en "Propiedades".
+6. En la ventana de Propiedades, selecciona "Usar las siguientes direcciones de servidor DNS:".
+	- Servidor DNS preferido: 1.1.1.1
+	- Servidor DNS alternativo: 8.8.8.8
+7. Haz clic en "Aceptar" en todas las ventanas para aplicar los cambios.
+
+Para restaurar la configuración automática desde la GUI:
+
+1. Repite los pasos 1–5 anteriores.
+2. Selecciona "Obtener dirección IP automáticamente" y "Obtener la dirección del servidor DNS automáticamente".
+3. Pulsa "Aceptar" para aplicar.
+
+Nota: Cambiar la DNS en el adaptador de red afecta solo al equipo. Si la red corporativa fuerza DNS desde DHCP o el router, deberás cambiar la configuración en el router o contactar al administrador.

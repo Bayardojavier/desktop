@@ -51,120 +51,71 @@ function initWindowControls() {
 // Cierre de sesión global
 function logoutAndReload() {
   localStorage.clear();
-  loadLogin();
+  location.reload();
 }
 
 // =============================
-// LOGIN (público)
+// NOTIFICACIONES DEL SISTEMA
 // =============================
 
-function loadLogin() {
+// Solicitar permisos para notificaciones del sistema operativo
+async function requestNotificationPermission() {
+  if ('Notification' in window) {
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      console.log('Permisos de notificación concedidos');
+    } else {
+      console.log('Permisos de notificación denegados');
+    }
+    return permission;
+  }
+  return 'denied';
+}
+
+// Mostrar notificación del sistema operativo
+function showSystemNotification(title, body, icon = null) {
+  if ('Notification' in window && Notification.permission === 'granted') {
+    const notification = new Notification(title, {
+      body: body,
+      icon: icon || '/assets/icon.png', // Icono por defecto
+      silent: false,
+      requireInteraction: false // Se cierra automáticamente
+    });
+
+    // Cerrar automáticamente después de 3 segundos
+    setTimeout(() => {
+      notification.close();
+    }, 3000);
+
+    return notification;
+  } else {
+    console.log('Notificaciones no soportadas o permisos no concedidos');
+    return null;
+  }
+}
+
+// Inicializar notificaciones al cargar la app
+document.addEventListener('DOMContentLoaded', async () => {
+  await requestNotificationPermission();
+});
+
+async function loadLogin() {
   const contentArea = document.querySelector('.content-area');
   if (!contentArea) return;
 
+  // El login ya está en index.html, solo configurar estilos
   contentArea.className = 'content-area';
   Object.assign(contentArea.style, {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
     padding: '20px',
-    minHeight: 'calc(100vh - 60px)'
+    minHeight: '0',
+    height: '100%'
+    
   });
 
-  contentArea.innerHTML = `
-    <style>
-      .login-card {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        width: 100%;
-        max-width: 400px;
-        padding: 32px;
-      }
-      .login-card h2 {
-        text-align: center;
-        color: #1e40af;
-        margin-bottom: 24px;
-        font-size: 24px;
-      }
-      .input-group {
-        margin-bottom: 18px;
-      }
-      .input-group label {
-        display: block;
-        margin-bottom: 6px;
-        color: #374151;
-        font-weight: 600;
-        font-size: 14px;
-      }
-      .input-group input {
-        width: 100%;
-        padding: 12px 14px;
-        border: 1px solid #d1d5db;
-        border-radius: 8px;
-        font-size: 15px;
-      }
-      .btn-login {
-        width: 100%;
-        padding: 12px;
-        background: #3b82f6;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 16px;
-        font-weight: 600;
-        cursor: pointer;
-      }
-      .btn-login:hover {
-        background: #2563eb;
-      }
-    </style>
-
-    <div class="login-card">
-      <h2>Iniciar Sesión</h2>
-      <form id="formLogin">
-        <div class="input-group">
-          <label>Usuario</label>
-          <input type="text" id="usuario" required />
-        </div>
-        <div class="input-group">
-          <label>Contraseña</label>
-          <input type="password" id="contrasena" required />
-        </div>
-        <button type="submit" class="btn-login">Ingresar</button>
-      </form>
-    </div>
-  `;
-
-  const script = document.createElement('script');
-  script.textContent = `
-    document.getElementById('formLogin')?.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const usuario = document.getElementById('usuario').value.trim();
-      const contrasena = document.getElementById('contrasena').value;
-
-      try {
-          const { data, error } = await window.supabaseClient
-           .from('usuarios')
-           .select('id, nombre, rol, puede_crear_usuarios')
-           .eq('usuario', usuario)
-           .eq('contrasena', contrasena)
-           .maybeSingle(); // evita 406 si hay más de un match
-
-        if (error || !data) throw new Error('Credenciales inválidas');
-
-        localStorage.setItem('usuario_id', data.id);
-        localStorage.setItem('usuario_nombre', data.nombre);
-        localStorage.setItem('usuario_rol', data.rol);
-        localStorage.setItem('usuario_puede_crear', data.puede_crear_usuarios);
-        location.reload();
-      } catch (err) {
-          console.warn('Login fallido:', err);
-          alert('❌ Usuario o contraseña incorrectos');
-      }
-    });
-  `;
-  document.body.appendChild(script);
+  // No hacer fetch, el login ya está cargado
 }
 
 // =============================
@@ -173,7 +124,7 @@ function loadLogin() {
 
 function loadCreateUser() {
   const user = getCurrentUser();
-  if (!user.puede_crear_usuarios) {
+  if (user.rol !== 'admin' && !user.puede_crear_usuarios) {
     alert('No tienes permisos para crear usuarios');
     return;
   }
@@ -182,12 +133,17 @@ function loadCreateUser() {
   if (!contentArea) return;
 
   contentArea.className = 'content-area';
+  contentArea.style.cssText = ''; // Limpiar estilos inline
+  // Limpiar estilos de login del head
+  document.head.querySelectorAll('style[data-login-style]').forEach(style => style.remove());
   Object.assign(contentArea.style, {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
     padding: '20px',
-    minHeight: 'calc(100vh - 60px)'
+    minHeight: '0',
+    height: '100%'
+    
   });
 
   contentArea.innerHTML = `
@@ -348,7 +304,9 @@ function loadDashboard() {
   if (!contentArea || !user.rol) return;
 
   contentArea.className = 'content-area';
-  contentArea.style.cssText = ''; // Limpiar estilos de login
+  contentArea.style.cssText = ''; // Limpiar estilos inline
+  // Limpiar estilos de login del head
+  document.head.querySelectorAll('style[data-login-style]').forEach(style => style.remove());
 
   // Inyectar estilos del dashboard (una sola vez)
   if (!document.getElementById('dashboard-styles')) {
@@ -447,7 +405,8 @@ function loadModule(moduleName) {
     rrhh: { path: 'modules/rrhh/rrhh.html', script: 'modules/rrhh/rrhh.js', style: '' },
     bodega: { path: 'modules/bodega/bodega.html', script: 'modules/bodega/bodega.js', style: '' },
     logistica: { path: 'modules/logistica/logistica.html', script: 'modules/logistica/logistica.js', style: '' },
-    contabilidad: { path: 'modules/contabilidad/contabilidad.html', script: 'modules/contabilidad/contabilidad.js', style: 'contabilidad-bg' }
+    contabilidad: { path: 'modules/contabilidad/contabilidad.html', script: 'modules/contabilidad/contabilidad.js', style: 'contabilidad-bg' },
+    juegos: { path: 'modules/juegos/juegos.html', script: 'modules/juegos/juegos.js', style: '' }
   }[moduleName];
 
   if (!config) {
@@ -460,6 +419,9 @@ function loadModule(moduleName) {
     .then(html => {
       const contentArea = document.querySelector('.content-area');
       contentArea.className = `content-area ${config.style || ''}`;
+      contentArea.style.cssText = ''; // Limpiar estilos inline
+      // Limpiar estilos de login del head
+      document.head.querySelectorAll('style[data-login-style]').forEach(style => style.remove());
       contentArea.innerHTML = html;
 
       // Eliminar script anterior
@@ -490,6 +452,70 @@ function loadModule(moduleName) {
         </p>
       `;
     });
+}
+
+// =============================
+// MANUAL DE USUARIO
+// =============================
+
+function loadManualUsuario() {
+  const contentArea = document.querySelector('.content-area');
+  if (!contentArea) return;
+
+  contentArea.className = 'content-area';
+  contentArea.style.cssText = ''; // Limpiar estilos inline
+  // Limpiar estilos de login del head
+  document.head.querySelectorAll('style[data-login-style]').forEach(style => style.remove());
+
+  // Inyectar estilos del manual (una sola vez)
+  if (!document.getElementById('manual-styles')) {
+    const style = document.createElement('style');
+    style.id = 'manual-styles';
+    style.textContent = `
+      .manual-container {
+        width: 100%;
+        height: 92%;
+        border: none;
+        background: white;
+      }
+      .manual-nav {
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 12px 20px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .manual-nav-btn {
+        padding: 8px 16px;
+        background: #3b82f6;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+      }
+      .manual-nav-btn:hover {
+        background: #2563eb;
+      }
+      .manual-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #1e293b;
+        margin: 0;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  contentArea.innerHTML = `
+    <div class="manual-nav">
+      <button class="manual-nav-btn" onclick="loadDashboard()">← Volver al Dashboard</button>
+      <h3 class="manual-title">Manual de Usuario - Absolute de Nicaragua</h3>
+    </div>
+    <iframe class="manual-container" src="./manual_usuario/index.html" title="Manual de Usuario"></iframe>
+  `;
 }
 
 // =============================
@@ -533,11 +559,17 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-crear-usuario')?.addEventListener('click', (e) => {
     e.preventDefault();
     const user = getCurrentUser();
-    if (!user.puede_crear_usuarios) {
+    if (user.rol !== 'admin' && !user.puede_crear_usuarios) {
       alert('No tienes permisos para crear usuarios');
       return;
     }
     loadCreateUser();
+  });
+
+  // 🎮 Juegos (Ayuda): disponible incluso sin sesión
+  document.getElementById('btn-juegos')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    loadModule('juegos');
   });
 
   // 🔒 App principal: solo si hay sesión
@@ -547,7 +579,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Ocultar/mostrar botones de inicio según sesión
     document.getElementById('btn-login').style.display = 'none';
     document.getElementById('btn-cerrar-sesion').style.display = 'flex';
-    if (!user.puede_crear_usuarios) {
+    if (user.rol !== 'admin' && !user.puede_crear_usuarios) {
       document.getElementById('btn-crear-usuario').style.display = 'none';
     }
 
@@ -619,9 +651,32 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Botón de acerca de
-    document.getElementById('btn-acerca')?.addEventListener('click', () => {
-      alert('Absolute de Nicaragua\nVersión 1.2.1\nAplicación de escritorio para gestión empresarial.');
+    document.getElementById('btn-acerca')?.addEventListener('click', async () => {
+      let version = '1.3.0';
+      try {
+        const v = await window.electronAPI?.getAppVersion?.();
+        if (v) version = String(v);
+      } catch {
+        // noop: fallback a versión hardcodeada
+      }
+
+      alert(
+        'Absolute de Nicaragua' +
+        '\nVersión ' + version +
+        '\n\nSistema de escritorio para la gestión empresarial:' +
+        '\n- Inventario y bodegas' +
+        '\n- Logística y despachos' +
+        '\n- Ventas, RRHH y contabilidad' +
+        '\n\nDesarrollado para apoyar las operaciones internas y el control de existencias.'
+      );
     });
+
+    // Botón de soporte (Manual de Usuario)
+    document.getElementById('btn-soporte')?.addEventListener('click', () => {
+      loadManualUsuario();
+    });
+
+
 
     // === CONFIGURACIÓN DE VENTANA ===
     const btnConfigVentana = document.getElementById('btn-config-ventana');

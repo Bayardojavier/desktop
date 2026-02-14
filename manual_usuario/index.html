@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario - Absolute de Nicaragua</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1e40af;
+            --primary-dark: #1e3a8a;
+            --secondary: #64748b;
+            --accent: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #0f172a;
+            --darker: #020617;
+            --light: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            --shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: var(--gray-700);
+            background: linear-gradient(135deg, var(--gray-50) 0%, var(--gray-100) 100%);
+            min-height: 100vh;
+        }
+
+        /* Header Moderno */
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 2rem 0;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.05"/><circle cx="10" cy="50" r="0.5" fill="white" opacity="0.05"/><circle cx="90" cy="30" r="0.5" fill="white" opacity="0.05"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            pointer-events: none;
+        }
+
+        header .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            letter-spacing: -0.025em;
+        }
+
+        header p {
+            font-size: 1.25rem;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+
+        /* Navegación */
+        nav {
+            background: var(--darker);
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--gray-800);
+        }
+
+        nav .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+        }
+
+        nav a {
+            color: var(--gray-300);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        nav a:hover {
+            color: white;
+            background: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        /* Contenido Principal */
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+
+        /* Cards Modernas */
+        .module-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--gray-200);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .module-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .module-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .module-card:hover::before {
+            opacity: 1;
+        }
+
+        .module-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--gray-100);
+        }
+
+        .module-icon {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            font-size: 1.25rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: white;
+            box-shadow: var(--shadow);
+        }
+
+        .module-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin: 0;
+        }
+
+        .module-description {
+            color: var(--gray-600);
+            font-size: 0.95rem;
+            margin-top: 0.25rem;
+        }
+
+        /* Lista de enlaces */
+        .module-links {
+            list-style: none;
+            padding: 0;
+        }
+
+        .module-links li {
+            margin-bottom: 0.75rem;
+        }
+
+        .module-links a {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            color: var(--gray-700);
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .module-links a:hover {
+            background: var(--gray-50);
+            color: var(--primary);
+            border-color: var(--gray-200);
+            transform: translateX(4px);
+        }
+
+        .module-links a i {
+            margin-right: 0.75rem;
+            color: var(--primary);
+            width: 1.25rem;
+        }
+
+        /* Submódulos */
+        .submodule {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .submodule h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .submodule h4 i {
+            margin-right: 0.5rem;
+            color: var(--accent);
+        }
+
+        /* Footer */
+        footer {
+            background: var(--darker);
+            color: var(--gray-400);
+            text-align: center;
+            padding: 2rem 0;
+            margin-top: 4rem;
+            border-top: 1px solid var(--gray-800);
+        }
+
+        footer p {
+            margin: 0;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2rem;
+            }
+
+            nav .container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            main {
+                padding: 2rem 1rem;
+            }
+
+            .module-card {
+                padding: 1.5rem;
+            }
+
+            .module-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .module-icon {
+                margin-bottom: 1rem;
+                margin-right: 0;
+            }
+        }
+
+        /* Animaciones */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .module-card {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .module-card:nth-child(1) { animation-delay: 0.1s; }
+        .module-card:nth-child(2) { animation-delay: 0.2s; }
+        .module-card:nth-child(3) { animation-delay: 0.3s; }
+        .module-card:nth-child(4) { animation-delay: 0.4s; }
+        .module-card:nth-child(5) { animation-delay: 0.5s; }
+        .module-card:nth-child(6) { animation-delay: 0.6s; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="container">
+            <h1><i class="fas fa-book-open"></i> Manual de Usuario</h1>
+            <p>Sistema de Gestión Absolute de Nicaragua</p>
+        </div>
+    </header>
+
+    <nav>
+        <div class="container">
+            <a href="#introduccion"><i class="fas fa-sign-in-alt"></i> Introducción</a>
+            <a href="#bodega"><i class="fas fa-warehouse"></i> Bodega</a>
+            <a href="#ventas"><i class="fas fa-shopping-cart"></i> Ventas</a>
+            <a href="#logistica"><i class="fas fa-truck"></i> Logística</a>
+            <a href="#contabilidad"><i class="fas fa-calculator"></i> Contabilidad</a>
+            <a href="#rrhh"><i class="fas fa-users"></i> RRHH</a>
+        </div>
+    </nav>
+
+    <main>
+        <div class="module-card" id="introduccion">
+            <div class="module-header">
+                <div class="module-icon">
+                    <i class="fas fa-key"></i>
+                </div>
+                <div>
+                    <h2 class="module-title">Capítulo 1: Introducción y Acceso</h2>
+                    <p class="module-description">Conoce cómo acceder al sistema y los fundamentos básicos</p>
+                </div>
+            </div>
+            <ul class="module-links">
+                <li><a href="auth/login.html"><i class="fas fa-sign-in-alt"></i> 1.1. Inicio de Sesión y Registro</a></li>
+            </ul>
+        </div>
+
+        <div class="module-card" id="bodega">
+            <div class="module-header">
+                <div class="module-icon">
+                    <i class="fas fa-warehouse"></i>
+                </div>
+                <div>
+                    <h2 class="module-title">Capítulo 2: Módulo de Bodega</h2>
+                    <p class="module-description">Gestión completa de inventario, movimientos y control de materiales</p>
+                </div>
+            </div>
+            <ul class="module-links">
+                <li><a href="bodega/index.html"><i class="fas fa-home"></i> 2.1. Inicio del Módulo</a></li>
+                <li><a href="bodega/dashboard_general.html"><i class="fas fa-tachometer-alt"></i> 2.2. Dashboard General</a></li>
+                <li><a href="bodega/dashboard_evento.html"><i class="fas fa-calendar-alt"></i> 2.3. Dashboard de Eventos</a></li>
+                <li><a href="bodega/dashboard_proveedor.html"><i class="fas fa-truck"></i> 2.4. Dashboard de Proveedores</a></li>
+                <li><a href="bodega/historial_item.html"><i class="fas fa-history"></i> 2.5. Historial de Ítems</a></li>
+                <li><a href="bodega/movimiento_ingreso.html"><i class="fas fa-plus-circle"></i> 2.6. Movimientos de Ingreso</a></li>
+                <li><a href="bodega/movimiento_despacho.html"><i class="fas fa-truck-loading"></i> 2.7. Movimientos de Despacho</a></li>
+                <li><a href="bodega/movimiento_bajas.html"><i class="fas fa-minus-circle"></i> 2.8. Movimientos de Bajas</a></li>
+                <li><a href="bodega/universal_ficha_etiqueta.html"><i class="fas fa-tags"></i> 2.9. Fichas y Etiquetas</a></li>
+            </ul>
+            <div class="submodule">
+                <h4><i class="fas fa-tools"></i> Gestión de Materiales</h4>
+                <ul class="module-links">
+                    <li><a href="bodega/movimiento_agregar_audiovisual.html"><i class="fas fa-plus"></i> Agregar Audiovisual</a></li>
+                    <li><a href="bodega/universal_agregar_consumibles.html"><i class="fas fa-plus"></i> Agregar Consumibles</a></li>
+                    <li><a href="bodega/universal_agregar_hierros.html"><i class="fas fa-plus"></i> Agregar Hierros</a></li>
+                    <li><a href="bodega/universal_modificar_audiovisual.html"><i class="fas fa-edit"></i> Modificar Audiovisual</a></li>
+                    <li><a href="bodega/universal_modificar_consumible.html"><i class="fas fa-edit"></i> Modificar Consumible</a></li>
+                    <li><a href="bodega/universal_modificar_hierro.html"><i class="fas fa-edit"></i> Modificar Hierro</a></li>
+                </ul>
+            </div>
+            <div class="submodule">
+                <h4><i class="fas fa-exchange-alt"></i> Movimientos Especiales</h4>
+                <ul class="module-links">
+                    <li><a href="bodega/movimiento_devolucion.html"><i class="fas fa-undo"></i> Devolución de Materiales</a></li>
+                    <li><a href="bodega/movimiento_ventas.html"><i class="fas fa-cash-register"></i> Despacho por Ventas</a></li>
+                    <li><a href="bodega/movimiento_fabricacion.html"><i class="fas fa-cogs"></i> Fabricación de Materiales</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="module-card" id="ventas">
+            <div class="module-header">
+                <div class="module-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <div>
+                    <h2 class="module-title">Capítulo 3: Módulo de Ventas</h2>
+                    <p class="module-description">Gestión de cotizaciones, pedidos y ventas</p>
+                </div>
+            </div>
+            <ul class="module-links">
+                <li><a href="ventas/index.html"><i class="fas fa-home"></i> 3.1. Inicio del Módulo</a></li>
+                <li><a href="ventas/clientes.html"><i class="fas fa-users"></i> 3.2. Gestión de Clientes</a></li>
+                <li><a href="ventas/cotizaciones.html"><i class="fas fa-file-invoice-dollar"></i> 3.3. Cotizaciones</a></li>
+                <li><a href="ventas/servicios.html"><i class="fas fa-tools"></i> 3.4. Servicios</a></li>
+                <li><a href="ventas/ventas_activas.html"><i class="fas fa-shopping-bag"></i> 3.5. Ventas Activas</a></li>
+                <li><a href="ventas/eventos.html"><i class="fas fa-calendar-alt"></i> 3.6. Eventos</a></li>
+                <li><a href="ventas/reportes.html"><i class="fas fa-chart-line"></i> 3.7. Reportes y Análisis</a></li>
+            </ul>
+        </div>
+
+        <div class="module-card" id="logistica">
+            <div class="module-header">
+                <div class="module-icon">
+                    <i class="fas fa-truck"></i>
+                </div>
+                <div>
+                    <h2 class="module-title">Capítulo 4: Módulo de Logística</h2>
+                    <p class="module-description">Control de transporte y distribución</p>
+                </div>
+            </div>
+            <ul class="module-links">
+                <li><a href="logistica/index.html"><i class="fas fa-home"></i> 4.1. Inicio del Módulo</a></li>
+                <li><a href="logistica/ordenes_compra.html"><i class="fas fa-shopping-cart"></i> 4.2. Órdenes de Compra</a></li>
+                <li><a href="logistica/recepcion_mercancias.html"><i class="fas fa-box-open"></i> 4.3. Recepción de Mercancías</a></li>
+                <li><a href="logistica/gestion_inventario.html"><i class="fas fa-warehouse"></i> 4.4. Gestión de Inventario</a></li>
+                <li><a href="logistica/rutas_distribucion.html"><i class="fas fa-route"></i> 4.5. Rutas de Distribución</a></li>
+                <li><a href="logistica/seguimiento_envios.html"><i class="fas fa-shipping-fast"></i> 4.6. Seguimiento de Envíos</a></li>
+                <li><a href="logistica/proveedores.html"><i class="fas fa-handshake"></i> 4.7. Gestión de Proveedores</a></li>
+            </ul>
+        </div>
+
+        <div class="module-card" id="contabilidad">
+            <div class="module-header">
+                <div class="module-icon">
+                    <i class="fas fa-calculator"></i>
+                </div>
+                <div>
+                    <h2 class="module-title">Capítulo 5: Módulo de Contabilidad</h2>
+                    <p class="module-description">Control financiero completo y reportes contables automatizados</p>
+                </div>
+            </div>
+            <ul class="module-links">
+                <li><a href="contabilidad/index.html"><i class="fas fa-home"></i> 5.1. Inicio del Módulo</a></li>
+                <li><a href="contabilidad/libro_diario.html"><i class="fas fa-book"></i> 5.2. Libro Diario</a></li>
+                <li><a href="contabilidad/estados_financieros.html"><i class="fas fa-chart-line"></i> 5.3. Estados Financieros</a></li>
+                <li><a href="contabilidad/cuentas_por_cobrar.html"><i class="fas fa-hand-holding-usd"></i> 5.4. Cuentas por Cobrar</a></li>
+                <li><a href="contabilidad/cuentas_por_pagar.html"><i class="fas fa-credit-card"></i> 5.5. Cuentas por Pagar</a></li>
+                <li><a href="contabilidad/presupuestos.html"><i class="fas fa-piggy-bank"></i> 5.6. Presupuestos</a></li>
+                <li><a href="contabilidad/reportes_contables.html"><i class="fas fa-file-invoice-dollar"></i> 5.7. Reportes Contables</a></li>
+            </ul>
+        </div>
+
+        <div class="module-card" id="rrhh">
+            <div class="module-header">
+                <div class="module-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div>
+                    <h2 class="module-title">Capítulo 6: Módulo de Recursos Humanos</h2>
+                    <p class="module-description">Gestión completa de personal, asistencia y nóminas</p>
+                </div>
+            </div>
+            <ul class="module-links">
+                <li><a href="rrhh/index.html"><i class="fas fa-home"></i> 6.1. Inicio del Módulo</a></li>
+                <li><a href="rrhh/empleados.html"><i class="fas fa-user-tie"></i> 6.2. Gestión de Empleados</a></li>
+                <li><a href="rrhh/asistencia.html"><i class="fas fa-clock"></i> 6.3. Control de Asistencia</a></li>
+                <li><a href="rrhh/nominas.html"><i class="fas fa-money-bill-wave"></i> 6.4. Nóminas y Salarios</a></li>
+                <li><a href="rrhh/reportes.html"><i class="fas fa-chart-bar"></i> 6.5. Reportes y Análisis</a></li>
+            </ul>
+        </div>
+
+        <!-- Mapa Conceptual -->
+        <div class="module-card" id="mapa-conceptual">
+          <div class="module-header">
+            <h2 class="module-title">Capítulo 7: Mapas Conceptuales</h2>
+            <p class="module-description">Visualización completa del flujo de procesos y dependencias entre módulos</p>
+          </div>
+          <div class="module-content">
+            <ul class="module-links">
+                    <li><a href="mapa-conceptual.html#despacho"><i class="fas fa-share-alt"></i> 7.1. Flujo Detallado: Despacho y Devolución</a></li>
+              <li><a href="mapa-conceptual.html#ventas"><i class="fas fa-shopping-cart"></i> 7.2. Proceso de Venta Completa</a></li>
+              <li><a href="mapa-conceptual.html#inventario"><i class="fas fa-boxes"></i> 7.3. Gestión de Inventario</a></li>
+              <li><a href="mapa-conceptual.html#rrhh"><i class="fas fa-users-cog"></i> 7.4. Recursos Humanos</a></li>
+              <li><a href="mapa-conceptual.html#contabilidad"><i class="fas fa-chart-line"></i> 7.5. Proceso Contable</a></li>
+              <li><a href="mapa-conceptual.html#dependencias"><i class="fas fa-sitemap"></i> 7.6. Dependencias de Módulos</a></li>
+              <li><a href="mapa-conceptual.html#guia"><i class="fas fa-route"></i> 7.7. Guía de Despacho Completo</a></li>
+            </ul>
+          </div>
+        </div>
+    </main>
+
+    <footer>
+        <p><i class="fas fa-copyright"></i> 2026 Absolute de Nicaragua. Todos los derechos reservados.</p>
+    </footer>
+
+</body>
+</html>

@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa Conceptual - Flujo de Procesos</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1e40af;
+            --primary-dark: #1e3a8a;
+            --secondary: #64748b;
+            --accent: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #0f172a;
+            --darker: #020617;
+            --light: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            --shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: var(--gray-700);
+            background: linear-gradient(135deg, var(--gray-50) 0%, var(--gray-100) 100%);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 2rem 0;
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.05"/><circle cx="10" cy="50" r="0.5" fill="white" opacity="0.05"/><circle cx="90" cy="30" r="0.5" fill="white" opacity="0.05"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            pointer-events: none;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        header p {
+            font-size: 1.125rem;
+            opacity: 0.9;
+            text-align: center;
+        }
+
+        /* Navegación */
+        nav {
+            background: var(--gray-800);
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--gray-700);
+        }
+
+        .nav-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-link {
+            color: var(--gray-300);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            background: var(--gray-700);
+            color: white;
+        }
+
+        /* Contenido Principal */
+        main {
+            padding: 3rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .section-subtitle {
+            font-size: 1.25rem;
+            color: var(--gray-600);
+            text-align: center;
+            margin-bottom: 3rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Mapa Conceptual */
+        .concept-map {
+            background: white;
+            border-radius: 1rem;
+            padding: 3rem;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 3rem;
+        }
+
+        .map-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-align: center;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        .flow-diagram {
+            position: relative;
+            min-height: 800px;
+            background: linear-gradient(45deg, var(--gray-50) 25%, transparent 25%),
+                        linear-gradient(-45deg, var(--gray-50) 25%, transparent 25%),
+                        linear-gradient(45deg, transparent 75%, var(--gray-50) 75%),
+                        linear-gradient(-45deg, transparent 75%, var(--gray-50) 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            border-radius: 1rem;
+            padding: 2rem;
+        }
+
+        /* Nodos del flujo */
+        .flow-node {
+            position: absolute;
+            background: white;
+            border: 2px solid var(--gray-300);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            min-width: 200px;
+            text-align: center;
+        }
+
+        .flow-node:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary);
+        }
+
+        .node-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .node-description {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            line-height: 1.4;
+        }
+
+        .node-icon {
+            font-size: 1.25rem;
+        }
+
+        /* Conexiones */
+        .flow-arrow {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 15px solid var(--gray-400);
+            transform: rotate(90deg);
+        }
+
+        .flow-line {
+            position: absolute;
+            height: 2px;
+            background: var(--gray-400);
+        }
+
+        /* Posicionamiento específico */
+        .node-ventas { top: 50px; left: 50px; }
+        .node-clientes { top: 50px; right: 50px; }
+        .node-servicios { top: 200px; left: 50px; }
+        .node-cotizaciones { top: 200px; right: 50px; }
+        .node-eventos { top: 350px; left: 50px; }
+        .node-logistica { top: 350px; right: 50px; }
+        .node-solicitudes { top: 500px; left: 50px; }
+        .node-despacho { top: 500px; right: 50px; }
+        .node-bodega { top: 650px; left: 50px; }
+
+        /* Líneas de conexión */
+        .line-1 { top: 140px; left: 250px; width: 500px; }
+        .line-2 { top: 290px; left: 250px; width: 500px; }
+        .line-3 { top: 440px; left: 250px; width: 500px; }
+        .line-4 { top: 590px; left: 250px; width: 500px; }
+
+        /* Flechas */
+        .arrow-1 { top: 125px; left: 730px; }
+        .arrow-2 { top: 275px; left: 730px; }
+        .arrow-3 { top: 425px; left: 730px; }
+        .arrow-4 { top: 575px; left: 730px; }
+
+        /* Leyenda */
+        .legend {
+            background: var(--gray-50);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        .legend-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .legend-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: white;
+            border-radius: 0.5rem;
+            border: 1px solid var(--gray-200);
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .legend-text {
+            font-size: 0.875rem;
+            color: var(--gray-700);
+        }
+
+        /* Responsivo */
+        @media (max-width: 768px) {
+            .flow-diagram {
+                min-height: 1200px;
+                padding: 1rem;
+            }
+
+            .flow-node {
+                min-width: 150px;
+                padding: 1rem;
+                position: relative;
+                margin-bottom: 1rem;
+            }
+
+            .node-ventas, .node-clientes, .node-servicios, .node-cotizaciones,
+            .node-eventos, .node-logistica, .node-solicitudes, .node-despacho, .node-bodega {
+                position: static !important;
+                display: inline-block;
+                margin: 0.5rem;
+            }
+
+            .flow-arrow, .flow-line {
+                display: none;
+            }
+
+            .nav-links {
+                gap: 1rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+        }
+
+        /* Footer */
+        footer {
+            background: var(--gray-900);
+            color: var(--gray-400);
+            text-align: center;
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+
+        footer p {
+            font-size: 0.875rem;
+        }
+
+        /* Explicación detallada de procesos */
+        .process-explanation {
+            margin-top: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--gray-50) 0%, white 100%);
+            border-radius: 12px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .process-explanation h3 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .explanation-steps {
+            display: grid;
+            gap: 20px;
+        }
+
+        .step {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+            box-shadow: var(--shadow);
+        }
+
+        .step h4 {
+            color: var(--primary-dark);
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .step ol, .step ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .step li {
+            margin-bottom: 5px;
+            line-height: 1.5;
+        }
+
+        .step em {
+            color: var(--gray-600);
+            font-style: italic;
+        }
+
+        .step strong {
+            color: var(--dark);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><i class="fas fa-project-diagram"></i> Mapa Conceptual</h1>
+            <p>Flujo de Procesos - Sistema Absolute de Nicaragua</p>
+        </div>
+    </header>
+
+    <nav>
+        <div class="container">
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">
+                    <i class="fas fa-home"></i> Inicio
+                </a>
+                <a href="bodega/index.html" class="nav-link">
+                    <i class="fas fa-warehouse"></i> Bodega
+                </a>
+                <a href="ventas/index.html" class="nav-link">
+                    <i class="fas fa-chart-line"></i> Ventas
+                </a>
+                <a href="logistica/index.html" class="nav-link">
+                    <i class="fas fa-truck"></i> Logística
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <h1 class="section-title">
+            <i class="fas fa-route"></i>
+            Flujo de Procesos del Sistema
+        </h1>
+        <p class="section-subtitle">
+            Mapa conceptual que muestra la interdependencia entre módulos y el flujo lógico para completar procesos como despachos, ventas y gestión de inventario.
+        </p>
+
+        <div class="concept-map" id="despacho">
+            <h2 class="map-title">
+                <i class="fas fa-share-alt"></i>
+                Flujo Detallado: Creación de Despacho y Devolución
+            </h2>
+
+            <div class="flow-diagram">
+                <!-- PASO 1: VENTAS -->
+                <div class="flow-node node-ventas" style="top: 50px; left: 50px; width: 200px;">
+                    <div class="node-title">
+                        <i class="fas fa-users node-icon" style="color: #3b82f6;"></i>
+                        PASO 1: VENTAS
+                    </div>
+                    <div class="node-description">
+                        <strong>1. Crear Cliente</strong><br>
+                        <strong>2. Crear Servicio</strong><br>
+                        <strong>3. Crear Cotización</strong><br>
+                        <strong>4. Crear Evento</strong><br>
+                        → Pasa pelota a Logística
+                    </div>
+                </div>
+
+                <!-- PASO 2: LOGÍSTICA -->
+                <div class="flow-node node-logistica" style="top: 50px; left: 350px; width: 250px;">
+                    <div class="node-title">
+                        <i class="fas fa-truck node-icon" style="color: #06b6d4;"></i>
+                        PASO 2: LOGÍSTICA
+                    </div>
+                    <div class="node-description">
+                        <strong>Requiere:</strong><br>
+                        • Base de persona (RRHH)<br>
+                        • Receta creada<br>
+                        • Evento de Ventas<br><br>
+                        <strong>Crea:</strong><br>
+                        • Despacho Audiovisual<br>
+                        • Solicitud de Materiales<br>
+                        → Pasa solicitud a Bodega
+                    </div>
+                </div>
+
+                <!-- PASO 3: BODEGA - REGISTRO INICIAL -->
+                <div class="flow-node node-bodega" style="top: 250px; left: 50px; width: 200px;">
+                    <div class="node-title">
+                        <i class="fas fa-warehouse node-icon" style="color: #6366f1;"></i>
+                        PASO 3A: BODEGA
+                    </div>
+                    <div class="node-description">
+                        <strong>Registro Inicial (PARALELO)</strong><br>
+                        • Usar códigos "agregar"<br>
+                        • Ingresar al catálogo<br>
+                        • Crear movimiento inicial<br>
+                        <em>(Necesario antes de solicitud)</em>
+                    </div>
+                </div>
+
+                <!-- PASO 4: BODEGA - PROCESA SOLICITUD -->
+                <div class="flow-node node-despacho" style="top: 250px; left: 350px; width: 250px;">
+                    <div class="node-title">
+                        <i class="fas fa-dolly node-icon" style="color: #f97316;"></i>
+                        PASO 3B: BODEGA
+                    </div>
+                    <div class="node-description">
+                        <strong>Recibe Solicitud de Logística</strong><br>
+                        • Procesa Despacho Audiovisual<br>
+                        • Procesa Solicitud de Materiales<br>
+                        • Crea DESPACHO<br>
+                        → Ahora se puede devolver
+                    </div>
+                </div>
+
+                <!-- PASO 5: DEVOLUCIÓN -->
+                <div class="flow-node node-eventos" style="top: 450px; left: 200px; width: 250px;">
+                    <div class="node-title">
+                        <i class="fas fa-undo node-icon" style="color: #ef4444;"></i>
+                        PASO 4: DEVOLUCIÓN
+                    </div>
+                    <div class="node-description">
+                        <strong>NO se puede devolver sin DESPACHO</strong><br>
+                        • Requiere despacho existente<br>
+                        • Devolución por Despacho<br>
+                        • Devolución por Evento<br>
+                        • Registra materiales devueltos
+                    </div>
+                </div>
+
+                <!-- DEPENDENCIAS -->
+                <div class="flow-node node-dependencias" style="top: 50px; right: 50px; width: 180px;">
+                    <div class="node-title">
+                        <i class="fas fa-sitemap node-icon" style="color: #8b5cf6;"></i>
+                        DEPENDENCIAS
+                    </div>
+                    <div class="node-description">
+                        <strong>RRHH → Logística</strong><br>
+                        (Base de personas)<br><br>
+                        <strong>Ventas → Logística</strong><br>
+                        (Evento creado)<br><br>
+                        <strong>Bodega → Logística</strong><br>
+                        (Materiales registrados)
+                    </div>
+                </div>
+
+                <!-- Líneas de conexión -->
+                <div class="flow-line" style="top: 150px; left: 250px; width: 2px; height: 120px;"></div>
+                <div class="flow-line" style="top: 350px; left: 250px; width: 2px; height: 120px;"></div>
+                <div class="flow-line" style="top: 150px; left: 450px; width: 2px; height: 120px;"></div>
+                <div class="flow-line" style="top: 350px; left: 450px; width: 2px; height: 120px;"></div>
+
+                <!-- Flechas -->
+                <div class="flow-arrow" style="top: 125px; left: 235px;"></div>
+                <div class="flow-arrow" style="top: 325px; left: 235px;"></div>
+                <div class="flow-arrow" style="top: 125px; left: 435px;"></div>
+                <div class="flow-arrow" style="top: 325px; left: 435px;"></div>
+            </div>
+
+            <!-- Explicación detallada -->
+            <div class="process-explanation">
+                <h3><i class="fas fa-info-circle"></i> Explicación Paso a Paso</h3>
+
+                <div class="explanation-steps">
+                    <div class="step">
+                        <h4><i class="fas fa-users"></i> PASO 1: VENTAS - Creación del Evento</h4>
+                        <ol>
+                            <li><strong>Crear Cliente:</strong> Registrar datos del cliente en el sistema</li>
+                            <li><strong>Crear Servicio:</strong> Definir el servicio/producto a ofrecer</li>
+                            <li><strong>Crear Cotización:</strong> Generar presupuesto basado en cliente y servicio</li>
+                            <li><strong>Crear Evento:</strong> Convertir cotización aprobada en evento activo</li>
+                        </ol>
+                        <p><em>Una vez creado el evento, se pasa el control a Logística</em></p>
+                    </div>
+
+                    <div class="step">
+                        <h4><i class="fas fa-truck"></i> PASO 2: LOGÍSTICA - Solicitud de Despacho</h4>
+                        <p><strong>Requisitos previos:</strong></p>
+                        <ul>
+                            <li>Base de persona de RRHH (para elegir encargado)</li>
+                            <li>Receta creada en el sistema</li>
+                            <li>Evento creado por Ventas</li>
+                        </ul>
+                        <p><strong>Tipos de solicitud:</strong></p>
+                        <ul>
+                            <li><strong>Despacho de audiovisual</strong> (material audiovisual obligatorio)</li>
+                            <li><strong>Solicitud de materiales</strong> (materiales consumibles)</li>
+                        </ul>
+                        <p><em>La solicitud se envía automáticamente a Bodega</em></p>
+                    </div>
+
+                    <div class="step">
+                        <h4><i class="fas fa-warehouse"></i> PASO 3A: BODEGA - Registro Inicial (PROCESO PARALELO)</h4>
+                        <p>Este paso debe hacerse <strong>ANTES</strong> de que Logística pueda crear solicitudes:</p>
+                        <ol>
+                            <li>Usar códigos "agregar" en el sistema</li>
+                            <li>Ingresar material al catálogo</li>
+                            <li>Crear movimiento inicial de inventario</li>
+                        </ol>
+                        <p><em>Sin este paso, no hay materiales disponibles para solicitar</em></p>
+                    </div>
+
+                    <div class="step">
+                        <h4><i class="fas fa-dolly"></i> PASO 3B: BODEGA - Procesamiento de Solicitud</h4>
+                        <ol>
+                            <li>Recibir solicitud de Logística</li>
+                            <li>Validar stock disponible</li>
+                            <li>Crear el DESPACHO correspondiente</li>
+                            <li>Registrar movimiento de salida</li>
+                        </ol>
+                        <p><em>Ahora el material está "despachado" y se puede devolver</em></p>
+                    </div>
+
+                    <div class="step">
+                        <h4><i class="fas fa-undo"></i> PASO 4: DEVOLUCIÓN</h4>
+                        <p><strong>REGLA IMPORTANTE:</strong> No se puede hacer devolución sin un despacho previo</p>
+                        <p><strong>Tipos de devolución:</strong></p>
+                        <ul>
+                            <li><strong>Devolución por Despacho:</strong> Devolver materiales de un despacho específico</li>
+                            <li><strong>Devolución por Evento:</strong> Devolver materiales de todos los despachos de un evento</li>
+                        </ul>
+                        <ol>
+                            <li>Seleccionar despacho/evento</li>
+                            <li>Seleccionar materiales a devolver</li>
+                            <li>Registrar cantidades devueltas</li>
+                            <li>Actualizar inventario</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="concept-map" id="ventas">
+            </h2>
+
+            <div class="flow-diagram">
+                <!-- Nivel 1: Base -->
+                <div class="flow-node node-ventas" style="top: 50px; left: 50px;">
+                    <div class="node-title">
+                        <i class="fas fa-users node-icon" style="color: #3b82f6;"></i>
+                        Clientes
+                    </div>
+                    <div class="node-description">
+                        Registro y gestión de clientes
+                    </div>
+                </div>
+
+                <div class="flow-node node-clientes" style="top: 50px; right: 50px;">
+                    <div class="node-title">
+                        <i class="fas fa-concierge-bell node-icon" style="color: #f59e0b;"></i>
+                        Servicios
+                    </div>
+                    <div class="node-description">
+                        Catálogo de productos/servicios
+                    </div>
+                </div>
+
+                <!-- Nivel 2: Cotización -->
+                <div class="flow-node node-servicios" style="top: 200px; left: 300px;">
+                    <div class="node-title">
+                        <i class="fas fa-calculator node-icon" style="color: #8b5cf6;"></i>
+                        Cotización
+                    </div>
+                    <div class="node-description">
+                        Creación de presupuesto
+                    </div>
+                </div>
+
+                <!-- Nivel 3: Aprobación -->
+                <div class="flow-node node-cotizaciones" style="top: 350px; left: 300px;">
+                    <div class="node-title">
+                        <i class="fas fa-check-circle node-icon" style="color: #10b981;"></i>
+                        Aprobación
+                    </div>
+                    <div class="node-description">
+                        Cliente aprueba cotización
+                    </div>
+                </div>
+
+                <!-- Nivel 4: Evento de Venta -->
+                <div class="flow-node node-eventos" style="top: 500px; left: 300px;">
+                    <div class="node-title">
+                        <i class="fas fa-calendar-alt node-icon" style="color: #ef4444;"></i>
+                        Evento de Venta
+                    </div>
+                    <div class="node-description">
+                        Registro de transacción activa
+                    </div>
+                </div>
+
+                <!-- Nivel 5: Venta Completa -->
+                <div class="flow-node node-logistica" style="top: 650px; left: 300px;">
+                    <div class="node-title">
+                        <i class="fas fa-shopping-cart node-icon" style="color: #10b981;"></i>
+                        Venta Completa
+                    </div>
+                    <div class="node-description">
+                        Proceso de venta finalizado
+                    </div>
+                </div>
+
+                <!-- Líneas de conexión -->
+                <div class="flow-line" style="top: 140px; left: 200px; width: 200px;"></div>
+                <div class="flow-line" style="top: 290px; left: 400px; width: 2px; height: 120px;"></div>
+                <div class="flow-line" style="top: 440px; left: 400px; width: 2px; height: 120px;"></div>
+                <div class="flow-line" style="top: 590px; left: 400px; width: 2px; height: 120px;"></div>
+
+                <!-- Flechas -->
+                <div class="flow-arrow" style="top: 125px; left: 380px;"></div>
+                <div class="flow-arrow" style="top: 275px; left: 385px;"></div>
+                <div class="flow-arrow" style="top: 425px; left: 385px;"></div>
+                <div class="flow-arrow" style="top: 575px; left: 385px;"></div>
+            </div>
+        </div>
+
+        <div class="concept-map" id="inventario">
+            <h2 class="map-title">
+                <i class="fas fa-boxes"></i>
+                Proceso de Gestión de Inventario
+            </h2>
+
+            <div class="flow-diagram">
+                <!-- Nivel 1: Proveedores -->
+                <div class="flow-node node-ventas" style="top: 50px; left: 50px;">
+                    <div class="node-title">
+                        <i class="fas fa-truck node-icon" style="color: #06b6d4;"></i>
+                        Proveedores
+                    </div>
+                    <div class="node-description">
+                        Gestión de proveedores
+                    </div>
+                </div>
+
+                <!-- Nivel 2: Órdenes de Compra -->
+                <div class="flow-node node-clientes" style="top: 200px; left: 50px;">
+                    <div class="node-title">
+                        <i class="fas fa-shopping-cart node-icon" style="color: #84cc16;"></i>
+                        Órdenes de Compra
+                    </div>
+                    <div class="node-description">
+                        Solicitudes de compra
+                    </div>
+                </div>
+
+                <!-- Nivel 3: Recepción -->
+                <div class="flow-node node-servicios" style="top: 350px; left: 50px;">
+                    <div class="node-title">
+                        <i class="fas fa-box-open node-icon" style="color: #f97316;"></i>
+                        Recepción
+                    </div>
+                    <div class="node-description">
+                        Recepción de mercancías
+                    </div>
+                </div>
+
+                <!-- Nivel 4: Ingreso a Bodega -->
+                <div class="flow-node node-cotizaciones" style="top: 500px; left: 50px;">
+                    <div class="node-title">
+                        <i class="fas fa-warehouse node-icon" style="color: #6366f1;"></i>
+                        Ingreso Bodega
+                    </div>
+                    <div class="node-description">
+                        Registro en inventario
+                    </div>
+                </div>
+
+                <!-- Nivel 5: Control de Stock -->
+                <div class="flow-node node-eventos" style="top: 650px; left: 50px;">
+                    <div class="node-title">
+                        <i class="fas fa-chart-bar node-icon" style="color: #ec4899;"></i>
+                        Control de Stock
+                    </div>
+                    <div class="node-description">
+                        Monitoreo y alertas
+                    </div>
+                </div>
+
+                <!-- Líneas de conexión -->
+                <div class="flow-line" style="top: 140px; left: 150px; width: 2px; height: 120px;"></div>
+                <div class="flow-line" style="top: 290px; left: 150px; width: 2px; height: 120px;"></div>
+                <div class="flow-line" style="top: 440px; left: 150px; width: 2px; height: 120px;"></div>
+                <div class="flow-line" style="top: 590px; left: 150px; width: 2px; height: 120px;"></div>
+
+                <!-- Flechas -->
+                <div class="flow-arrow" style="top: 125px; left: 135px;"></div>
+                <div class="flow-arrow" style="top: 275px; left: 135px;"></div>
+                <div class="flow-arrow" style="top: 425px; left: 135px;"></div>
+                <div class="flow-arrow" style="top: 575px; left: 135px;"></div>
+            </div>
+        </div>
+
+        <div class="concept-map" id="rrhh">
+            <h2 class="map-title">
+                <i class="fas fa-users-cog"></i>
+                Proceso de Recursos Humanos
+            </h2>
+
+            <div class="flow-diagram">
+                <!-- Nivel 1: Reclutamiento -->
+                <div class="flow-node node-ventas" style="top: 50px; left: 50px;">
+                    <div class="node-title">
+                        <i class="fas fa-user-plus node-icon" style="color: #10b981;"></i>
+                        Reclutamiento
+                    </div>
+                    <div class="node-description">
+                        Proceso de selección
+                    </div>
+                </div>
+
+                <!-- Nivel 2: Contratación -->
+                <div class="flow-node node-clientes" style="top: 200px; left: 50px;">
+                    <div class="node-title">
+                        <i class="fas fa-file-contract node-icon" style="color: #3b82f6;"></i>
+                        Contratación
+                    </div>
+                    <div class="node-description">
+                        Formalización laboral
+                    </div>
+                </div>
+
+                <!-- Nivel 3: Asistencia -->
+                <div class="flow-node node-servicios" style="top: 350px; left: 50px;">
+                    <div class="node-title">
+                        <i class="fas fa-clock node-icon" style="color: #f59e0b;"></i>
+                        Control Asistencia
+                    </div>
+                    <div class="node-description">
+                        Registro de horarios
+                    </div>
+                </div>
+
+                <!-- Nivel 4: Nómina -->
+                <div class="flow-node node-cotizaciones" style="top: 500px; left: 50px;">
+                    <div class="node-title">
+                        <i class="fas fa-money-bill-wave node-icon" style="color: #8b5cf6;"></i>
+                        Procesamiento Nómina
+                    </div>
+                    <div class="node-description">
+                        Cálculo de salarios
+                    </div>
+                </div>
+
+                <!-- Nivel 5: Contabilidad -->
+                <div class="flow-node node-eventos" style="top: 650px; left: 50px;">
+                    <div class="node-title">
+                        <i class="fas fa-calculator node-icon" style="color: #ef4444;"></i>
+                        Integración Contable
+                    </div>
+                    <div class="node-description">
+                        Registro en contabilidad
+                    </div>
+                </div>
+
+                <!-- Líneas de conexión -->
+                <div class="flow-line" style="top: 140px; left: 150px; width: 2px; height: 120px;"></div>
+                <div class="flow-line" style="top: 290px; left: 150px; width: 2px; height: 120px;"></div>
+                <div class="flow-line" style="top: 440px; left: 150px; width: 2px; height: 120px;"></div>
+                <div class="flow-line" style="top: 590px; left: 150px; width: 2px; height: 120px;"></div>
+
+                <!-- Flechas -->
+                <div class="flow-arrow" style="top: 125px; left: 135px;"></div>
+                <div class="flow-arrow" style="top: 275px; left: 135px;"></div>
+                <div class="flow-arrow" style="top: 425px; left: 135px;"></div>
+                <div class="flow-arrow" style="top: 575px; left: 135px;"></div>
+            </div>
+        </div>
+
+        <div class="concept-map" id="contabilidad">
+            <h2 class="map-title">
+                <i class="fas fa-chart-line"></i>
+                Proceso de Contabilidad
+            </h2>
+
+            <div class="flow-diagram">
+                <!-- Nivel 1: Transacciones -->
+                <div class="flow-node node-ventas" style="top: 50px; left: 50px;">
+                    <div class="node-title">
+                        <i class="fas fa-exchange-alt node-icon" style="color: #06b6d4;"></i>
+                        Transacciones
+                    </div>
+                    <div class="node-description">
+                        Registro de operaciones
+                    </div>
+                </div>
+
+                <!-- Nivel 2: Asientos Contables -->
+                <div class="flow-node node-clientes" style="top: 200px; left: 50px;">
+                    <div class="node-title">
+                        <i class="fas fa-book node-icon" style="color: #84cc16;"></i>
+                        Asientos Contables
+                    </div>
+                    <div class="node-description">
+                        Registro doble
+                    </div>
+                </div>
+
+                <!-- Nivel 3: Balances -->
+                <div class="flow-node node-servicios" style="top: 350px; left: 50px;">
+                    <div class="node-title">
+                        <i class="fas fa-balance-scale node-icon" style="color: #f97316;"></i>
+                        Balances
+                    </div>
+                    <div class="node-description">
+                        Estados financieros
+                    </div>
+                </div>
+
+                <!-- Nivel 4: Reportes -->
+                <div class="flow-node node-cotizaciones" style="top: 500px; left: 50px;">
+                    <div class="node-title">
+                        <i class="fas fa-chart-bar node-icon" style="color: #6366f1;"></i>
+                        Reportes
+                    </div>
+                    <div class="node-description">
+                        Análisis y reportes
+                    </div>
+                </div>
+
+                <!-- Nivel 5: Auditoría -->
+                <div class="flow-node node-eventos" style="top: 650px; left: 50px;">
+                    <div class="node-title">
+                        <i class="fas fa-search node-icon" style="color: #ec4899;"></i>
+                        Auditoría
+                    </div>
+                    <div class="node-description">
+                        Control y verificación
+                    </div>
+                </div>
+
+                <!-- Líneas de conexión -->
+                <div class="flow-line" style="top: 140px; left: 150px; width: 2px; height: 120px;"></div>
+                <div class="flow-line" style="top: 290px; left: 150px; width: 2px; height: 120px;"></div>
+                <div class="flow-line" style="top: 440px; left: 150px; width: 2px; height: 120px;"></div>
+                <div class="flow-line" style="top: 590px; left: 150px; width: 2px; height: 120px;"></div>
+
+                <!-- Flechas -->
+                <div class="flow-arrow" style="top: 125px; left: 135px;"></div>
+                <div class="flow-arrow" style="top: 275px; left: 135px;"></div>
+                <div class="flow-arrow" style="top: 425px; left: 135px;"></div>
+                <div class="flow-arrow" style="top: 575px; left: 135px;"></div>
+            </div>
+        </div>
+
+            <div class="legend">
+                <h3 class="legend-title">
+                    <i class="fas fa-info-circle"></i>
+                    Leyenda del Flujo
+                </h3>
+                <div class="legend-items">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #10b981;"></div>
+                        <div class="legend-text">
+                            <strong>Ventas:</strong> Punto de inicio para cualquier transacción comercial
+                        </div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #3b82f6;"></div>
+                        <div class="legend-text">
+                            <strong>Clientes:</strong> Base fundamental requerida por todos los módulos
+                        </div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #f59e0b;"></div>
+                        <div class="legend-text">
+                            <strong>Servicios:</strong> Catálogo necesario para crear cotizaciones
+                        </div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #8b5cf6;"></div>
+                        <div class="legend-text">
+                            <strong>Cotizaciones:</strong> Presupuestos que generan eventos de venta
+                        </div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ef4444;"></div>
+                        <div class="legend-text">
+                            <strong>Eventos:</strong> Transacciones activas que requieren logística
+                        </div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #06b6d4;"></div>
+                        <div class="legend-text">
+                            <strong>Logística:</strong> Coordina el transporte y genera solicitudes
+                        </div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #84cc16;"></div>
+                        <div class="legend-text">
+                            <strong>Solicitudes:</strong> Pedidos que activan el proceso de despacho
+                        </div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #f97316;"></div>
+                        <div class="legend-text">
+                            <strong>Despacho:</strong> Proceso final que requiere inventario de bodega
+                        </div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #6366f1;"></div>
+                        <div class="legend-text">
+                            <strong>Bodega:</strong> Control de stock y materiales disponibles
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="concept-map">
+            <h2 class="map-title">
+                <i class="fas fa-question-circle"></i>
+                Guía de Dependencias
+            </h2>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: 2rem;">
+                <div style="background: var(--gray-50); padding: 1.5rem; border-radius: 0.75rem; border-left: 4px solid var(--primary);">
+                    <h3 style="color: var(--primary); font-weight: 700; margin-bottom: 1rem;">
+                        <i class="fas fa-arrow-right"></i> Para crear un DESPACHO necesitas:
+                    </h3>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                            <span>Solicitud de Logística</span>
+                        </li>
+                        <li style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                            <span>Evento de Venta activo</span>
+                        </li>
+                        <li style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                            <span>Cotización aprobada</span>
+                        </li>
+                        <li style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                            <span>Servicio seleccionado</span>
+                        </li>
+                        <li style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                            <span>Cliente registrado</span>
+                        </li>
+                        <li style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                            <span>Inventario disponible en Bodega</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div style="background: var(--gray-50); padding: 1.5rem; border-radius: 0.75rem; border-left: 4px solid var(--accent);">
+                    <h3 style="color: var(--accent); font-weight: 700; margin-bottom: 1rem;">
+                        <i class="fas fa-clock"></i> Orden Recomendado:
+                    </h3>
+                    <ol style="padding-left: 1.5rem;">
+                        <li style="margin-bottom: 0.75rem; color: var(--gray-700);">
+                            <strong style="color: var(--primary);">1. Registrar Cliente</strong><br>
+                            <small style="color: var(--gray-600);">Base de datos de clientes</small>
+                        </li>
+                        <li style="margin-bottom: 0.75rem; color: var(--gray-700);">
+                            <strong style="color: var(--primary);">2. Configurar Servicios</strong><br>
+                            <small style="color: var(--gray-600);">Catálogo de productos/servicios</small>
+                        </li>
+                        <li style="margin-bottom: 0.75rem; color: var(--gray-700);">
+                            <strong style="color: var(--primary);">3. Crear Cotización</strong><br>
+                            <small style="color: var(--gray-600);">Presupuesto para el cliente</small>
+                        </li>
+                        <li style="margin-bottom: 0.75rem; color: var(--gray-700);">
+                            <strong style="color: var(--primary);">4. Generar Evento de Venta</strong><br>
+                            <small style="color: var(--gray-600);">Transacción activa</small>
+                        </li>
+                        <li style="margin-bottom: 0.75rem; color: var(--gray-700);">
+                            <strong style="color: var(--primary);">5. Solicitar Logística</strong><br>
+                            <small style="color: var(--gray-600);">Coordinar transporte</small>
+                        </li>
+                        <li style="margin-bottom: 0.75rem; color: var(--gray-700);">
+                            <strong style="color: var(--primary);">6. Procesar Despacho</strong><br>
+                            <small style="color: var(--gray-600);">Entrega final con control de bodega</small>
+                        </li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>
+                <i class="fas fa-copyright"></i> 2026 Absolute de Nicaragua.
+                Sistema de Gestión Empresarial - Manual de Usuario
+            </p>
+        </div>
+    </footer>
+</body>
+</html>

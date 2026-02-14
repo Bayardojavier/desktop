@@ -55,6 +55,7 @@
       <div class="mov-form-actions">
         <button id="btn-guardar-ingreso" class="mov-btn mov-btn-primary">Guardar Ingreso</button>
         <button id="btn-limpiar-ingreso" class="mov-btn mov-btn-secondary">Limpiar</button>
+        <button id="btn-cambiar-tipo-cambio" class="mov-btn mov-btn-secondary" style="display: none;">💱 Tipo de Cambio</button>
         <button id="btn-imprimir-ingreso" class="mov-btn mov-btn-secondary" style="display: none;">🖨️ Imprimir</button>
       </div>
     </div>
@@ -65,8 +66,8 @@
   <div id="modal-tipo-cambio" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
     <div style="background:white; padding:24px; border-radius:12px; width:400px;">
       <h3 style="margin:0 0 16px 0; color:#1e40af;">Tipo de Cambio</h3>
-      <p style="margin-bottom:16px;">Ingrese el valor actual para convertir córdobas a dólares (1 USD = ? C$)</p>
-      <input type="number" id="input-tipo-cambio" step="0.01" value="36.62" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; font-size:16px;" />
+      <p style="margin-bottom:16px;color: #8b1414;">Ingrese el valor actual para convertir córdobas a dólares (1 USD = ? C$)</p>
+      <input type="number" id="input-tipo-cambio" step="0.01" value="36.62" style="width:100%; padding:10px; border:1px solid #8a8585; border-radius:6px; font-size:16px; color: #8b1414;" />
       <div style="display:flex; gap:12px; margin-top:20px;">
         <button id="btn-aplicar-cambio" style="flex:1; background:#1e40af; color:white; border:none; padding:10px; border-radius:6px; font-weight:bold;">Aplicar</button>
         <button id="btn-cerrar-cambio" style="flex:1; background:#64748b; color:white; border:none; padding:10px; border-radius:6px;">Cerrar</button>
@@ -82,6 +83,7 @@
       let tipoCambio = 36.62;
       let itemsOrdenSeleccionada = [];
       let ordenMoneda = 'USD';
+      let modalTipoCambioMostrado = false; // Controla si el modal ya se mostró para la orden actual
       function fmt(n, dec = 2) {
         const num = Number(n) || 0;
         return num.toLocaleString('es-NI', { minimumFractionDigits: dec, maximumFractionDigits: dec });
@@ -159,6 +161,13 @@
           document.getElementById('moneda-orden').value = orden.moneda || 'USD';
           ordenMoneda = orden.moneda || 'USD';
           
+          // Resetear el control del modal para la nueva orden
+          modalTipoCambioMostrado = false;
+          
+          // Mostrar/ocultar botón de tipo de cambio según la moneda
+          const btnTipoCambio = document.getElementById('btn-cambiar-tipo-cambio');
+          btnTipoCambio.style.display = orden.moneda === 'NIO' ? 'inline-block' : 'none';
+          
           // Cargar ítems de la orden
           const { data: items, error: errItems } = await window.supabaseClient
             .from('items_orden_compra')
@@ -166,14 +175,31 @@
             .eq('orden_compra_id', orden.id);
           if (errItems) throw errItems;
           
-          // Para cada ítem, cargar datos del material
+          // Para cada ítem, cargar datos del material desde las tablas de catálogo separadas
           itemsOrdenSeleccionada = await Promise.all(items.map(async (item) => {
-            const { data: mat, error: errMat } = await window.supabaseClient
-              .from('catalogo')
-              .select('codigo, nombre, bodega_principal, bodega_secundaria')
-              .eq('es_contenedor', false)
-              .eq('codigo', item.material_codigo)
-              .maybeSingle(); // Usar maybeSingle en lugar de single para evitar error 400
+            // Buscar en las 3 tablas de catálogo separadas
+            let mat = null;
+            let tablaOrigen = null;
+            const tablasCatalogo = ['catalogo_hierros', 'catalogo_audiovisual', 'catalogo_consumibles'];
+            
+            for (const tabla of tablasCatalogo) {
+              try {
+                const { data, error } = await window.supabaseClient
+                  .from(tabla)
+                  .select('codigo, nombre, bodega_principal, bodega_secundaria')
+                  .eq('codigo', item.material_codigo)
+                  .maybeSingle();
+                
+                if (!error && data) {
+                  mat = data;
+                  tablaOrigen = tabla;
+                  break; // Encontrado, salir del loop
+                }
+              } catch (e) {
+                console.warn(`Error consultando ${tabla}:`, e.message || e);
+                continue;
+              }
+            }
             
             // Convertir precio si es en córdobas
             let precioDolares = item.precio_unitario;
@@ -186,6 +212,7 @@
               nombre: mat?.nombre || 'Material no encontrado',
               bodega_principal: mat?.bodega_principal || 'Desconocida',
               bodega_secundaria: mat?.bodega_secundaria || 'Sin clasificar',
+              tabla_origen: tablaOrigen, // Nueva propiedad para saber de qué tabla vino
               cantidad: item.cantidad,
               cantidadRecibida: item.cantidad,
               precioUnitario: parseFloat(precioDolares.toFixed(4)),
@@ -195,9 +222,10 @@
           
           renderTablaIngreso();
           
-          // Si la orden está en córdobas, mostrar modal de tipo de cambio
-          if (orden.moneda === 'NIO') {
+          // Si la orden está en córdobas y no se mostró el modal aún, mostrar modal de tipo de cambio
+          if (orden.moneda === 'NIO' && !modalTipoCambioMostrado) {
             document.getElementById('modal-tipo-cambio').style.display = 'flex';
+            modalTipoCambioMostrado = true;
           }
           
         } catch (err) {
@@ -308,10 +336,26 @@ async function guardarIngreso() {
       itemsValidos.map(async (item) => {
         let existenciaPrevia = 0;
         try {
-          const { data: stock, error: stockErr } = await window.supabaseClient
-            .rpc('stock_actual_codigo', { material_codigo_input: item.codigo });
-          if (stockErr) throw stockErr;
-          existenciaPrevia = Array.isArray(stock) ? (stock[0]?.existencia || 0) : 0;
+          // Determinar tabla de movimientos según tabla de catálogo
+          let tablaMovimientos = 'movimientos_bodega'; // fallback
+          
+          if (item.tabla_origen === 'catalogo_audiovisual') {
+            tablaMovimientos = 'movimientos_bodega_audiovisual';
+          } else if (item.tabla_origen === 'catalogo_hierros') {
+            tablaMovimientos = 'movimientos_bodega_hierros';
+          } else if (item.tabla_origen === 'catalogo_consumibles') {
+            tablaMovimientos = 'movimientos_bodega_consumibles';
+          }
+          
+          // Calcular stock directamente desde la tabla correspondiente
+          const { data: movimientos, error: stockErr } = await window.supabaseClient
+            .from(tablaMovimientos)
+            .select('cantidad, signo')
+            .eq('material_codigo', item.codigo);
+            
+          if (!stockErr && movimientos) {
+            existenciaPrevia = movimientos.reduce((sum, mov) => sum + (mov.cantidad * mov.signo), 0);
+          }
         } catch (err) {
           console.warn('No se pudo obtener stock previo para:', item.codigo, err);
         }
@@ -323,8 +367,19 @@ async function guardarIngreso() {
       })
     );
 
-    // Guardar cada movimiento en movimientos_bodega
+    // Guardar cada movimiento en la tabla correspondiente según el tipo de material
     for (const item of itemsConExistenciaPrevia) {
+      // Determinar tabla de movimientos según tabla de catálogo
+      let tablaMovimientos = 'movimientos_bodega'; // fallback por si acaso
+      
+      if (item.tabla_origen === 'catalogo_audiovisual') {
+        tablaMovimientos = 'movimientos_bodega_audiovisual';
+      } else if (item.tabla_origen === 'catalogo_hierros') {
+        tablaMovimientos = 'movimientos_bodega_hierros';
+      } else if (item.tabla_origen === 'catalogo_consumibles') {
+        tablaMovimientos = 'movimientos_bodega_consumibles';
+      }
+      
       const movimiento = {
         material_codigo: item.codigo,
         material_nombre: item.nombre,
@@ -338,14 +393,14 @@ async function guardarIngreso() {
         responsable: encargado,
         fecha_movimiento: fecha,
         observaciones: item.observacion || '',  // Aquí van observaciones específicas del ítem
-        precio_unitario: item.precioUnitario,
-        // ✅ NUEVAS COLUMNAS DE TRAZABILIDAD
-        proveedor: proveedor || null,
-        numero_factura: numeroFactura || null
+        precio: item.precioUnitario, // Usar 'precio' en lugar de 'precio_unitario' para tablas separadas
+        // Nota: proveedor y numero_factura no existen en las tablas separadas
       };
 
+      console.log(`Guardando movimiento en tabla: ${tablaMovimientos} para material ${item.codigo} de tabla ${item.tabla_origen}`);
+      
       const { error } = await window.supabaseClient
-        .from('movimientos_bodega')
+        .from(tablaMovimientos)
         .insert([movimiento]);
 
       if (error) throw error;
@@ -364,12 +419,20 @@ async function guardarIngreso() {
     });
 
     alert('✅ Ingreso registrado exitosamente.');
+    // Mostrar notificación del sistema
+    if (window.showSystemNotification) {
+      window.showSystemNotification('Ingreso Registrado', `Se registró el ingreso de ${itemsValidos.length} material(es) exitosamente.`);
+    }
     document.getElementById('btn-imprimir-ingreso').style.display = 'inline-block';
     document.getElementById('btn-guardar-ingreso').style.display = 'none';
 
   } catch (err) {
     console.error('Error al guardar ingreso:', err);
     alert('❌ Error al guardar: ' + err.message);
+    // Mostrar notificación de error
+    if (window.showSystemNotification) {
+      window.showSystemNotification('Error en Ingreso', 'No se pudo registrar el ingreso. Verifique los datos.');
+    }
   }
 }
 
@@ -394,17 +457,34 @@ async function generarPDFIngreso() {
   const numeroOrden = document.getElementById('numero-orden').value || '';
   const proveedor = document.getElementById('proveedor-orden').value || '';
   const numeroFactura = document.getElementById('numero-factura').value || '';
-  const symbol = (ordenMoneda || 'USD') === 'USD' ? '$' : 'C$';
+  // Los precios ya están convertidos a dólares, así que siempre usar símbolo de dólar
+  const symbol = '$';
 
   // 🔹 Obtener existencia actual (ya incluye el ingreso realizado)
   const itemsConExistencia = await Promise.all(
     itemsOrdenSeleccionada.map(async (it) => {
       let existenciaActual = 0;
       try {
-        const { data: stock, error: stockErr } = await window.supabaseClient
-          .rpc('stock_actual_codigo', { material_codigo_input: it.codigo });
-        if (stockErr) throw stockErr;
-        existenciaActual = Array.isArray(stock) ? (stock[0]?.existencia || 0) : 0;
+        // Determinar tabla de movimientos según tabla de catálogo
+        let tablaMovimientos = 'movimientos_bodega'; // fallback
+        
+        if (it.tabla_origen === 'catalogo_audiovisual') {
+          tablaMovimientos = 'movimientos_bodega_audiovisual';
+        } else if (it.tabla_origen === 'catalogo_hierros') {
+          tablaMovimientos = 'movimientos_bodega_hierros';
+        } else if (it.tabla_origen === 'catalogo_consumibles') {
+          tablaMovimientos = 'movimientos_bodega_consumibles';
+        }
+        
+        // Calcular stock directamente desde la tabla correspondiente
+        const { data: movimientos, error: stockErr } = await window.supabaseClient
+          .from(tablaMovimientos)
+          .select('cantidad, signo')
+          .eq('material_codigo', it.codigo);
+          
+        if (!stockErr && movimientos) {
+          existenciaActual = movimientos.reduce((sum, mov) => sum + (mov.cantidad * mov.signo), 0);
+        }
       } catch (err) {
         console.warn('No se pudo obtener stock para:', it.codigo, err);
       }
@@ -426,7 +506,7 @@ async function generarPDFIngreso() {
           <div style="font-weight:600;">${it.codigo}</div>
           <div style="font-size:11px; color:#4b5563;">${it.nombre}</div>
         </td>
-        <td style="padding:10px; text-align:right; border-bottom:1px solid #dcfce7;">${symbol} ${fmt(pu, 4)}</td>
+        <td style="padding:10px; text-align:right; border-bottom:1px solid #dcfce7;">${symbol} ${fmt(pu, 2)}</td>
         <td style="padding:10px; text-align:right; font-weight:600; border-bottom:1px solid #dcfce7;">${symbol} ${fmt(st, 2)}</td>
         <td style="padding:10px; text-align:center; border-bottom:1px solid #dcfce7; background:${bgColor}; font-weight:bold; color:${accentColor};">
           ${fmt(it.existenciaActual)}
@@ -550,6 +630,9 @@ async function generarPDFIngreso() {
             renderTablaIngreso();
             document.getElementById('proveedor-orden').value = '';
             document.getElementById('moneda-orden').value = '';
+            // Resetear variables de tipo de cambio
+            modalTipoCambioMostrado = false;
+            document.getElementById('btn-cambiar-tipo-cambio').style.display = 'none';
           }
         });
         
@@ -566,6 +649,9 @@ async function generarPDFIngreso() {
           document.getElementById('numero-factura').value = '';
           document.getElementById('btn-imprimir-ingreso').style.display = 'none';
           document.getElementById('btn-guardar-ingreso').style.display = 'inline-block';
+          // Resetear variables de tipo de cambio
+          modalTipoCambioMostrado = false;
+          document.getElementById('btn-cambiar-tipo-cambio').style.display = 'none';
         });
 
         document.getElementById('btn-imprimir-ingreso').addEventListener('click', async () => {
@@ -589,6 +675,11 @@ async function generarPDFIngreso() {
         
         document.getElementById('btn-cerrar-cambio').addEventListener('click', () => {
           document.getElementById('modal-tipo-cambio').style.display = 'none';
+        });
+        
+        // Event listener para el botón de cambiar tipo de cambio
+        document.getElementById('btn-cambiar-tipo-cambio').addEventListener('click', () => {
+          document.getElementById('modal-tipo-cambio').style.display = 'flex';
         });
       }
       

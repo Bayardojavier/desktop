@@ -1,8 +1,9 @@
 // desktop/main.js
-const { app, BrowserWindow, Menu, ipcMain, session, dialog } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, session, dialog, shell, Notification } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { autoUpdater } = require('electron-updater');
+const { exec } = require('child_process');
 
 let mainWindow;
 let splashWindow;
@@ -71,6 +72,11 @@ ipcMain.handle('save-pdf', async (event, payload) => {
   }
 });
 
+// App info
+ipcMain.handle('get-app-version', () => {
+  return app.getVersion();
+});
+
 async function createWindow() {
   // === Ventana de Splash ===
   splashWindow = new BrowserWindow({
@@ -112,6 +118,24 @@ async function createWindow() {
 
   mainWindow.webContents.on('context-menu', (e) => e.preventDefault());
 
+  // Limpiar cache para forzar recarga de archivos modificados
+  if (!app.isPackaged) {
+    console.log('🧹 Clearing cache for development...');
+    session.defaultSession.clearCache().then(() => {
+      console.log('✅ Cache cleared');
+    }).catch(err => {
+      console.error('❌ Error clearing cache:', err);
+    });
+
+    // Deshabilitar completamente el cache en desarrollo
+    session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
+      details.requestHeaders['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+      details.requestHeaders['Pragma'] = 'no-cache';
+      details.requestHeaders['Expires'] = '0';
+      callback({ requestHeaders: details.requestHeaders });
+    });
+  }
+
   // Cargar la app principal
   mainWindow.loadFile('index.html');
   
@@ -129,11 +153,38 @@ async function createWindow() {
   });
 
   // Eventos de auto-updater
-  autoUpdater.on('update-available', () => {
-    console.log('Actualización disponible');
+  autoUpdater.on('update-available', (info) => {
+    console.log('Actualización disponible', info && info.version ? `(${info.version})` : '');
+
+    try {
+      if (Notification.isSupported()) {
+        const versionTxt = info && info.version ? ` (${info.version})` : '';
+        new Notification({
+          title: 'Actualización disponible',
+          body: `Hay una nueva versión${versionTxt}. Se descargará en segundo plano.`
+        }).show();
+      }
+    } catch (e) {
+      console.error('No se pudo mostrar notificación de update-available:', e);
+    }
+  });
+
+  autoUpdater.on('update-not-available', () => {
+    console.log('No hay actualizaciones disponibles');
   });
 
   autoUpdater.on('update-downloaded', () => {
+    try {
+      if (Notification.isSupported()) {
+        new Notification({
+          title: 'Actualización lista',
+          body: 'La actualización terminó de descargarse. Puede reiniciar para instalarla.'
+        }).show();
+      }
+    } catch (e) {
+      console.error('No se pudo mostrar notificación de update-downloaded:', e);
+    }
+
     dialog.showMessageBox(mainWindow, {
       type: 'info',
       title: 'Actualización lista',
@@ -188,12 +239,26 @@ async function createWindow() {
   ipcMain.handle('check-for-updates', async () => {
     try {
       const result = await autoUpdater.checkForUpdates();
-      if (result.updateInfo.version !== app.getVersion()) {
-        autoUpdater.downloadUpdate();
-        return { message: 'Nueva versión disponible. Descargando actualización...' };
-      } else {
+
+      const remoteVersion = result && result.updateInfo ? result.updateInfo.version : null;
+      const currentVersion = app.getVersion();
+
+      // Si no hay info de versión remota, no hay update disponible (o no se pudo determinar)
+      if (!remoteVersion) {
+        return { message: 'No hay actualizaciones disponibles.' };
+      }
+
+      if (String(remoteVersion) === String(currentVersion)) {
         return { message: 'La aplicación está actualizada.' };
       }
+
+      // Si autoDownload ya está activo, checkForUpdates puede haber iniciado la descarga
+      // y exponer downloadPromise. Si no, iniciamos la descarga explícitamente.
+      if (!result.downloadPromise) {
+        autoUpdater.downloadUpdate();
+      }
+
+      return { message: `Nueva versión disponible (${remoteVersion}). Descargando actualización...` };
     } catch (error) {
       return { error: error.message };
     }
@@ -231,6 +296,10 @@ async function createWindow() {
     app.relaunch();
     app.exit(0);
   });
+  
+
+// Confirmación de arranque en consola
+console.log('main.js loaded — IPC handlers should be registered after app.whenReady()');
 }
 
 // === Inicialización de la app ===
@@ -325,3 +394,92 @@ ipcMain.handle('render-html-to-pdf', async (event, payload) => {
     try { win?.destroy(); } catch (_) {}
   }
 });
+
+// Ejecutar scripts .bat en Windows sin elevar desde la app (registrado al nivel de módulo)
+ipcMain.handle('run-set-dns', async () => {
+  try {
+    if (process.platform !== 'win32') return { error: 'Sólo soportado en Windows' };
+    const scriptPath = path.join(__dirname, 'tools', 'set_dns.bat');
+    if (!fs.existsSync(scriptPath)) return { error: 'Script no encontrado: ' + scriptPath };
+    exec(`"${scriptPath}"`, { windowsHide: false }, (err) => {
+      if (err) console.error('run-set-dns exec error:', err);
+    });
+    console.log('IPC handler registered: run-set-dns');
+    return { started: true };
+  } catch (err) {
+    console.error('run-set-dns error:', err);
+    return { error: err && err.message ? err.message : String(err) };
+  }
+});
+
+ipcMain.handle('run-restore-dns', async () => {
+  try {
+    if (process.platform !== 'win32') return { error: 'Sólo soportado en Windows' };
+    const scriptPath = path.join(__dirname, 'tools', 'restore_dns.bat');
+    if (!fs.existsSync(scriptPath)) return { error: 'Script no encontrado: ' + scriptPath };
+    exec(`"${scriptPath}"`, { windowsHide: false }, (err) => {
+      if (err) console.error('run-restore-dns exec error:', err);
+    });
+    console.log('IPC handler registered: run-restore-dns');
+    return { started: true };
+  } catch (err) {
+    console.error('run-restore-dns error:', err);
+    return { error: err && err.message ? err.message : String(err) };
+  }
+});
+
+// Abrir carpeta tools en el explorador del sistema
+ipcMain.handle('open-tools-dir', async () => {
+  try {
+    const toolsPath = path.join(__dirname, 'tools');
+    if (!fs.existsSync(toolsPath)) return { error: 'Carpeta tools no encontrada: ' + toolsPath };
+    // shell.openPath abre la carpeta en el explorador
+    await shell.openPath(toolsPath);
+    return { opened: true };
+  } catch (err) {
+    console.error('open-tools-dir error:', err);
+    return { error: err && err.message ? err.message : String(err) };
+  }
+});
+
+// Export: leer asset como data URL (para incrustar imágenes en PDFs)
+ipcMain.handle('get-asset-data-url', async (event, payload) => {
+  try {
+    const rel = payload && payload.path ? String(payload.path) : '';
+    if (!rel) return { ok: false, error: 'Path vacío' };
+
+    // Permitir solo dentro de /assets (soporta app.asar y resources)
+    const candidates = [
+      path.join(app.getAppPath(), 'assets'),
+      path.join(process.resourcesPath || '', 'assets'),
+      path.join(__dirname, 'assets'),
+    ].filter(Boolean);
+    let assetsDir = candidates.find((p) => {
+      try { return fs.existsSync(p); } catch (_) { return false; }
+    }) || candidates[0];
+
+    const assetsDirResolved = path.resolve(assetsDir);
+    const requested = path.resolve(path.join(assetsDirResolved, rel));
+    if (!requested.toLowerCase().startsWith(assetsDirResolved.toLowerCase() + path.sep)) {
+      return { ok: false, error: 'Path no permitido' };
+    }
+    if (!fs.existsSync(requested)) {
+      return { ok: false, error: 'Asset no encontrado: ' + rel };
+    }
+
+    const ext = path.extname(requested).toLowerCase();
+    const mime = ext === '.png' ? 'image/png'
+      : ext === '.jpg' || ext === '.jpeg' ? 'image/jpeg'
+      : ext === '.svg' ? 'image/svg+xml'
+      : 'application/octet-stream';
+
+    const buf = fs.readFileSync(requested);
+    const base64 = buf.toString('base64');
+    return { ok: true, dataUrl: `data:${mime};base64,${base64}` };
+  } catch (err) {
+    console.error('get-asset-data-url error:', err);
+    return { ok: false, error: err && err.message ? err.message : String(err) };
+  }
+});
+
+console.log('IPC handler registered: get-asset-data-url');

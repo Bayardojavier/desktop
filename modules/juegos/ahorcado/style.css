@@ -1,0 +1,55 @@
+.game{color:#e5e7eb;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+.game-header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.game-title{margin:0;font-size:18px}
+.game-sub{margin:2px 0 0 0;color:#a7b0c0;font-size:13px}
+.game-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.game-pill{border:1px solid rgba(148,163,184,.25);background:rgba(15,23,42,.35);color:#e5e7eb;padding:8px 10px;border-radius:999px;font-weight:800;font-size:12px;letter-spacing:.3px}
+.game-btn{border:1px solid rgba(148,163,184,.25);background:rgba(15,23,42,.65);color:#e5e7eb;padding:10px 12px;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px}
+.game-btn:hover{border-color:rgba(99,102,241,.55);background:rgba(30,41,59,.6)}
+.game-select{border:1px solid rgba(148,163,184,.25);background:rgba(15,23,42,.65);color:#e5e7eb;padding:10px 12px;border-radius:10px;font-weight:600}
+
+.hangman-hud{position:sticky;top:0;z-index:5;margin-top:10px;padding:10px;border-radius:14px;border:1px solid rgba(148,163,184,.18);background:rgba(2,6,23,.55);backdrop-filter:blur(6px)}
+.hangman-hud-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:900px){.hangman-hud-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.hangman-hud-item{border:1px solid rgba(148,163,184,.14);background:rgba(15,23,42,.35);border-radius:12px;padding:10px;display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:42px}
+.hangman-hud-item span{color:#a7b0c0;font-size:12px;font-weight:800;letter-spacing:.2px}
+.hangman-hud-item strong{font-size:16px;font-weight:900}
+
+.hangman-layout{display:grid;grid-template-columns:1fr 1.2fr;gap:12px;margin-top:12px}
+@media (max-width:900px){.hangman-layout{grid-template-columns:1fr}}
+
+.hangman-panel{border:1px solid rgba(148,163,184,.18);background:rgba(2,6,23,.35);border-radius:14px;padding:12px}
+.hangman-drawing{margin:0;min-height:220px;background:rgba(0,0,0,.25);border-radius:12px;padding:12px;border:1px solid rgba(148,163,184,.14);overflow:hidden}
+
+.hangman-visual{display:flex;align-items:center;justify-content:center}
+.hangman-visual svg{width:100%;max-width:420px;height:auto;display:block}
+.hangman-visual .hm-part{opacity:0;transform:translateY(-2px);transition:opacity .18s ease,transform .18s ease}
+.hangman-visual .hm-part.on{opacity:1;transform:translateY(0)}
+
+.hangman-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px}
+@media (min-width:900px){.hangman-stats{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.stat{flex:1;border:1px solid rgba(148,163,184,.14);background:rgba(15,23,42,.35);border-radius:12px;padding:10px;display:flex;justify-content:space-between;align-items:center}
+.stat span{color:#a7b0c0;font-size:12px}
+.stat strong{font-size:18px}
+.stat-accent{border-color:rgba(251,191,36,.35);background:rgba(251,191,36,.08)}
+
+
+
+.record-hit{animation:recordFlash .7s ease-out}
+@keyframes recordFlash{0%{background:rgba(34,197,94,.18)}100%{background:transparent}}
+
+.hangman-word{display:flex;gap:10px;flex-wrap:wrap;font-size:26px;letter-spacing:4px;padding:6px 4px}
+.hangman-letter{display:inline-flex;min-width:22px;justify-content:center;border-bottom:2px solid rgba(148,163,184,.5);padding-bottom:4px}
+.hangman-hint{margin:10px 0 0 0;color:#fde68a;font-size:16px;font-weight:900;line-height:1.35;padding:10px 12px;border-radius:12px;border:1px solid rgba(251,191,36,.25);background:rgba(251,191,36,.08)}
+
+.hangman-kbd{display:grid;grid-template-columns:repeat(10,1fr);gap:8px;margin-top:14px}
+@media (max-width:900px){.hangman-kbd{grid-template-columns:repeat(8,1fr)}}
+.key{border:1px solid rgba(148,163,184,.25);background:rgba(15,23,42,.65);color:#e5e7eb;border-radius:10px;padding:10px 0;cursor:pointer;font-weight:800;text-align:center;user-select:none}
+.key:hover{border-color:rgba(99,102,241,.55)}
+.key.disabled{opacity:.45;cursor:not-allowed}
+.key.good{border-color:rgba(34,197,94,.7);background:rgba(34,197,94,.12)}
+.key.bad{border-color:rgba(239,68,68,.7);background:rgba(239,68,68,.10)}
+
+.hangman-footer{margin-top:12px}
+.hangman-msg{margin:0;font-weight:700}
+.hangman-tip{margin:6px 0 0 0;color:#94a3b8;font-size:12px}

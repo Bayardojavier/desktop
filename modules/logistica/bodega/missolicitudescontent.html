@@ -158,6 +158,15 @@
               </div>
               <div style="font-size: 12px; color: #94a3b8;">
                 <strong>Materiales:</strong> ${s.items_solicitud_logistica?.length || 0} ítems
+                ${(() => {
+                  const herramientas = s.items_solicitud_logistica?.filter(item =>
+                    item.observacion && (item.observacion.includes('Herramienta adicional') || item.observacion.includes('Consumible adicional'))
+                  ) || [];
+                  if (herramientas.length > 0) {
+                    return `<br><strong>Herramientas/Consumibles:</strong> ${herramientas.map(h => `${h.nombre_material} (${h.cantidad_solicitada})`).join(', ')}`;
+                  }
+                  return '';
+                })()}
                 ${s.encargado_evento ? ` | <strong>Encargado:</strong> ${s.encargado_evento}` : ''}
                 ${s.prioridad ? ` | <strong>Prioridad:</strong> ${s.prioridad}` : ''}
               </div>
@@ -483,8 +492,12 @@
           const plantillas = solicitud.items_solicitud_logistica.filter(item =>
             item.observacion === "Plantilla adicional (fuera de receta)"
           );
+          const consumibles = solicitud.items_solicitud_logistica.filter(item =>
+            item.observacion && (item.observacion.includes('Herramienta adicional') || item.observacion.includes('Consumible adicional'))
+          );
           const itemsReceta = solicitud.items_solicitud_logistica.filter(item =>
-            !item.observacion?.includes("Material adicional") && !item.observacion?.includes("Plantilla adicional")
+            !item.observacion?.includes("Material adicional") && !item.observacion?.includes("Plantilla adicional") &&
+            !item.observacion?.includes("Herramienta adicional") && !item.observacion?.includes("Consumible adicional")
           );
 
           // Cargar recetas disponibles (plantillas y específicas)
@@ -635,7 +648,7 @@
                   ${especificos.map((item, idx) => `
                     <tr data-esp-idx="${idx}">
                       <td>${renderMaterialCell(item)}</td>
-                      <td><input type="number" min="1" value="${item.cantidad_solicitada}" data-esp-idx="${idx}" style="width: 70px; padding: 4px; font-size: 13px; border: 1px solid #ccc; border-radius: 4px;"></td>
+                      <td><input type="number" min="1" value="${item.cantidad_solicitada}" data-item-id="${item.id}" style="width: 70px; padding: 4px; font-size: 13px; border: 1px solid #ccc; border-radius: 4px;"></td>
                       <td style="text-align: center;">
                         <button class="btn-remove-esp" data-esp-idx="${idx}" data-item-id="${item.id}" style="width: 24px; height: 24px; padding: 0; font-size: 14px; background: #ef4445; color: white; border: none; border-radius: 4px;">🗑️</button>
                       </td>
@@ -658,7 +671,7 @@
                   ${plantillas.map((item, idx) => `
                     <tr data-pla-idx="${idx}">
                       <td><strong>${item.nombre_material}</strong></td>
-                      <td><input type="number" min="1" value="${item.cantidad_solicitada}" data-pla-idx="${idx}" style="width: 70px; padding: 4px; font-size: 13px; border: 1px solid #ccc; border-radius: 4px;"></td>
+                      <td><input type="number" min="1" value="${item.cantidad_solicitada}" data-item-id="${item.id}" style="width: 70px; padding: 4px; font-size: 13px; border: 1px solid #ccc; border-radius: 4px;"></td>
                       <td style="text-align: center;">
                         <button class="btn-remove-pla" data-pla-idx="${idx}" data-item-id="${item.id}" style="width: 24px; height: 24px; padding: 0; font-size: 14px; background: #ef4445; color: white; border: none; border-radius: 4px;">🗑️</button>
                       </td>
@@ -670,25 +683,78 @@
             contenidoItems.appendChild(divPla);
           }
 
+          // Renderizar consumibles/herramientas
+          if (consumibles.length > 0) {
+            const divCon = document.createElement('div');
+            divCon.innerHTML = `
+              <h4 style="margin: 16px 0 8px 0; color: #1a365d; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">🔧 Consumibles/Herramientas</h4>
+              <table class="log-table" style="width: 100%; font-size: 12px;">
+                <thead><tr style="background: #f1f5f9;"><th>Material</th><th>Cantidad</th><th style="text-align: center;">Acción</th></tr></thead>
+                <tbody id="modal-con-body">
+                  ${consumibles.map((item, idx) => `
+                    <tr data-con-idx="${idx}">
+                      <td>${renderMaterialCell(item)}</td>
+                      <td><input type="number" min="1" value="${item.cantidad_solicitada}" data-item-id="${item.id}" style="width: 70px; padding: 4px; font-size: 13px; border: 1px solid #ccc; border-radius: 4px;"></td>
+                      <td style="text-align: center;">
+                        <button class="btn-remove-con" data-con-idx="${idx}" data-item-id="${item.id}" style="width: 24px; height: 24px; padding: 0; font-size: 14px; background: #ef4445; color: white; border: none; border-radius: 4px;">🗑️</button>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            `;
+            contenidoItems.appendChild(divCon);
+          }
+
         } else {
           // === Modo "Por Ítem" ===
+          // Separar materiales y consumibles
+          const materiales = solicitud.items_solicitud_logistica.filter(item =>
+            !item.observacion || (!item.observacion.includes('Herramienta adicional') && !item.observacion.includes('Consumible adicional'))
+          );
+          const consumibles = solicitud.items_solicitud_logistica.filter(item =>
+            item.observacion && (item.observacion.includes('Herramienta adicional') || item.observacion.includes('Consumible adicional'))
+          );
+
           contenidoItems.innerHTML = `
-            <h4 style="margin: 0 0 12px 0; color: #1a365d;">📋 Ítems Individuales</h4>
+            <h4 style="margin: 0 0 12px 0; color: #1a365d;">📋 Materiales</h4>
+            <table class="log-table" style="width: 100%; font-size: 12px; margin-bottom: 20px;">
+              <thead>
+                <tr style="background: #f1f5f9;">
+                  <th>Material</th><th>Estado</th><th>Observación</th><th>Cantidad</th><th style="text-align: center;">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="modal-materiales-body">
+                ${materiales.map((item, idx) => `
+                  <tr data-item-id="${item.id}">
+                    <td>${renderMaterialCell(item)}</td>
+                    <td>${item.estado || 'pendiente'}</td>
+                    <td>${item.observacion || ''}</td>
+                    <td><input type="number" min="1" value="${item.cantidad_solicitada}" data-item-id="${item.id}" style="width: 70px; padding: 4px; font-size: 13px; border: 1px solid #ccc; border-radius: 4px;"></td>
+                    <td style="text-align: center;">
+                      <button class="btn-remove-item" data-item-id="${item.id}" style="width: 24px; height: 24px; padding: 0; font-size: 14px; background: #ef4445; color: white; border: none; border-radius: 4px;">🗑️</button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+
+            <h4 style="margin: 0 0 12px 0; color: #1a365d;">🔧 Consumibles/Herramientas</h4>
             <table class="log-table" style="width: 100%; font-size: 12px;">
               <thead>
                 <tr style="background: #f1f5f9;">
                   <th>Material</th><th>Estado</th><th>Observación</th><th>Cantidad</th><th style="text-align: center;">Acción</th>
                 </tr>
               </thead>
-              <tbody id="modal-items-body">
-                ${solicitud.items_solicitud_logistica.map((item, idx) => `
-                  <tr data-item-idx="${idx}">
+              <tbody id="modal-consumibles-body">
+                ${consumibles.map((item, idx) => `
+                  <tr data-item-id="${item.id}">
                     <td>${renderMaterialCell(item)}</td>
                     <td>${item.estado || 'pendiente'}</td>
                     <td>${item.observacion || ''}</td>
-                    <td><input type="number" min="1" value="${item.cantidad_solicitada}" data-item-idx="${idx}" style="width: 70px; padding: 4px; font-size: 13px; border: 1px solid #ccc; border-radius: 4px;"></td>
+                    <td><input type="number" min="1" value="${item.cantidad_solicitada}" data-item-id="${item.id}" style="width: 70px; padding: 4px; font-size: 13px; border: 1px solid #ccc; border-radius: 4px;"></td>
                     <td style="text-align: center;">
-                      <button class="btn-remove-item" data-item-idx="${idx}" data-item-id="${item.id}" style="width: 24px; height: 24px; padding: 0; font-size: 14px; background: #ef4445; color: white; border: none; border-radius: 4px;">🗑️</button>
+                      <button class="btn-remove-item" data-item-id="${item.id}" style="width: 24px; height: 24px; padding: 0; font-size: 14px; background: #ef4445; color: white; border: none; border-radius: 4px;">🗑️</button>
                     </td>
                   </tr>
                 `).join('')}
@@ -705,7 +771,7 @@
 
         // Manejo de eliminaciones
         const itemsAEliminar = new Set();
-        modal.querySelectorAll('.btn-remove-esp, .btn-remove-pla, .btn-remove-item').forEach(btn => {
+        modal.querySelectorAll('.btn-remove-esp, .btn-remove-pla, .btn-remove-con, .btn-remove-item').forEach(btn => {
           btn.addEventListener('click', (e) => {
             if (confirm("¿Eliminar este ítem?")) {
               const itemId = e.currentTarget.dataset.itemId;
@@ -795,8 +861,8 @@
               const especificosOriginales = solicitud.items_solicitud_logistica.filter(item =>
                 item.observacion === "Material adicional específico (fuera de receta)" && !itemsAEliminar.has(item.id.toString())
               );
-              especificosOriginales.forEach((item, idx) => {
-                const input = modal.querySelector(`[data-esp-idx="${idx}"]`);
+              especificosOriginales.forEach((item) => {
+                const input = modal.querySelector(`[data-item-id="${item.id}"]`);
                 const nuevaCantidad = input ? parseInt(input.value) || 1 : item.cantidad_solicitada;
                 nuevosItems.push({
                   solicitud_id: idSolicitud,
@@ -814,8 +880,8 @@
               const plantillasOriginales = solicitud.items_solicitud_logistica.filter(item =>
                 item.observacion === "Plantilla adicional (fuera de receta)" && !itemsAEliminar.has(item.id.toString())
               );
-              plantillasOriginales.forEach((item, idx) => {
-                const input = modal.querySelector(`[data-pla-idx="${idx}"]`);
+              plantillasOriginales.forEach((item) => {
+                const input = modal.querySelector(`[data-item-id="${item.id}"]`);
                 const nuevaCantidad = input ? parseInt(input.value) || 1 : item.cantidad_solicitada;
                 nuevosItems.push({
                   solicitud_id: idSolicitud,
@@ -829,7 +895,38 @@
                 });
               });
 
-              // Eliminar items marcados para eliminación
+              // Agregar consumibles no eliminados
+              const consumiblesOriginales = solicitud.items_solicitud_logistica.filter(item =>
+                item.observacion && (item.observacion.includes('Herramienta adicional') || item.observacion.includes('Consumible adicional')) && !itemsAEliminar.has(item.id.toString())
+              );
+              consumiblesOriginales.forEach((item) => {
+                const input = modal.querySelector(`[data-item-id="${item.id}"]`);
+                const nuevaCantidad = input ? parseInt(input.value) || 1 : item.cantidad_solicitada;
+                nuevosItems.push({
+                  solicitud_id: idSolicitud,
+                  codigo_material: item.codigo_material,
+                  nombre_material: item.nombre_material,
+                  cantidad_solicitada: nuevaCantidad,
+                  estado: 'pendiente',
+                  observacion: item.observacion,
+                  medidas: item.medidas,
+                  color: item.color
+                });
+              });
+
+              // Eliminar todos los items existentes para reconstruir desde cero y evitar duplicados
+              const { error: errorDeleteAll } = await window.supabaseClient
+                .from('items_solicitud_logistica')
+                .delete()
+                .eq('solicitud_id', idSolicitud);
+              if (errorDeleteAll) {
+                console.error('Error al eliminar items existentes:', errorDeleteAll);
+                alert('❌ Error al actualizar los items de la solicitud.');
+                mostrarNotificacion('❌ Error al actualizar los items de la solicitud.', 'error');
+                return;
+              }
+
+              // Eliminar items marcados para eliminación (ya no necesario, pero mantener por consistencia)
               if (itemsAEliminar.size > 0) {
                 const { error: errorDelete } = await window.supabaseClient
                   .from('items_solicitud_logistica')
@@ -860,7 +957,7 @@
               );
 
               for (const item of itemsActuales) {
-                const input = modal.querySelector(`[data-item-idx="${itemsActuales.indexOf(item)}"]`);
+                const input = modal.querySelector(`[data-item-id="${item.id}"]`);
                 if (input) {
                   const nuevaCantidad = parseInt(input.value) || 1;
                   if (nuevaCantidad !== item.cantidad_solicitada) {

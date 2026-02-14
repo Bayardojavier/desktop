@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Registrar Usuario</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; font-family:Segoe UI; }
+    body {
+      background: linear-gradient(135deg, #0c4a6e, #0ea5e9);
+      min-height:100vh; display:flex; justify-content:center; align-items:center; padding:20px;
+    }
+    .container {
+      background:white; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.3);
+      width:100%; max-width:420px; padding:32px;
+    }
+    .container h2 {
+      text-align:center; color:#0c4a6e; margin-bottom:24px; font-size:24px;
+    }
+    .input-group { margin-bottom:16px; }
+    .input-group label { display:block; margin-bottom:6px; color:#333; font-weight:600; }
+    .input-group input, .input-group select {
+      width:100%; padding:12px; border:1px solid #ccc; border-radius:8px; font-size:15px;
+    }
+    .btn { width:100%; padding:12px; background:#0ea5e9; color:white; border:none; border-radius:8px; font-size:16px; cursor:pointer; }
+    .btn:hover { background:#0c92d1; }
+    .back-link { text-align:center; margin-top:20px; }
+    .back-link a { color:#0ea5e9; text-decoration:none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Registrar Nuevo Usuario</h2>
+    <form id="formRegistro">
+      <div class="input-group">
+        <label>Nombre completo</label>
+        <input type="text" id="nombre" required />
+      </div>
+      <div class="input-group">
+        <label>Usuario</label>
+        <input type="text" id="usuario" required />
+      </div>
+      <div class="input-group">
+        <label>Contraseña</label>
+        <input type="password" id="contrasena" required />
+      </div>
+      <div class="input-group">
+        <label>Rol</label>
+        <select id="rol" required>
+          <option value="">-- Selecciona --</option>
+          <option value="bodega">Bodega</option>
+          <option value="logistica">Logística</option>
+          <option value="contabilidad">Contabilidad</option>
+          <option value="rrhh">Recursos Humanos</option>
+          <option value="ventas">Ventas</option>
+          <option value="admin">Administrador</option>
+        </select>
+      </div>
+      <button type="submit" class="btn">Registrar</button>
+    </form>
+    <div class="back-link">
+      <a href="#" id="link-login">← Volver al login</a>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../config/supabaseClient.js"></script>
+  <script src="./registro.js"></script>
+</body>
+</html>

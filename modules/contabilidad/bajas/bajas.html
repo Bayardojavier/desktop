@@ -206,6 +206,38 @@
 
   <script>
     // =============================================================================
+    // 🔹 UTILIDADES INVENTARIO
+    // =============================================================================
+    function getBodegasPorDefecto(materialCodigo) {
+      const code = (materialCodigo || '').toString().toUpperCase().trim();
+      if (code.startsWith('CASEBASE|')) return { principal: 'Principal', secundaria: 'General' };
+
+      const parts = code.split('-');
+      const prefix = parts.length > 1 ? parts[1] : '';
+      if (prefix === 'AUDI') return { principal: 'Audiovisual', secundaria: 'General' };
+      if (prefix === 'HIER') return { principal: 'Hierros', secundaria: 'General' };
+      return { principal: 'Consumibles', secundaria: 'General' };
+    }
+
+    function getTablaMovimientosPorCodigo(materialCodigo) {
+      const code = (materialCodigo || '').toString().toUpperCase().trim();
+      if (code.startsWith('CASEBASE|')) return 'movimientos_bodega_consumibles';
+
+      const parts = code.split('-');
+      const prefix = parts.length > 1 ? parts[1] : '';
+      if (prefix === 'AUDI') return 'movimientos_bodega_audiovisual';
+      if (prefix === 'HIER') return 'movimientos_bodega_hierros';
+      return 'movimientos_bodega_consumibles';
+    }
+
+    function getTablaMovimientosPorBodegaNombre(bodegaPrincipal) {
+      const bp = (bodegaPrincipal || '').toString().toLowerCase();
+      if (bp.includes('audiovisual') || bp.includes('audio') || bp.includes('visual')) return 'movimientos_bodega_audiovisual';
+      if (bp.includes('hierro') || bp.includes('estructural') || bp.includes('hierros')) return 'movimientos_bodega_hierros';
+      return 'movimientos_bodega_consumibles';
+    }
+
+    // =============================================================================
     // 🔹 CARGAR SOLICITUDES DE BAJA DESDE SUPABASE
     // =============================================================================
     async function cargarSolicitudes() {
@@ -462,49 +494,129 @@
           return;
         }
 
-        // Actualizar items a aprobados
-        const { error: errorItems } = await window.supabaseClient
-          .from('items_baja_logistica')
-          .update({
-            estado: 'aprobada',
-            cantidad_bajada: window.supabaseClient.raw('cantidad_solicitada')
-          })
-          .eq('baja_id', idSolicitud);
+        // Actualizar items a aprobados (sin "raw"; asignar cantidad_bajada = cantidad_solicitada)
+        const solicitudes = window.solicitudesGlobal || [];
+        const solicitud = solicitudes.find(s => String(s.id) === String(idSolicitud));
 
-        if (errorItems) {
-          console.error('Error al actualizar items:', errorItems);
-          alert('❌ Error al actualizar los items de la solicitud.');
-          return;
+        if (solicitud && solicitud.materiales && solicitud.materiales.length) {
+          for (const it of solicitud.materiales) {
+            const itemId = it.id;
+            const cantSolicitada = parseFloat(it.cantidad_solicitada) || 0;
+            const payload = {
+              estado: 'aprobada',
+              cantidad_bajada: cantSolicitada
+            };
+
+            let q = window.supabaseClient.from('items_baja_logistica').update(payload);
+            if (itemId != null) {
+              q = q.eq('id', itemId);
+            } else {
+              // Fallback defensivo
+              q = q.eq('baja_id', idSolicitud).eq('codigo_material', it.codigo_material);
+            }
+            const { error: errorItem } = await q;
+            if (errorItem) {
+              console.error('Error al actualizar item de baja:', errorItem, it);
+              alert('❌ Error al actualizar los items de la solicitud.');
+              return;
+            }
+          }
+        } else {
+          // Fallback: al menos marcar estado (si no hay materiales cargados en memoria)
+          const { error: errorItemsEstado } = await window.supabaseClient
+            .from('items_baja_logistica')
+            .update({ estado: 'aprobada' })
+            .eq('baja_id', idSolicitud);
+          if (errorItemsEstado) {
+            console.error('Error al actualizar items (estado):', errorItemsEstado);
+            alert('❌ Error al actualizar los items de la solicitud.');
+            return;
+          }
         }
 
         // ✅ AFECTAR EL INVENTARIO
-        const solicitudes = window.solicitudesGlobal || [];
-        const solicitud = solicitudes.find(s => String(s.id) === String(idSolicitud));
+        // (reutiliza `solicitud` si ya está resuelta arriba)
+        const solicitudes2 = window.solicitudesGlobal || [];
+        const solicitud2 = (typeof solicitud !== 'undefined' && solicitud) ? solicitud : solicitudes2.find(s => String(s.id) === String(idSolicitud));
         
-        if (solicitud && solicitud.materiales) {
-          for (const item of solicitud.materiales) {
+        if (solicitud2 && solicitud2.materiales) {
+          // Resolver bodegas/precio en batch desde stock_actual_con_precio
+          const codigosUnicos = Array.from(new Set(
+            (solicitud2.materiales || []).map(it => String(it.codigo_material || '').trim()).filter(Boolean)
+          ));
+
+          const stockRowsPorCodigo = new Map();
+          if (codigosUnicos.length > 0) {
+            const { data: stockRows, error: stockErr } = await window.supabaseClient
+              .from('stock_actual_con_precio')
+              .select('material_codigo, bodega_principal, bodega_secundaria, existencia, precio_promedio')
+              .in('material_codigo', codigosUnicos);
+
+            if (stockErr) {
+              console.warn('No se pudo leer stock_actual_con_precio para bajas:', stockErr);
+            } else {
+              (stockRows || []).forEach(r => {
+                const key = String(r.material_codigo || '').trim();
+                if (!key) return;
+                if (!stockRowsPorCodigo.has(key)) stockRowsPorCodigo.set(key, []);
+                stockRowsPorCodigo.get(key).push(r);
+              });
+            }
+          }
+
+          for (const item of solicitud2.materiales) {
             const cantidad = parseFloat(item.cantidad_solicitada) || 0;
             if (cantidad <= 0) continue;
 
+            const codigo = String(item.codigo_material || '').trim();
+            const def = getBodegasPorDefecto(codigo);
+            const rows = stockRowsPorCodigo.get(codigo) || [];
+            // Preferir la bodega por defecto; si no existe, usar la de mayor existencia
+            const rowPreferida =
+              rows.find(r => String(r.bodega_principal || '').toLowerCase() === String(def.principal).toLowerCase())
+              || rows.slice().sort((a, b) => (Number(b.existencia) || 0) - (Number(a.existencia) || 0))[0]
+              || null;
+
+            const bodegaPrincipal = (rowPreferida && rowPreferida.bodega_principal) ? rowPreferida.bodega_principal : def.principal;
+            const bodegaSecundaria = (rowPreferida && rowPreferida.bodega_secundaria) ? rowPreferida.bodega_secundaria : def.secundaria;
+            const precioUnitario = (rowPreferida && rowPreferida.precio_promedio != null) ? Number(rowPreferida.precio_promedio) || 0 : 0;
+
+            const responsable = (window.currentUser && (window.currentUser.nombre || window.currentUser.email))
+              ? (window.currentUser.nombre || window.currentUser.email)
+              : 'Usuario Contabilidad';
+
             // Registrar movimiento (egreso por baja)
-            const movimiento = {
-              material_codigo: String(item.codigo_material || '').trim(),
-              material_nombre: item.nombre_material || String(item.codigo_material || '').trim(),
-              bodega_principal: 'Principal',
-              bodega_secundaria: 'General',
+              const fechaMovimiento = (solicitud2.fecha_baja || new Date().toISOString()).toString().split('T')[0];
+
+            // Determinar tabla de movimientos (tu esquema usa tablas separadas)
+            const tablaPorCodigo = getTablaMovimientosPorCodigo(codigo);
+            const tablaPorBodega = getTablaMovimientosPorBodegaNombre(bodegaPrincipal);
+            const tablaMovimientos = (tablaPorCodigo && tablaPorCodigo !== 'movimientos_bodega_consumibles') ? tablaPorCodigo : tablaPorBodega;
+
+            const movimientoBase = {
+              material_codigo: codigo,
+              material_nombre: item.nombre_material || codigo,
+              bodega_principal: bodegaPrincipal,
+              bodega_secundaria: bodegaSecundaria,
               tipo_movimiento: 'baja',
               cantidad,
               signo: -1,
-              referencia_documento: idSolicitud,
+              referencia_documento: solicitud2.numero_baja || idSolicitud,
               referencia_tipo: 'baja_logistica',
-              responsable: 'Usuario Contabilidad', // TODO: Obtener usuario actual
-              fecha_movimiento: new Date().toISOString(),
-              observaciones: solicitud.observaciones || `Baja aprobada ${solicitud.numero_baja || idSolicitud}`,
-              precio_unitario: 0
+              responsable,
+              fecha_movimiento: fechaMovimiento,
+              observaciones: solicitud2.observaciones || `Baja aprobada ${solicitud2.numero_baja || idSolicitud}`,
+              precio: precioUnitario,
+              estado: 'completado',
+              usuario_id: window.currentUser?.id || null
             };
 
+            const movimiento = (tablaMovimientos === 'movimientos_bodega_consumibles')
+              ? { ...movimientoBase, requiere_devolucion: false }
+              : movimientoBase;
+
             const { error: errorMov } = await window.supabaseClient
-              .from('movimientos_bodega')
+              .from(tablaMovimientos)
               .insert(movimiento);
 
             if (errorMov) {

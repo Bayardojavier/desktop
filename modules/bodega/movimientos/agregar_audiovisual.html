@@ -1536,9 +1536,17 @@
 
   async function loadContenedores() {
     try {
+      const container = document.getElementById('contenedor-tipos-container') || document.getElementById('contenedores-container');
+      if (!state.secundariaNombre) {
+        if (container) container.innerHTML = '';
+        return;
+      }
+
+      // Importante: sin filtrar por secundaria, PostgREST puede devolver solo 1000 filas y ocultar contenedores válidos.
       const { data: contenedores, error } = await supa
         .from(TABLE_CATALOGO)
         .select('id, codigo, contenedor, contenedor_tipo, bodega_secundaria, es_contenedor, tipo_alta, campos_personalizados')
+        .eq('bodega_secundaria', state.secundariaNombre)
         .not('contenedor', 'is', null)
         .neq('contenedor', '')
         .order('contenedor');
@@ -1546,8 +1554,6 @@
         console.warn('Error cargando contenedores', error);
         return;
       }
-
-      const container = document.getElementById('contenedor-tipos-container');
       if (container) {
         container.innerHTML = '';
         const filtered = (contenedores || []).filter(c => {
@@ -1555,8 +1561,7 @@
           // compatibilidad con datos antiguos
           const esCont = (c.es_contenedor === true) || (String(c.tipo_alta || '').toUpperCase() === 'CONTENEDOR');
           if (!esCont) return false;
-          if (!state.secundariaNombre) return true;
-          return String(c.bodega_secundaria || '') === String(state.secundariaNombre);
+          return true;
         });
 
         filtered.forEach(c => {

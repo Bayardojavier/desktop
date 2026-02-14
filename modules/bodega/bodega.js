@@ -4,6 +4,26 @@ console.log('bodega.js cargado');
 window.__ACTIVE_INVENTARIO_SCOPE = 'general';
 console.log('bodega-tab-panel existe:', document.getElementById('bodega-tab-panel'));
 console.log('bodega-area-contenido existe:', document.querySelector('.bodega-area-contenido'));
+// Delegated click handler: toggles collapsed class on menu groups even if menu was injected later
+document.addEventListener('click', (e) => {
+  try {
+    const h3 = e.target.closest('.bodega-menu-lateral h3');
+    if (!h3) return;
+    const grupo = h3.nextElementSibling;
+    if (grupo && grupo.classList && grupo.classList.contains('bodega-menu-grupo')) {
+      grupo.classList.toggle('collapsed');
+    }
+  } catch (err) {
+    console.warn('Error en delegado de menú lateral:', err);
+  }
+});
+
+// Ensure groups are collapsed if present when script runs (harmless if not yet in DOM)
+try {
+  document.querySelectorAll('.bodega-menu-grupo').forEach(grupo => grupo.classList.add('collapsed'));
+} catch (e) {
+  /* ignore */
+}
   // ─── 1. CARGA INICIAL DEL DASHBOARD ────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', () => {
     window.__ACTIVE_INVENTARIO_SCOPE = 'general';
@@ -98,6 +118,7 @@ console.log('bodega-area-contenido existe:', document.querySelector('.bodega-are
       if (vista === 'universal-agregar-herramientas') ruta = './modules/bodega/universal/agregar_consumibles_v2.html';
       if (vista === 'universal-modificar-consumibles') ruta = './modules/bodega/universal/modificar_consumible.html';
       if (vista === 'universal-ficha-etiqueta') ruta = './modules/bodega/universal/ficha_etiqueta.html';
+      if (vista === 'universal-ficha-etiqueta-bulk') ruta = './modules/bodega/universal/ficha_etiqueta_masivo.html';
       // Compat: vistas antiguas ahora usan el flujo universal
       if (vista === 'hierro-agregar') ruta = './modules/bodega/universal/agregar_hierros.html';
       if (vista === 'hierro-modificar') ruta = './modules/bodega/universal/modificar_hierro.html';
@@ -108,9 +129,11 @@ console.log('bodega-area-contenido existe:', document.querySelector('.bodega-are
       if (vista === 'mobiliario-modificar') ruta = './modules/bodega/universal/agregar_consumibles_v2.html';
       if (vista === 'movimientos-ingreso') ruta = './modules/bodega/movimientos/ingreso.html';
       if (vista === 'movimientos-despachobodega') ruta = './modules/bodega/movimientos/despachobodega.html';
+      if (vista === 'movimientos-despacho-audiovisual') ruta = './modules/bodega/movimientos/despacho_audiovisual.html';
       if (vista === 'movimientos-devolucion') ruta = './modules/bodega/movimientos/devolucion.html';
       if (vista === 'movimientos-ventasmateriales') ruta = './modules/bodega/movimientos/ventasmateriales.html';
       if (vista === 'movimientos-fabricacion') ruta = './modules/bodega/movimientos/fabricacion.html';
+      if (vista === 'movimientos-mantenimiento') ruta = './modules/bodega/movimientos/mantenimiento.html';
       if (vista === 'movimientos-bajasmateriales') ruta = './modules/bodega/movimientos/bajasmateriales.html';
 
       // --- DASHBOARD ---
@@ -196,6 +219,7 @@ console.log('bodega-area-contenido existe:', document.querySelector('.bodega-are
           console.log('CSS cargado:', cssHref);
         }
       }
+      // (Nota: estilos de Mantenimiento están inline en el HTML; no se cargan como archivo separado)
 
       // Ejecutar scripts encapsulados
       if (scriptContent) {
@@ -235,7 +259,17 @@ console.log('bodega-area-contenido existe:', document.querySelector('.bodega-are
 async function exportarBodegaAExcel() {
   try {
     // Tablas específicas del módulo Bodega
-    const tablas = ['stock_actual_con_precio', 'catalogo', 'movimientos_bodega', 'recetas', 'recetas_materiales'];
+    const tablas = [
+      'stock_actual_con_precio',
+      'catalogo_hierros',
+      'catalogo_audiovisual',
+      'catalogo_consumibles',
+      'movimientos_bodega_hierros',
+      'movimientos_bodega_audiovisual',
+      'movimientos_bodega_consumibles',
+      'recetas',
+      'recetas_materiales'
+    ];
     
     const workbook = XLSX.utils.book_new();
     
@@ -259,3 +293,27 @@ async function exportarBodegaAExcel() {
     alert('❌ Error al exportar datos de Bodega.');
   }
 }
+
+// ─── EVENTOS PARA GRUPOS DESPLEGABLES ───────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('Registrando eventos para grupos desplegables');
+  // Hacer que los h3 sean clickeables para mostrar/ocultar sus grupos
+  document.querySelectorAll('.bodega-menu-lateral h3').forEach(h3 => {
+    console.log('Agregando evento a h3:', h3.textContent);
+    h3.addEventListener('click', () => {
+      console.log('Clic en h3:', h3.textContent);
+      const grupo = h3.nextElementSibling;
+      console.log('Grupo encontrado:', grupo);
+      if (grupo && grupo.classList.contains('bodega-menu-grupo')) {
+        console.log('Toggling collapsed');
+        grupo.classList.toggle('collapsed');
+      }
+    });
+  });
+
+  // Inicialmente, colapsar todos los grupos
+  document.querySelectorAll('.bodega-menu-grupo').forEach(grupo => {
+    console.log('Colapsando grupo');
+    grupo.classList.add('collapsed');
+  });
+});

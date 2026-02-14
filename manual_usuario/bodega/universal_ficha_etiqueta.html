@@ -1,0 +1,549 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario - Ficha y Etiqueta</title>
+    <style>
+        /* c:/Users/BAYAR/absolute/desktop/manual_usuario/styles/manual.css */
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            background-color: #0f172a; /* slate-900 */
+            color: #cbd5e1; /* slate-300 */
+        }
+
+        header {
+            background-color: #1e293b; /* slate-800 */
+            color: #e2e8f0; /* slate-200 */
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #334155; /* slate-700 */
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.25rem;
+            font-weight: 800;
+        }
+
+        header p {
+            margin: 0.25rem 0 0;
+            font-size: 1rem;
+            color: #94a3b8; /* slate-400 */
+        }
+
+        nav {
+            background-color: rgba(30, 41, 59, 0.5);
+            padding: 1rem 2rem;
+            text-align: center;
+            border-bottom: 1px solid #334155; /* slate-700 */
+        }
+
+        nav a {
+            color: #e2e8f0; /* slate-200 */
+            text-decoration: none;
+            margin: 0 1rem;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+
+        nav a:hover {
+            background-color: #475569; /* slate-600 */
+        }
+
+        main {
+            padding: 2rem;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        section {
+            background-color: #1e293b; /* slate-800 */
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid #334155; /* slate-700 */
+            margin-bottom: 2rem;
+        }
+
+        section h2 {
+            font-size: 1.75rem;
+            color: #f1f5f9; /* slate-100 */
+            margin-top: 0;
+            border-bottom: 2px solid #475569; /* slate-600 */
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        section h3 {
+            font-size: 1.4rem;
+            color: #e2e8f0; /* slate-200 */
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        p,
+        li {
+            color: #cbd5e1; /* slate-300 */
+            font-size: 1rem;
+        }
+
+        ul,
+        ol {
+            padding-left: 1.5rem;
+        }
+
+        ul li,
+        ol li {
+            margin-bottom: 0.75rem;
+        }
+
+        code {
+            background-color: #334155; /* slate-700 */
+            color: #f1f5f9; /* slate-100 */
+            padding: 0.2em 0.4em;
+            margin: 0;
+            font-size: 85%;
+            border-radius: 6px;
+            font-family: "Fira Code", "Courier New", monospace;
+        }
+
+        .description {
+            font-size: 1.1rem;
+            color: #94a3b8; /* slate-400 */
+            margin-bottom: 2rem;
+            border-left: 4px solid #6366f1; /* indigo-500 */
+            padding-left: 1rem;
+        }
+
+        .feature-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .feature-gallery figure {
+            margin: 0;
+            background-color: #0f172a; /* slate-900 */
+            border: 1px solid #334155; /* slate-700 */
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .feature-gallery img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .feature-gallery figcaption {
+            padding: 1rem;
+            font-size: 0.9rem;
+            color: #94a3b8; /* slate-400 */
+            text-align: center;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            color: #64748b; /* slate-500 */
+            border-top: 1px solid #334155; /* slate-700 */
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Módulo de Bodega: Ficha y Etiqueta</h1>
+    </header>
+    <nav>
+        <a href="../index.html">Volver al Índice</a>
+    </nav>
+    <main>
+        <section>
+            <h2>Ficha y Etiqueta</h2>
+            <p>Esta herramienta permite generar fichas tóncnicas detalladas y etiquetas compactas para identificación de materiales. Ofrece configuración personalizable completa para adaptar el diseño a las necesidades específicas de cada tipo de material y contenedor.</p>
+            <div style="background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin: 20px 0; font-family: 'Fira Code', 'Courier New', monospace; font-size: 12px; line-height: 1.4; color: #cbd5e1;">
+                <div style="display: flex; gap: 16px; height: 600px;">
+                    <!-- Panel Lateral Izquierdo -->
+                    <div style="width: 360px; background: rgba(20, 30, 60, 0.45); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; padding: 12px; overflow: auto;">
+                        <div style="font-weight: 900; color: #e5e7eb; margin-bottom: 8px;">🪪 Ficha & Etiqueta</div>
+                        <div style="color: #94a3b8; font-size: 12px; line-height: 1.35; margin-bottom: 12px;">
+                            Configura quón datos aparecen y en quón posiciones. La ficha es para detalles (más grande). La etiqueta es compacta.
+                        </div>
+                        
+                        <!-- Buscar material -->
+                        <div style="border-top: 1px solid rgba(148,163,184,0.15); padding-top: 10px;">
+                            <div style="font-weight: 800; color: #cbd5e1; margin-bottom: 6px;">Buscar material</div>
+                            
+                            <label style="display: block; margin: 6px 0 6px; font-weight: 700; color: #cbd5e1;">Bodega</label>
+                            <select style="width: 100%; padding: 8px; border: 1px solid rgba(148,163,184,0.2); border-radius: 6px; background: rgba(2,6,23,0.3); color: #cbd5e1; margin-bottom: 8px;">
+                                <option>Seleccionar bodega...</option>
+                                <option selected>Audiovisual</option>
+                                <option>Consumibles</option>
+                                <option>Hierros</option>
+                            </select>
+                            
+                            <label style="display: block; margin: 8px 0 6px; font-weight: 700; color: #cbd5e1;">Tipo de alta</label>
+                            <select style="width: 100%; padding: 8px; border: 1px solid rgba(148,163,184,0.2); border-radius: 6px; background: rgba(2,6,23,0.3); color: #cbd5e1; margin-bottom: 8px;">
+                                <option value="MATERIAL" selected>Material</option>
+                                <option value="CONTENEDOR">Contenedor</option>
+                            </select>
+                            
+                            <div style="margin-top: 6px; color: #94a3b8; font-size: 12px; line-height: 1.25; margin-bottom: 8px;">
+                                Equivale a la columna <b>tipo_alta</b> del catálogo: Material o Contenedor.
+                            </div>
+                            
+                            <input style="width: 100%; padding: 8px; border: 1px solid rgba(148,163,184,0.2); border-radius: 6px; background: rgba(2,6,23,0.3); color: #cbd5e1; margin-bottom: 8px;" placeholder="Código (ej: 2001-AUD-ILU-... )" value="2001-AUD-ILU-001" />
+                            
+                            <div style="display: flex; gap: 8px; margin-top: 8px;">
+                                <button style="padding: 8px 12px; background: #10b981; color: white; border: none; border-radius: 6px;">🔎 Cargar</button>
+                                <button style="padding: 8px 12px; background: #059669; color: white; border: none; border-radius: 6px;">🧾 Buscar</button>
+                                <button style="padding: 8px 12px; background: #6b7280; color: white; border: none; border-radius: 6px;">Limpiar</button>
+                            </div>
+                            
+                            <div style="margin-top: 8px; color: #10b981; font-size: 12px;">✓ Material cargado: Micrófono Sony ECM-77B</div>
+                        </div>
+                        
+                        <!-- Ficha (layout) -->
+                        <div style="border-top: 1px solid rgba(148,163,184,0.15); padding-top: 10px; margin-top: 10px;">
+                            <div style="font-weight: 800; color: #cbd5e1; margin-bottom: 6px;">Ficha (layout)</div>
+                            
+                            <label style="display: block; margin: 8px 0 6px; font-weight: 700; color: #cbd5e1;">Paleta / Tema</label>
+                            <select style="width: 100%; padding: 6px; border: 1px solid rgba(148,163,184,0.2); border-radius: 6px; background: rgba(2,6,23,0.3); color: #cbd5e1; margin-bottom: 8px;">
+                                <option selected>Azul Profesional</option>
+                                <option>Verde Natural</option>
+                                <option>Rojo Energía</option>
+                            </select>
+                            
+                            <label style="display: block; margin: 8px 0 6px; font-weight: 700; color: #cbd5e1;">Principal</label>
+                            <select style="width: 100%; padding: 6px; border: 1px solid rgba(148,163,184,0.2); border-radius: 6px; background: rgba(2,6,23,0.3); color: #cbd5e1; margin-bottom: 8px;">
+                                <option selected>Logo Empresa</option>
+                                <option>Código QR</option>
+                                <option>Texto Personalizado</option>
+                            </select>
+                            
+                            <label style="display: block; margin: 8px 0 6px; font-weight: 700; color: #cbd5e1;">Foto</label>
+                            <select style="width: 100%; padding: 6px; border: 1px solid rgba(148,163,184,0.2); border-radius: 6px; background: rgba(2,6,23,0.3); color: #cbd5e1; margin-bottom: 8px;">
+                                <option value="left" selected>Izquierda</option>
+                                <option value="right">Derecha</option>
+                                <option value="hide">Ocultar</option>
+                            </select>
+                            
+                            <label style="display: block; margin: 8px 0 6px; font-weight: 700; color: #cbd5e1;">Campos (hasta 12 líneas)</label>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="checkbox" checked />
+                                    <span style="color: #cbd5e1; font-size: 11px;">Código</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="checkbox" checked />
+                                    <span style="color: #cbd5e1; font-size: 11px;">Nombre</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="checkbox" checked />
+                                    <span style="color: #cbd5e1; font-size: 11px;">Tipo de Uso</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="checkbox" />
+                                    <span style="color: #cbd5e1; font-size: 11px;">Marca</span>
+                                </div>
+                                <span style="color: #94a3b8; font-size: 10px;">[Más campos disponibles...]</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Etiqueta (layout) -->
+                        <div style="border-top: 1px solid rgba(148,163,184,0.15); padding-top: 10px; margin-top: 10px;">
+                            <div style="font-weight: 800; color: #cbd5e1; margin-bottom: 6px;">Etiqueta (layout)</div>
+                            
+                            <label style="display: block; margin: 8px 0 6px; font-weight: 700; color: #cbd5e1;">Paleta / Tema</label>
+                            <select style="width: 100%; padding: 6px; border: 1px solid rgba(148,163,184,0.2); border-radius: 6px; background: rgba(2,6,23,0.3); color: #cbd5e1; margin-bottom: 8px;">
+                                <option>Compacto Negro</option>
+                                <option selected>Blanco Simple</option>
+                                <option>Color Vivo</option>
+                            </select>
+                            
+                            <label style="display: block; margin: 8px 0 6px; font-weight: 700; color: #cbd5e1;">Foto</label>
+                            <select style="width: 100%; padding: 6px; border: 1px solid rgba(148,163,184,0.2); border-radius: 6px; background: rgba(2,6,23,0.3); color: #cbd5e1; margin-bottom: 8px;">
+                                <option value="hide" selected>Ocultar</option>
+                                <option value="left">Izquierda</option>
+                                <option value="right">Derecha</option>
+                            </select>
+                            
+                            <label style="display: block; margin: 8px 0 6px; font-weight: 700; color: #cbd5e1;">Campos (hasta 3 líneas)</label>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="checkbox" checked />
+                                    <span style="color: #cbd5e1; font-size: 11px;">Código</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="checkbox" checked />
+                                    <span style="color: #cbd5e1; font-size: 11px;">Nombre</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="checkbox" />
+                                    <span style="color: #cbd5e1; font-size: 11px;">Contenedor</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Botones de acción -->
+                        <div style="border-top: 1px solid rgba(148,163,184,0.15); padding-top: 10px; margin-top: 10px; display: flex; gap: 8px;">
+                            <button style="padding: 10px 12px; background: #059669; color: white; border: none; border-radius: 6px; flex: 1;">💾 Guardar configuración</button>
+                            <button style="padding: 10px 12px; background: #6b7280; color: white; border: none; border-radius: 6px;">Reset</button>
+                        </div>
+                        
+                        <div style="border-top: 1px solid rgba(148,163,184,0.15); padding-top: 10px; margin-top: 10px; display: flex; gap: 8px;">
+                            <button style="padding: 10px 12px; background: #10b981; color: white; border: none; border-radius: 6px; flex: 1;">📄 Exportar PDF</button>
+                            <button style="padding: 10px 12px; background: #10b981; color: white; border: none; border-radius: 6px; flex: 1;">🖼️ Exportar PNG</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Panel Principal Derecho -->
+                    <div style="flex: 1; min-width: 520px; overflow: auto;">
+                        <div style="margin-bottom: 12px;">
+                            <h1 style="margin: 0; color: #f1f5f9; font-size: 24px; font-weight: 800;">🪪 Ficha & Etiqueta</h1>
+                            <p style="margin: 6px 0 0 0; color: #94a3b8;">Vista previa y configuración dinámica.</p>
+                        </div>
+                        
+                        <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start;">
+                            <!-- Ficha preview -->
+                            <div style="width: 720px; max-width: 100%; background: rgba(15,23,42,0.35); border: 1px solid rgba(148,163,184,0.15); border-radius: 12px; padding: 14px;">
+                                <div style="background: white; color: #0f172a; border-radius: 10px; overflow: hidden; padding: 20px;">
+                                    <!-- Header de ficha -->
+                                    <div style="background: linear-gradient(135deg, #1e40af, #3b82f6); padding: 25px; display: flex; align-items: center; justify-content: space-between; gap: 14px;">
+                                        <div>
+                                            <h1 style="color: white; margin: 0; font-size: 26px; letter-spacing: 1px; font-weight: 800;">ABSOLUTE</h1>
+                                            <p style="color: rgba(255,255,255,0.9); font-size: 14px; margin: 5px 0 0 0; font-weight: bold;">Sistema de Inventario</p>
+                                        </div>
+                                        <div style="background: white; padding: 8px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
+                                            <div style="width: 65px; height: 65px; background: #e5e7eb; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: 24px;">📦</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Contenido de ficha -->
+                                    <div style="padding: 30px; display: flex; gap: 30px;">
+                                        <!-- Foto -->
+                                        <div style="width: 220px; height: 220px; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; flex-shrink: 0; background: #f8fafc; display: flex; align-items: center; justify-content: center;">
+                                            <div style="font-size: 60px; color: #cbd5e1;">🎙️</div>
+                                        </div>
+                                        
+                                        <!-- Grid de campos -->
+                                        <div style="flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 15px 25px; color: #1e293b; font-size: 14px;">
+                                            <div style="border-bottom: 1px solid #f1f5f9; padding-bottom: 4px;">
+                                                <span style="font-weight: bold;">Código:</span> 2001-AUD-ILU-001
+                                            </div>
+                                            <div style="border-bottom: 1px solid #f1f5f9; padding-bottom: 4px;">
+                                                <span style="font-weight: bold;">Nombre:</span> Micrófono Sony ECM-77B
+                                            </div>
+                                            <div style="border-bottom: 1px solid #f1f5f9; padding-bottom: 4px;">
+                                                <span style="font-weight: bold;">Tipo de Uso:</span> Audio Profesional
+                                            </div>
+                                            <div style="border-bottom: 1px solid #f1f5f9; padding-bottom: 4px;">
+                                                <span style="font-weight: bold;">Contenedor:</span> Case 01
+                                            </div>
+                                            <div style="border-bottom: 1px solid #f1f5f9; padding-bottom: 4px;">
+                                                <span style="font-weight: bold;">Marca:</span> Sony
+                                            </div>
+                                            <div style="border-bottom: 1px solid #f1f5f9; padding-bottom: 4px;">
+                                                <span style="font-weight: bold;">Estado:</span> Activo
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Footer -->
+                                    <div style="text-align: center; padding: 20px; background: #f8fafc; font-size: 42px; font-weight: 900; letter-spacing: 3px; word-break: break-word;">
+                                        2001-AUD-ILU-001
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Etiqueta preview -->
+                            <div style="width: 420px; background: rgba(15,23,42,0.35); border: 1px solid rgba(148,163,184,0.15); border-radius: 12px; padding: 14px;">
+                                <div style="background: white; color: #0f172a; border: 2px solid black; padding: 15px; font-family: Arial, sans-serif; border-radius: 10px;">
+                                    <!-- Código principal -->
+                                    <div style="text-align: center; font-size: 22px; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 10px; word-break: break-all; font-weight: 900;">
+                                        2001-AUD-ILU-001
+                                    </div>
+                                    
+                                    <!-- Nombre -->
+                                    <div style="font-weight: 900; font-size: 16px; text-transform: uppercase; margin-bottom: 4px;">
+                                        Micrófono Sony ECM-77B
+                                    </div>
+                                    
+                                    <!-- Detalles -->
+                                    <div style="font-size: 14px; color: #444; margin-bottom: 15px;">
+                                        Audio Profesional • Case 01
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Características Principales</h3>
+            <ul>
+                <li><strong>Dos Formatos:</strong> Fichas detalladas (para documentación) y etiquetas compactas (para identificación).</li>
+                <li><strong>Configuración Personalizable:</strong> Control total sobre quón campos mostrar y en quón posiciones.</li>
+                <li><strong>Temas y Paletas:</strong> Múltiples opciones de colores y estilos visuales.</li>
+                <li><strong>Vista Previa en Tiempo Real:</strong> Visualización inmediata de cambios en el diseño.</li>
+                <li><strong>Búsqueda Avanzada:</strong> Localizar materiales por código, nombre, contenedor o tipo.</li>
+                <li><strong>Exportación Múltiple:</strong> PDF para impresión profesional y PNG para uso digital.</li>
+            </ul>
+
+            <h3>Flujo de Trabajo</h3>
+            <ol>
+                <li><strong>Buscar Material:</strong>
+                    <ul>
+                        <li>Seleccionar la bodega principal.</li>
+                        <li>Elegir tipo de búsqueda: Material o Contenedor.</li>
+                        <li>Ingresar código específico o usar el buscador avanzado.</li>
+                        <li>Cargar el material seleccionado.</li>
+                    </ul>
+                </li>
+                <li><strong>Configurar Ficha:</strong>
+                    <ul>
+                        <li>Seleccionar tema/paleta de colores.</li>
+                        <li>Configurar elementos principales (título, encabezado).</li>
+                        <li>Definir elementos secundarios (subtítulos, información adicional).</li>
+                        <li>Posicionar la foto: izquierda, derecha u ocultar.</li>
+                        <li>Seleccionar hasta 12 campos para mostrar en la ficha.</li>
+                    </ul>
+                </li>
+                <li><strong>Configurar Etiqueta:</strong>
+                    <ul>
+                        <li>Elegir tema diferente para la etiqueta si es necesario.</li>
+                        <li>Configurar elementos principales y secundarios (más compactos).</li>
+                        <li>Decidir posición de la foto (generalmente oculta o pequeña).</li>
+                        <li>Seleccionar hasta 3 campos clave para la etiqueta.</li>
+                    </ul>
+                </li>
+                <li><strong>Vista Previa:</strong>
+                    <ul>
+                        <li>Observar cambios en tiempo real en el panel de preview.</li>
+                        <li>Ajustar configuraciones hasta obtener el diseño deseado.</li>
+                        <li>Guardar la configuración para uso futuro.</li>
+                    </ul>
+                </li>
+                <li><strong>Exportar:</strong>
+                    <ul>
+                        <li>Exportar PDF: Genera ficha completa + múltiples etiquetas por página.</li>
+                        <li>Exportar PNG: Crea imagen individual de ficha o etiqueta.</li>
+                    </ul>
+                </li>
+            </ol>
+
+            <h3>Tipos de Documentos</h3>
+            <h4>Ficha Tóncnica</h4>
+            <ul>
+                <li><strong>Formato:</strong> Documento detallado de tamaño carta (792px ancho).</li>
+                <li><strong>Contenido:</strong> Hasta 12 campos de información organizados en grid.</li>
+                <li><strong>Elementos:</strong> Logo, título, foto grande, información detallada, código de barras opcional.</li>
+                <li><strong>Uso:</strong> Documentación tóncnica, archivos, especificaciones completas.</li>
+            </ul>
+
+            <h4>Etiqueta de Identificación</h4>
+            <ul>
+                <li><strong>Formato:</strong> Etiqueta compacta (380px ancho) para impresión en etiquetas adhesivas.</li>
+                <li><strong>Contenido:</strong> Hasta 3 campos clave más código y nombre.</li>
+                <li><strong>Elementos:</strong> Foto pequeña u oculta, código prominente, información esencial.</li>
+                <li><strong>Uso:</strong> Identificación física de contenedores, estanterías, equipos.</li>
+            </ul>
+
+            <h3>Campos Disponibles</h3>
+            <p>La herramienta permite seleccionar quón información mostrar en cada documento:</p>
+            <ul>
+                <li><strong>Información Básica:</strong> Código, nombre, tipo de uso, tipo de material.</li>
+                <li><strong>Ubicación:</strong> Bodega principal, secundaria, contenedor.</li>
+                <li><strong>Especificaciones:</strong> Marca, modelo, color, dimensiones, peso, precio.</li>
+                <li><strong>Estado:</strong> Cantidad disponible, estado del contenedor.</li>
+                <li><strong>Personalizados:</strong> Campos extra definidos en el catálogo.</li>
+                <li><strong>Tóncnicos:</strong> Fecha de creación, usuario, notas adicionales.</li>
+            </ul>
+
+            <h3>Temas y Personalización Visual</h3>
+            <ul>
+                <li><strong>Paletas de Color:</strong> Múltiples combinaciones predefinidas.</li>
+                <li><strong>Posicionamiento:</strong> Control sobre ubicación de elementos (izquierda, derecha, centro).</li>
+                <li><strong>Fuentes:</strong> Estilos tipográficos apropiados para impresión.</li>
+                <li><strong>Logos:</strong> Integración de logotipo de la empresa.</li>
+                <li><strong>Códigos de Barras:</strong> Generación automática para identificación rápida.</li>
+            </ul>
+
+            <h3>Búsqueda y Selección</h3>
+            <h4>Búsqueda Directa</h4>
+            <ul>
+                <li>Ingresar código específico del material o contenedor.</li>
+                <li>Seleccionar bodega y tipo (Material/Contenedor).</li>
+                <li>Carga inmediata del elemento encontrado.</li>
+            </ul>
+
+            <h4>Buscador Avanzado</h4>
+            <ul>
+                <li>Búsqueda por texto libre (código, nombre, contenedor, tipo).</li>
+                <li>Lista de resultados con vista previa.</li>
+                <li>Selección interactiva del material deseado.</li>
+            </ul>
+
+            <h3>Exportación y Formatos</h3>
+            <h4>PDF para Impresión</h4>
+            <ul>
+                <li>Genera documento profesional listo para impresión.</li>
+                <li>Incluye ficha completa y múltiples etiquetas por hoja.</li>
+                <li>Optimizado para papel carta y etiquetas adhesivas.</li>
+                <li>Compatible con impresoras estándar y plotters.</li>
+            </ul>
+
+            <h4>PNG para Digital</h4>
+            <ul>
+                <li>Exportación individual de ficha o etiqueta.</li>
+                <li>Formato de imagen de alta calidad.</li>
+                <li>Ideal para uso digital, correos electrónicos, sistemas de gestión.</li>
+                <li>Selección del tipo y código específico a exportar.</li>
+            </ul>
+
+            <h3>Configuraciones Guardadas</h3>
+            <ul>
+                <li><strong>Guardar Configuración:</strong> Almacenar setups personalizados para reutilización.</li>
+                <li><strong>Reset:</strong> Restaurar configuraciones predeterminadas.</li>
+                <li><strong>Persistencia:</strong> Las configuraciones se mantienen entre sesiones.</li>
+            </ul>
+
+            <h3>Casos de Uso Comunes</h3>
+            <ul>
+                <li><strong>Identificación de Equipos:</strong> Etiquetas para audiovisual, iluminación, sonido.</li>
+                <li><strong>Documentación Tóncnica:</strong> Fichas completas para mantenimiento y reparaciones.</li>
+                <li><strong>Inventario Físico:</strong> Etiquetas para verificación y conteo de materiales.</li>
+                <li><strong>Organización de Bodega:</strong> Identificación de contenedores y estanterías.</li>
+                <li><strong>Control de Calidad:</strong> Fichas con especificaciones tóncnicas detalladas.</li>
+                <li><strong>Transferencias:</strong> Documentación para movimientos entre bodegas.</li>
+            </ul>
+
+            <h3>Consideraciones Tóncnicas</h3>
+            <ul>
+                <li><strong>Resolución:</strong> Diseños optimizados para impresión de alta calidad.</li>
+                <li><strong>Compatibilidad:</strong> Funciona con html2pdf.js para exportación PDF.</li>
+                <li><strong>Almacenamiento:</strong> Configuraciones guardadas en el navegador local.</li>
+                <li><strong>Actualización:</strong> Cambios en el catálogo se reflejan automáticamente.</li>
+                <li><strong>Validación:</strong> Verificación de existencia del material antes de generar documentos.</li>
+            </ul>
+
+            <h3>Limitaciones</h3>
+            <ul>
+                <li>Fichas limitadas a 12 campos para mantener legibilidad.</li>
+                <li>Etiquetas limitadas a 3 campos para formato compacto.</li>
+                <li>Dependiente de conexión a Supabase para datos actualizados.</li>
+                <li>Formatos de exportación fijos (PDF carta, PNG alta resolución).</li>
+            </ul>
+        </section>
+    </main>
+</body>
+</html>
+

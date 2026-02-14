@@ -1,0 +1,847 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario - Recepción de Mercancías</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary-color: #64748b;
+            --accent-color: #f59e0b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --background-primary: #0f172a;
+            --background-secondary: #1e293b;
+            --background-tertiary: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --border-hover: #475569;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--background-primary) 0%, #1e1b4b 100%);
+            color: var(--text-secondary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--background-secondary) 0%, var(--background-tertiary) 100%);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .header-text h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .header-text p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--background-tertiary);
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .nav-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            transform: translateY(-1px);
+        }
+
+        /* Breadcrumb */
+        .breadcrumb {
+            background: var(--background-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .breadcrumb-nav {
+            padding: 1rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .breadcrumb-list {
+            display: flex;
+            align-items: center;
+            list-style: none;
+            gap: 0.5rem;
+        }
+
+        .breadcrumb-item {
+            color: var(--text-muted);
+        }
+
+        .breadcrumb-item a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .breadcrumb-item a:hover {
+            color: var(--primary-color);
+        }
+
+        .breadcrumb-separator {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .breadcrumb-current {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .content-section {
+            background: var(--background-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .section-header {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-description {
+            font-size: 1.125rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        /* Feature Gallery */
+        .feature-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .feature-card {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .feature-image {
+            padding: 1.5rem;
+            background: var(--background-primary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .feature-caption {
+            padding: 1rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            text-align: center;
+            background: var(--background-secondary);
+        }
+
+        /* Content Blocks */
+        .content-block {
+            margin: 2rem 0;
+        }
+
+        .content-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .content-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .content-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .content-list li:last-child {
+            border-bottom: none;
+        }
+
+        .nested-list {
+            margin-left: 1.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .nested-list li {
+            border-bottom: none;
+            padding: 0.25rem 0;
+            color: var(--text-muted);
+        }
+
+        .highlight-box {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .highlight-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Table Styles */
+        .table-container {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .table-header {
+            background: var(--background-secondary);
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .table-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table th {
+            background: var(--background-secondary);
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .data-table td {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .data-table tr:hover td {
+            background: var(--background-primary);
+        }
+
+        .amount-cell {
+            text-align: right;
+            font-family: 'Courier New', monospace;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-md);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .status-pending {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .status-approved {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .status-rejected {
+            background: var(--error-color);
+            color: white;
+        }
+
+        /* Status Cards */
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .status-card {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .status-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .status-label {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--background-secondary);
+            border-top: 1px solid var(--border-color);
+            margin-top: 3rem;
+        }
+
+        .footer-content {
+            padding: 2rem;
+            text-align: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-text {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .feature-card {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .feature-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .nav-buttons {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .main-content {
+                padding: 1rem;
+            }
+
+            .content-section {
+                padding: 1.5rem;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            .feature-gallery {
+                grid-template-columns: 1fr;
+            }
+
+            .data-table {
+                font-size: 0.75rem;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 0.5rem;
+            }
+
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo">
+                    <i class="fas fa-truck-loading"></i>
+                </div>
+                <div class="header-text">
+                    <h1>Manual de Usuario</h1>
+                    <p>Absolute de Nicaragua</p>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <a href="index.html" class="nav-btn">
+                    <i class="fas fa-arrow-left"></i>
+                    Logística
+                </a>
+                <a href="../index.html" class="nav-btn">
+                    <i class="fas fa-home"></i>
+                    Inicio
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <nav class="breadcrumb">
+        <div class="breadcrumb-nav">
+            <ol class="breadcrumb-list">
+                <li class="breadcrumb-item">
+                    <a href="../index.html">Inicio</a>
+                </li>
+                <li class="breadcrumb-separator">/</li>
+                <li class="breadcrumb-item">
+                    <a href="index.html">Logística</a>
+                </li>
+                <li class="breadcrumb-separator">/</li>
+                <li class="breadcrumb-current">Recepción de Mercancías</li>
+            </ol>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <section class="content-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-truck-loading"></i>
+                    Recepción de Mercancías
+                </h2>
+                <p class="section-description">
+                    El módulo de recepción de mercancías garantiza un proceso eficiente y controlado para verificar, inspeccionar y registrar todas las entregas de proveedores. Incluye control de calidad, verificación de cantidades y actualización automática del inventario.
+                </p>
+            </div>
+
+            <div class="feature-gallery">
+                <div class="feature-card">
+                    <div class="feature-image">
+                        <div style="background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 20px; font-family: 'Fira Code', 'Courier New', monospace; font-size: 12px; line-height: 1.4; color: #cbd5e1;">
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+                                <h3 style="margin: 0 0 12px; color: #0f172a; font-size: 14px; font-weight: 600;">📦 Recepción en Progreso</h3>
+
+                                <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; color: #0f172a;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                                        <h4 style="margin: 0; font-size: 13px; font-weight: 600;">OC-2026-015 - Proveedor ABC</h4>
+                                        <span style="background: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">En Recepción</span>
+                                    </div>
+
+                                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-bottom: 16px;">
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                            <div>
+                                                <label style="display: block; font-size: 11px; color: #64748b; margin-bottom: 4px;">Fecha Recepción</label>
+                                                <div style="font-size: 12px; font-weight: 600;">28/02/2026 14:30</div>
+                                            </div>
+                                            <div>
+                                                <label style="display: block; font-size: 11px; color: #64748b; margin-bottom: 4px;">Responsable</label>
+                                                <div style="font-size: 12px; font-weight: 600;">Juan Pérez</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div style="background: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 6px; padding: 12px;">
+                                        <h5 style="margin: 0 0 8px; font-size: 12px; font-weight: 600; color: #0c4a6e;">Items Recibidos</h5>
+                                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px; background: #fff; border-radius: 4px;">
+                                                <div style="font-size: 11px; color: #374151;">Cemento Portland 50kg</div>
+                                                <div style="display: flex; gap: 8px;">
+                                                    <span style="font-size: 10px; color: #059669; background: #dcfce7; padding: 2px 6px; border-radius: 8px;">✓ 25/25</span>
+                                                </div>
+                                            </div>
+                                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px; background: #fff; border-radius: 4px;">
+                                                <div style="font-size: 11px; color: #374151;">Arena Fina 40kg</div>
+                                                <div style="display: flex; gap: 8px;">
+                                                    <span style="font-size: 10px; color: #dc2626; background: #fef2f2; padding: 2px 6px; border-radius: 8px;">✗ 18/20</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="feature-caption">
+                        Fig. 1 - Interfaz de recepción mostrando verificación de items y control de calidad.
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-image">
+                        <div style="background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 20px; font-family: 'Fira Code', 'Courier New', monospace; font-size: 12px; line-height: 1.4; color: #cbd5e1;">
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+                                <h3 style="margin: 0 0 12px; color: #0f172a; font-size: 14px; font-weight: 600;">🔍 Control de Calidad</h3>
+
+                                <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; color: #0f172a;">
+                                    <div style="margin-bottom: 16px;">
+                                        <h4 style="margin: 0 0 8px; font-size: 13px; font-weight: 600;">Inspección de Calidad</h4>
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px;">
+                                                <label style="display: block; font-size: 11px; color: #64748b; margin-bottom: 4px;">Estado del Producto</label>
+                                                <select style="width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; font-size: 12px;">
+                                                    <option>✓ Aprobado</option>
+                                                    <option>⚠ Condicional</option>
+                                                    <option>✗ Rechazado</option>
+                                                </select>
+                                            </div>
+
+                                            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px;">
+                                                <label style="display: block; font-size: 11px; color: #64748b; margin-bottom: 4px;">Cantidad Recibida</label>
+                                                <input style="width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; font-size: 12px;" type="number" value="18" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div style="background: #fef2f2; border: 1px solid #fca5a5; border-radius: 6px; padding: 12px; margin-bottom: 16px;">
+                                        <h5 style="margin: 0 0 8px; font-size: 12px; font-weight: 600; color: #dc2626;">Observaciones de Calidad</h5>
+                                        <textarea style="width: 100%; padding: 8px; border: 1px solid #fca5a5; border-radius: 4px; background: #fff; font-size: 12px; resize: vertical;" rows="3" placeholder="Describa las observaciones encontradas...">Arena presenta humedad excesiva. 2 sacos dañados durante el transporte.</textarea>
+                                    </div>
+
+                                    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                                        <button style="padding: 8px 16px; border: 1px solid #dc2626; border-radius: 6px; background: #dc2626; color: #fff; font-size: 12px; font-weight: 600;">Rechazar Lote</button>
+                                        <button style="padding: 8px 16px; border: 1px solid #059669; border-radius: 6px; background: #059669; color: #fff; font-size: 12px; font-weight: 600;">Aceptar con Observaciones</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="feature-caption">
+                        Fig. 2 - Sistema de control de calidad con inspección detallada y registro de observaciones.
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-chart-pie"></i>
+                    Estado de Recepciones
+                </h3>
+                <div class="status-grid">
+                    <div class="status-card">
+                        <div class="status-number">8</div>
+                        <div class="status-label">Recepciones Hoy</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-number">95%</div>
+                        <div class="status-label">Calidad Aprobada</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-number">3</div>
+                        <div class="status-label">Con Observaciones</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-number">2</div>
+                        <div class="status-label">Rechazadas</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-number">C$ 125,000</div>
+                        <div class="status-label">Valor Recibido</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-number">4.2h</div>
+                        <div class="status-label">Tiempo Promedio</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-table"></i>
+                    Recepciones Recientes
+                </h3>
+                <div class="table-container">
+                    <div class="table-header">
+                        <h4 class="table-title">Recepciones del Día - 28 Febrero 2026</h4>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Orden</th>
+                                <th>Proveedor</th>
+                                <th>Hora Recepción</th>
+                                <th>Items Recibidos</th>
+                                <th>Estado Calidad</th>
+                                <th>Valor</th>
+                                <th>Responsable</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>OC-2026-015</td>
+                                <td>Proveedor ABC</td>
+                                <td>14:30</td>
+                                <td>45/47 items</td>
+                                <td><span class="status-badge status-pending">En Inspección</span></td>
+                                <td class="amount-cell">C$ 25,000</td>
+                                <td>Juan Pérez</td>
+                            </tr>
+                            <tr>
+                                <td>OC-2026-012</td>
+                                <td>Distribuidora XYZ</td>
+                                <td>11:15</td>
+                                <td>28/28 items</td>
+                                <td><span class="status-badge status-approved">Aprobado</span></td>
+                                <td class="amount-cell">C$ 18,500</td>
+                                <td>María González</td>
+                            </tr>
+                            <tr>
+                                <td>OC-2026-010</td>
+                                <td>Materiales Industriales</td>
+                                <td>09:45</td>
+                                <td>15/16 items</td>
+                                <td><span class="status-badge status-pending">Observaciones</span></td>
+                                <td class="amount-cell">C$ 32,000</td>
+                                <td>Carlos Rodríguez</td>
+                            </tr>
+                            <tr>
+                                <td>OC-2026-008</td>
+                                <td>Servicios Técnicos</td>
+                                <td>08:30</td>
+                                <td>5/5 items</td>
+                                <td><span class="status-badge status-approved">Aprobado</span></td>
+                                <td class="amount-cell">C$ 12,500</td>
+                                <td>Ana López</td>
+                            </tr>
+                            <tr>
+                                <td>OC-2026-005</td>
+                                <td>Transporte Express</td>
+                                <td>16:20</td>
+                                <td>0/12 items</td>
+                                <td><span class="status-badge status-rejected">Rechazado</span></td>
+                                <td class="amount-cell">C$ 37,000</td>
+                                <td>Juan Pérez</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-star"></i>
+                    Funcionalidades Principales
+                </h3>
+                <ul class="content-list">
+                    <li><strong>Verificación Automática:</strong> Escaneo de códigos QR/barra para identificación rápida de productos y órdenes.</li>
+                    <li><strong>Control de Calidad:</strong> Inspección sistemática con criterios predefinidos por tipo de producto.</li>
+                    <li><strong>Registro Fotográfico:</strong> Captura de evidencia visual de daños, defectos o condiciones especiales.</li>
+                    <li><strong>Integración con Inventario:</strong> Actualización automática del stock disponible al completar la recepción.</li>
+                    <li><strong>Alertas de Desviaciones:</strong> Notificaciones automáticas cuando hay discrepancias en cantidad o calidad.</li>
+                    <li><strong>Gestión de Devoluciones:</strong> Procesamiento simplificado de productos rechazados o defectuosos.</li>
+                    <li><strong>Reportes de Recepción:</strong> Documentación completa de cada recepción para auditoría y seguimiento.</li>
+                    <li><strong>Optimización de Procesos:</strong> Sugerencias automáticas para mejorar tiempos y reducir errores.</li>
+                </ul>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-route"></i>
+                    Proceso de Recepción
+                </h3>
+                <ul class="content-list">
+                    <li><strong>Programación de Entrega:</strong> Confirmación previa de fecha y hora de llegada del proveedor.</li>
+                    <li><strong>Verificación de Documentos:</strong> Revisión de orden de compra, factura y documentos de transporte.</li>
+                    <li><strong>Inspección Visual:</strong> Verificación externa de embalajes y condiciones de transporte.</li>
+                    <li><strong>Conteo de Mercancía:</strong> Verificación de cantidades contra la orden de compra.</li>
+                    <li><strong>Control de Calidad:</strong> Inspección detallada según especificaciones técnicas del producto.</li>
+                    <li><strong>Registro de Observaciones:</strong> Documentación de cualquier anomalía o condición especial.</li>
+                    <li><strong>Actualización de Inventario:</strong> Incorporación automática de productos al stock disponible.</li>
+                    <li><strong>Generación de Reportes:</strong> Creación automática de certificados de recepción y calidad.</li>
+                </ul>
+            </div>
+
+            <div class="highlight-box">
+                <h4 class="highlight-title">
+                    <i class="fas fa-check-circle"></i>
+                    Criterios de Control de Calidad
+                </h4>
+                <ul class="content-list" style="margin: 0;">
+                    <li><strong>Materiales de Construcción:</strong> Verificación de integridad física, humedad, fecha de vencimiento y especificaciones técnicas.</li>
+                    <li><strong>Productos Electrónicos:</strong> Pruebas de funcionamiento, verificación de accesorios y compatibilidad.</li>
+                    <li><strong>Productos Químicos:</strong> Control de etiquetado, condiciones de almacenamiento y certificados de calidad.</li>
+                    <li><strong>Equipos y Maquinaria:</strong> Inspección de funcionamiento, verificación de manuales y accesorios completos.</li>
+                    <li><strong>Productos Perecederos:</strong> Control de temperaturas, fechas de caducidad y condiciones sanitarias.</li>
+                    <li><strong>Documentación:</strong> Verificación de certificados, garantías y documentación técnica completa.</li>
+                </ul>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-file-contract"></i>
+                    Tipos de Recepciones
+                </h3>
+                <ul class="content-list">
+                    <li><strong>Recepción Estándar:</strong> Proceso normal con verificación completa de calidad y cantidad.</li>
+                    <li><strong>Recepción Urgente:</strong> Proceso acelerado para entregas críticas con verificación prioritaria.</li>
+                    <li><strong>Recepción Parcial:</strong> Aceptación de entregas incompletas con seguimiento de pendientes.</li>
+                    <li><strong>Recepción con Devolución:</strong> Procesamiento de productos defectuosos con gestión de retorno al proveedor.</li>
+                    <li><strong>Recepción por Consignación:</strong> Mercancía que permanece en propiedad del proveedor hasta su venta.</li>
+                    <li><strong>Recepción Internacional:</strong> Control adicional de documentación aduanera y certificaciones.</li>
+                    <li><strong>Recepción de Servicios:</strong> Verificación de cumplimiento de contratos de servicios profesionales.</li>
+                    <li><strong>Recepción Automática:</strong> Procesos simplificados para proveedores certificados con historial confiable.</li>
+                </ul>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-chart-bar"></i>
+                    Reportes y Análisis
+                </h3>
+                <ul class="content-list">
+                    <li><strong>Reporte de Recepciones:</strong> Resumen diario de todas las mercancías recibidas y su estado.</li>
+                    <li><strong>Análisis de Calidad:</strong> Tendencias de aceptación, rechazos y observaciones por proveedor.</li>
+                    <li><strong>Reporte de Eficiencia:</strong> Métricas de tiempo de proceso y productividad del equipo.</li>
+                    <li><strong>Análisis de Proveedores:</strong> Evaluación de cumplimiento, puntualidad y calidad de entregas.</li>
+                    <li><strong>Reporte de Desviaciones:</strong> Documentación de discrepancias y acciones correctivas.</li>
+                    <li><strong>Estadísticas de Inventario:</strong> Impacto de recepciones en niveles de stock y rotación.</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p class="footer-text">
+                <i class="fas fa-copyright"></i>
+                Manual de Usuario - Absolute de Nicaragua 2026
+            </p>
+        </div>
+    </footer>
+</body>
+</html>

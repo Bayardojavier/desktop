@@ -1,0 +1,56 @@
+<div class="mq">
+  <div class="mq-header">
+    <div>
+      <h3 class="mq-title">Cálculo de Trusses</h3>
+      <p class="mq-sub">Ejercicios de despiece: calcula totales, faltantes y sobrantes a partir de cantidades reales.</p>
+    </div>
+
+    <div class="mq-controls">
+      <label class="mq-label">Dificultad
+        <select id="mq-diff" class="mq-select">
+          <option value="1">Fácil</option>
+          <option value="2">Media</option>
+          <option value="3">Difícil</option>
+        </select>
+      </label>
+      <label class="mq-label">Tipo
+        <select id="mq-mode" class="mq-select">
+          <option value="mix">Trusses</option>
+        </select>
+      </label>
+      <button id="mq-start" class="mq-btn">▶ Iniciar</button>
+      <button id="mq-stop" class="mq-btn">■ Detener</button>
+    </div>
+  </div>
+
+  <div class="mq-body">
+    <div class="mq-card">
+      <div class="mq-metrics">
+        <div class="metric"><span>Tiempo</span><strong id="mq-time">60</strong></div>
+        <div class="metric"><span>Puntos</span><strong id="mq-score">0</strong></div>
+        <div class="metric"><span>Racha</span><strong id="mq-streak">0</strong></div>
+      </div>
+
+      <div class="mq-problem" id="mq-problem">Presiona Iniciar</div>
+
+      <div class="mq-answer">
+        <input id="mq-input" class="mq-input" type="text" inputmode="numeric" placeholder="Respuesta" disabled />
+        <button id="mq-submit" class="mq-btn" disabled>Responder</button>
+      </div>
+
+      <p id="mq-msg" class="mq-msg"></p>
+    </div>
+
+    <div class="mq-card">
+      <h4 class="mq-side-title">Cómo se puntúa</h4>
+      <ul class="mq-list">
+        <li>Respuesta correcta: +10 puntos</li>
+        <li>Racha: +2 puntos extra por acierto consecutivo</li>
+        <li>Incorrecta: racha vuelve a 0</li>
+      </ul>
+      <div class="mq-sep"></div>
+      <h4 class="mq-side-title">Sugerencia educativa</h4>
+      <p class="mq-sub2">Practica cálculo rápido de materiales (multiplicar/sumar/restar) usando un despiece real de techos/estructuras.</p>
+    </div>
+  </div>
+</div>

@@ -164,19 +164,71 @@
     // =============================================================================
     // 🔹 GENERAR ID ÚNICO
     // =============================================================================
-    // 🔹 SOLO MUESTRA el siguiente ID (NO incrementa)
-function obtenerSiguienteIdServicio() {
-  let ultimoNumero = parseInt(localStorage.getItem('ultimoNumServicio')) || 0;
-  return `SRV-${String(ultimoNumero + 1).padStart(5, '0')}`;
-}
+    // Nota: el ID NO se debe generar solo con localStorage porque al reinstalar/limpiar
+    // el navegador o usar otra PC se repite el mismo SRV-xxxxx y da 23505.
 
-// 🔹 CONFIRMA el ID (SOLO al guardar)
-function confirmarIdServicio() {
-  let ultimoNumero = parseInt(localStorage.getItem('ultimoNumServicio')) || 0;
-  ultimoNumero++;
-  localStorage.setItem('ultimoNumServicio', ultimoNumero.toString());
-  return `SRV-${String(ultimoNumero).padStart(5, '0')}`;
-}
+    function formatearIdServicio(numero) {
+      return `SRV-${String(numero).padStart(5, '0')}`;
+    }
+
+    function extraerNumeroServicio(id) {
+      if (!id || typeof id !== 'string') return null;
+      const match = id.match(/^SRV-(\d{1,})$/);
+      if (!match) return null;
+      const n = parseInt(match[1], 10);
+      return Number.isFinite(n) ? n : null;
+    }
+
+    function obtenerUltimoNumeroLocal() {
+      const n = parseInt(localStorage.getItem('ultimoNumServicio'), 10);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function guardarUltimoNumeroLocal(numero) {
+      if (!Number.isFinite(numero) || numero < 0) return;
+      localStorage.setItem('ultimoNumServicio', String(numero));
+    }
+
+    async function obtenerUltimoNumeroServicioEnDB() {
+      try {
+        const { data, error } = await window.supabaseClient
+          .from('servicios')
+          .select('id')
+          .like('id', 'SRV-%')
+          .order('id', { ascending: false })
+          .limit(1);
+
+        if (error) {
+          console.warn('No se pudo obtener el último ID desde DB:', error);
+          return null;
+        }
+
+        const ultimoId = Array.isArray(data) && data.length ? data[0].id : null;
+        return extraerNumeroServicio(ultimoId);
+      } catch (err) {
+        console.warn('Error inesperado leyendo ID desde DB:', err);
+        return null;
+      }
+    }
+
+    async function obtenerSiguienteNumeroServicio() {
+      const ultimoLocal = obtenerUltimoNumeroLocal();
+      const ultimoDb = await obtenerUltimoNumeroServicioEnDB();
+      const base = Number.isFinite(ultimoDb) ? Math.max(ultimoLocal, ultimoDb) : ultimoLocal;
+      return base + 1;
+    }
+
+    async function obtenerSiguienteIdServicio() {
+      const siguienteNumero = await obtenerSiguienteNumeroServicio();
+      return formatearIdServicio(siguienteNumero);
+    }
+
+    async function refrescarCampoIdServicio() {
+      const inputId = document.getElementById('servicio-id');
+      if (!inputId) return;
+      inputId.value = '...';
+      inputId.value = await obtenerSiguienteIdServicio();
+    }
 
 
     // =============================================================================
@@ -216,8 +268,7 @@ function confirmarIdServicio() {
       
       if (!validarFormulario()) return;
 
-      const servicio = {
-        id: confirmarIdServicio(),
+      const servicioBase = {
         nombre: document.getElementById('servicio-desc-corta').value.trim(),
         descripcion: document.getElementById('servicio-descripcion').value.trim(),
         precio_a: parseFloat(document.getElementById('precio-a').value) || 0,
@@ -226,23 +277,48 @@ function confirmarIdServicio() {
         activo: true
       };
 
-      try {
-        const { data, error } = await window.supabaseClient
-          .from('servicios')
-          .insert(servicio)
-          .select()
-          .single();
+      const maxIntentos = 8;
+      let numero = await obtenerSiguienteNumeroServicio();
 
-        if (error) {
-          console.error('Error al guardar servicio:', error);
-          alert('❌ Error al guardar el servicio.');
+      try {
+        let data = null;
+        for (let intento = 0; intento < maxIntentos; intento++) {
+          const idCandidato = formatearIdServicio(numero + intento);
+          const servicio = { id: idCandidato, ...servicioBase };
+
+          const res = await window.supabaseClient
+            .from('servicios')
+            .insert(servicio)
+            .select()
+            .single();
+
+          if (!res.error) {
+            data = res.data;
+            const usado = extraerNumeroServicio(idCandidato);
+            if (Number.isFinite(usado)) guardarUltimoNumeroLocal(usado);
+            break;
+          }
+
+          // 23505 = unique_violation (PK duplicada). Probablemente otro equipo/instancia usó el mismo ID.
+          if (String(res.error.code) === '23505') {
+            console.warn('ID de servicio duplicado, reintentando con el siguiente:', idCandidato);
+            continue;
+          }
+
+          console.error('Error al guardar servicio:', res.error);
+          alert(`❌ Error al guardar el servicio.\n${res.error.message || ''}`);
+          return;
+        }
+
+        if (!data) {
+          alert('❌ No se pudo guardar el servicio: demasiados reintentos por ID duplicado.');
           return;
         }
 
         alert(`✅ Servicio "${data.nombre}" guardado en dólares con ID ${data.id}.`);
         
         // Resetear formulario
-        document.getElementById('servicio-id').value = obtenerSiguienteIdServicio();
+        await refrescarCampoIdServicio();
         document.getElementById('servicio-desc-corta').value = '';
         document.getElementById('servicio-descripcion').value = '';
         document.getElementById('precio-a').value = '';
@@ -258,9 +334,9 @@ function confirmarIdServicio() {
     // =============================================================================
     // 🔹 CREAR NUEVO
     // =============================================================================
-    function crearNuevo() {
+    async function crearNuevo() {
       if (confirm("¿Desea crear un nuevo servicio? Se perderán los cambios no guardados.")) {
-        document.getElementById('servicio-id').value = obtenerSiguienteIdServicio();
+        await refrescarCampoIdServicio();
 
         document.getElementById('servicio-desc-corta').value = '';
         document.getElementById('servicio-descripcion').value = '';
@@ -275,7 +351,7 @@ function confirmarIdServicio() {
     // =============================================================================
     // 🔹 INICIALIZACIÓN
     // =============================================================================
-   document.getElementById('servicio-id').value = obtenerSiguienteIdServicio();
+    refrescarCampoIdServicio();
 
     
     document.getElementById('form-servicio').addEventListener('submit', guardarServicio);

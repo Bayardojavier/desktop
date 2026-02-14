@@ -38,6 +38,7 @@
 
 <script src="../../../src/config/supabaseClient.js"></script>
 <script>
+/* eslint-disable jsx */
 (function() {
     // 1. CARGA DE LIBRERIAS Y HELPERS
     if (!window.html2pdf) {
@@ -51,8 +52,13 @@
         set: (k, v) => localStorage.setItem(k, JSON.stringify(v))
     };
 
-    const formatDateTime = (f, h) => (f && h) ? new Date(f + 'T' + h).toLocaleString("es-ES") : "—";
-    const formatDate = (date) => new Date(date).toLocaleDateString("es-ES");
+    const formatDateTime = (f, h) => (f && h) ? new Date(f + 'T' + h).toLocaleString("es-NI") : "—";
+    const formatDate = (date) => {
+        if(!date) return '–';
+        const d = new Date(date);
+        if(Number.isNaN(d.getTime())) return String(date);
+        return d.toLocaleDateString('es-NI');
+    };
 
     // FUNCIONES UTILITARIAS GLOBALES
     function isCaseBaseCodigo(codigo) {
@@ -92,43 +98,172 @@
         }
     }
 
+    // Nueva función: determinar si un material es rentable (herramienta) o consumible
+    function determinarTipoMaterial(material) {
+        if (!material) return 'consumible'; // Por defecto
+
+        const tipoMaterial = (material.tipoMaterial || '').toString().toLowerCase();
+        const tipoUso = (material.tipoUso || '').toString().toLowerCase();
+        const nombre = (material.nom || '').toString().toLowerCase();
+
+        // Si tiene tipo_material o tipo_uso que indique herramienta/rentable
+        if (tipoMaterial.includes('herramienta') || tipoMaterial.includes('rentable') ||
+            tipoUso.includes('herramienta') || tipoUso.includes('rentable')) {
+            return 'rentable';
+        }
+
+        // Si el nombre contiene palabras clave de herramientas
+        if (nombre.includes('martillo') || nombre.includes('destornillador') || nombre.includes('taladro') ||
+            nombre.includes('sierra') || nombre.includes('llave') || nombre.includes('pinza') ||
+            nombre.includes('alicate') || nombre.includes('cinta') || nombre.includes('nivel') ||
+            nombre.includes('escuadra') || nombre.includes('juego de') || nombre.includes('kit')) {
+            return 'rentable';
+        }
+
+        // Por defecto, si viene del catálogo de consumibles, es consumible
+        if (material.__catalogo === 'catalogo_consumibles') {
+            return 'consumible';
+        }
+
+        return 'consumible'; // Default
+    }
+
+    // Nueva función: simplificar observaciones en el PDF
+    function simplificarObservacion(observacion) {
+        if (!observacion) return "";
+        
+        const obs = observacion.toString().toLowerCase();
+        if (obs.includes('material actualizado desde la búsqueda') || 
+            obs.includes('material actualizado desde la busqueda') ||
+            obs.includes('reemplazado') || obs.includes('sustituido')) {
+            return "Este material vino de plantilla y se reemplazó con el código correspondiente.";
+        }
+        
+        return observacion; // Si no coincide, devolver original
+    }
+
+    // Resolver un posible ID de empleado (UUID) a nombre legible
+    const __empleadosNombreCache = new Map();
+    async function resolveEmpleadoNombre(encargadoEvento) {
+        const raw = String(encargadoEvento || '').trim();
+        if (!raw) return '';
+
+        // Si ya viene con nombre (no parece UUID), devolver tal cual
+        const uuidLike = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(raw);
+        if (!uuidLike) return raw;
+
+        if (__empleadosNombreCache.has(raw)) return __empleadosNombreCache.get(raw);
+
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('empleados')
+                .select('nombres, apellidos, codigo_empleado')
+                .eq('id', raw)
+                .limit(1);
+
+            if (error) {
+                console.warn('No se pudo resolver empleado por id:', raw, error);
+                __empleadosNombreCache.set(raw, raw);
+                return raw;
+            }
+
+            const e = (data && data[0]) ? data[0] : null;
+            if (!e) {
+                __empleadosNombreCache.set(raw, raw);
+                return raw;
+            }
+
+            const nombre = `${e.nombres || ''} ${e.apellidos || ''}`.trim();
+            const etiqueta = e.codigo_empleado ? `${nombre} (${e.codigo_empleado})` : nombre;
+            const finalName = etiqueta || raw;
+            __empleadosNombreCache.set(raw, finalName);
+            return finalName;
+        } catch (err) {
+            console.warn('Error resolviendo empleado por id:', raw, err);
+            __empleadosNombreCache.set(raw, raw);
+            return raw;
+        }
+    }
+
+    // Función auxiliar para obtener stock desde vistas SQL usando RPC
+    async function obtenerStockDesdeVistas(codigoMaterial) {
+        try {
+            // Usar una consulta RPC que ejecute SQL en el servidor
+            const { data: stockData, error } = await window.supabaseClient
+                .rpc('get_material_stock', {
+                    p_codigo: codigoMaterial
+                });
+
+            if (error) {
+                console.error('Error consultando stock via RPC:', error);
+                return 0;
+            }
+
+            return stockData || 0;
+        } catch (error) {
+            console.error('Error obteniendo stock:', error);
+            return 0;
+        }
+    }
+
     function renderCodigoNombreHTML(item) {
         const cod = item?.codigo_material;
         const nombre = item?.nombre_material || cod;
         if (isCaseBaseCodigo(cod)) {
             const base = getCaseBaseFromCodigo(cod) || (item?.nombre_material || 'Case');
-            return `<b>CASE ${base}</b><br><small>Pendiente de selección en despacho</small>`;
+            return `<b>CASE ${base}</b><br/><small>Pendiente de selección en despacho</small>`;
         }
-        return `<b>${nombre}</b><br><small>Código: ${cod} (${item?.medidas || ''})</small>`;
+        return `<b>${nombre}</b><br/><small>Código: ${cod} (${item?.medidas || ''})</small>`;
     }
     // 2. FUNCIÓN DE CORRELATIVO SECUENCIAL
     async function generarCorrelativo() {
-        try {
-            // Intentar obtener el último correlativo desde Supabase
-            const { data: despachos, error } = await window.supabaseClient
-                .from('despachos_logistica')
-                .select('numero_despacho')
-                .order('creado_en', { ascending: false })
-                .limit(1);
+        const fallbackLocal = () => {
+            const ultimo = parseInt(localStorage.getItem('ultimo_correlativo_despacho') || '0', 10) || 0;
+            const nuevo = ultimo + 1;
+            localStorage.setItem('ultimo_correlativo_despacho', String(nuevo));
+            return 'DESE-' + String(nuevo).padStart(5, '0');
+        };
 
-            let ultimoNumero = 0;
-            if (!error && despachos && despachos.length > 0) {
-                // Extraer el número del formato "DESE-XXXXX" o "DES-XXXXX" (compatibilidad)
-                const match = despachos[0].numero_despacho.match(/(?:DESE|DES)-(\d+)/);
-                if (match) {
-                    ultimoNumero = parseInt(match[1]);
+        const parseNumero = (numeroDespacho) => {
+            const s = String(numeroDespacho || '').trim();
+            const m = s.match(/-(\d+)$/);
+            return m ? (parseInt(m[1], 10) || 0) : 0;
+        };
+
+        try {
+            // Importante: NO dependemos de created_at/creado_en/fecha_despacho (pueden variar o no existir).
+            // Usamos el propio numero_despacho (padded) para obtener el mayor por prefijo.
+            let maxEncontrado = 0;
+            const prefijos = ['DESE', 'DES'];
+
+            for (const p of prefijos) {
+                const { data, error } = await window.supabaseClient
+                    .from('despachos_logistica')
+                    .select('numero_despacho')
+                    .ilike('numero_despacho', `${p}-%`)
+                    .order('numero_despacho', { ascending: false })
+                    .limit(1);
+
+                if (error) {
+                    console.warn('No se pudo leer último correlativo en despachos_logistica para', p, error);
+                    continue;
+                }
+
+                if (data && data.length > 0) {
+                    maxEncontrado = Math.max(maxEncontrado, parseNumero(data[0].numero_despacho));
                 }
             }
 
-            const nuevoNumero = ultimoNumero + 1;
-            return "DESE-" + nuevoNumero.toString().padStart(5, '0');
+            // Si no pudimos leer nada (RLS o tabla vacía), continuar desde localStorage.
+            const local = parseInt(localStorage.getItem('ultimo_correlativo_despacho') || '0', 10) || 0;
+            const base = Math.max(maxEncontrado, local);
+            const nuevoNumero = base + 1;
+
+            localStorage.setItem('ultimo_correlativo_despacho', String(nuevoNumero));
+            return 'DESE-' + String(nuevoNumero).padStart(5, '0');
         } catch (error) {
             console.error('Error al generar correlativo desde Supabase:', error);
-            // Fallback a localStorage
-            let ultimo = parseInt(localStorage.getItem('ultimo_correlativo_despacho') || "0");
-            let nuevo = ultimo + 1;
-            localStorage.setItem('ultimo_correlativo_despacho', nuevo.toString());
-            return "DESE-" + nuevo.toString().padStart(5, '0');
+            return fallbackLocal();
         }
     }
 
@@ -165,7 +300,7 @@
                         // Para solicitudes completadas, buscar el número de despacho
                         botonesHTML = `<button class="btn-despacho-outline" onclick="window.buscarDespachoParaReimprimir('${s.id}')">📄 Reimprimir</button>`;
                     }
-                    botonesHTML += `<button class="btn-despacho-solido" onclick="window.verPedidoDespacho('${s.id}')">REVISAR SALIDA</button>`;
+                    botonesHTML += `<button class="btn-despacho-solido" onclick="window.iniciarCargaPedido('${s.id}', this)">REVISAR SALIDA</button>`;
                     
                     html += `
                         <div class="despacho-card ${esCompletada ? 'is-completada' : 'is-pendiente'}">
@@ -226,7 +361,7 @@
 
                         const itemCount = countError ? 0 : count;
 
-                        const fecha = new Date(despacho.fecha_despacho).toLocaleDateString('es-ES');
+                        const fecha = formatDate(despacho.fecha_despacho);
                         html += `
                             <div class="despacho-hist-item">
                                 <div class="despacho-hist-item-row">
@@ -244,7 +379,7 @@
                     } catch (countError) {
                         console.error('Error obteniendo conteo para despacho:', despacho.numero_despacho, countError);
                         // Mostrar despacho sin conteo
-                        const fecha = new Date(despacho.fecha_despacho).toLocaleDateString('es-ES');
+                        const fecha = formatDate(despacho.fecha_despacho);
                         html += `
                             <div class="despacho-hist-item">
                                 <div class="despacho-hist-item-row">
@@ -309,39 +444,110 @@
             // Obtener datos del evento
             let eventoData = null;
             if (despacho.evento) {
-                const { data: eventosEncontrados } = await window.supabaseClient
+                // Primero buscar por nombre exacto
+                let { data: eventosEncontrados } = await window.supabaseClient
                     .from('eventos')
                     .select('*')
-                    .ilike('nombre', `%${despacho.evento}%`);
+                    .eq('nombre', despacho.evento);
+
+                if (!eventosEncontrados || eventosEncontrados.length === 0) {
+                    // Si no encuentra exacto, buscar por parcial
+                    const { data: eventosParciales } = await window.supabaseClient
+                        .from('eventos')
+                        .select('*')
+                        .ilike('nombre', `%${despacho.evento}%`);
+                    eventosEncontrados = eventosParciales;
+                }
 
                 if (eventosEncontrados && eventosEncontrados.length > 0) {
                     eventoData = eventosEncontrados[0];
                 }
             }
 
-            // Preparar datos para el PDF
+                        // Obtener bodega secundaria del catálogo para todos los items (se mostrará en el PDF)
+            const codigosUnicos = [...new Set(itemsDespacho.map(item => item.codigo_material))];
+            const contenedoresMap = new Map();
+            
+                        // Cargar bodega secundaria desde las tablas de catálogo
+            const allRows = [];
+            const CATALOGOS = [
+              { table: 'catalogo_hierros' },
+              { table: 'catalogo_audiovisual' },
+              { table: 'catalogo_consumibles' }
+            ];
+            for (const c of CATALOGOS) {
+              const { data, error } = await window.supabaseClient
+                .from(c.table)
+                                .select('codigo, bodega_secundaria')
+                .in('codigo', codigosUnicos);
+              if (error) {
+                console.error(`Error al cargar contenedores de ${c.table}:`, error);
+                continue;
+              }
+              const rows = (data || []).map(r => ({ ...r, __catalogo: c.table }));
+              allRows.push(...rows);
+            }
+
+                        // Poblar contenedoresMap (aquí guarda bodega_secundaria para el PDF)
+            allRows.forEach(item => {
+                            if (item.bodega_secundaria) {
+                                contenedoresMap.set(item.codigo, item.bodega_secundaria);
+              }
+            });
+
+            // Preparar datos para el PDF - separar por tipo de bodega
+            const materiales = itemsDespacho.map(item => {
+                const code = (item.codigo_material || '').toString().toUpperCase().trim();
+                const esMaterial = !code.includes('-CONS-');
+                
+                if (esMaterial) {
+                    return {
+                        codigo: item.codigo_material,
+                        material: (isCaseBaseCodigo(item.codigo_material)
+                          ? `CASE ${getCaseBaseFromCodigo(item.codigo_material) || item.nombre_material || 'Case'}`
+                          : (item.nombre_material || item.codigo_material + (item.medidas ? ` (${item.medidas})` : ""))),
+                        cantidad: item.cantidad_despachada,
+                        contenedor: contenedoresMap.get(item.codigo_material) || 'N/A',
+                        observacion: simplificarObservacion(item.observacion || "")
+                    };
+                }
+                return null;
+            }).filter(item => item !== null);
+
+            const consumibles = itemsDespacho.map(item => {
+                const code = (item.codigo_material || '').toString().toUpperCase().trim();
+                const esConsumible = code.includes('-CONS-');
+                
+                if (esConsumible) {
+                    return {
+                        codigo: item.codigo_material,
+                        material: (isCaseBaseCodigo(item.codigo_material)
+                          ? `CASE ${getCaseBaseFromCodigo(item.codigo_material) || item.nombre_material || 'Case'}`
+                          : (item.nombre_material || item.codigo_material + (item.medidas ? ` (${item.medidas})` : ""))),
+                        cantidad: item.cantidad_despachada,
+                        contenedor: contenedoresMap.get(item.codigo_material) || 'N/A',
+                        observacion: simplificarObservacion(item.observacion || "")
+                    };
+                }
+                return null;
+            }).filter(item => item !== null);
+
             const datosPDF = {
                 numeroRegistro: numeroDespacho,
                 fechaDespacho: formatDate(new Date(despacho.fecha_despacho)),
-                personalEntrega: despacho.encargado_evento,
+                personalEntrega: await resolveEmpleadoNombre(despacho.encargado_evento),
                 evento: despacho.evento,
                 clienteEvento: eventoData?.cliente || "",
                 lugarMontaje: eventoData?.lugar || "",
-                itemsSalida: itemsDespacho.map(item => ({
-                    material: (isCaseBaseCodigo(item.codigo_material)
-                      ? `CASE ${getCaseBaseFromCodigo(item.codigo_material) || item.nombre_material || 'Case'}`
-                      : (item.nombre_material || item.codigo_material + (item.medidas ? ` (${item.medidas})` : ""))),
-                    cantidad: item.cantidad_despachada,
-                    estado: item.estado || "Despachado",
-                    observacion: item.observacion || ""
-                })),
+                materiales,
+                consumibles,
                 eventoCompleto: eventoData || {}
             };
 
             console.log('Datos para reimpresión:', datosPDF);
 
             // Generar el PDF
-            generarActaDeEntregaPDF(datosPDF);
+            await generarActaDeEntregaPDF(datosPDF);
 
         } catch (error) {
             console.error('Error en reimprimirDespacho:', error);
@@ -384,6 +590,35 @@
         }
     };
 
+    // Función para iniciar carga con indicador visual
+    window.iniciarCargaPedido = function(solicitudId, buttonElement) {
+        // Deshabilitar el botón y mostrar indicador de carga
+        buttonElement.disabled = true;
+        buttonElement.innerHTML = '<span style="display: inline-flex; align-items: center; gap: 8px;"><span class="spinner" style="width: 16px; height: 16px; border: 2px solid #ffffff; border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite;"></span> Cargando datos...</span>';
+        buttonElement.style.opacity = '0.8';
+
+        // Agregar estilos de animación si no existen
+        if (!document.getElementById('spinner-styles')) {
+            const style = document.createElement('style');
+            style.id = 'spinner-styles';
+            style.textContent = `
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Llamar a la función original
+        window.verPedidoDespacho(solicitudId).finally(() => {
+            // Restaurar el botón cuando termine (éxito o error)
+            buttonElement.disabled = false;
+            buttonElement.innerHTML = 'REVISAR SALIDA';
+            buttonElement.style.opacity = '1';
+        });
+    };
+
     window.verPedidoDespacho = async function(id) {
         try {
             // Almacenar el ID de la solicitud actual para uso en otras funciones
@@ -404,20 +639,33 @@
 
             // Obtener datos del evento - búsqueda más robusta
             let eventoData = null;
-            const { data: eventosEncontrados, error: errorEvento } = await window.supabaseClient
-                .from('eventos')
-                .select('*')
-                .ilike('nombre', `%${solicitud.evento}%`);
+            if (solicitud.evento) {
+                // Primero buscar por nombre exacto
+                let { data: eventosEncontrados, error: errorEvento } = await window.supabaseClient
+                    .from('eventos')
+                    .select('*')
+                    .eq('nombre', solicitud.evento);
 
-            if (errorEvento) {
-                console.log('Error al buscar evento:', errorEvento);
-            } else if (eventosEncontrados && eventosEncontrados.length > 0) {
-                // Tomar el primer evento que coincida
-                eventoData = eventosEncontrados[0];
-                console.log('Evento encontrado por nombre parcial:', eventoData);
-            } else {
-                console.log('Evento no encontrado con nombre:', solicitud.evento);
-                // Intentar búsqueda alternativa por otros campos si es necesario
+                if (errorEvento) {
+                    console.log('Error al buscar evento exacto:', errorEvento);
+                } else if (!eventosEncontrados || eventosEncontrados.length === 0) {
+                    // Si no encuentra exacto, buscar por parcial
+                    const { data: eventosParciales, error: errorParcial } = await window.supabaseClient
+                        .from('eventos')
+                        .select('*')
+                        .ilike('nombre', `%${solicitud.evento}%`);
+                    
+                    if (!errorParcial && eventosParciales && eventosParciales.length > 0) {
+                        eventosEncontrados = eventosParciales;
+                    }
+                }
+
+                if (eventosEncontrados && eventosEncontrados.length > 0) {
+                    eventoData = eventosEncontrados[0];
+                    console.log('Evento encontrado:', eventoData);
+                } else {
+                    console.log('Evento no encontrado con nombre:', solicitud.evento);
+                }
             }
 
             // Obtener servicios con cantidades desde la cotización si existe
@@ -472,8 +720,8 @@
             ];
             for (const c of CATALOGOS) {
               const selectStr = c.table === 'catalogo_consumibles'
-                ? 'codigo, nombre, dimensiones, color, unidad_medida, campos_personalizados'
-                : 'codigo, nombre, dimensiones, color, unidad_medida, campos_personalizados';
+                ? 'codigo, nombre, dimensiones, color, unidad_medida, campos_personalizados, tipo_material, tipo_uso'
+                : 'codigo, nombre, dimensiones, color, unidad_medida, campos_personalizados, tipo_material, tipo_uso';
               const { data, error } = await window.supabaseClient
                 .from(c.table)
                 .select(selectStr)
@@ -487,13 +735,15 @@
             }
 
             // Crear mapa de materiales con nombres (mismo formato que solicitudmateriales.html)
-            const materialesMap = new Map();
+            materialesMap = new Map();
             allRows.forEach(item => {
               materialesMap.set(item.codigo, {
                 cod: item.codigo,
                 nom: item.nombre,
                 med: item.dimensiones || '',
                 col: item.color || '',
+                tipoMaterial: item.tipo_material || '',
+                tipoUso: item.tipo_uso || '',
                 bodegaPrincipal: '',
                 bodegaSecundaria: '',
                 contenedor: '',
@@ -548,14 +798,54 @@
                 console.error('Error al obtener stock:', errorStock);
             }
 
-            // Calcular stock por material
+            // Calcular stock por material (coerce numeric values)
             const stockPorMaterial = {};
             movimientosStock?.forEach(mov => {
                 if (!stockPorMaterial[mov.material_codigo]) {
                     stockPorMaterial[mov.material_codigo] = 0;
                 }
-                stockPorMaterial[mov.material_codigo] += (mov.cantidad * mov.signo);
+                const cantidadNum = Number(mov.cantidad) || 0;
+                let signoNum = Number(mov.signo);
+                if (!isFinite(signoNum)) {
+                    signoNum = (mov.signo === '-' ? -1 : 1);
+                }
+                stockPorMaterial[mov.material_codigo] += cantidadNum * signoNum;
             });
+
+            // DEBUG: imprimir stock calculado y los items de la solicitud para diagnosticar discrepancias
+            try {
+                console.log('DEBUG stockPorMaterial (resumen):', Object.entries(stockPorMaterial).slice(0,50));
+                console.log('DEBUG solicitud.items (codigo -> cantidad_solicitada):', solicitud.items_solicitud_logistica.map(i => ({ codigo: i.codigo_material, cantidad_solicitada: i.cantidad_solicitada })));
+            } catch (e) {
+                console.warn('DEBUG: no se pudo imprimir stockPorMaterial:', e);
+            }
+
+            // DEBUG ADICIONAL: comparar con vistas de stock (stock_audiovisual, stock_hierros, stock_consumibles)
+            try {
+                const codigos = solicitud.items_solicitud_logistica.map(i => i.codigo_material).filter(Boolean);
+                if (codigos.length > 0) {
+                    const VIEWS = ['stock_audiovisual', 'stock_hierros', 'stock_consumibles'];
+                    for (const viewName of VIEWS) {
+                        try {
+                            const { data: viewData, error: viewErr } = await window.supabaseClient
+                                .from(viewName)
+                                .select('material_codigo, stock_actual')
+                                .in('material_codigo', codigos);
+                            if (viewErr) {
+                                console.warn(`DEBUG: error consultando view ${viewName}:`, viewErr);
+                                continue;
+                            }
+                            console.log(`DEBUG view ${viewName} results:`, viewData || []);
+                        } catch (innerErr) {
+                            console.warn(`DEBUG: excepción consultando view ${viewName}:`, innerErr);
+                        }
+                    }
+                } else {
+                    console.log('DEBUG: no hay códigos en la solicitud para comparar con vistas de stock');
+                }
+            } catch (e) {
+                console.warn('DEBUG: error comparando con vistas de stock:', e);
+            }
 
 
             // Detectar si hay materiales de plantilla que requieren asignación
@@ -576,35 +866,84 @@
                 !item.observacion || (!item.observacion.includes('Material adicional') && !item.observacion.includes('Plantilla adicional'))
             );
 
-            // Separar materiales de recetas en específicos y plantillas
-            // Material específico: código que existe en el catálogo O fue actualizado desde búsqueda
+            // PRIMERO: Separar consumibles adicionales de materialesDeRecetas
+            const consumiblesDeRecetas = materialesDeRecetas.filter(item =>
+                item.observacion && (item.observacion.includes('Herramienta adicional') || item.observacion.includes('Consumible adicional'))
+            );
+
+            // Filtrar materialesDeRecetas para excluir consumibles adicionales
+            const materialesDeRecetasSinConsumibles = materialesDeRecetas.filter(item =>
+                !(item.observacion && (item.observacion.includes('Herramienta adicional') || item.observacion.includes('Consumible adicional')))
+            );
+
+            // Separar materiales de recetas en específicos y plantillas (excluyendo consumibles)
+            // Material específico: código que existe en el catálogo O fue actualizado desde búsqueda O asignado desde plantilla
             // Plantilla: nombre genérico que puede referirse a múltiples códigos con el mismo nombre
-            const materialesRecetasEspecificos = materialesDeRecetas.filter(item => {
-                // Es específico si el código existe en el catálogo o fue actualizado desde búsqueda
+            const materialesRecetasEspecificos = materialesDeRecetasSinConsumibles.filter(item => {
+                // Es específico si el código existe en el catálogo o fue actualizado desde búsqueda o asignado desde plantilla o parcialmente
                 const existeEnCatalogo = catalogo.some(cat => cat.cod === item.codigo_material);
                 const fueActualizadoDesdeBusqueda = item.observacion && item.observacion.includes('Actualizado desde búsqueda');
-                return existeEnCatalogo || fueActualizadoDesdeBusqueda;
+                const asignadoDesdePlantilla = item.observacion && item.observacion.includes('Material específico asignado desde plantilla');
+                const asignadoParcialmente = item.observacion && item.observacion.includes('Material específico asignado parcialmente');
+                return existeEnCatalogo || fueActualizadoDesdeBusqueda || asignadoDesdePlantilla || asignadoParcialmente;
             });
 
-            const materialesRecetasPlantillas = materialesDeRecetas.filter(item => {
-                // Es plantilla si el código NO existe en el catálogo y NO fue actualizado desde búsqueda
+            const materialesRecetasPlantillas = materialesDeRecetasSinConsumibles.filter(item => {
+                // Es plantilla si el código NO existe en el catálogo y NO fue actualizado desde búsqueda y NO fue asignado desde plantilla y NO fue asignado parcialmente
                 const existeEnCatalogo = catalogo.some(cat => cat.cod === item.codigo_material);
                 const fueActualizadoDesdeBusqueda = item.observacion && item.observacion.includes('Actualizado desde búsqueda');
-                return !existeEnCatalogo && !fueActualizadoDesdeBusqueda;
+                const asignadoDesdePlantilla = item.observacion && item.observacion.includes('Material específico asignado desde plantilla');
+                const asignadoParcialmente = item.observacion && item.observacion.includes('Material específico asignado parcialmente');
+                return !existeEnCatalogo && !fueActualizadoDesdeBusqueda && !asignadoDesdePlantilla && !asignadoParcialmente;
+            });
+
+            // Nueva categoría: Materiales específicos asignados desde plantillas o parcialmente (para mostrar separados)
+            const materialesEspecificosDePlantillas = materialesDeRecetasSinConsumibles.filter(item => {
+                return item.observacion && (
+                    item.observacion.includes('Material específico asignado desde plantilla') ||
+                    item.observacion.includes('Material específico asignado parcialmente')
+                );
             });
 
             // Debug: verificar separación
             console.log('Materiales de recetas totales:', materialesDeRecetas.length);
+            console.log('Consumibles de recetas:', consumiblesDeRecetas.length);
+            console.log('Materiales de recetas sin consumibles:', materialesDeRecetasSinConsumibles.length);
             console.log('Materiales específicos (del catálogo):', materialesRecetasEspecificos.length);
+            console.log('Materiales específicos de plantillas:', materialesEspecificosDePlantillas.length);
             console.log('Materiales plantillas (genéricos):', materialesRecetasPlantillas.length);
 
             const materialesEspecificosAdicionales = solicitud.items_solicitud_logistica.filter(item =>
-                item.observacion && item.observacion.includes('Material adicional específico')
+                item.observacion && item.observacion.includes('Material adicional específico') &&
+                !(item.observacion.includes('Herramienta adicional') || item.observacion.includes('Consumible adicional'))
             );
 
             const materialesPlantillasAdicionales = solicitud.items_solicitud_logistica.filter(item =>
-                item.observacion && item.observacion.includes('Plantilla adicional')
+                item.observacion && item.observacion.includes('Plantilla adicional') &&
+                !(item.observacion.includes('Herramienta adicional') || item.observacion.includes('Consumible adicional'))
             );
+
+            // Combinar consumibles: los que vienen de recetas + los adicionales (eliminando duplicados)
+            const consumiblesAdicionalesDirectos = solicitud.items_solicitud_logistica.filter(item =>
+                item.observacion && (item.observacion.includes('Herramienta adicional') || item.observacion.includes('Consumible adicional'))
+            );
+
+            // Crear un mapa para evitar duplicados por código
+            const consumiblesMap = new Map();
+
+            // Agregar consumibles de recetas primero
+            consumiblesDeRecetas.forEach(item => {
+                consumiblesMap.set(item.codigo_material, item);
+            });
+
+            // Agregar consumibles adicionales (solo si no existen ya)
+            consumiblesAdicionalesDirectos.forEach(item => {
+                if (!consumiblesMap.has(item.codigo_material)) {
+                    consumiblesMap.set(item.codigo_material, item);
+                }
+            });
+
+            const materialesConsumiblesAdicionales = Array.from(consumiblesMap.values());
 
             // Renderizar materiales separados por tipo (ahora asíncrono)
             const materialesHTML = `
@@ -626,31 +965,70 @@
                         }
                     </style>
                     ${await renderMaterialesRecetasEspecificos(materialesRecetasEspecificos)}
+                    ${await renderMaterialesEspecificosDePlantillas(materialesEspecificosDePlantillas)}
                     ${await renderMaterialesRecetasPlantillas(materialesRecetasPlantillas)}
                     ${await renderMaterialesEspecificosAdicionales(materialesEspecificosAdicionales)}
-                    ${await renderMaterialesPlantillasAdicionales(materialesPlantillasAdicionales, true)}
+                    ${await renderMaterialesPlantillasAdicionales(materialesPlantillasAdicionales)}
+                    ${await renderMaterialesConsumiblesAdicionales(materialesConsumiblesAdicionales, true)}
                 </div>
             `;
 
-            // Función auxiliar para obtener stock desde vistas SQL usando RPC
-            async function obtenerStockDesdeVistas(codigoMaterial) {
-                try {
-                    // Usar una consulta RPC que ejecute SQL en el servidor
-                    const { data: stockData, error } = await window.supabaseClient
-                        .rpc('get_material_stock', {
-                            p_codigo: codigoMaterial
-                        });
+            // Función para renderizar materiales específicos asignados desde plantillas
+            async function renderMaterialesEspecificosDePlantillas(items, esUltimo = false) {
+                if (items.length === 0) return '';
 
-                    if (error) {
-                        console.error('Error consultando stock via RPC:', error);
-                        return 0;
-                    }
+                const config = { color: '#059669', bgColor: '#ecfdf5', icon: '🌱' };
+                const titulo = '🌱 Materiales Asignados Parcialmente';
+                const margenInferior = esUltimo ? '0' : '15px';
 
-                    return stockData || 0;
-                } catch (error) {
-                    console.error('Error obteniendo stock:', error);
-                    return 0;
+                let tabla = `
+                    <div class="despacho-materiales-grupo-v2" style="margin-bottom: ${margenInferior}; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #cbd5e1;">
+                        <div class="despacho-grupo-header-v2" style="background: ${config.bgColor}; padding: 12px; border-bottom: 1px solid #1e3a8a;">
+                            <h4 class="despacho-titulo-grupo-v2" style="margin: 0; color: ${config.color} !important; font-size: 14px; font-weight: 600;">
+                                ${config.icon} ${titulo} (${items.length} ${items.length === 1 ? 'item' : 'items'})
+                            </h4>
+                        </div>
+                        <table class="tabla-despacho-inventario" style="width: 100%; border-collapse: collapse;">
+                            <thead style="background: #f8fafc;">
+                                <tr>
+                                    <th style="padding: 8px; text-align: left; border-bottom: 1px solid #1e3a8a !important;">Material</th>
+                                    <th style="padding: 8px; text-align: center; border-bottom: 1px solid #1e3a8a !important; width: 80px;">Cant.</th>
+                                    <th style="padding: 8px; text-align: center; border-bottom: 1px solid #1e3a8a !important; width: 80px;">Estado</th>
+                                    <th style="padding: 8px; text-align: center; border-bottom: 1px solid #1e3a8a !important; width: 80px;">Stock</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+
+                // Procesar cada item de forma asíncrona
+                for (const it of items) {
+                    const stock = await obtenerStockDesdeVistas(it.codigo_material);
+                    const stockClass = stock >= it.cantidad_solicitada ? 'despacho-stock-ok' : 'despacho-stock-bad';
+
+                    // Resolver nombre desde catálogo
+                    const materialCatalogo = catalogo.find(m => m.cod === it.codigo_material);
+                    let nombreDisplay = materialCatalogo ? (materialCatalogo.nom || it.nombre_material || 'Desconocido') : (it.nombre_material || 'Desconocido');
+                    let observacionExtra = it.observacion ? `<br/><small style="color: #6b7280;">${it.observacion}</small>` : '';
+
+                    tabla += `
+                        <tr>
+                            <td style="padding: 8px; border-bottom: 1px solid #0353a3;">
+                                <strong class="despacho-nombre-material-v2" style="color: #059669 !important;">${nombreDisplay}</strong><br/>
+                                <small style="color: #20252b;">Código: ${it.codigo_material}${it.medidas ? ` (${it.medidas})` : ''}${it.color ? ` - ${it.color}` : ''}</small>${observacionExtra}
+                            </td>
+                            <td style="padding: 8px; text-align: center; border-bottom: 1px solid #0353a3;">${it.cantidad_solicitada}</td>
+                            <td style="padding: 8px; text-align: center; border-bottom: 1px solid #0353a3;">
+                                <span style="background: #10b981; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 500;">Asignado</span>
+                            </td>
+                            <td style="padding: 8px; text-align: center; border-bottom: 1px solid #055cb3; ${stockClass ? `color: ${stock >= it.cantidad_solicitada ? '#16a34a' : '#dc2626'}; font-weight: bold;` : ''}">${stock}</td>
+                        </tr>`;
                 }
+
+                tabla += `
+                            </tbody>
+                        </table>
+                    </div>`;
+
+                return tabla;
             }
 
             // Función para renderizar materiales de recetas específicos
@@ -687,12 +1065,12 @@
                     // Resolver nombre desde catálogo para recetas específicas
                     const materialCatalogo = catalogo.find(m => m.cod === it.codigo_material);
                     let nombreDisplay = materialCatalogo ? (materialCatalogo.nom || it.nombre_material || 'Desconocido') : (it.nombre_material || 'Desconocido');
-                    let observacionExtra = it.observacion ? `<br><small style="color: #6b7280;">${it.observacion}</small>` : '';
+                    let observacionExtra = it.observacion ? `<br/><small style="color: #6b7280;">${it.observacion}</small>` : '';
 
                     tabla += `
                         <tr>
                             <td style="padding: 8px; border-bottom: 1px solid #0353a3;">
-                                <strong class="despacho-nombre-material-v2" style="color: #991b1b !important;">${nombreDisplay}</strong><br>
+                                <strong class="despacho-nombre-material-v2" style="color: #991b1b !important;">${nombreDisplay}</strong><br/>
                                 <small style="color: #20252b;">Código: ${it.codigo_material}${it.medidas ? ` (${it.medidas})` : ''}${it.color ? ` - ${it.color}` : ''}</small>${observacionExtra}
                             </td>
                             <td style="padding: 8px; text-align: center; border-bottom: 1px solid #0353a3;">${it.cantidad_solicitada}</td>
@@ -748,7 +1126,7 @@
                     tabla += `
                         <tr>
                             <td style="padding: 8px; border-bottom: 1px solid #0353a3;">
-                                <strong class="despacho-nombre-material-v2" style="color: #991b1b !important;">${nombreDisplay}</strong><br>
+                                <strong class="despacho-nombre-material-v2" style="color: #991b1b !important;">${nombreDisplay}</strong><br/>
                                 <small style="color: #20252b;">Código: ${it.codigo_material}${it.medidas ? ` (${it.medidas})` : ''}${it.color ? ` - ${it.color}` : ''}</small>
                             </td>
                             <td style="padding: 8px; text-align: center; border-bottom: 1px solid #0353a3;">
@@ -807,7 +1185,7 @@
                     tabla += `
                         <tr>
                             <td style="padding: 8px; border-bottom: 1px solid #0353a3;">
-                                <strong class="despacho-nombre-material-v2" style="color: #991b1b !important;">${nombreDisplay}</strong><br>
+                                <strong class="despacho-nombre-material-v2" style="color: #991b1b !important;">${nombreDisplay}</strong><br/>
                                 <small style="color: #20252b;">Código: ${it.codigo_material}${it.medidas ? ` (${it.medidas})` : ''}${it.color ? ` - ${it.color}` : ''}</small>
                             </td>
                             <td style="padding: 8px; text-align: center; border-bottom: 1px solid #0353a3;">${it.cantidad_solicitada}</td>
@@ -863,13 +1241,68 @@
                     tabla += `
                         <tr>
                             <td style="padding: 8px; border-bottom: 1px solid #0353a3;">
-                                <strong class="despacho-nombre-material-v2" style="color: #991b1b !important;">${nombreDisplay}</strong><br>
+                                <strong class="despacho-nombre-material-v2" style="color: #991b1b !important;">${nombreDisplay}</strong><br/>
                                 <small style="color: #20252b;">Código: ${it.codigo_material}${it.medidas ? ` (${it.medidas})` : ''}${it.color ? ` - ${it.color}` : ''}</small>
                             </td>
                             <td style="padding: 8px; text-align: center; border-bottom: 1px solid #0353a3;">
                                 <button class="btn-despacho-outline btn-xs" onclick="window.buscarMaterialesSimilares('${it.id}', '${it.codigo_material}', '${it.nombre_material === 'Desconocido' ? it.codigo_material : (it.nombre_material || it.codigo_material)}')">
                                     🔍
                                 </button>
+                            </td>
+                            <td style="padding: 8px; text-align: center; border-bottom: 1px solid #0353a3;">${it.cantidad_solicitada}</td>
+                            <td style="padding: 8px; text-align: center; border-bottom: 1px solid #0353a3;">${it.estado === 'pendiente' ? 'Pendiente' : (it.estado || 'Nuevo')}</td>
+                            <td style="padding: 8px; text-align: center; border-bottom: 1px solid #055cb3; ${stockClass ? `color: ${stock >= it.cantidad_solicitada ? '#16a34a' : '#dc2626'}; font-weight: bold;` : ''}">${stock}</td>
+                        </tr>`;
+                }
+
+                tabla += `
+                            </tbody>
+                        </table>
+                    </div>`;
+
+                return tabla;
+            }
+
+            // Función para renderizar consumibles/herramientas adicionales
+            async function renderMaterialesConsumiblesAdicionales(items, esUltimo = false) {
+                if (items.length === 0) return '';
+
+                const config = { color: '#7c3aed', bgColor: '#f3e8ff', icon: '🔨' };
+                const titulo = '🔨 Consumibles/Herramientas Adicionales';
+                const margenInferior = esUltimo ? '0' : '15px';
+
+                let tabla = `
+                    <div class="despacho-materiales-grupo-v2" style="margin-bottom: ${margenInferior}; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #cbd5e1;">
+                        <div class="despacho-grupo-header-v2" style="background: ${config.bgColor}; padding: 12px; border-bottom: 1px solid #1e3a8a;">
+                            <h4 class="despacho-titulo-grupo-v2" style="margin: 0; color: ${config.color} !important; font-size: 14px; font-weight: 600;">
+                                ${config.icon} ${titulo} (${items.length} ${items.length === 1 ? 'item' : 'items'})
+                            </h4>
+                        </div>
+                        <table class="tabla-despacho-inventario" style="width: 100%; border-collapse: collapse;">
+                            <thead style="background: #f8fafc;">
+                                <tr>
+                                    <th style="padding: 8px; text-align: left; border-bottom: 1px solid #1e3a8a !important;">Material</th>
+                                    <th style="padding: 8px; text-align: center; border-bottom: 1px solid #1e3a8a !important; width: 80px;">Cant.</th>
+                                    <th style="padding: 8px; text-align: center; border-bottom: 1px solid #1e3a8a !important; width: 80px;">Estado</th>
+                                    <th style="padding: 8px; text-align: center; border-bottom: 1px solid #1e3a8a !important; width: 80px;">Stock</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+
+                // Procesar cada item de forma asíncrona
+                for (const it of items) {
+                    const stock = await obtenerStockDesdeVistas(it.codigo_material);
+                    const stockClass = stock >= it.cantidad_solicitada ? 'despacho-stock-ok' : 'despacho-stock-bad';
+
+                    // Consumibles adicionales - usar nombre_material directamente
+                    let nombreDisplay = it.nombre_material || 'Consumible/Herramienta';
+                    let tipoDisplay = it.observacion && it.observacion.includes('Herramienta') ? 'Herramienta' : 'Consumible';
+
+                    tabla += `
+                        <tr>
+                            <td style="padding: 8px; border-bottom: 1px solid #0353a3;">
+                                <strong class="despacho-nombre-material-v2" style="color: #7c3aed !important;">${nombreDisplay}</strong><br/>
+                                <small style="color: #20252b;">Código: ${it.codigo_material} | Tipo: ${tipoDisplay}</small>
                             </td>
                             <td style="padding: 8px; text-align: center; border-bottom: 1px solid #0353a3;">${it.cantidad_solicitada}</td>
                             <td style="padding: 8px; text-align: center; border-bottom: 1px solid #0353a3;">${it.estado === 'pendiente' ? 'Pendiente' : (it.estado || 'Nuevo')}</td>
@@ -914,14 +1347,14 @@
             if (solicitud.fecha_procesamiento || (!errorDespachoExistente && despachoExistente && despachoExistente.length > 0)) {
                 estadoHeader = `Solicitud Procesada: ${solicitud.id}`;
                 const numeroDespacho = despachoExistente?.[0]?.numero_despacho || 'N/A';
-                const fechaDespacho = despachoExistente?.[0]?.fecha_despacho ? new Date(despachoExistente[0].fecha_despacho).toLocaleDateString('es-ES') : solicitud.fecha_procesamiento ? new Date(solicitud.fecha_procesamiento).toLocaleDateString('es-ES') : 'N/A';
+                const fechaDespacho = despachoExistente?.[0]?.fecha_despacho ? formatDate(despachoExistente[0].fecha_despacho) : solicitud.fecha_procesamiento ? formatDate(solicitud.fecha_procesamiento) : 'N/A';
 
                 botonesHTML = `
                     <div class="despacho-alert">
                         <div class="despacho-alert-title">📋 Esta solicitud ya fue procesada</div>
                         <div class="despacho-alert-body">
-                            <strong>Número de Despacho:</strong> ${numeroDespacho}<br>
-                            <strong>Fecha de Procesamiento:</strong> ${fechaDespacho}<br>
+                            <strong>Número de Despacho:</strong> ${numeroDespacho}<br/>
+                            <strong>Fecha de Procesamiento:</strong> ${fechaDespacho}<br/>
                             <strong>Estado:</strong> Procesada
                         </div>
                     </div>
@@ -1032,17 +1465,29 @@
                 return;
             }
 
-            // Obtener stock actual
-            const { data: stockData, error: errorStock } = await window.supabaseClient
-                .from('stock_actual_con_precio')
-                .select('material_codigo, existencia, bodega_principal, bodega_secundaria');
-
+            // Obtener stock actual (veraz) desde las 3 vistas de stock
             const stockMap = new Map();
-            if (!errorStock && stockData) {
-                stockData.forEach(item => {
-                    const key = `${item.material_codigo}-${item.bodega_principal}-${item.bodega_secundaria}`;
-                    stockMap.set(key, item.existencia || 0);
-                });
+            try {
+                const STOCK_VIEWS = ['stock_hierros', 'stock_audiovisual', 'stock_consumibles'];
+                for (const viewName of STOCK_VIEWS) {
+                    const { data: rows, error: err } = await window.supabaseClient
+                        .from(viewName)
+                        .select('material_codigo, stock_actual, bodega_principal, bodega_secundaria');
+                    if (err) {
+                        console.warn(`No se pudo cargar ${viewName} para stock de plantillas:`, err);
+                        continue;
+                    }
+                    (rows || []).forEach(r => {
+                        const codigo = (r.material_codigo || '').toString().trim();
+                        if (!codigo) return;
+                        const b1 = (r.bodega_principal || 'Principal').toString().trim() || 'Principal';
+                        const b2 = (r.bodega_secundaria || 'General').toString().trim() || 'General';
+                        const key = `${codigo}-${b1}-${b2}`;
+                        stockMap.set(key, (Number(r.stock_actual) || 0));
+                    });
+                }
+            } catch (e) {
+                console.warn('No se pudo construir stockMap desde vistas de stock:', e);
             }
 
             // Crear modal
@@ -1100,7 +1545,7 @@
                 tablaHTML += `
                     <tr data-item-id="${item.id}" data-index="${index}">
                         <td>
-                            <strong>${item.nombre_material}</strong><br>
+                            <strong>${item.nombre_material}</strong><br/>
                             <small>Cantidad: ${item.cantidad_solicitada}</small>
                         </td>
                         <td class="despacho-td-center">${item.cantidad_solicitada}</td>
@@ -1251,7 +1696,35 @@
 
     // 4. LÓGICA DE CIERRE: VALIDAR STOCK + PDF CON DATOS COMPLETOS
     window.confirmarDespachoOficial = async function(id) {
+        let materialesMap; // Declarar al inicio para asegurar scope
+        const botonesTarget = Array.from(document.querySelectorAll('.despacho-action-main'))
+            .filter(btn => btn.onclick && btn.onclick.toString().includes(`'${id}'`));
+        const estadoBotonesOriginal = botonesTarget.map(btn => ({
+            btn,
+            disabled: btn.disabled,
+            text: btn.textContent,
+            bg: btn.style.backgroundColor
+        }));
+
+        const setBotonProcesando = () => {
+            botonesTarget.forEach(btn => {
+                btn.disabled = true;
+                btn.textContent = '⏳ PROCESANDO DESPACHO...';
+                btn.style.backgroundColor = '#64748b';
+            });
+        };
+
+        const restaurarBotones = () => {
+            estadoBotonesOriginal.forEach(s => {
+                s.btn.disabled = s.disabled;
+                s.btn.textContent = s.text;
+                s.btn.style.backgroundColor = s.bg;
+            });
+        };
+
+        let despachoProcesadoOk = false;
         try {
+            setBotonProcesando();
             // Obtener solicitud completa desde Supabase
             const { data: solicitud, error: errorSolicitud } = await window.supabaseClient
                 .from('solicitudes_logistica')
@@ -1268,7 +1741,7 @@
             // ✅ VALIDAR QUE LA SOLICITUD NO HAYA SIDO DESPACHADA ANTERIORMENTE
             // Nota: Las solicitudes completadas tienen estado 'completada' y fecha_procesamiento
             if (solicitud.fecha_procesamiento) {
-                alert(`❌ Esta solicitud ya fue procesada el ${new Date(solicitud.fecha_procesamiento).toLocaleDateString('es-ES')}`);
+                alert(`❌ Esta solicitud ya fue procesada el ${formatDate(solicitud.fecha_procesamiento)}`);
                 console.log('Intento de despachar solicitud ya procesada:', solicitud);
                 // Recargar la lista para reflejar el estado actual
                 renderLista();
@@ -1301,47 +1774,55 @@
                 return;
             }
 
-            // Obtener stock actual calculado desde las 3 tablas de movimientos
-            const tablasMovimientos = ['movimientos_bodega_audiovisual', 'movimientos_bodega_hierros', 'movimientos_bodega_consumibles'];
-            let movimientosStock = [];
+            // Stock veraz: calcular desde las 3 vistas stock_* (no desde cache)
+            const codigosSolicitados = Array.from(new Set(
+                (solicitud.items_solicitud_logistica || [])
+                    .map(i => (i.codigo_material || '').trim())
+                    .filter(c => c && !isCaseBaseCodigo(c))
+            ));
 
-            for (const tabla of tablasMovimientos) {
-                const { data: movData, error: errorMov } = await window.supabaseClient
-                    .from(tabla)
-                    .select('material_codigo, cantidad, signo')
-                    .eq('estado', 'completado');
-
-                if (errorMov) {
-                    console.error(`Error al obtener stock de ${tabla}:`, errorMov);
-                    continue;
+            const stockPorCodigo = {};
+            if (codigosSolicitados.length > 0) {
+                const VIEWS = ['stock_hierros', 'stock_audiovisual', 'stock_consumibles'];
+                for (const viewName of VIEWS) {
+                    const { data: rows, error: err } = await window.supabaseClient
+                        .from(viewName)
+                        .select('material_codigo, stock_actual')
+                        .in('material_codigo', codigosSolicitados);
+                    if (err) {
+                        console.warn(`No se pudo cargar ${viewName} para validar stock:`, err);
+                        continue;
+                    }
+                    (rows || []).forEach(r => {
+                        const codigo = (r.material_codigo || '').toString().trim();
+                        if (!codigo) return;
+                        const qty = Number(r.stock_actual) || 0;
+                        stockPorCodigo[codigo] = (Number(stockPorCodigo[codigo]) || 0) + qty;
+                    });
                 }
-
-                movimientosStock = movimientosStock.concat(movData || []);
             }
 
-
-            // Calcular stock por material
-            const stockPorMaterial = {};
-            movimientosStock?.forEach(mov => {
-                if (!stockPorMaterial[mov.material_codigo]) {
-                    stockPorMaterial[mov.material_codigo] = 0;
-                }
-                stockPorMaterial[mov.material_codigo] += (mov.cantidad * mov.signo);
-            });
-
-            // ✅ VALIDAR STOCK ANTES DE DESPACHAR
-            let stockInsuficiente = false;
+            // ✅ VALIDAR STOCK ANTES DE DESPACHAR (detalle y alerta más informativa)
+            const insuficientes = [];
             solicitud.items_solicitud_logistica.forEach(item => {
                 // Los CASE genéricos se resuelven luego a códigos reales.
                 if (isCaseBaseCodigo(item.codigo_material)) return;
-                const stock = stockPorMaterial[item.codigo_material] || 0;
-                if (stock < item.cantidad_solicitada) {
-                    stockInsuficiente = true;
+                const codigo = item.codigo_material;
+                const solicitado = Number(item.cantidad_solicitada) || 0;
+                const disponible = Number(stockPorCodigo[codigo]) || 0;
+                if (disponible < solicitado) {
+                    insuficientes.push({ codigo, solicitado, disponible, nombre: item.nombre_material || '' });
                 }
             });
 
-            if (stockInsuficiente) {
-                alert("❌ STOCK INSUFICIENTE: No se puede despachar material con existencia insuficiente.");
+            if (insuficientes.length > 0) {
+                // Construir mensaje detallado
+                let lines = insuficientes.map(i => `- ${i.codigo} (${i.nombre || 'Sin nombre'}): solicitado=${i.solicitado}, disponible=${i.disponible}`);
+                const msg = `❌ STOCK INSUFICIENTE: Los siguientes materiales no alcanzan el stock requerido:\n\n${lines.join('\n')}\n\nNota: este cálculo usa las vistas stock_hierros/stock_audiovisual/stock_consumibles.`;
+                // Mostrar alerta detallada para que el usuario copie/pegue aquí
+                alert(msg);
+                // También log para DevTools
+                console.warn('STOCK INSUFICIENTE detalle:', insuficientes);
                 return;
             }
 
@@ -1351,7 +1832,75 @@
                 .select('*')
                 .eq('nombre', solicitud.evento);
             
-            const numeroRegistro = await generarCorrelativo();
+            let numeroRegistro = await generarCorrelativo();
+
+            // Cargar catálogo de materiales para determinar tipos
+            const allRows = [];
+            const CATALOGOS = [
+              { table: 'catalogo_hierros' },
+              { table: 'catalogo_audiovisual' },
+              { table: 'catalogo_consumibles' }
+            ];
+            for (const c of CATALOGOS) {
+              const selectStr = 'codigo, nombre, dimensiones, color, unidad_medida, campos_personalizados, tipo_material, tipo_uso, contenedor';
+              const { data, error } = await window.supabaseClient
+                .from(c.table)
+                .select(selectStr)
+                .order('codigo', { ascending: true });
+              if (error) {
+                console.error(`Error al cargar ${c.table}:`, error);
+                continue;
+              }
+              const rows = (data || []).map(r => ({ ...r, __catalogo: c.table }));
+              allRows.push(...rows);
+            }
+
+            // Crear mapa de materiales con nombres
+            materialesMap = new Map();
+            allRows.forEach(item => {
+              materialesMap.set(item.codigo, {
+                cod: item.codigo,
+                nom: item.nombre,
+                med: item.dimensiones || '',
+                col: item.color || '',
+                tipoMaterial: item.tipo_material || '',
+                tipoUso: item.tipo_uso || '',
+                bodegaPrincipal: '',
+                bodegaSecundaria: '',
+                contenedor: item.contenedor || '',
+                ubicacionNombre: '',
+                stockActual: 0,
+                fechaCompra: null,
+                __catalogo: item.__catalogo
+              });
+            });
+
+            // Actualizar con datos de stock
+            const STOCK_VIEWS = [
+              { view: 'stock_hierros' },
+              { view: 'stock_audiovisual' },
+              { view: 'stock_consumibles' }
+            ];
+            for (const v of STOCK_VIEWS) {
+              const { data, error } = await window.supabaseClient
+                .from(v.view)
+                .select('material_codigo, material_nombre, precio, stock_actual, bodega_principal, bodega_secundaria, contenedor, ubicacion_nombre, fecha_compra');
+              if (error) {
+                console.error(`Error al cargar stock de ${v.view}:`, error);
+                continue;
+              }
+              (data || []).forEach(r => {
+                if (materialesMap.has(r.material_codigo)) {
+                  const mat = materialesMap.get(r.material_codigo);
+                  mat.bodegaPrincipal = r.bodega_principal || '';
+                  mat.bodegaSecundaria = r.bodega_secundaria || '';
+                  mat.contenedor = r.contenedor || '';
+                  mat.ubicacionNombre = r.ubicacion_nombre || '';
+                  mat.stockActual = r.stock_actual || 0;
+                  mat.fechaCompra = r.fecha_compra || null;
+                }
+              });
+            }
 
             // Se usará también fuera del try (PDF).
             let itemsResueltos = null;
@@ -1359,33 +1908,55 @@
             // 🔄 INTEGRACIÓN CON SUPABASE: Crear registro de despacho y movimientos
             try {
                 // 1. Crear registro maestro del despacho
-                const despachoData = {
-                    numero_despacho: numeroRegistro,
-                    solicitud_id: solicitud.id,
-                    evento: solicitud.evento,
-                    encargado_evento: solicitud.encargado_evento,
-                    cliente: (eventoData && eventoData.length > 0) ? eventoData[0].cliente : null,
-                    lugar_montaje: (eventoData && eventoData.length > 0) ? eventoData[0].lugar : null,
-                    fecha_montaje: (eventoData && eventoData.length > 0 && eventoData[0].fecha_montaje) ? new Date(eventoData[0].fecha_montaje + 'T' + (eventoData[0].hora_montaje || '00:00')).toISOString() : null,
-                    fecha_desmontaje: (eventoData && eventoData.length > 0 && eventoData[0].fecha_desmontaje) ? new Date(eventoData[0].fecha_desmontaje + 'T' + (eventoData[0].hora_desmontaje || '00:00')).toISOString() : null,
-                    numero_acta: numeroRegistro,
-                    fecha_despacho: new Date().toISOString(),
-                    estado: 'completado',
+                let despachoCreado = null;
+                let errorDespacho = null;
+                let despachoData = null;
 
-                    observaciones: `Despacho generado desde solicitud ${solicitud.id}`,
-                    usuario_id: window.currentUser?.id
+                // Reintento por si hay colisión de correlativo (multiusuario o RLS que impida leer el último)
+                for (let intento = 0; intento < 5; intento++) {
+                    despachoData = {
+                        numero_despacho: numeroRegistro,
+                        solicitud_id: solicitud.id,
+                        evento: solicitud.evento,
+                        encargado_evento: solicitud.encargado_evento,
+                        cliente: (eventoData && eventoData.length > 0) ? eventoData[0].cliente : null,
+                        lugar_montaje: (eventoData && eventoData.length > 0) ? eventoData[0].lugar : null,
+                        fecha_montaje: (eventoData && eventoData.length > 0 && eventoData[0].fecha_montaje) ? new Date(eventoData[0].fecha_montaje + 'T' + (eventoData[0].hora_montaje || '00:00')).toISOString() : null,
+                        fecha_desmontaje: (eventoData && eventoData.length > 0 && eventoData[0].fecha_desmontaje) ? new Date(eventoData[0].fecha_desmontaje + 'T' + (eventoData[0].hora_desmontaje || '00:00')).toISOString() : null,
+                        numero_acta: numeroRegistro,
+                        fecha_despacho: new Date().toISOString(),
+                        estado: 'completado',
 
-                };
+                        observaciones: `Despacho generado desde solicitud ${solicitud.id}`,
+                        usuario_id: window.currentUser?.id
+                    };
 
-                const { data: despachoCreado, error: errorDespacho } = await window.supabaseClient
-                    .from('despachos_logistica')
-                    .insert(despachoData)
-                    .select('id')
-                    .single();
+                    const res = await window.supabaseClient
+                        .from('despachos_logistica')
+                        .insert(despachoData)
+                        .select('id')
+                        .single();
 
-                if (errorDespacho) {
+                    despachoCreado = res.data || null;
+                    errorDespacho = res.error || null;
+
+                    if (!errorDespacho) break;
+
+                    const esDuplicadoNumero = (errorDespacho.code === '23505') && String(errorDespacho.details || '').includes('numero_despacho');
+                    if (esDuplicadoNumero) {
+                        console.warn('Conflicto de numero_despacho, reintentando correlativo...', { numeroRegistro, intento: intento + 1, error: errorDespacho });
+                        numeroRegistro = await generarCorrelativo();
+                        continue;
+                    }
+
                     console.error('Error al crear despacho:', errorDespacho);
                     alert('❌ Error al registrar el despacho en la base de datos.');
+                    return;
+                }
+
+                if (errorDespacho) {
+                    console.error('Error al crear despacho (reintentos agotados):', errorDespacho);
+                    alert('❌ No se pudo generar un número de despacho disponible. Intenta nuevamente.');
                     return;
                 }
 
@@ -1396,19 +1967,26 @@
                 await window.logAuditoria('INSERT', 'despachos_logistica', despachoCreado.id, despachoData);
 
                 // 1.5. Guardar items del despacho en items_despacho_logistica
-                const itemsDespachoParaInsertar = (solicitud.items_solicitud_logistica || []).map(item => ({
-                    despacho_id: despachoCreado.id,
-                    codigo_material: item.codigo_material,
-                    nombre_material: item.nombre_material,
-                    cantidad_despachada: item.cantidad_solicitada,
-                    estado: 'despachado',
-                    observacion: item.observacion,
-                    medidas: item.medidas,
-                    color: item.color,
-                    usuario_id: window.currentUser?.id,
-                    bodega_principal: null, // Se determinará después al crear movimientos
-                    bodega_secundaria: null  // Se determinará después al crear movimientos
-                }));
+                const itemsDespachoParaInsertar = (solicitud.items_solicitud_logistica || []).map(item => {
+                    // Determinar tipo de material
+                    const materialCatalogo = materialesMap.get(item.codigo_material);
+                    const tipoMaterial = determinarTipoMaterial(materialCatalogo);
+
+                    return {
+                        despacho_id: despachoCreado.id,
+                        codigo_material: item.codigo_material,
+                        nombre_material: item.nombre_material,
+                        cantidad_despachada: item.cantidad_solicitada,
+                        cantidad_devuelta: tipoMaterial === 'rentable' ? item.cantidad_solicitada : 0, // Rentables deben devolverse completos, consumibles pueden tener sobrantes
+                        estado: 'despachado',
+                        observacion: item.observacion,
+                        medidas: item.medidas,
+                        color: item.color,
+                        usuario_id: window.currentUser?.id,
+                        bodega_principal: null, // Se determinará después al crear movimientos
+                        bodega_secundaria: null  // Se determinará después al crear movimientos
+                    };
+                });
 
                 const { error: errorItemsDespacho } = await window.supabaseClient
                     .from('items_despacho_logistica')
@@ -1428,7 +2006,7 @@
                 });
 
 
-                // 2. Crear movimientos de bodega referenciando al despacho
+                // 2. Resolver items genéricos tipo CASEBASE|<base> a códigos reales antes de despachar.
                 // IMPORTANTE (Bodegas V2): registrar bodega_principal/bodega_secundaria reales para que el stock se descuente correctamente.
                 // isCaseBaseCodigo/getCaseBaseFromCodigo definidos arriba
 
@@ -1594,6 +2172,38 @@
 
                 const codigosUnicos = Array.from(new Set((itemsResueltos || []).map(i => i.codigo_material).filter(Boolean)));
 
+                // Consultar información del catálogo para completar datos de movimientos
+                let catalogoData = new Map();
+                if (codigosUnicos.length > 0) {
+                    const tablasCatalogo = ['catalogo_audiovisual', 'catalogo_hierros', 'catalogo_consumibles'];
+
+                    for (const tabla of tablasCatalogo) {
+                        const { data: catData, error: catErr } = await window.supabaseClient
+                            .from(tabla)
+                            .select('codigo, nombre_base, nombre_numero, precio, fecha_compra, dimensiones, color, unidad_medida, campos_personalizados, contenedor')
+                            .in('codigo', codigosUnicos);
+
+                        if (catErr) {
+                            console.warn(`No se pudo cargar catálogo de ${tabla}:`, catErr);
+                            continue;
+                        }
+
+                        (catData || []).forEach(item => {
+                            catalogoData.set(item.codigo, {
+                                material_nombre_base: item.nombre_base,
+                                material_nombre_numero: item.nombre_numero,
+                                precio: item.precio,
+                                fecha_compra: item.fecha_compra,
+                                dimensiones: item.dimensiones,
+                                color: item.color,
+                                unidad_medida: item.unidad_medida,
+                                campos_personalizados: item.campos_personalizados,
+                                contenedor: item.contenedor
+                            });
+                        });
+                    }
+                }
+
                 let stockRows = [];
                 if (codigosUnicos.length > 0) {
 
@@ -1615,6 +2225,28 @@
                     }
                 }
 
+                // Cargar datos del catálogo
+                let dispatchCatalogoData = new Map();
+                if (codigosUnicos.length > 0) {
+                    const tablasCatalogo = ['catalogo_audiovisual', 'catalogo_hierros', 'catalogo_consumibles'];
+
+                    for (const tabla of tablasCatalogo) {
+                        const { data: catData, error: catErr } = await window.supabaseClient
+                            .from(tabla)
+                            .select('codigo, bodega_secundaria, contenedor')
+                            .in('codigo', codigosUnicos);
+
+                        if (catErr) {
+                            console.warn(`No se pudo cargar datos de ${tabla}:`, catErr);
+                            continue;
+                        }
+
+                        (catData || []).forEach(item => {
+                            dispatchCatalogoData.set(item.codigo, {bodega_secundaria: item.bodega_secundaria, contenedor: item.contenedor});
+                        });
+                    }
+                }
+
                 const stockPorCodigo = new Map();
                 (stockRows || []).forEach(r => {
                     const c = (r?.material_codigo || '').toString();
@@ -1622,9 +2254,10 @@
                     const arr = stockPorCodigo.get(c) || [];
                     arr.push({
                         bodega_principal: r.bodega_principal || 'Principal',
-                        bodega_secundaria: r.bodega_secundaria || 'General',
+                        bodega_secundaria: r.bodega_secundaria || dispatchCatalogoData.get(c)?.bodega_secundaria || 'General',
 
-                        existencia: Number(r.stock_actual) || 0
+                        existencia: Number(r.stock_actual) || 0,
+                        contenedor: dispatchCatalogoData.get(c)?.contenedor || null
 
                     });
                     stockPorCodigo.set(c, arr);
@@ -1646,9 +2279,14 @@
                         const disp = Number(f.existencia) || 0;
                         if (disp <= 0) continue;
                         const usar = Math.min(restante, disp);
+                        
+                        // Obtener datos del catálogo para este material
+                        const datosCatalogo = catalogoData.get(codigo) || {};
+                        
                         movimientos.push({
                             material_codigo: codigo,
                             material_nombre: item.nombre_material || '',
+                            fecha_movimiento: new Date().toISOString(),
                             bodega_principal: f.bodega_principal,
                             bodega_secundaria: f.bodega_secundaria,
                             tipo_movimiento: 'despacho',
@@ -1659,23 +2297,26 @@
                             responsable: solicitud.encargado_evento,
                             observaciones: `Despacho ${numeroRegistro} - Evento: ${solicitud.evento}. Estado: ${item.estado || 'Nuevo'}. ${item.observacion || ''}`,
                             estado: 'completado',
-
                             usuario_id: window.currentUser?.id,
-
-                            // Ubicación fina (contenedor) no aplica aquí
-                            ubicacion_codigo: null,
-                            ubicacion_nombre: null
+                            precio: datosCatalogo.precio || 0,
+                            fecha_compra: datosCatalogo.fecha_compra,
+                            ubicacion_codigo: f.contenedor || datosCatalogo.contenedor || null,
+                            ubicacion_nombre: f.contenedor || datosCatalogo.contenedor || null
                         });
                         restante -= usar;
                     }
 
                     // Si por alguna razón no se pudo asignar bodega (o quedó restante), hacemos fallback.
                     if (restante > 0) {
+                        // Obtener datos del catálogo para este material
+                        const datosCatalogo = catalogoData.get(codigo) || {};
+                        
                         movimientos.push({
                             material_codigo: codigo,
                             material_nombre: item.nombre_material || '',
+                            fecha_movimiento: new Date().toISOString(),
                             bodega_principal: 'Principal',
-                            bodega_secundaria: 'General',
+                            bodega_secundaria: dispatchCatalogoData.get(codigo)?.bodega_secundaria || 'General',
                             tipo_movimiento: 'despacho',
                             cantidad: restante,
                             signo: -1,
@@ -1684,11 +2325,11 @@
                             responsable: solicitud.encargado_evento,
                             observaciones: `Despacho ${numeroRegistro} - Evento: ${solicitud.evento}. Estado: ${item.estado || 'Nuevo'}. ${item.observacion || ''}`,
                             estado: 'completado',
-
                             usuario_id: window.currentUser?.id,
-
-                            ubicacion_codigo: null,
-                            ubicacion_nombre: null
+                            precio: datosCatalogo.precio || 0,
+                            fecha_compra: datosCatalogo.fecha_compra,
+                            ubicacion_codigo: dispatchCatalogoData.get(codigo)?.contenedor || null,
+                            ubicacion_nombre: dispatchCatalogoData.get(codigo)?.contenedor || null
                         });
                     }
                 }
@@ -1709,6 +2350,7 @@
 
                 // Insertar en cada tabla
                 let movimientosInsertados = [];
+                const conteosInsertados = {};
                 for (const [tabla, movs] of Object.entries(movimientosPorTabla)) {
                     if (movs.length > 0) {
                         const { data: insertados, error: errorTabla } = await window.supabaseClient
@@ -1718,48 +2360,141 @@
 
                         if (errorTabla) {
                             console.error(`Error al registrar movimientos en ${tabla}:`, errorTabla);
-                            alert(`❌ Error al registrar movimientos en ${tabla}.`);
+                            alert(`❌ Error al registrar movimientos en ${tabla}: ${errorTabla.message || 'Error desconocido'}`);
                             return;
                         } else {
-                            console.log(`✅ Movimientos registrados en ${tabla}:`, insertados);
                             movimientosInsertados = movimientosInsertados.concat(insertados || []);
+                            conteosInsertados[tabla] = (insertados || []).length;
                             // Log de auditoría para movimientos
                             (insertados || []).forEach(mov => {
-                                window.logAuditoria('INSERT', tabla, mov.id, mov);
+                                window.logAuditoria('INSERT', tabla, null, mov); // mov.id no es UUID, usar null
                             });
                         }
                     }
+                }
+
+                // Validación post-inserción (head/count) por si .select() no retorna filas o el usuario está revisando la tabla equivocada.
+                try {
+                    const tablas = ['movimientos_bodega_audiovisual', 'movimientos_bodega_hierros', 'movimientos_bodega_consumibles'];
+                    const verif = {};
+                    let total = 0;
+                    for (const tabla of tablas) {
+                        const { count, error: errCount } = await window.supabaseClient
+                            .from(tabla)
+                            .select('id', { count: 'exact', head: true })
+                            .eq('tipo_movimiento', 'despacho')
+                            .eq('referencia_documento', numeroRegistro);
+                        if (errCount) {
+                            console.warn(`No se pudo verificar conteo en ${tabla}:`, errCount);
+                            continue;
+                        }
+                        verif[tabla] = count || 0;
+                        total += (count || 0);
+                    }
+                    console.log('📊 Movimientos insertados (select):', conteosInsertados);
+                    console.log('📊 Movimientos verificados en BD (count):', verif);
+                    if (total === 0) {
+                        console.warn('⚠️ No aparecen movimientos en BD para este despacho. Revisar RLS/permisos o que el usuario esté consultando la tabla correcta.');
+                    }
+                } catch (e) {
+                    console.warn('No se pudo ejecutar verificación post-inserción:', e);
                 }
 
                 if (movimientosInsertados.length === 0) {
                     console.warn('No se registraron movimientos en ninguna tabla');
 
                 }
+
+                // 3.5. Actualizar items del despacho con información de bodegas
+                // Crear mapa de bodegas por código de material
+                const bodegasPorMaterial = new Map();
+                movimientos.forEach(mov => {
+                    if (!bodegasPorMaterial.has(mov.material_codigo)) {
+                        bodegasPorMaterial.set(mov.material_codigo, {
+                            bodega_principal: mov.bodega_principal,
+                            bodega_secundaria: mov.bodega_secundaria
+                        });
+                    }
+                });
+
+                // Actualizar items del despacho con las bodegas correspondientes
+                for (const item of itemsDespachoParaInsertar) {
+                    const bodegaInfo = bodegasPorMaterial.get(item.codigo_material);
+                    if (bodegaInfo) {
+                        const { error: errorUpdate } = await window.supabaseClient
+                            .from('items_despacho_logistica')
+                            .update({
+                                bodega_principal: bodegaInfo.bodega_principal,
+                                bodega_secundaria: bodegaInfo.bodega_secundaria
+                            })
+                            .eq('despacho_id', despachoCreado.id)
+                            .eq('codigo_material', item.codigo_material);
+
+                        if (errorUpdate) {
+                            console.error(`Error al actualizar bodegas para ${item.codigo_material}:`, errorUpdate);
+                        }
+                    }
+                }
+
+                console.log('✅ Items del despacho actualizados con información de bodegas');
+
             } catch (error) {
                 console.error('Error en integración con Supabase:', error);
                 alert('❌ Error en integración con base de datos. El despacho se realizó localmente.');
             }
             
+            const materiales = (itemsResueltos || solicitud.items_solicitud_logistica || []).map(it => {
+                const code = (it.codigo_material || '').toString().toUpperCase().trim();
+                const esMaterial = !code.includes('-CONS-');
+                
+                if (esMaterial) {
+                    const materialInfo = materialesMap.get(it.codigo_material);
+                    return {
+                        codigo: it.codigo_material,
+                        material: (isCaseBaseCodigo(it.codigo_material)
+                          ? `CASE ${getCaseBaseFromCodigo(it.codigo_material) || it.nombre_material || 'Case'}`
+                          : (it.nombre_material || it.codigo_material + (it.medidas ? ` (${it.medidas})` : ""))),
+                        cantidad: it.cantidad_solicitada,
+                        contenedor: materialInfo?.bodegaSecundaria || 'N/A',
+                        observacion: simplificarObservacion(it.observacion || "")
+                    };
+                }
+                return null;
+            }).filter(it => it !== null);
+
+            const consumibles = (itemsResueltos || solicitud.items_solicitud_logistica || []).map(it => {
+                const code = (it.codigo_material || '').toString().toUpperCase().trim();
+                const esConsumible = code.includes('-CONS-');
+                
+                if (esConsumible) {
+                    const materialInfo = materialesMap.get(it.codigo_material);
+                    return {
+                        codigo: it.codigo_material,
+                        material: (isCaseBaseCodigo(it.codigo_material)
+                          ? `CASE ${getCaseBaseFromCodigo(it.codigo_material) || it.nombre_material || 'Case'}`
+                          : (it.nombre_material || it.codigo_material + (it.medidas ? ` (${it.medidas})` : ""))),
+                        cantidad: it.cantidad_solicitada,
+                        contenedor: materialInfo?.bodegaSecundaria || 'N/A',
+                        observacion: simplificarObservacion(it.observacion || "")
+                    };
+                }
+                return null;
+            }).filter(it => it !== null);
+
             const datosPDF = {
                 numeroRegistro,
                 fechaDespacho: formatDate(new Date()),
-                personalEntrega: solicitud.encargado_evento,
+                personalEntrega: await resolveEmpleadoNombre(solicitud.encargado_evento),
                 evento: solicitud.evento,
-                clienteEvento: eventoData?.cliente || "",
-                lugarMontaje: eventoData?.lugar || "",
-                itemsSalida: (itemsResueltos || solicitud.items_solicitud_logistica || []).map(it => ({
-                    material: (isCaseBaseCodigo(it.codigo_material)
-                      ? `CASE ${getCaseBaseFromCodigo(it.codigo_material) || it.nombre_material || 'Case'}`
-                      : (it.nombre_material || it.codigo_material + (it.medidas ? ` (${it.medidas})` : ""))),
-                    cantidad: it.cantidad_solicitada,
-                    estado: it.estado || "Nuevo",
-                    observacion: it.observacion || ""
-                })),
-                eventoCompleto: eventoData || {} // ✅ Ahora contiene todos los datos
+                clienteEvento: (eventoData && eventoData.length > 0) ? eventoData[0].cliente : "",
+                lugarMontaje: (eventoData && eventoData.length > 0) ? eventoData[0].lugar : "",
+                materiales,
+                consumibles,
+                eventoCompleto: (eventoData && eventoData.length > 0) ? eventoData[0] : {} // ✅ Ahora contiene todos los datos
             };
 
             // Generar Acta
-            generarActaDeEntregaPDF(datosPDF);
+            await generarActaDeEntregaPDF(datosPDF);
 
 // ✅ Actualizar información de procesamiento en la solicitud
             const { error: errorUpdateSolicitud } = await window.supabaseClient
@@ -1777,16 +2512,37 @@
                 alert('❌ Error al actualizar el estado de la solicitud.');
             }
 
+            // Deshabilitar el botón para evitar despachos duplicados
+            botonesTarget.forEach(btn => {
+                btn.disabled = true;
+                btn.textContent = '✅ DESPACHO CONFIRMADO';
+                btn.style.backgroundColor = '#10b981';
+            });
+
+            despachoProcesadoOk = true;
+
             alert(`✅ Despacho ${numeroRegistro} procesado y guardado.`);
+            // Mostrar notificación del sistema
+            if (window.showSystemNotification) {
+              window.showSystemNotification('Despacho Registrado', `Despacho ${numeroRegistro} procesado y guardado exitosamente.`);
+            }
             renderLista();
         } catch (error) {
             console.error('Error en confirmarDespachoOficial:', error);
             alert('❌ Error al procesar el despacho.');
+            // Mostrar notificación de error
+            if (window.showSystemNotification) {
+              window.showSystemNotification('Error en Despacho', 'No se pudo procesar el despacho. Verifique los datos.');
+            }
+        } finally {
+            if (!despachoProcesadoOk) {
+                restaurarBotones();
+            }
         }
     };
 
     // 5. TU FUNCIÓN DE PDF ORIGINAL (ya correcta, pero ahora con datos completos)
-    function generarActaDeEntregaPDF(data) {
+    async function generarActaDeEntregaPDF(data) {
         const recibe = data.personalEntrega;
         const copias = [
             { leyenda: "Original – Bodega" },
@@ -1797,22 +2553,48 @@
         copias.forEach(copia => {
             const tablaEncabezados = `
                 <tr style="background-color: #f1f5f9; color: #1e40af; font-size: 10pt; font-weight: bold;">
-                    <th style="padding: 6pt; border: 1px solid #e2e8f0;">Material</th>
-                    <th style="padding: 6pt; border: 1px solid #e2e8f0;">Cantidad</th>
-                    <th style="padding: 6pt; border: 1px solid #e2e8f0;">Estado</th>
-                    <th style="padding: 6pt; border: 1px solid #e2e8f0;">Observación</th>
+                    <th style="padding: 8pt; border: 1px solid #e2e8f0; width: 18%;">Código</th>
+                    <th style="padding: 8pt; border: 1px solid #e2e8f0; width: 25%;">Material</th>
+                    <th style="padding: 8pt; border: 1px solid #e2e8f0; width: 12%;">Cantidad</th>
+                    <th style="padding: 8pt; border: 1px solid #e2e8f0; width: 15%;">Bodega secundaria</th>
+                    <th style="padding: 8pt; border: 1px solid #e2e8f0; width: 35%;">Observación</th>
                 </tr>`;
-            const tablaFilas = data.itemsSalida.map(item => `
-                <tr style="font-size: 9pt;">
-                    <td style="padding: 6pt; border: 1px solid #e2e8f0;">${item.material}</td>
-                    <td style="padding: 6pt; border: 1px solid #e2e8f0; text-align: center;">${item.cantidad}</td>
-                    <td style="padding: 6pt; border: 1px solid #e2e8f0;">${item.estado}</td>
-                    <td style="padding: 6pt; border: 1px solid #e2e8f0;">${item.observacion}</td>
-                </tr>`).join("");
+            
+            let tablasHTML = "";
+            
+            // Tabla de Materiales (Rentables)
+            if (data.materiales && data.materiales.length > 0) {
+                const tablaFilasMateriales = data.materiales.map(item => `
+                    <tr style="font-size: 8pt;">
+                        <td style="padding: 8pt; border: 1px solid #e2e8f0; width: 18%;">${item.codigo}</td>
+                        <td style="padding: 8pt; border: 1px solid #e2e8f0; width: 25%;">${item.material}</td>
+                        <td style="padding: 8pt; border: 1px solid #e2e8f0; text-align: center; width: 12%;">${item.cantidad}</td>
+                        <td style="padding: 8pt; border: 1px solid #e2e8f0; width: 15%;">${item.contenedor}</td>
+                        <td style="padding: 8pt; border: 1px solid #e2e8f0; width: 35%;">${item.observacion}</td>
+                    </tr>`).join("");
+                tablasHTML += `
+                    <h3 style="color: #1e40af; margin: 15pt 0 8pt 0; font-size: 11pt; border-bottom: 1px solid #cbd5e1; padding-bottom: 4pt;">Materiales</h3>
+                    <table style="width: 110%; border-collapse: collapse; font-size: 9pt; margin-bottom: 15pt;"><thead>${tablaEncabezados}</thead><tbody>${tablaFilasMateriales}</tbody></table>`;
+            }
+            
+            // Tabla de Consumibles
+            if (data.consumibles && data.consumibles.length > 0) {
+                const tablaFilasConsumibles = data.consumibles.map(item => `
+                    <tr style="font-size: 8pt;">
+                        <td style="padding: 8pt; border: 1px solid #e2e8f0; width: 18%;">${item.codigo}</td>
+                        <td style="padding: 8pt; border: 1px solid #e2e8f0; width: 25%;">${item.material}</td>
+                        <td style="padding: 8pt; border: 1px solid #e2e8f0; text-align: center; width: 12%;">${item.cantidad}</td>
+                        <td style="padding: 8pt; border: 1px solid #e2e8f0; width: 15%;">${item.contenedor}</td>
+                        <td style="padding: 8pt; border: 1px solid #e2e8f0; width: 35%;">${item.observacion}</td>
+                    </tr>`).join("");
+                tablasHTML += `
+                    <h3 style="color: #1e40af; margin: 15pt 0 8pt 0; font-size: 11pt; border-bottom: 1px solid #cbd5e1; padding-bottom: 4pt;">Consumibles y Herramientas</h3>
+                    <table style="width: 110%; border-collapse: collapse; font-size: 9pt; margin-bottom: 15pt;"><thead>${tablaEncabezados}</thead><tbody>${tablaFilasConsumibles}</tbody></table>`;
+            }
             
             let servicioHTML = "No disponible";
             if (data.eventoCompleto && Array.isArray(data.eventoCompleto.descripcion)) {
-                servicioHTML = '<ul style="margin: 4pt 0; padding-left: 16pt; font-size: 9pt;">' +
+                servicioHTML = '<ul style="margin: 4pt 0; padding-left: 16pt; font-size: 8pt;">' +
                     data.eventoCompleto.descripcion.map(item => `<li><em>${item}</em></li>`).join('') + '</ul>';
             }
 
@@ -1820,7 +2602,7 @@
             const desmontaje = data.eventoCompleto ? formatDateTime(data.eventoCompleto.fecha_desmontaje, data.eventoCompleto.hora_desmontaje) : "—";
             
             contenidoCompleto += `
-            <div style="width: 185mm; font-family: Arial, sans-serif; color: #333; line-height: 1.3; font-size: 10pt; page-break-after: always; padding: 10mm; background: white;">
+            <div style="width: 195mm; font-family: Arial, sans-serif; color: #333; line-height: 1.3; font-size: 10pt; page-break-after: always; padding: 10mm; background: white;">
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10pt; border-bottom: 2px solid #1e40af; padding-bottom: 6pt;">
                     <img src="assets/logo.png" alt="Logo" style="height: 20mm; margin-right: 8mm;">
                     <div style="text-align: center; flex: 1;">
@@ -1831,13 +2613,13 @@
                         <div style="font-size: 24pt; font-weight: bold; color: #1e40af; letter-spacing: 1px;">${data.numeroRegistro}</div>
                     </div>
                 </div>
-                <div style="background: #f8fafc; padding: 6pt; border-radius: 4pt; margin: 8pt 0; font-size: 9pt; border: 1px solid #e2e8f0;">
+                <div style="background: #f8fafc; padding: 6pt; border-radius: 4pt; margin: 8pt 0; font-size: 8pt; border: 1px solid #e2e8f0;">
                     <p><strong>Número de Despacho:</strong> <em>${data.numeroRegistro}</em></p>
                     <p><strong>Encargado del Evento:</strong> <em>${recibe}</em></p>
                 </div>
-                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4pt; padding: 6pt; margin: 8pt 0; font-size: 9pt;">
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4pt; padding: 6pt; margin: 8pt 0; font-size: 8pt;">
                     <h4 style="margin: 0 0 6pt 0; color: #1e40af; font-size: 10pt; border-bottom: 1px solid #cbd5e1; padding-bottom: 4pt;">📋 Información del Evento</h4>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8pt; font-size: 9pt;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8pt; font-size: 8pt;">
                         <div>
                             <p style="margin: 4pt 0;"><strong>Evento:</strong> <em>${data.evento || 'N/A'}</em></p>
                             <p style="margin: 4pt 0;"><strong>Cliente:</strong> <em>${data.clienteEvento || 'N/A'}</em></p>
@@ -1850,24 +2632,41 @@
                     </div>
                     <div style="margin-top: 8pt;"><p style="margin: 4pt 0;"><strong>Servicio Solicitado:</strong></p>${servicioHTML}</div>
                 </div>
-                <table style="width: 100%; border-collapse: collapse; font-size: 9pt;"><thead>${tablaEncabezados}</thead><tbody>${tablaFilas}</tbody></table>
+                ${tablasHTML}
                 <div style="display: flex; justify-content: space-around; margin-top: 20mm;">
                     <div style="text-align: center; width: 30%;"><div style="border-top: 1px solid black; padding-top: 5pt; font-weight: bold;">Bodega</div><p style="margin: 5pt 0 0 0; font-size: 8pt;">Entrega</p></div>
                     <div style="text-align: center; width: 30%;"><div style="border-top: 1px solid black; padding-top: 5pt; font-weight: bold;">${recibe}</div><p style="margin: 5pt 0 0 0; font-size: 8pt;">Recibe</p></div>
                     <div style="text-align: center; width: 30%;"><div style="border-top: 1px solid black; padding-top: 5pt; font-weight: bold;">Jefe de Operaciones</div><p style="margin: 5pt 0 0 0; font-size: 8pt;">Autoriza</p></div>
                 </div>
-                <div style="margin-top: 10mm; text-align: center; font-size: 9pt; color: #666; border-top: 1px solid #eee; padding-top: 4pt;">${copia.leyenda}</div>
+                <div style="margin-top: 10mm; text-align: center; font-size: 8pt; color: #666; border-top: 1px solid #eee; padding-top: 4pt;">${copia.leyenda}</div>
             </div>`;
         });
 
-        const options = {
-            margin: [0, 0, 0, 0],
-            filename: `Acta_Despacho_${data.numeroRegistro}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
-            jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
-        };
-        html2pdf().from(contenidoCompleto).set(options).save();
+        const filename = `Acta_Despacho_${data.numeroRegistro}.pdf`;
+
+        try {
+                        // Inyectar estilos: reducir espacio entre filas de tabla ajustando padding de celdas
+                        const styleOverride = `
+                                <style>
+                                    /* No tocar line-height global para evitar solapamiento del texto */
+                                    table { border-collapse: collapse; }
+                                    table td, table th { padding: 3pt 6pt !important; }
+                                    table tbody tr { page-break-inside: avoid; }
+                                </style>`;
+
+                        const fullHtml = `<!doctype html><html><head><meta charset="utf-8">${styleOverride}</head><body>${contenidoCompleto}</body></html>`;
+
+            // Usar el handler nativo de Electron para generar PDF preservando texto
+            const result = await window.electronAPI.renderHtmlToPdf({ filename, html: fullHtml, baseUrl: document.baseURI });
+            if (result && result.canceled === false) {
+                alert('PDF guardado en: ' + result.filePath);
+            } else {
+                console.log('Generación de PDF cancelada o no completada', result);
+            }
+        } catch (err) {
+            console.error('Error generando PDF nativo:', err);
+            alert('Error al generar PDF nativo. Revisa la consola para más detalles.');
+        }
     }
 
     function actualizarPanelEvento(data, serviciosTexto = 'No disponible') {
@@ -2198,15 +2997,11 @@
 
     // Función para seleccionar un material del modal
     window.seleccionarMaterial = async function(itemId, codigoActual, codigoNuevo, nombreNuevo) {
-        if (!confirm(`¿Estás seguro de que quieres reemplazar "${codigoActual}" con "${codigoNuevo}" (${nombreNuevo}) en este material?`)) {
-            return;
-        }
-
         try {
-            // Primero obtener el item actual para saber de dónde viene
+            // Primero obtener el item actual completo (incluyendo cantidad)
             const { data: itemActual, error: errorConsulta } = await window.supabaseClient
                 .from('items_solicitud_logistica')
-                .select('observacion')
+                .select('*')
                 .eq('id', itemId)
                 .single();
 
@@ -2216,44 +3011,131 @@
                 return;
             }
 
-            // Determinar qué tipo de actualización hacer según la observación actual
-            let updateData = {
-                codigo_material: codigoNuevo,
-                nombre_material: nombreNuevo
-            };
+            // Verificar si el material específico ya está asignado en esta solicitud
+            const { data: itemsExistentes, error: errorVerificar } = await window.supabaseClient
+                .from('items_solicitud_logistica')
+                .select('id, codigo_material, nombre_material')
+                .eq('solicitud_id', itemActual.solicitud_id)
+                .eq('codigo_material', codigoNuevo);
 
-            // Si viene de plantillas adicionales, convertir a específico adicional
-            if (itemActual.observacion && itemActual.observacion.includes('Plantilla adicional')) {
-                updateData.observacion = `Material adicional específico - Original: ${codigoActual}`;
-            } else {
-                // Para otros casos, mantener la observación existente pero agregar nota de actualización
-                updateData.observacion = itemActual.observacion
-                    ? `${itemActual.observacion} - Actualizado desde búsqueda: ${codigoActual} → ${codigoNuevo}`
-                    : `Material actualizado desde búsqueda - Original: ${codigoActual}`;
+            if (errorVerificar) {
+                console.error('Error al verificar duplicados:', errorVerificar);
+                alert('Error al verificar duplicados');
+                return;
             }
 
-            // Actualizar el material existente
-            const { data: materialActualizado, error } = await window.supabaseClient
-                .from('items_solicitud_logistica')
-                .update(updateData)
-                .eq('id', itemId)
-                .select()
-                .single();
-
-            if (error) {
-                console.error('Error al actualizar material:', error);
-                alert('Error al actualizar el material');
+            // Si ya existe el material en la solicitud (excluyendo el item actual que se está modificando)
+            if (itemsExistentes && itemsExistentes.length > 0) {
+                const itemDuplicado = itemsExistentes[0];
+                alert(`❌ Error: El material "${codigoNuevo}" (${nombreNuevo}) ya está asignado en esta solicitud.\n\nNo se puede seleccionar el mismo material específico más de una vez.`);
                 return;
+            }
+
+            // Obtener stock disponible del material seleccionado
+            const stockDisponible = await obtenerStockDesdeVistas(codigoNuevo);
+
+            if (stockDisponible <= 0) {
+                alert(`❌ El material "${nombreNuevo}" no tiene stock disponible.`);
+                return;
+            }
+
+            // Determinar la cantidad a asignar
+            const cantidadActual = itemActual.cantidad_solicitada;
+            const cantidadAsignar = Math.min(stockDisponible, cantidadActual);
+
+            // Confirmación inteligente según el caso
+            let mensajeConfirmacion;
+            if (stockDisponible >= cantidadActual) {
+                mensajeConfirmacion = `¿Estás seguro de que quieres reemplazar completamente "${codigoActual}" (cantidad: ${cantidadActual}) con "${codigoNuevo}" (${nombreNuevo})?`;
+            } else {
+                mensajeConfirmacion = `El material "${nombreNuevo}" tiene stock insuficiente (${stockDisponible}) para cubrir toda la cantidad solicitada (${cantidadActual}).\n\n¿Quieres asignar ${stockDisponible} unidades de "${codigoNuevo}" y dejar ${cantidadActual - stockDisponible} unidades pendientes en el material original?`;
+            }
+
+            if (!confirm(mensajeConfirmacion)) {
+                return;
+            }
+
+            if (stockDisponible >= cantidadActual) {
+                // ✅ ASIGNACIÓN COMPLETA: Reemplazar el material completamente
+                const updateData = {
+                    codigo_material: codigoNuevo,
+                    nombre_material: nombreNuevo,
+                    observacion: itemActual.observacion
+                        ? `${itemActual.observacion} - Asignación completa desde búsqueda: ${codigoActual} → ${codigoNuevo}`
+                        : `Material asignado completamente desde búsqueda - Original: ${codigoActual}`
+                };
+
+                const { data: materialActualizado, error } = await window.supabaseClient
+                    .from('items_solicitud_logistica')
+                    .update(updateData)
+                    .eq('id', itemId)
+                    .select()
+                    .single();
+
+                if (error) {
+                    console.error('Error al actualizar material:', error);
+                    alert('Error al actualizar el material');
+                    return;
+                }
+
+                alert(`✅ Asignación completa exitosamente.\n\n"${codigoActual}" → "${codigoNuevo}" (${nombreNuevo})\nCantidad: ${cantidadActual}`);
+
+            } else {
+                // 🔄 ASIGNACIÓN PARCIAL: Crear nuevo item específico y reducir cantidad del original
+                const cantidadRestante = cantidadActual - stockDisponible;
+
+                // 1. Crear nuevo item específico con la cantidad disponible
+                const nuevoItemEspecifico = {
+                    solicitud_id: itemActual.solicitud_id,
+                    codigo_material: codigoNuevo,
+                    nombre_material: nombreNuevo,
+                    cantidad_solicitada: stockDisponible,
+                    estado: 'pendiente',
+                    observacion: `Material específico asignado parcialmente - Original: ${codigoActual} - Parte ${stockDisponible} de ${cantidadActual}`,
+                    medidas: itemActual.medidas,
+                    color: itemActual.color,
+                    usuario_id: window.currentUser?.id
+                };
+
+                const { data: itemEspecificoCreado, error: errorCrear } = await window.supabaseClient
+                    .from('items_solicitud_logistica')
+                    .insert(nuevoItemEspecifico)
+                    .select()
+                    .single();
+
+                if (errorCrear) {
+                    console.error('Error al crear item específico:', errorCrear);
+                    alert('Error al crear el material específico');
+                    return;
+                }
+
+                // 2. Reducir la cantidad del material original
+                const { data: materialActualizado, error: errorActualizar } = await window.supabaseClient
+                    .from('items_solicitud_logistica')
+                    .update({
+                        cantidad_solicitada: cantidadRestante,
+                        observacion: itemActual.observacion
+                            ? `${itemActual.observacion} - Asignación parcial: ${stockDisponible} unidades asignadas a ${codigoNuevo}, ${cantidadRestante} pendientes`
+                            : `Material con asignación parcial - ${stockDisponible} unidades asignadas a ${codigoNuevo}, ${cantidadRestante} pendientes`
+                    })
+                    .eq('id', itemId)
+                    .select()
+                    .single();
+
+                if (errorActualizar) {
+                    console.error('Error al actualizar material original:', errorActualizar);
+                    alert('Error al actualizar el material original');
+                    return;
+                }
+
+                alert(`✅ Asignación parcial exitosamente.\n\nSe asignaron ${stockDisponible} unidades de "${codigoNuevo}" (${nombreNuevo})\nEl material original "${codigoActual}" ahora tiene ${cantidadRestante} unidades pendientes.`);
             }
 
             // Cerrar modal
             const modal = document.querySelector('.modal-seleccion-materiales');
             if (modal) modal.remove();
 
-            // Mostrar confirmación y refrescar la vista
-            alert(`✅ Material actualizado exitosamente.\n\n"${codigoActual}" → "${codigoNuevo}" (${nombreNuevo})`);
-
-            // Refrescar la vista para mostrar el material actualizado
+            // Refrescar la vista para mostrar los cambios
             if (window.solicitudActualId) {
                 window.verPedidoDespacho(window.solicitudActualId);
             }

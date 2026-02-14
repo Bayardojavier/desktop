@@ -4,13 +4,30 @@ const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 module.exports = {
   packagerConfig: {
     asar: true,
+    name: 'Absolute de Nicaragua',
+    executableName: 'Absolute de Nicaragua',
+    ignore: [
+      /^\/src\/.*\.map$/,
+      /^\/\.git$/,
+    ],
   },
   rebuildConfig: {},
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
       config: {
-        name: 'Absolute_de_Nicaragua'
+        name: 'Absolute_de_Nicaragua',
+        exe: 'Absolute de Nicaragua.exe',
+        setupExe: 'Absolute_de_Nicaragua_Setup.exe',
+        setupIcon: 'assets/icon.ico',
+        noMsi: true,
+      },
+    },
+    {
+      name: '@electron-forge/maker-zip',
+      platforms: ['win32'],
+      config: {
+        name: 'Absolute_de_Nicaragua_Portable',
       },
     },
     {

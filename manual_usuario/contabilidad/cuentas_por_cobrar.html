@@ -1,0 +1,838 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario - Cuentas por Cobrar</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary-color: #64748b;
+            --accent-color: #f59e0b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --background-primary: #0f172a;
+            --background-secondary: #1e293b;
+            --background-tertiary: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --border-hover: #475569;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--background-primary) 0%, #1e1b4b 100%);
+            color: var(--text-secondary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--background-secondary) 0%, var(--background-tertiary) 100%);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .header-text h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .header-text p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--background-tertiary);
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .nav-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            transform: translateY(-1px);
+        }
+
+        /* Breadcrumb */
+        .breadcrumb {
+            background: var(--background-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .breadcrumb-nav {
+            padding: 1rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .breadcrumb-list {
+            display: flex;
+            align-items: center;
+            list-style: none;
+            gap: 0.5rem;
+        }
+
+        .breadcrumb-item {
+            color: var(--text-muted);
+        }
+
+        .breadcrumb-item a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .breadcrumb-item a:hover {
+            color: var(--primary-color);
+        }
+
+        .breadcrumb-separator {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .breadcrumb-current {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .content-section {
+            background: var(--background-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .section-header {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-description {
+            font-size: 1.125rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        /* Feature Gallery */
+        .feature-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .feature-card {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .feature-image {
+            padding: 1.5rem;
+            background: var(--background-primary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .feature-caption {
+            padding: 1rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            text-align: center;
+            background: var(--background-secondary);
+        }
+
+        /* Content Blocks */
+        .content-block {
+            margin: 2rem 0;
+        }
+
+        .content-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .content-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .content-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .content-list li:last-child {
+            border-bottom: none;
+        }
+
+        .nested-list {
+            margin-left: 1.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .nested-list li {
+            border-bottom: none;
+            padding: 0.25rem 0;
+            color: var(--text-muted);
+        }
+
+        .highlight-box {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .highlight-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Table Styles */
+        .table-container {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .table-header {
+            background: var(--background-secondary);
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .table-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table th {
+            background: var(--background-secondary);
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .data-table td {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .data-table tr:hover td {
+            background: var(--background-primary);
+        }
+
+        .amount-cell {
+            text-align: right;
+            font-family: 'Courier New', monospace;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-md);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .status-pending {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .status-overdue {
+            background: var(--error-color);
+            color: white;
+        }
+
+        .status-paid {
+            background: var(--success-color);
+            color: white;
+        }
+
+        /* Status Cards */
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .status-card {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .status-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .status-label {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--background-secondary);
+            border-top: 1px solid var(--border-color);
+            margin-top: 3rem;
+        }
+
+        .footer-content {
+            padding: 2rem;
+            text-align: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-text {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .feature-card {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .feature-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .nav-buttons {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .main-content {
+                padding: 1rem;
+            }
+
+            .content-section {
+                padding: 1.5rem;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            .feature-gallery {
+                grid-template-columns: 1fr;
+            }
+
+            .data-table {
+                font-size: 0.75rem;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 0.5rem;
+            }
+
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo">
+                    <i class="fas fa-hand-holding-usd"></i>
+                </div>
+                <div class="header-text">
+                    <h1>Manual de Usuario</h1>
+                    <p>Absolute de Nicaragua</p>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <a href="index.html" class="nav-btn">
+                    <i class="fas fa-arrow-left"></i>
+                    Contabilidad
+                </a>
+                <a href="../index.html" class="nav-btn">
+                    <i class="fas fa-home"></i>
+                    Inicio
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <nav class="breadcrumb">
+        <div class="breadcrumb-nav">
+            <ol class="breadcrumb-list">
+                <li class="breadcrumb-item">
+                    <a href="../index.html">Inicio</a>
+                </li>
+                <li class="breadcrumb-separator">/</li>
+                <li class="breadcrumb-item">
+                    <a href="index.html">Contabilidad</a>
+                </li>
+                <li class="breadcrumb-separator">/</li>
+                <li class="breadcrumb-current">Cuentas por Cobrar</li>
+            </ol>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <section class="content-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-hand-holding-usd"></i>
+                    Gestión de Cuentas por Cobrar
+                </h2>
+                <p class="section-description">
+                    El módulo de cuentas por cobrar permite gestionar eficientemente todas las facturas pendientes de cobro, controlar los plazos de pago, enviar recordatorios automáticos y mantener un seguimiento detallado del flujo de ingresos por cobrar.
+                </p>
+            </div>
+
+            <div class="feature-gallery">
+                <div class="feature-card">
+                    <div class="feature-image">
+                        <div style="background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 20px; font-family: 'Fira Code', 'Courier New', monospace; font-size: 12px; line-height: 1.4; color: #cbd5e1;">
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+                                <h3 style="margin: 0 0 12px; color: #0f172a; font-size: 14px; font-weight: 600;">📊 Dashboard de Cobranza</h3>
+
+                                <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; color: #0f172a;">
+                                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px;">
+                                        <div style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: #fff; padding: 12px; border-radius: 8px;">
+                                            <div style="font-size: 18px; font-weight: 700;">C$ 125,000</div>
+                                            <div style="font-size: 12px; opacity: 0.9;">Total por Cobrar</div>
+                                            <div style="font-size: 11px; opacity: 0.7; margin-top: 4px;">↗️ +8% vs mes anterior</div>
+                                        </div>
+
+                                        <div style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; padding: 12px; border-radius: 8px;">
+                                            <div style="font-size: 18px; font-weight: 700;">12</div>
+                                            <div style="font-size: 12px; opacity: 0.9;">Facturas Pendientes</div>
+                                            <div style="font-size: 11px; opacity: 0.7; margin-top: 4px;">3 vencidas</div>
+                                        </div>
+                                    </div>
+
+                                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px;">
+                                        <h5 style="margin: 0 0 8px; font-size: 12px; font-weight: 600; color: #374151;">Distribución por Estado</h5>
+                                        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                                            <div style="flex: 3; background: #10b981; height: 8px; border-radius: 4px;"></div>
+                                            <div style="flex: 1; background: #f59e0b; height: 8px; border-radius: 4px;"></div>
+                                            <div style="flex: 1; background: #ef4444; height: 8px; border-radius: 4px;"></div>
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between; font-size: 11px; color: #6b7280;">
+                                            <span>75% Al día</span>
+                                            <span>15% Próximo vencimiento</span>
+                                            <span>10% Vencidas</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="feature-caption">
+                        Fig. 1 - Dashboard con resumen de cuentas por cobrar y estado de cobranza.
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-image">
+                        <div style="background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 20px; font-family: 'Fira Code', 'Courier New', monospace; font-size: 12px; line-height: 1.4; color: #cbd5e1;">
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+                                <h3 style="margin: 0 0 12px; color: #0f172a; font-size: 14px; font-weight: 600;">💰 Registro de Pagos</h3>
+
+                                <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; color: #0f172a;">
+                                    <div style="margin-bottom: 16px;">
+                                        <h4 style="margin: 0 0 8px; font-size: 13px; font-weight: 600;">Registrar Pago Recibido</h4>
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px;">
+                                                <label style="display: block; font-size: 11px; color: #64748b; margin-bottom: 4px;">Factura</label>
+                                                <select style="width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; font-size: 12px;">
+                                                    <option>INV-2026-001</option>
+                                                    <option>INV-2026-002</option>
+                                                    <option>INV-2026-003</option>
+                                                </select>
+                                            </div>
+
+                                            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px;">
+                                                <label style="display: block; font-size: 11px; color: #64748b; margin-bottom: 4px;">Monto</label>
+                                                <input style="width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; font-size: 12px;" type="number" placeholder="0.00" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                                        <button style="padding: 8px 16px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; color: #334155; font-size: 12px;">Aplicar a Factura</button>
+                                        <button style="padding: 8px 16px; border: 1px solid #10b981; border-radius: 6px; background: #10b981; color: #fff; font-size: 12px; font-weight: 600;">Registrar Pago</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="feature-caption">
+                        Fig. 2 - Interfaz para registrar pagos recibidos y aplicar a facturas pendientes.
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-chart-pie"></i>
+                    Estado de Cuentas por Cobrar
+                </h3>
+                <div class="status-grid">
+                    <div class="status-card">
+                        <div class="status-number">C$ 125,000</div>
+                        <div class="status-label">Total por Cobrar</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-number">12</div>
+                        <div class="status-label">Facturas Pendientes</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-number">C$ 93,750</div>
+                        <div class="status-label">Monto al Día</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-number">C$ 18,750</div>
+                        <div class="status-label">Próximo Vencimiento</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-number">C$ 12,500</div>
+                        <div class="status-label">Monto Vencido</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-number">8</div>
+                        <div class="status-label">Clientes Activos</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-table"></i>
+                    Listado de Cuentas por Cobrar
+                </h3>
+                <div class="table-container">
+                    <div class="table-header">
+                        <h4 class="table-title">Facturas Pendientes de Cobro - Febrero 2026</h4>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Factura</th>
+                                <th>Cliente</th>
+                                <th>Fecha Emisión</th>
+                                <th>Fecha Vencimiento</th>
+                                <th>Monto Total</th>
+                                <th>Saldo Pendiente</th>
+                                <th>Estado</th>
+                                <th>Días Vencida</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>INV-2026-001</td>
+                                <td>Hotel Real</td>
+                                <td>15/01/2026</td>
+                                <td>15/02/2026</td>
+                                <td class="amount-cell">C$ 25,000</td>
+                                <td class="amount-cell">C$ 25,000</td>
+                                <td><span class="status-badge status-pending">Pendiente</span></td>
+                                <td>0</td>
+                            </tr>
+                            <tr>
+                                <td>INV-2026-002</td>
+                                <td>Centro de Convenciones</td>
+                                <td>20/01/2026</td>
+                                <td>20/02/2026</td>
+                                <td class="amount-cell">C$ 35,000</td>
+                                <td class="amount-cell">C$ 35,000</td>
+                                <td><span class="status-badge status-pending">Pendiente</span></td>
+                                <td>0</td>
+                            </tr>
+                            <tr>
+                                <td>INV-2026-003</td>
+                                <td>Corporación ABC</td>
+                                <td>10/01/2026</td>
+                                <td>10/02/2026</td>
+                                <td class="amount-cell">C$ 18,750</td>
+                                <td class="amount-cell">C$ 18,750</td>
+                                <td><span class="status-badge status-overdue">Vencida</span></td>
+                                <td>5</td>
+                            </tr>
+                            <tr>
+                                <td>INV-2026-004</td>
+                                <td>Empresa XYZ</td>
+                                <td>25/01/2026</td>
+                                <td>25/02/2026</td>
+                                <td class="amount-cell">C$ 12,500</td>
+                                <td class="amount-cell">C$ 12,500</td>
+                                <td><span class="status-badge status-overdue">Vencida</span></td>
+                                <td>10</td>
+                            </tr>
+                            <tr>
+                                <td>INV-2026-005</td>
+                                <td>Restaurante El Patio</td>
+                                <td>28/01/2026</td>
+                                <td>28/02/2026</td>
+                                <td class="amount-cell">C$ 33,750</td>
+                                <td class="amount-cell">C$ 33,750</td>
+                                <td><span class="status-badge status-pending">Pendiente</span></td>
+                                <td>0</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-star"></i>
+                    Funcionalidades Principales
+                </h3>
+                <ul class="content-list">
+                    <li><strong>Registro Automático:</strong> Las facturas se generan automáticamente desde el módulo de ventas y se integran al sistema de cuentas por cobrar.</li>
+                    <li><strong>Control de Vencimientos:</strong> Seguimiento automático de fechas de vencimiento con alertas configurables.</li>
+                    <li><strong>Registro de Pagos:</strong> Aplicación de pagos a facturas pendientes con posibilidad de pagos parciales.</li>
+                    <li><strong>Reportes de Cobranza:</strong> Estados de cuenta por cliente, análisis de mora y reportes de eficiencia de cobranza.</li>
+                    <li><strong>Recordatorios Automáticos:</strong> Envío automático de recordatorios por email antes del vencimiento.</li>
+                    <li><strong>Historial Completo:</strong> Registro detallado de todas las transacciones y comunicaciones con clientes.</li>
+                    <li><strong>Análisis de Riesgo:</strong> Evaluación del riesgo crediticio por cliente basada en historial de pagos.</li>
+                    <li><strong>Conciliación Bancaria:</strong> Verificación automática de depósitos contra facturas pendientes.</li>
+                </ul>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-route"></i>
+                    Proceso de Gestión
+                </h3>
+                <ul class="content-list">
+                    <li><strong>Generación de Facturas:</strong> Las facturas se crean automáticamente al confirmar ventas o servicios.</li>
+                    <li><strong>Asignación de Plazos:</strong> Cada cliente tiene términos de pago definidos (30, 60, 90 días, etc.).</li>
+                    <li><strong>Monitoreo Continuo:</strong> El sistema calcula automáticamente días de vencimiento y estado de cada factura.</li>
+                    <li><strong>Envío de Recordatorios:</strong> Alertas automáticas 7 días antes del vencimiento y el día del vencimiento.</li>
+                    <li><strong>Registro de Pagos:</strong> Al recibir pagos, se aplican automáticamente a las facturas más antiguas primero.</li>
+                    <li><strong>Gestión de Mora:</strong> Identificación automática de facturas vencidas y cálculo de intereses moratorios.</li>
+                    <li><strong>Reportes y Análisis:</strong> Generación de reportes para análisis de eficiencia de cobranza y tendencias.</li>
+                </ul>
+            </div>
+
+            <div class="highlight-box">
+                <h4 class="highlight-title">
+                    <i class="fas fa-bell"></i>
+                    Sistema de Alertas y Recordatorios
+                </h4>
+                <ul class="content-list" style="margin: 0;">
+                    <li><strong>Recordatorio Previo:</strong> 7 días antes del vencimiento se envía notificación por email al cliente.</li>
+                    <li><strong>Alerta de Vencimiento:</strong> El día del vencimiento se genera alerta en el sistema y email de cortesía.</li>
+                    <li><strong>Notificación de Mora:</strong> A los 5 días de vencida se envía carta de cobranza formal.</li>
+                    <li><strong>Escalamiento:</strong> Después de 30 días de mora, se activa protocolo de cobranza intensiva.</li>
+                    <li><strong>Reportes Gerenciales:</strong> Alertas diarias al gerente de cuentas por cobrar significativas.</li>
+                </ul>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    Tipos de Pagos Soportados
+                </h3>
+                <ul class="content-list">
+                    <li><strong>Pagos Completos:</strong> Liquidación total de una o más facturas en una sola transacción.</li>
+                    <li><strong>Pagos Parciales:</strong> Aplicación de montos menores al total adeudado, con saldo pendiente.</li>
+                    <li><strong>Pagos Anticipados:</strong> Depósitos que se aplican a facturas futuras o como crédito disponible.</li>
+                    <li><strong>Notas de Crédito:</strong> Ajustes por descuentos, devoluciones o correcciones aplicadas a facturas.</li>
+                    <li><strong>Compensaciones:</strong> Acuerdos de compensación entre deudas y créditos mutuos.</li>
+                    <li><strong>Transferencias Bancarias:</strong> Depósitos directos identificados por número de factura.</li>
+                    <li><strong>Cheques:</strong> Pagos mediante cheque con verificación de fondos y compensación.</li>
+                    <li><strong>Tarjetas de Crédito:</strong> Procesamiento electrónico con cargo automático a tarjetas autorizadas.</li>
+                </ul>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-chart-bar"></i>
+                    Reportes y Análisis
+                </h3>
+                <ul class="content-list">
+                    <li><strong>Reporte de Cartera:</strong> Estado general de todas las cuentas por cobrar con totales por cliente.</li>
+                    <li><strong>Análisis de Mora:</strong> Clasificación de facturas por antigüedad (1-30, 31-60, 61-90, +90 días).</li>
+                    <li><strong>Eficiencia de Cobranza:</strong> Métricas de días promedio de cobro y porcentaje de recuperación.</li>
+                    <li><strong>Historial por Cliente:</strong> Detalle completo de pagos, moras y comportamiento crediticio.</li>
+                    <li><strong>Proyecciones de Flujo:</strong> Estimaciones de ingresos futuros basadas en facturas pendientes.</li>
+                    <li><strong>Análisis de Tendencias:</strong> Evolución mensual de la cartera de cobro y patrones de pago.</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p class="footer-text">
+                <i class="fas fa-copyright"></i>
+                Manual de Usuario - Absolute de Nicaragua 2026
+            </p>
+        </div>
+    </footer>
+</body>
+</html>

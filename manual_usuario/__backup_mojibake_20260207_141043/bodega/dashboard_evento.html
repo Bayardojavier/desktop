@@ -1,0 +1,971 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario - Dashboard de Eventos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary-color: #64748b;
+            --accent-color: #f59e0b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --background-primary: #0f172a;
+            --background-secondary: #1e293b;
+            --background-tertiary: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --border-hover: #475569;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--background-primary) 0%, #1e1b4b 100%);
+            color: var(--text-secondary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--background-secondary) 0%, var(--background-tertiary) 100%);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .header-text h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .header-text p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--background-tertiary);
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .nav-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            transform: translateY(-1px);
+        }
+
+        /* Breadcrumb */
+        .breadcrumb {
+            background: var(--background-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .breadcrumb-nav {
+            padding: 1rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .breadcrumb-list {
+            display: flex;
+            align-items: center;
+            list-style: none;
+            gap: 0.5rem;
+        }
+
+        .breadcrumb-item {
+            color: var(--text-muted);
+        }
+
+        .breadcrumb-item a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .breadcrumb-item a:hover {
+            color: var(--primary-color);
+        }
+
+        .breadcrumb-separator {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .breadcrumb-current {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .content-section {
+            background: var(--background-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .section-header {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-description {
+            font-size: 1.125rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        /* Event Cards */
+        .event-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .event-card {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .event-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .event-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .event-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .event-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-md);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .status-active {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .status-upcoming {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .status-completed {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .event-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .event-detail {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .detail-value {
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .event-progress {
+            margin-top: 1rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--background-primary);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            border-radius: var(--radius-sm);
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        /* Table Styles */
+        .table-container {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .table-header {
+            background: var(--background-secondary);
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .table-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table th {
+            background: var(--background-secondary);
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .data-table td {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .data-table tr:hover td {
+            background: var(--background-primary);
+        }
+
+        /* Content Blocks */
+        .content-block {
+            margin: 2rem 0;
+        }
+
+        .content-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .content-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .content-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .content-list li:last-child {
+            border-bottom: none;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--background-secondary);
+            border-top: 1px solid var(--border-color);
+            margin-top: 3rem;
+        }
+
+        .footer-content {
+            padding: 2rem;
+            text-align: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-text {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .nav-buttons {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .main-content {
+                padding: 1rem;
+            }
+
+            .content-section {
+                padding: 1.5rem;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            .event-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .event-details {
+                grid-template-columns: 1fr;
+            }
+
+            .data-table {
+                font-size: 0.75rem;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 0.5rem;
+            }
+        }
+
+        /* CSS adicional movido desde despuón©s del </html> */
+        .header .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav-links a {
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav-links a:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .breadcrumb {
+            background: var(--card-bg);
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .breadcrumb .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .breadcrumb a {
+            color: var(--accent-color);
+            text-decoration: none;
+        }
+
+        .breadcrumb span {
+            color: var(--text-secondary);
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .content-section {
+            background: var(--card-bg);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .section-header {
+            background: linear-gradient(135deg, rgba(30, 64, 175, 0.1), rgba(59, 130, 246, 0.1));
+            padding: 2rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-description {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            line-height: 1.7;
+        }
+
+        .content-wrapper {
+            padding: 2rem;
+        }
+
+        .content-main h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 2rem 0 1rem 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--accent-color);
+        }
+
+        .content-main h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--accent-color);
+            margin: 1.5rem 0 1rem 0;
+        }
+
+        .content-main p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            line-height: 1.7;
+        }
+
+        .content-main ul, .content-main ol {
+            color: var(--text-secondary);
+            margin: 1rem 0;
+            padding-left: 1.5rem;
+        }
+
+        .content-main li {
+            margin-bottom: 0.5rem;
+        }
+
+        .content-main code {
+            background: rgba(6, 182, 212, 0.1);
+            color: var(--accent-color);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9em;
+        }
+
+        .feature-gallery {
+            margin: 2rem 0;
+        }
+
+        .feature-gallery figure {
+            margin: 2rem 0;
+        }
+
+        .feature-gallery figcaption {
+            color: var(--text-secondary);
+            font-style: italic;
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .nav-footer {
+            background: var(--card-bg);
+            padding: 2rem 0;
+            border-top: 1px solid var(--border-color);
+            margin-top: 2rem;
+        }
+
+        .nav-footer .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            text-align: center;
+        }
+
+        .nav-links-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-links-footer a {
+            color: var(--accent-color);
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-links-footer a:hover {
+            background: rgba(6, 182, 212, 0.1);
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .header .container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .nav-links {
+                width: 100%;
+                justify-content: center;
+            }
+
+            main {
+                padding: 1rem;
+            }
+
+            .content-wrapper {
+                padding: 1rem;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            .nav-links-footer {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div class="header-text">
+                    <h1>Dashboard de Eventos</h1>
+                    <p>Món³dulo de Bodega</p>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <a href="index.html" class="nav-btn">
+                    <i class="fas fa-arrow-left"></i>
+                    Bodega
+                </a>
+                <a href="../index.html" class="nav-btn">
+                    <i class="fas fa-home"></i>
+                    Inicio
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <nav class="breadcrumb">
+        <div class="breadcrumb-nav">
+            <ol class="breadcrumb-list">
+                <li class="breadcrumb-item">
+                    <a href="../index.html">Inicio</a>
+                </li>
+                <li class="breadcrumb-separator">/</li>
+                <li class="breadcrumb-item">
+                    <a href="index.html">Bodega</a>
+                </li>
+                <li class="breadcrumb-separator">/</li>
+                <li class="breadcrumb-current">Dashboard de Eventos</li>
+            </ol>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <section class="content-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-calendar-alt"></i>
+                    Dashboard de Eventos
+                </h2>
+                <p class="section-description">
+                    Seguimiento completo de eventos programados, control de materiales asignados y gestión³n de entregas para cada actividad. Visualiza el estado de preparación³n y recibe alertas automáticas sobre fechas crón­ticas.
+                </p>
+            </div>
+
+            <div class="event-grid">
+                <div class="event-card">
+                    <div class="event-header">
+                        <h3 class="event-title">Feria Educativa 2026</h3>
+                        <span class="event-status status-active">Activo</span>
+                    </div>
+                    <div class="event-details">
+                        <div class="event-detail">
+                            <span class="detail-label">Fecha</span>
+                            <span class="detail-value">15-17 Feb 2026</span>
+                        </div>
+                        <div class="event-detail">
+                            <span class="detail-label">Ubicación³n</span>
+                            <span class="detail-value">Centro Educativo</span>
+                        </div>
+                        <div class="event-detail">
+                            <span class="detail-label">Materiales</span>
+                            <span class="detail-value">47/52 asignados</span>
+                        </div>
+                        <div class="event-detail">
+                            <span class="detail-label">Responsable</span>
+                            <span class="detail-value">Marón­a Gonzón¡lez</span>
+                        </div>
+                    </div>
+                    <div class="event-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 90%;"></div>
+                        </div>
+                        <div class="progress-text">90% Completado</div>
+                    </div>
+                </div>
+
+                <div class="event-card">
+                    <div class="event-header">
+                        <h3 class="event-title">Conferencia Tecnolón³gica</h3>
+                        <span class="event-status status-upcoming">Pró³ximo</span>
+                    </div>
+                    <div class="event-details">
+                        <div class="event-detail">
+                            <span class="detail-label">Fecha</span>
+                            <span class="detail-value">22 Feb 2026</span>
+                        </div>
+                        <div class="event-detail">
+                            <span class="detail-label">Ubicación³n</span>
+                            <span class="detail-value">Hotel Real</span>
+                        </div>
+                        <div class="event-detail">
+                            <span class="detail-label">Materiales</span>
+                            <span class="detail-value">23/35 asignados</span>
+                        </div>
+                        <div class="event-detail">
+                            <span class="detail-label">Responsable</span>
+                            <span class="detail-value">Carlos Rodrón­guez</span>
+                        </div>
+                    </div>
+                    <div class="event-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 66%;"></div>
+                        </div>
+                        <div class="progress-text">66% Completado</div>
+                    </div>
+                </div>
+
+                <div class="event-card">
+                    <div class="event-header">
+                        <h3 class="event-title">Taller de Capacitación³n</h3>
+                        <span class="event-status status-completed">Completado</span>
+                    </div>
+                    <div class="event-details">
+                        <div class="event-detail">
+                            <span class="detail-label">Fecha</span>
+                            <span class="detail-value">10 Feb 2026</span>
+                        </div>
+                        <div class="event-detail">
+                            <span class="detail-label">Ubicación³n</span>
+                            <span class="detail-value">Oficinas Centrales</span>
+                        </div>
+                        <div class="event-detail">
+                            <span class="detail-label">Materiales</span>
+                            <span class="detail-value">18/18 asignados</span>
+                        </div>
+                        <div class="event-detail">
+                            <span class="detail-label">Responsable</span>
+                            <span class="detail-value">Ana Lón³pez</span>
+                        </div>
+                    </div>
+                    <div class="event-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 100%;"></div>
+                        </div>
+                        <div class="progress-text">100% Completado</div>
+                    </div>
+                </div>
+
+                <div class="event-card">
+                    <div class="event-header">
+                        <h3 class="event-title">Exposición³n Empresarial</h3>
+                        <span class="event-status status-upcoming">Pró³ximo</span>
+                    </div>
+                    <div class="event-details">
+                        <div class="event-detail">
+                            <span class="detail-label">Fecha</span>
+                            <span class="detail-value">05 Mar 2026</span>
+                        </div>
+                        <div class="event-detail">
+                            <span class="detail-label">Ubicación³n</span>
+                            <span class="detail-value">Centro de Convenciones</span>
+                        </div>
+                        <div class="event-detail">
+                            <span class="detail-label">Materiales</span>
+                            <span class="detail-value">8/45 asignados</span>
+                        </div>
+                        <div class="event-detail">
+                            <span class="detail-label">Responsable</span>
+                            <span class="detail-value">Luis Martón­nez</span>
+                        </div>
+                    </div>
+                    <div class="event-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 18%;"></div>
+                        </div>
+                        <div class="progress-text">18% Completado</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-list"></i>
+                    Materiales por Evento
+                </h3>
+                <div class="table-container">
+                    <div class="table-header">
+                        <h4 class="table-title">Asignación³n de Materiales - Eventos Activos</h4>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Evento</th>
+                                <th>Material</th>
+                                <th>Cantidad Asignada</th>
+                                <th>Estado</th>
+                                <th>Fecha Entrega</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Feria Educativa 2026</td>
+                                <td>Proyector Epson EB-S41</td>
+                                <td>3 unidades</td>
+                                <td><span class="event-status status-active">Entregado</span></td>
+                                <td>14 Feb 2026</td>
+                            </tr>
+                            <tr>
+                                <td>Feria Educativa 2026</td>
+                                <td>Cable HDMI 2m</td>
+                                <td>10 unidades</td>
+                                <td><span class="event-status status-active">Entregado</span></td>
+                                <td>14 Feb 2026</td>
+                            </tr>
+                            <tr>
+                                <td>Conferencia Tecnolón³gica</td>
+                                <td>Micrón³fono inalón¡mbrico</td>
+                                <td>2 unidades</td>
+                                <td><span class="event-status status-upcoming">Pendiente</span></td>
+                                <td>20 Feb 2026</td>
+                            </tr>
+                            <tr>
+                                <td>Conferencia Tecnolón³gica</td>
+                                <td>Altavoz Bluetooth</td>
+                                <td>1 unidad</td>
+                                <td><span class="event-status status-upcoming">Pendiente</span></td>
+                                <td>20 Feb 2026</td>
+                            </tr>
+                            <tr>
+                                <td>Exposición³n Empresarial</td>
+                                <td>Panel LED 55"</td>
+                                <td>2 unidades</td>
+                                <td><span class="event-status status-upcoming">En preparación³n</span></td>
+                                <td>03 Mar 2026</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-clock"></i>
+                    Pró³ximas Fechas Crón­ticas
+                </h3>
+                <ul class="content-list">
+                    <li><strong>14 Feb 2026:</strong> Entrega final de materiales para Feria Educativa 2026</li>
+                    <li><strong>20 Feb 2026:</strong> Preparación³n de equipos audiovisuales para Conferencia Tecnolón³gica</li>
+                    <li><strong>28 Feb 2026:</strong> Revisión³n de inventario pre-evento Exposición³n Empresarial</li>
+                    <li><strong>03 Mar 2026:</strong> Entrega de paneles LED para Exposición³n Empresarial</li>
+                    <li><strong>10 Mar 2026:</strong> Devolución³n programada de materiales Feria Educativa</li>
+                </ul>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-cog"></i>
+                    Funcionalidades del Dashboard
+                </h3>
+                <ul class="content-list">
+                    <li><strong>Seguimiento en Tiempo Real:</strong> Actualización³n automática del estado de preparación³n de cada evento.</li>
+                    <li><strong>Alertas Automáticas:</strong> Notificaciones por email y en aplicación³n sobre fechas crón­ticas y materiales faltantes.</li>
+                    <li><strong>Asignación³n de Responsables:</strong> Designación³n clara de personas a cargo de cada evento y material.</li>
+                    <li><strong>Control de Checklist:</strong> Lista de verificación³n para asegurar que todos los requerimientos estón©n completos.</li>
+                    <li><strong>Reportes de Entrega:</strong> Documentación³n automática de entregas y recepciones de materiales.</li>
+                    <li><strong>Historial Completo:</strong> Registro detallado de todos los movimientos relacionados con cada evento.</li>
+                    <li><strong>Integración³n con Calendario:</strong> Sincronización³n con calendarios externos y recordatorios automáticos.</li>
+                    <li><strong>Có³digos QR:</strong> Etiquetas con Có³digos QR para seguimiento rón¡pido de equipos en eventos.</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p class="footer-text">
+                <i class="fas fa-copyright"></i>
+                Manual de Usuario - Absolute de Nicaragua 2026
+            </p>
+        </div>
+    </footer>
+</body>
+</html>
+

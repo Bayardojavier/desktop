@@ -159,17 +159,36 @@
       }
 
       // =============================================================================
-      // 🔹 DETERMINAR BODEGAS
+      // 🔹 DETERMINAR BODEGAS (MEJORADO)
       // =============================================================================
       function determinarBodegas(material) {
         if (!material) return { principal: 'Desconocida', secundaria: 'Sin clasificar' };
+        
+        // Si ya tenemos tabla_origen, usarla para determinar la bodega
+        if (material.tabla_origen) {
+          let bodegaPrincipal = 'Desconocida';
+          if (material.tabla_origen === 'catalogo_hierros') {
+            bodegaPrincipal = 'Hierros';
+          } else if (material.tabla_origen === 'catalogo_audiovisual') {
+            bodegaPrincipal = 'Audiovisual';
+          } else if (material.tabla_origen === 'catalogo_consumibles') {
+            bodegaPrincipal = 'Consumibles';
+          }
+          return { principal: bodegaPrincipal, secundaria: material.bodega_secundaria || 'Sin clasificar' };
+        }
+        
+        // Fallback: usar prefijos de código (lógica anterior)
         let bodegaPrincipal = 'Desconocida';
         const prefijo = material.codigo?.split('-')[1] || '';
-        if (prefijo === 'HIE') bodegaPrincipal = 'Hierro Cuploc';
-        else if (prefijo === 'AUD') bodegaPrincipal = 'Audio Profesional';
+        if (prefijo === 'HIE') bodegaPrincipal = 'Hierros';
+        else if (prefijo === 'AUD') bodegaPrincipal = 'Audiovisual';
         else if (['PER', 'MOB', 'SIL', 'HER'].includes(prefijo)) bodegaPrincipal = 'Perfilería y Mobiliario';
-        else bodegaPrincipal = material.bodega || 'Sin clasificar';
-        const bodegaSecundaria = material.bodega || 'Sin clasificar';
+        else if (['ILU', 'LIG', 'FOC'].includes(prefijo)) bodegaPrincipal = 'Iluminación Escénica';
+        else if (['SILL'].includes(prefijo)) bodegaPrincipal = 'Bodega Sillas';
+        else if (['HERR', 'CONS', 'FERR'].includes(prefijo)) bodegaPrincipal = 'Consumibles';
+        else bodegaPrincipal = material.bodega_principal || material.bodega || 'Sin clasificar';
+        
+        const bodegaSecundaria = material.bodega_secundaria || material.bodega || 'Sin clasificar';
         return { principal: bodegaPrincipal, secundaria: bodegaSecundaria };
       }
 
@@ -201,12 +220,9 @@
                     <label class="fab-catalog-label">Filtrar por Bodega:</label>
                     <select id="filtro-bodega-fabricacion" class="mov-form-select">
                       <option value="todas">Todas las Bodegas</option>
-                      <option value="Hierro Cuploc">Hierro Cuploc</option>
-                      <option value="Audio Profesional">Audio Profesional</option>
-                      <option value="Iluminación Escénica">Iluminación Escénica</option>
-                      <option value="Perfilería y Mobiliario">Perfilería y Mobiliario</option>
-                      <option value="Bodega Sillas">Bodega Sillas</option>
-                      <option value="Bodega Herramientas">Bodega Herramientas</option>
+                      <option value="Hierros">Hierros</option>
+                      <option value="Audiovisual">Audiovisual</option>
+                      <option value="Consumibles">Consumibles</option>
                     </select>
                   </div>
 
@@ -261,26 +277,73 @@
         try {
             let materiales = [];
             if (tipo === 'consumido') {
-                // Para consumidos: usar stock_actual_con_precio (necesita existencia y precio)
-                const { data, error } = await window.supabaseClient
-                  .from('stock_actual_con_precio')
-                  .select('material_codigo, material_nombre, bodega_principal, existencia, precio_promedio');
-                if (error) throw error;
-                materiales = data || [];
+                // Para consumidos: usar las 3 vistas de stock separadas
+                let materialesStock = [];
+                const tablasStock = ['stock_hierros', 'stock_audiovisual', 'stock_consumibles'];
+                
+                for (const tabla of tablasStock) {
+                  try {
+                    const { data, error } = await window.supabaseClient
+                      .from(tabla)
+                      .select('material_codigo, material_nombre, bodega_principal, stock_actual, precio')
+                      .gt('stock_actual', 0); // Solo materiales con stock disponible
+                    
+                    if (!error && data) {
+                      // Agregar propiedad tabla_origen para saber de dónde viene
+                      const materialesConOrigen = data.map(m => ({
+                        ...m,
+                        tabla_origen: tabla.replace('stock_', 'catalogo_')
+                      }));
+                      materialesStock = materialesStock.concat(materialesConOrigen);
+                    }
+                  } catch (e) {
+                    console.warn(`Error consultando ${tabla}:`, e.message || e);
+                    continue;
+                  }
+                }
+                
+                materiales = materialesStock.map(m => ({
+                  material_codigo: m.material_codigo,
+                  material_nombre: m.material_nombre,
+                  bodega_principal: m.bodega_principal,
+                  existencia: m.stock_actual,
+                  precio_promedio: m.precio,
+                  tabla_origen: m.tabla_origen
+                }));
             } else {
-                // Para producidos: usar catalogo (no necesita existencia/precio)
-                const { data, error } = await window.supabaseClient
-                  .from('catalogo')
-                  .select('codigo, nombre, bodega_principal, bodega_secundaria')
-                  .eq('es_contenedor', false);
-                if (error) throw error;
-                materiales = (data || []).map(m => ({
+                // Para producidos: usar las 3 tablas de catálogo separadas
+                let materialesCatalogo = [];
+                const tablasCatalogo = ['catalogo_hierros', 'catalogo_audiovisual', 'catalogo_consumibles'];
+                
+                for (const tabla of tablasCatalogo) {
+                  try {
+                    const { data, error } = await window.supabaseClient
+                      .from(tabla)
+                      .select('codigo, nombre, bodega_principal, bodega_secundaria')
+                      .eq('es_contenedor', false);
+                    
+                    if (!error && data) {
+                      // Agregar propiedad tabla_origen para saber de dónde viene
+                      const materialesConOrigen = data.map(m => ({
+                        ...m,
+                        tabla_origen: tabla
+                      }));
+                      materialesCatalogo = materialesCatalogo.concat(materialesConOrigen);
+                    }
+                  } catch (e) {
+                    console.warn(`Error consultando ${tabla}:`, e.message || e);
+                    continue;
+                  }
+                }
+                
+                materiales = materialesCatalogo.map(m => ({
                   material_codigo: m.codigo,
                   material_nombre: m.nombre,
                   bodega_principal: m.bodega_principal,
                   bodega: m.bodega_secundaria,
                   existencia: 0,
-                  precio_promedio: 0
+                  precio_promedio: 0,
+                  tabla_origen: m.tabla_origen
                 }));
             }
 
@@ -450,12 +513,29 @@
           alert('⚠️ Este material ya está en la lista de producidos.');
           return;
         }
+        
+        // Usar la bodega del material o determinarla por tabla de origen
+        let bodegaFinal = material.bodega || material.bodega_principal || determinarBodegas(material).principal;
+        
+        // Si tenemos tabla_origen, podemos determinar la bodega más precisamente
+        if (material.tabla_origen) {
+          if (material.tabla_origen === 'catalogo_hierros') {
+            bodegaFinal = 'Hierros';
+          } else if (material.tabla_origen === 'catalogo_audiovisual') {
+            bodegaFinal = 'Audiovisual';
+          } else if (material.tabla_origen === 'catalogo_consumibles') {
+            bodegaFinal = 'Consumibles';
+          }
+        }
+        
         estado.itemsProducidos.push({
           codigo: material.codigo,
           nombre: material.nombre,
-          bodega: material.bodega || material.bodega_principal || determinarBodegas(material).principal,
+          bodega: bodegaFinal,
+          bodega_principal: material.bodega_principal || bodegaFinal,
           cantidad: 1,
-          observacion: ''
+          observacion: '',
+          tabla_origen: material.tabla_origen // Guardar referencia a la tabla de origen
         });
         renderTablaProducidos();
       }
@@ -640,20 +720,35 @@
 
           let stockMap = new Map();
           if (codigosCatalogo.length > 0) {
-            let query = window.supabaseClient
-              .from('stock_actual_con_precio')
-              .select('material_codigo, material_nombre, bodega_principal, existencia, precio_promedio');
-            if (codigosCatalogo.length === 1) {
-              query = query.eq('material_codigo', codigosCatalogo[0]);
-            } else {
-              query = query.in('material_codigo', codigosCatalogo);
+            // Consultar las 3 vistas de stock separadas
+            const tablasStock = ['stock_hierros', 'stock_audiovisual', 'stock_consumibles'];
+            let stockData = [];
+            
+            for (const tabla of tablasStock) {
+              try {
+                let query = window.supabaseClient
+                  .from(tabla)
+                  .select('material_codigo, material_nombre, bodega_principal, stock_actual, precio');
+                if (codigosCatalogo.length === 1) {
+                  query = query.eq('material_codigo', codigosCatalogo[0]);
+                } else {
+                  query = query.in('material_codigo', codigosCatalogo);
+                }
+                const { data, error } = await query;
+                if (!error && data) {
+                  stockData = stockData.concat(data);
+                }
+              } catch (e) {
+                console.warn(`Error consultando ${tabla}:`, e.message || e);
+                continue;
+              }
             }
-            const { data: stockData } = await query;
+            
             (stockData || []).forEach(s => stockMap.set(s.material_codigo, {
               nombre: s.material_nombre,
               bodega_principal: s.bodega_principal,
-              existencia: s.existencia || 0,
-              precio_promedio: s.precio_promedio || 0
+              existencia: s.stock_actual || 0,
+              precio_promedio: s.precio || 0
             }));
           }
 
@@ -772,31 +867,35 @@
             return;
           }
 
-          // Validar stock suficiente en una sola consulta (evita múltiples fetch y reduce errores de conexión)
+          // Validar stock suficiente consultando las 3 vistas de stock
           if (itemsConsumidosValidos.length > 0) {
             const codigosConsumidos = itemsConsumidosValidos.map(i => i.codigo).filter(Boolean);
-            let query = window.supabaseClient
-              .from('stock_actual_con_precio')
-              .select('material_codigo, existencia');
-            if (codigosConsumidos.length === 1) {
-              query = query.eq('material_codigo', codigosConsumidos[0]);
-            } else {
-              query = query.in('material_codigo', codigosConsumidos);
-            }
-            const { data: stockRows, error: errValStock } = await query;
-
-            if (errValStock) {
-              const msg = errValStock?.message || '';
-              if (msg.includes('Failed to fetch') || msg.includes('Connection')) {
-                alert('⚠️ No se pudo validar stock por una falla de conexión con Supabase. Verifique su red e intente de nuevo.');
-                return;
+            const tablasStock = ['stock_hierros', 'stock_audiovisual', 'stock_consumibles'];
+            let stockRows = [];
+            
+            for (const tabla of tablasStock) {
+              try {
+                let query = window.supabaseClient
+                  .from(tabla)
+                  .select('material_codigo, stock_actual');
+                if (codigosConsumidos.length === 1) {
+                  query = query.eq('material_codigo', codigosConsumidos[0]);
+                } else {
+                  query = query.in('material_codigo', codigosConsumidos);
+                }
+                const { data, error } = await query;
+                if (!error && data) {
+                  stockRows = stockRows.concat(data);
+                }
+              } catch (e) {
+                console.warn(`Error consultando ${tabla}:`, e.message || e);
+                continue;
               }
-              throw errValStock;
             }
 
             const stockMap = new Map();
             (stockRows || []).forEach(row => {
-              stockMap.set(row.material_codigo, row.existencia || 0);
+              stockMap.set(row.material_codigo, row.stock_actual || 0);
             });
 
             for (const item of itemsConsumidosValidos) {
@@ -874,7 +973,8 @@
               solicitud_id: solicitudId,
               material_codigo: item.codigo,
               nombre: item.nombre,
-              bodega: item.bodega,
+              bodega_secundaria: item.bodega,
+              bodega_principal: item.bodega_principal,
               cantidad: item.cantidad,
               observacion: item.observacion
             }));
@@ -948,20 +1048,34 @@
           const cods = Array.from(new Set((cons || []).map(c => c.material_codigo).filter(Boolean)));
           let stockData = [];
           if (cods.length > 0) {
-            let query = window.supabaseClient.from('stock_actual_con_precio').select('material_codigo, material_nombre, bodega_principal, precio_promedio');
-            if (cods.length === 1) {
-              query = query.eq('material_codigo', cods[0]);
-            } else {
-              query = query.in('material_codigo', cods);
+            // Consultar las 3 vistas de stock separadas
+            const tablasStock = ['stock_hierros', 'stock_audiovisual', 'stock_consumibles'];
+            
+            for (const tabla of tablasStock) {
+              try {
+                let query = window.supabaseClient
+                  .from(tabla)
+                  .select('material_codigo, material_nombre, bodega_principal, precio');
+                if (cods.length === 1) {
+                  query = query.eq('material_codigo', cods[0]);
+                } else {
+                  query = query.in('material_codigo', cods);
+                }
+                const { data, error } = await query;
+                if (!error && data) {
+                  stockData = stockData.concat(data);
+                }
+              } catch (e) {
+                console.warn(`Error consultando ${tabla}:`, e.message || e);
+                continue;
+              }
             }
-            const { data } = await query;
-            stockData = data || [];
           }
           const stockMap = new Map();
           stockData.forEach(s => stockMap.set(s.material_codigo, {
             nombre: s.material_nombre,
             bodega_principal: s.bodega_principal,
-            precio_promedio: s.precio_promedio || 0
+            precio_promedio: s.precio || 0
           }));
 
           const itemsConsumidos = (cons || []).map(c => ({

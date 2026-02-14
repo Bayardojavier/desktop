@@ -1,0 +1,2465 @@
+<div class="movimientos-view">
+    <div class="despacho-wrapper-custom">
+        <div class="despacho-header">
+            <div>
+                <h2 class="despacho-header-title">📤 Despacho de Materiales</h2>
+                <p class="despacho-txt-muted">Gestión de salidas con correlativo secuencial y actas originales.</p>
+            </div>
+            <div id="reloj-bodega" class="despacho-badge">Bodega Central</div>
+        </div>
+
+        <div class="despacho-grid">
+            <!-- Panel izquierdo: Vista detallada -->
+            <div id="panelVistaDetallada" class="despacho-panel-left">
+                <div class="despacho-hint">
+                    <h3 class="despacho-hint-title">📋 Vista de Despacho</h3>
+                    <p class="despacho-hint-text">Selecciona una solicitud de la lista para ver los detalles</p>
+                </div>
+            </div>
+
+            <!-- Panel derecho: Lista de solicitudes -->
+            <div id="panelListaSolicitudes" class="despacho-panel-right">
+                <div class="despacho-panel-right-header">
+                    <h3 class="despacho-panel-title">📤 Solicitudes de Despacho</h3>
+                    <button class="btn-despacho-outline despacho-btn-xs" onclick="window.verDespachosHistoricos()">📋 Historial Completo</button>
+                </div>
+                <div id="contenidoListaSolicitudes">
+                    <div class="despacho-empty">
+                        <div class="despacho-empty-icon">📋</div>
+                        Cargando solicitudes...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ... (tu mismo HTML, sin cambios) ... -->
+
+<script src="../../../src/config/supabaseClient.js"></script>
+<script>
+(function() {
+    // 1. CARGA DE LIBRERIAS Y HELPERS
+    if (!window.html2pdf) {
+        const script = document.createElement('script');
+        script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
+        document.head.appendChild(script);
+    }
+
+    const DB = {
+        get: (k) => JSON.parse(localStorage.getItem(k) || "[]"),
+        set: (k, v) => localStorage.setItem(k, JSON.stringify(v))
+    };
+
+    const formatDateTime = (f, h) => (f && h) ? new Date(f + 'T' + h).toLocaleString("es-ES") : "—";
+    const formatDate = (date) => new Date(date).toLocaleDateString("es-ES");
+
+    // FUNCIONES UTILITARIAS GLOBALES
+    function isCaseBaseCodigo(codigo) {
+        return (codigo || '').toString().startsWith('CASEBASE|');
+    }
+
+    function getCaseBaseFromCodigo(codigo) {
+        const s = (codigo || '').toString();
+        if (!s.startsWith('CASEBASE|')) return '';
+        return s.substring('CASEBASE|'.length).trim();
+    }
+
+    // Nueva función: determinar tabla de movimientos según el prefijo del código de material
+    function getTablaMovimientos(materialCodigo) {
+        const code = (materialCodigo || '').toString().toUpperCase().trim();
+        const parts = code.split('-');
+        const prefix = parts.length > 1 ? parts[1] : '';
+        
+        if (prefix === 'AUDI') {
+            return 'movimientos_bodega_audiovisual';
+        } else if (prefix === 'HIER') {
+            return 'movimientos_bodega_hierros';
+        } else {
+            return 'movimientos_bodega_consumibles';
+        }
+    }
+
+    // Nueva función: determinar tabla de catálogo según bodega principal
+    function getTablaCatalogo(bodegaPrincipal) {
+        const bp = (bodegaPrincipal || '').toString().toLowerCase().trim();
+        if (bp.includes('audio') || bp.includes('visual') || bp.includes('audiovisual')) {
+            return 'catalogo_audiovisual';
+        } else if (bp.includes('hierro') || bp.includes('estructural')) {
+            return 'catalogo_hierros';
+        } else {
+            return 'catalogo_consumibles';
+        }
+    }
+
+    function renderCodigoNombreHTML(item) {
+        const cod = item?.codigo_material;
+        const nombre = item?.nombre_material || cod;
+        if (isCaseBaseCodigo(cod)) {
+            const base = getCaseBaseFromCodigo(cod) || (item?.nombre_material || 'Case');
+            return `<b>CASE ${base}</b><br><small>Pendiente de selección en despacho</small>`;
+        }
+        return `<b>${nombre}</b><br><small>Código: ${cod} (${item?.medidas || ''})</small>`;
+    }
+    // 2. FUNCIÓN DE CORRELATIVO SECUENCIAL
+    async function generarCorrelativo() {
+        try {
+            // Intentar obtener el último correlativo desde Supabase
+            const { data: despachos, error } = await window.supabaseClient
+                .from('despachos_logistica')
+                .select('numero_despacho')
+                .order('creado_en', { ascending: false })
+                .limit(1);
+
+            let ultimoNumero = 0;
+            if (!error && despachos && despachos.length > 0) {
+                // Extraer el número del formato "DESE-XXXXX" o "DES-XXXXX" (compatibilidad)
+                const match = despachos[0].numero_despacho.match(/(?:DESE|DES)-(\d+)/);
+                if (match) {
+                    ultimoNumero = parseInt(match[1]);
+                }
+            }
+
+            const nuevoNumero = ultimoNumero + 1;
+            return "DESE-" + nuevoNumero.toString().padStart(5, '0');
+        } catch (error) {
+            console.error('Error al generar correlativo desde Supabase:', error);
+            // Fallback a localStorage
+            let ultimo = parseInt(localStorage.getItem('ultimo_correlativo_despacho') || "0");
+            let nuevo = ultimo + 1;
+            localStorage.setItem('ultimo_correlativo_despacho', nuevo.toString());
+            return "DESE-" + nuevo.toString().padStart(5, '0');
+        }
+    }
+
+    // 3. RENDERIZACIÓN DE VISTAS
+    async function renderLista() {
+
+        try {
+            // Obtener solicitudes desde Supabase - incluir completadas para reimpresión
+            const { data: solicitudes, error } = await window.supabaseClient
+                .from('solicitudes_logistica')
+                .select('*')
+                .eq('tipo', 'despacho')
+                .in('estado', ['pendiente_bodega', 'completada'])
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error('Error al obtener solicitudes:', error);
+                document.getElementById("contenidoListaSolicitudes").innerHTML =
+                    `<div class="despacho-empty">Error al cargar solicitudes.</div>`;
+                return;
+            }
+
+            let html = `<div class="despacho-list">`;
+
+            if (!solicitudes || solicitudes.length === 0) {
+                html += `<div class="despacho-empty">No hay solicitudes de despacho pendientes o completadas.</div>`;
+            } else {
+                solicitudes.forEach(s => {
+                    const esCompletada = s.estado === 'completada';
+                    const textoEstado = esCompletada ? '✅ Completada' : '⏳ Pendiente';
+                    
+                    let botonesHTML = '';
+                    if (esCompletada) {
+                        // Para solicitudes completadas, buscar el número de despacho
+                        botonesHTML = `<button class="btn-despacho-outline" onclick="window.buscarDespachoParaReimprimir('${s.id}')">📄 Reimprimir</button>`;
+                    }
+                    botonesHTML += `<button class="btn-despacho-solido" onclick="window.verPedidoDespacho('${s.id}')">REVISAR SALIDA</button>`;
+                    
+                    html += `
+                        <div class="despacho-card ${esCompletada ? 'is-completada' : 'is-pendiente'}">
+                            <div class="despacho-card-info">
+                                <strong class="despacho-card-id">${s.id}</strong>
+                                <div class="despacho-card-status">${textoEstado}</div>
+                                <div class="despacho-card-meta">${s.evento} • Resp: ${s.encargado_evento}</div>
+                            </div>
+                            <div class="despacho-card-actions">${botonesHTML}</div>
+                        </div>`;
+                });
+            }
+
+            document.getElementById("contenidoListaSolicitudes").innerHTML = html + `</div>`;
+        } catch (error) {
+            console.error('Error en renderLista:', error);
+            document.getElementById("contenidoListaSolicitudes").innerHTML =
+                `<div class="despacho-empty">Error al cargar solicitudes.</div>`;
+        }
+    }
+
+    // Nueva función para ver despachos históricos
+    window.verDespachosHistoricos = async function() {
+        try {
+            const { data: despachos, error } = await window.supabaseClient
+                .from('despachos_logistica')
+                .select(`
+                    *,
+                    solicitudes_logistica!inner(evento)
+                `)
+                .eq('estado', 'completado')
+                .order('fecha_despacho', { ascending: false })
+                .limit(20);
+
+            if (error) {
+                console.error('Error al obtener despachos históricos:', error);
+                alert('Error al cargar despachos históricos');
+                return;
+            }
+
+            let html = `
+                <div class="despacho-hist-header">
+                    <h3 class="despacho-hist-title">📋 Historial de Despachos</h3>
+                    <p class="despacho-hist-subtitle">Últimos 20 despachos completados</p>
+                </div>
+                <div class="despacho-hist-list">`;
+
+            if (!despachos || despachos.length === 0) {
+                html += `<div class="despacho-empty">No hay despachos registrados.</div>`;
+            } else {
+                // Obtener conteo de items para cada despacho
+                for (const despacho of despachos) {
+                    try {
+                        const { count, error: countError } = await window.supabaseClient
+                            .from('items_despacho_logistica')
+                            .select('*', { count: 'exact', head: true })
+                            .eq('despacho_id', despacho.id);
+
+                        const itemCount = countError ? 0 : count;
+
+                        const fecha = new Date(despacho.fecha_despacho).toLocaleDateString('es-ES');
+                        html += `
+                            <div class="despacho-hist-item">
+                                <div class="despacho-hist-item-row">
+                                    <div>
+                                        <strong class="despacho-hist-num">${despacho.numero_despacho}</strong>
+                                        <div class="despacho-hist-meta">${despacho.evento} • ${fecha} • ${despacho.encargado_evento}</div>
+                                    </div>
+                                    <div class="despacho-hist-right">
+                                        <div class="despacho-hist-status">✅ Completado</div>
+                                        <div class="despacho-hist-count">${itemCount} items</div>
+                                        <button class="btn-despacho-outline despacho-btn-xxs" onclick="window.reimprimirDespacho('${despacho.numero_despacho}')">📄 Reimprimir</button>
+                                    </div>
+                                </div>
+                            </div>`;
+                    } catch (countError) {
+                        console.error('Error obteniendo conteo para despacho:', despacho.numero_despacho, countError);
+                        // Mostrar despacho sin conteo
+                        const fecha = new Date(despacho.fecha_despacho).toLocaleDateString('es-ES');
+                        html += `
+                            <div class="despacho-hist-item">
+                                <div class="despacho-hist-item-row">
+                                    <div>
+                                        <strong class="despacho-hist-num">${despacho.numero_despacho}</strong>
+                                        <div class="despacho-hist-meta">${despacho.evento} • ${fecha} • ${despacho.encargado_evento}</div>
+                                    </div>
+                                    <div class="despacho-hist-right">
+                                        <div class="despacho-hist-status">✅ Completado</div>
+                                        <div class="despacho-hist-count">- items</div>
+                                        <button class="btn-despacho-outline despacho-btn-xxs" onclick="window.reimprimirDespacho('${despacho.numero_despacho}')">📄 Reimprimir</button>
+                                    </div>
+                                </div>
+                            </div>`;
+                    }
+                }
+            }
+
+            html += `
+                </div>
+                <div class="despacho-actions-center">
+                    <button class="btn-despacho-outline" onclick="window.renderLista()">VOLVER</button>
+                </div>`;
+
+            document.getElementById("contenidoDinamicoDespacho").innerHTML = html;
+        } catch (error) {
+            console.error('Error en verDespachosHistoricos:', error);
+            alert('Error al cargar despachos históricos');
+        }
+    };
+
+    // Función para reimprimir un despacho
+    window.reimprimirDespacho = async function(numeroDespacho) {
+        try {
+            console.log('Reimprimiendo despacho:', numeroDespacho);
+
+            // Obtener datos del despacho
+            const { data: despacho, error: errorDespacho } = await window.supabaseClient
+                .from('despachos_logistica')
+                .select('*')
+                .eq('numero_despacho', numeroDespacho)
+                .single();
+
+            if (errorDespacho || !despacho) {
+                console.error('Error al obtener despacho:', errorDespacho);
+                alert('Error al obtener datos del despacho');
+                return;
+            }
+
+            // Obtener items del despacho desde items_despacho_logistica
+            const { data: itemsDespacho, error: errorItems } = await window.supabaseClient
+                .from('items_despacho_logistica')
+                .select('*')
+                .eq('despacho_id', despacho.id);
+
+            if (errorItems) {
+                console.error('Error al obtener items del despacho:', errorItems);
+                alert('Error al obtener items del despacho');
+                return;
+            }
+
+            // Obtener datos del evento
+            let eventoData = null;
+            if (despacho.evento) {
+                const { data: eventosEncontrados } = await window.supabaseClient
+                    .from('eventos')
+                    .select('*')
+                    .ilike('nombre', `%${despacho.evento}%`);
+
+                if (eventosEncontrados && eventosEncontrados.length > 0) {
+                    eventoData = eventosEncontrados[0];
+                }
+            }
+
+            // Preparar datos para el PDF
+            const datosPDF = {
+                numeroRegistro: numeroDespacho,
+                fechaDespacho: formatDate(new Date(despacho.fecha_despacho)),
+                personalEntrega: despacho.encargado_evento,
+                evento: despacho.evento,
+                clienteEvento: eventoData?.cliente || "",
+                lugarMontaje: eventoData?.lugar || "",
+                itemsSalida: itemsDespacho.map(item => ({
+                    material: (isCaseBaseCodigo(item.codigo_material)
+                      ? `CASE ${getCaseBaseFromCodigo(item.codigo_material) || item.nombre_material || 'Case'}`
+                      : (item.nombre_material || item.codigo_material + (item.medidas ? ` (${item.medidas})` : ""))),
+                    cantidad: item.cantidad_despachada,
+                    estado: item.estado || "Despachado",
+                    observacion: item.observacion || ""
+                })),
+                eventoCompleto: eventoData || {}
+            };
+
+            console.log('Datos para reimpresión:', datosPDF);
+
+            // Generar el PDF
+            generarActaDeEntregaPDF(datosPDF);
+
+        } catch (error) {
+            console.error('Error en reimprimirDespacho:', error);
+            alert('Error al reimprimir el despacho');
+        }
+    };
+
+    // Función para buscar despacho de una solicitud completada y reimprimir
+    window.buscarDespachoParaReimprimir = async function(idSolicitud) {
+        try {
+            console.log('Buscando despacho para solicitud:', idSolicitud);
+            
+            // Buscar en las observaciones de la solicitud el número de despacho
+            const { data: solicitud, error: errorSolicitud } = await window.supabaseClient
+                .from('solicitudes_logistica')
+                .select('observaciones')
+                .eq('id', idSolicitud)
+                .single();
+
+            if (errorSolicitud || !solicitud) {
+                console.error('Error al obtener solicitud:', errorSolicitud);
+                alert('Error al buscar datos de la solicitud');
+                return;
+            }
+
+            // Extraer número de despacho de las observaciones (formato: [DESPACHO: DESE-XXXXX - fecha])
+            const match = solicitud.observaciones?.match(/\[DESPACHO:\s*(DESE-\d+)\s*-/);
+            if (match) {
+                const numeroDespacho = match[1];
+                console.log('Número de despacho encontrado:', numeroDespacho);
+                window.reimprimirDespacho(numeroDespacho);
+            } else {
+                console.log('No se encontró número de despacho en observaciones');
+                alert('No se encontró el número de despacho para esta solicitud');
+            }
+
+        } catch (error) {
+            console.error('Error en buscarDespachoParaReimprimir:', error);
+            alert('Error al buscar el despacho para reimprimir');
+        }
+    };
+
+    window.verPedidoDespacho = async function(id) {
+        try {
+            // Almacenar el ID de la solicitud actual para uso en otras funciones
+            window.solicitudActualId = id;
+
+            // Obtener solicitud desde Supabase
+            const { data: solicitud, error: errorSolicitud } = await window.supabaseClient
+                .from('solicitudes_logistica')
+                .select('*, items_solicitud_logistica(*)')
+                .eq('id', id)
+                .single();
+
+            if (errorSolicitud || !solicitud) {
+                console.error('Error al obtener solicitud:', errorSolicitud);
+                alert('Error al cargar la solicitud');
+                return;
+            }
+
+            // Obtener datos del evento - búsqueda más robusta
+            let eventoData = null;
+            const { data: eventosEncontrados, error: errorEvento } = await window.supabaseClient
+                .from('eventos')
+                .select('*')
+                .ilike('nombre', `%${solicitud.evento}%`);
+
+            if (errorEvento) {
+                console.log('Error al buscar evento:', errorEvento);
+            } else if (eventosEncontrados && eventosEncontrados.length > 0) {
+                // Tomar el primer evento que coincida
+                eventoData = eventosEncontrados[0];
+                console.log('Evento encontrado por nombre parcial:', eventoData);
+            } else {
+                console.log('Evento no encontrado con nombre:', solicitud.evento);
+                // Intentar búsqueda alternativa por otros campos si es necesario
+            }
+
+            // Obtener servicios con cantidades desde la cotización si existe
+            let serviciosTexto = 'No disponible';
+            if (eventoData && eventoData.cotizacion_id) {
+                console.log('Consultando cotización:', eventoData.cotizacion_id);
+                try {
+                    const { data: cotizacion, error: cotError } = await window.supabaseClient
+                        .from('cotizaciones')
+                        .select('servicios')
+                        .eq('id', eventoData.cotizacion_id)
+                        .single();
+
+                    if (cotError) {
+                        console.error('Error consultando cotización:', cotError);
+                    } else {
+                        console.log('Cotización obtenida:', cotizacion);
+                    }
+
+                    if (!cotError && cotizacion?.servicios && cotizacion.servicios.length > 0) {
+                        serviciosTexto = cotizacion.servicios.map(s => {
+                            const cantidad = s.cantidad || 1;
+                            const nombre = s.nombre || 'Servicio sin nombre';
+                            return `• ${cantidad} ${nombre}`;
+                        }).join('<br>');
+                        console.log('Servicios texto generado:', serviciosTexto);
+                    }
+                } catch (cotErr) {
+                    console.warn('Error al cargar servicios de cotización:', cotErr);
+                    // Fallback a la descripción guardada en el evento
+                    serviciosTexto = (Array.isArray(eventoData.descripcion) ? eventoData.descripcion : [eventoData.descripcion])
+                        .map(i => `• ${i}`).join('<br>') || "No disponible";
+                }
+            } else {
+                console.log('Evento sin cotizacion_id o evento no encontrado');
+                // Fallback a la descripción guardada en el evento
+                if (eventoData) {
+                    serviciosTexto = (Array.isArray(eventoData.descripcion) ? eventoData.descripcion : [eventoData.descripcion])
+                        .map(i => `• ${i}`).join('<br>') || "No disponible";
+                }
+            }
+
+            actualizarPanelEvento(eventoData || {}, serviciosTexto);
+
+
+            // Obtener catálogo de materiales para resolver nombres (mismo formato que solicitudmateriales.html)
+            const allRows = [];
+            const CATALOGOS = [
+              { table: 'catalogo_hierros' },
+              { table: 'catalogo_audiovisual' },
+              { table: 'catalogo_consumibles' }
+            ];
+            for (const c of CATALOGOS) {
+              const selectStr = c.table === 'catalogo_consumibles'
+                ? 'codigo, nombre, dimensiones, color, unidad_medida, campos_personalizados'
+                : 'codigo, nombre, dimensiones, color, unidad_medida, campos_personalizados';
+              const { data, error } = await window.supabaseClient
+                .from(c.table)
+                .select(selectStr)
+                .order('codigo', { ascending: true });
+              if (error) {
+                console.error(`Error al cargar ${c.table}:`, error);
+                continue;
+              }
+              const rows = (data || []).map(r => ({ ...r, __catalogo: c.table }));
+              allRows.push(...rows);
+            }
+
+            // Crear mapa de materiales con nombres (mismo formato que solicitudmateriales.html)
+            const materialesMap = new Map();
+            allRows.forEach(item => {
+              materialesMap.set(item.codigo, {
+                cod: item.codigo,
+                nom: item.nombre,
+                med: item.dimensiones || '',
+                col: item.color || '',
+                bodegaPrincipal: '',
+                bodegaSecundaria: '',
+                contenedor: '',
+                ubicacionNombre: '',
+                stockActual: 0,
+                fechaCompra: null,
+                __catalogo: item.__catalogo
+              });
+            });
+
+            // Actualizar con datos de stock
+            const STOCK_VIEWS = [
+              { view: 'stock_hierros' },
+              { view: 'stock_audiovisual' },
+              { view: 'stock_consumibles' }
+            ];
+            for (const v of STOCK_VIEWS) {
+              const { data, error } = await window.supabaseClient
+                .from(v.view)
+                .select('material_codigo, material_nombre, precio, stock_actual, bodega_principal, bodega_secundaria, contenedor, ubicacion_nombre, fecha_compra');
+              if (error) {
+                console.error(`Error al cargar stock de ${v.view}:`, error);
+                continue;
+              }
+              (data || []).forEach(r => {
+                if (materialesMap.has(r.material_codigo)) {
+                  const mat = materialesMap.get(r.material_codigo);
+                  mat.bodegaPrincipal = r.bodega_principal || '';
+                  mat.bodegaSecundaria = r.bodega_secundaria || '';
+                  mat.contenedor = r.contenedor || '';
+                  mat.ubicacionNombre = r.ubicacion_nombre || '';
+                  mat.stockActual = r.stock_actual || 0;
+                  mat.fechaCompra = r.fecha_compra || null;
+                }
+              });
+            }
+
+            const catalogo = Array.from(materialesMap.values());
+
+            if (catalogo.length === 0) {
+              console.warn('No se pudo cargar el catálogo de materiales');
+            }
+
+
+            // Obtener stock actual calculado desde movimientos_bodega
+            const { data: movimientosStock, error: errorStock } = await window.supabaseClient
+                .from('movimientos_bodega')
+                .select('material_codigo, cantidad, signo')
+                .eq('estado', 'completado');
+
+            if (errorStock) {
+                console.error('Error al obtener stock:', errorStock);
+            }
+
+            // Calcular stock por material
+            const stockPorMaterial = {};
+            movimientosStock?.forEach(mov => {
+                if (!stockPorMaterial[mov.material_codigo]) {
+                    stockPorMaterial[mov.material_codigo] = 0;
+                }
+                stockPorMaterial[mov.material_codigo] += (mov.cantidad * mov.signo);
+            });
+
+
+            // Detectar si hay materiales de plantilla que requieren asignación
+            const tieneMaterialesPlantilla = solicitud.items_solicitud_logistica.some(item =>
+                item.observacion && item.observacion.toLowerCase().includes('plantilla')
+            );
+
+            // Verificar si ya existe un despacho para esta solicitud
+
+            const { data: despachoExistente, error: errorDespachoExistente } = await window.supabaseClient
+                .from('despachos_logistica')
+                .select('numero_despacho, fecha_despacho')
+                .eq('solicitud_id', id);
+
+
+            // Separar materiales por tipo/origen con mejor lógica
+            const materialesDeRecetas = solicitud.items_solicitud_logistica.filter(item =>
+                !item.observacion || (!item.observacion.includes('Material adicional') && !item.observacion.includes('Plantilla adicional'))
+            );
+
+            // Separar materiales de recetas en específicos y plantillas
+            // Material específico: código que existe en el catálogo O fue actualizado desde búsqueda
+            // Plantilla: nombre genérico que puede referirse a múltiples códigos con el mismo nombre
+            const materialesRecetasEspecificos = materialesDeRecetas.filter(item => {
+                // Es específico si el código existe en el catálogo o fue actualizado desde búsqueda
+                const existeEnCatalogo = catalogo.some(cat => cat.cod === item.codigo_material);
+                const fueActualizadoDesdeBusqueda = item.observacion && item.observacion.includes('Actualizado desde búsqueda');
+                return existeEnCatalogo || fueActualizadoDesdeBusqueda;
+            });
+
+            const materialesRecetasPlantillas = materialesDeRecetas.filter(item => {
+                // Es plantilla si el código NO existe en el catálogo y NO fue actualizado desde búsqueda
+                const existeEnCatalogo = catalogo.some(cat => cat.cod === item.codigo_material);
+                const fueActualizadoDesdeBusqueda = item.observacion && item.observacion.includes('Actualizado desde búsqueda');
+                return !existeEnCatalogo && !fueActualizadoDesdeBusqueda;
+            });
+
+            // Debug: verificar separación
+            console.log('Materiales de recetas totales:', materialesDeRecetas.length);
+            console.log('Materiales específicos (del catálogo):', materialesRecetasEspecificos.length);
+            console.log('Materiales plantillas (genéricos):', materialesRecetasPlantillas.length);
+
+            const materialesEspecificosAdicionales = solicitud.items_solicitud_logistica.filter(item =>
+                item.observacion && item.observacion.includes('Material adicional específico')
+            );
+
+            const materialesPlantillasAdicionales = solicitud.items_solicitud_logistica.filter(item =>
+                item.observacion && item.observacion.includes('Plantilla adicional')
+            );
+
+            // Renderizar materiales separados por tipo (ahora asíncrono)
+            const materialesHTML = `
+                <div class="despacho-materiales-container-scroll" style="max-height: 600px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff; padding: 15px; scrollbar-width: thin; scrollbar-color: #cbd5e1 #f8fafc;">
+                    <style>
+                        .despacho-materiales-container-scroll::-webkit-scrollbar {
+                            width: 8px;
+                        }
+                        .despacho-materiales-container-scroll::-webkit-scrollbar-track {
+                            background: #f8fafc;
+                            border-radius: 4px;
+                        }
+                        .despacho-materiales-container-scroll::-webkit-scrollbar-thumb {
+                            background: #cbd5e1;
+                            border-radius: 4px;
+                        }
+                        .despacho-materiales-container-scroll::-webkit-scrollbar-thumb:hover {
+                            background: #94a3b8;
+                        }
+                    </style>
+                    ${await renderMaterialesRecetasEspecificos(materialesRecetasEspecificos)}
+                    ${await renderMaterialesRecetasPlantillas(materialesRecetasPlantillas)}
+                    ${await renderMaterialesEspecificosAdicionales(materialesEspecificosAdicionales)}
+                    ${await renderMaterialesPlantillasAdicionales(materialesPlantillasAdicionales, true)}
+                </div>
+            `;
+
+            // Función auxiliar para obtener stock desde vistas SQL usando RPC
+            async function obtenerStockDesdeVistas(codigoMaterial) {
+                try {
+                    // Usar una consulta RPC que ejecute SQL en el servidor
+                    const { data: stockData, error } = await window.supabaseClient
+                        .rpc('get_material_stock', {
+                            p_codigo: codigoMaterial
+                        });
+
+                    if (error) {
+                        console.error('Error consultando stock via RPC:', error);
+                        return 0;
+                    }
+
+                    return stockData || 0;
+                } catch (error) {
+                    console.error('Error obteniendo stock:', error);
+                    return 0;
+                }
+            }
+
+            // Función para renderizar materiales de recetas específicos
+            async function renderMaterialesRecetasEspecificos(items, esUltimo = false) {
+                if (items.length === 0) return '';
+
+                const config = { color: '#2563eb', bgColor: '#eff6ff', icon: '📋' };
+                const titulo = '📋 Materiales de Recetas - Específicos';
+                const margenInferior = esUltimo ? '0' : '15px';
+
+                let tabla = `
+                    <div class="despacho-materiales-grupo-v2" style="margin-bottom: ${margenInferior}; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #cbd5e1;">
+                        <div class="despacho-grupo-header-v2" style="background: ${config.bgColor}; padding: 12px; border-bottom: 1px solid #1e3a8a;">
+                            <h4 class="despacho-titulo-grupo-v2" style="margin: 0; color: ${config.color} !important; font-size: 14px; font-weight: 600;">
+                                ${config.icon} ${titulo} (${items.length} ${items.length === 1 ? 'item' : 'items'})
+                            </h4>
+                        </div>
+                        <table class="tabla-despacho-inventario" style="width: 100%; border-collapse: collapse;">
+                            <thead style="background: #f8fafc;">
+                                <tr>
+                                    <th style="padding: 8px; text-align: left; border-bottom: 1px solid #1e3a8a !important;">Material</th>
+                                    <th style="padding: 8px; text-align: center; border-bottom: 1px solid #1e3a8a !important; width: 80px;">Cant.</th>
+                                    <th style="padding: 8px; text-align: center; border-bottom: 1px solid #1e3a8a !important; width: 80px;">Estado</th>
+                                    <th style="padding: 8px; text-align: center; border-bottom: 1px solid #1e3a8a !important; width: 80px;">Stock</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+
+                // Procesar cada item de forma asíncrona
+                for (const it of items) {
+                    const stock = await obtenerStockDesdeVistas(it.codigo_material);
+                    const stockClass = stock >= it.cantidad_solicitada ? 'despacho-stock-ok' : 'despacho-stock-bad';
+
+                    // Resolver nombre desde catálogo para recetas específicas
+                    const materialCatalogo = catalogo.find(m => m.cod === it.codigo_material);
+                    let nombreDisplay = materialCatalogo ? (materialCatalogo.nom || it.nombre_material || 'Desconocido') : (it.nombre_material || 'Desconocido');
+                    let observacionExtra = it.observacion ? `<br><small style="color: #6b7280;">${it.observacion}</small>` : '';
+
+                    tabla += `
+                        <tr>
+                            <td style="padding: 8px; border-bottom: 1px solid #0353a3;">
+                                <strong class="despacho-nombre-material-v2" style="color: #991b1b !important;">${nombreDisplay}</strong><br>
+                                <small style="color: #20252b;">Código: ${it.codigo_material}${it.medidas ? ` (${it.medidas})` : ''}${it.color ? ` - ${it.color}` : ''}</small>${observacionExtra}
+                            </td>
+                            <td style="padding: 8px; text-align: center; border-bottom: 1px solid #0353a3;">${it.cantidad_solicitada}</td>
+                            <td style="padding: 8px; text-align: center; border-bottom: 1px solid #0353a3;">${it.estado || 'Nuevo'}</td>
+                            <td style="padding: 8px; text-align: center; border-bottom: 1px solid #055cb3; ${stockClass ? `color: ${stock >= it.cantidad_solicitada ? '#16a34a' : '#dc2626'}; font-weight: bold;` : ''}">${stock}</td>
+                        </tr>`;
+                }
+
+                tabla += `
+                            </tbody>
+                        </table>
+                    </div>`;
+
+                return tabla;
+            }
+
+            // Función para renderizar materiales de recetas plantillas
+            async function renderMaterialesRecetasPlantillas(items, esUltimo = false) {
+                if (items.length === 0) return '';
+
+                const config = { color: '#dc2626', bgColor: '#fef2f2', icon: '📦' };
+                const titulo = '📋 Materiales de Recetas - Plantillas';
+                const margenInferior = esUltimo ? '0' : '15px';
+
+                let tabla = `
+                    <div class="despacho-materiales-grupo-v2" style="margin-bottom: ${margenInferior}; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #cbd5e1;">
+                        <div class="despacho-grupo-header-v2" style="background: ${config.bgColor}; padding: 12px; border-bottom: 1px solid #1e3a8a;">
+                            <h4 class="despacho-titulo-grupo-v2" style="margin: 0; color: ${config.color} !important; font-size: 14px; font-weight: 600;">
+                                ${config.icon} ${titulo} (${items.length} ${items.length === 1 ? 'item' : 'items'})
+                            </h4>
+                        </div>
+                        <table class="tabla-despacho-inventario" style="width: 100%; border-collapse: collapse;">
+                            <thead style="background: #f8fafc;">
+                                <tr>
+                                    <th style="padding: 8px; text-align: left; border-bottom: 1px solid #1e3a8a !important;">Material</th>
+                                    <th style="padding: 8px; text-align: center; border-bottom: 1px solid #1e3a8a !important; width: 60px;">Buscar</th>
+                                    <th style="padding: 8px; text-align: center; border-bottom: 1px solid #1e3a8a !important; width: 80px;">Cant.</th>
+                                    <th style="padding: 8px; text-align: center; border-bottom: 1px solid #1e3a8a !important; width: 80px;">Estado</th>
+                                    <th style="padding: 8px; text-align: center; border-bottom: 1px solid #1e3a8a !important; width: 80px;">Stock</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+
+                // Procesar cada item de forma asíncrona
+                for (const it of items) {
+                    const stock = await obtenerStockDesdeVistas(it.codigo_material);
+                    const stockClass = stock >= it.cantidad_solicitada ? 'despacho-stock-ok' : 'despacho-stock-bad';
+
+                    // Para plantillas de recetas, usar SOLO el código del material
+                    let nombreDisplay = it.codigo_material;
+                    console.log('Plantilla Recetas:', { codigo: it.codigo_material, nombre: it.nombre_material, observacion: it.observacion });
+
+                    tabla += `
+                        <tr>
+                            <td style="padding: 8px; border-bottom: 1px solid #0353a3;">
+                                <strong class="despacho-nombre-material-v2" style="color: #991b1b !important;">${nombreDisplay}</strong><br>
+                                <small style="color: #20252b;">Código: ${it.codigo_material}${it.medidas ? ` (${it.medidas})` : ''}${it.color ? ` - ${it.color}` : ''}</small>
+                            </td>
+                            <td style="padding: 8px; text-align: center; border-bottom: 1px solid #0353a3;">
+                                <button class="btn-despacho-outline btn-xs" onclick="window.buscarMaterialesSimilares('${it.id}', '${it.codigo_material}', '${it.nombre_material === 'Desconocido' ? it.codigo_material : (it.nombre_material || it.codigo_material)}')">
+                                    🔍
+                                </button>
+                            </td>
+                            <td style="padding: 8px; text-align: center; border-bottom: 1px solid #0353a3;">${it.cantidad_solicitada}</td>
+                            <td style="padding: 8px; text-align: center; border-bottom: 1px solid #0353a3;">${it.estado === 'pendiente' ? 'Pendiente' : (it.estado || 'Nuevo')}</td>
+                            <td style="padding: 8px; text-align: center; border-bottom: 1px solid #055cb3; ${stockClass ? `color: ${stock >= it.cantidad_solicitada ? '#16a34a' : '#dc2626'}; font-weight: bold;` : ''}">${stock}</td>
+                        </tr>`;
+                }
+
+                tabla += `
+                            </tbody>
+                        </table>
+                    </div>`;
+
+                return tabla;
+            }
+
+            // Función para renderizar materiales específicos adicionales
+            async function renderMaterialesEspecificosAdicionales(items, esUltimo = false) {
+                if (items.length === 0) return '';
+
+                const config = { color: '#059669', bgColor: '#ecfdf5', icon: '🔧' };
+                const titulo = '🔧 Materiales Específicos Adicionales';
+                const margenInferior = esUltimo ? '0' : '15px';
+
+                let tabla = `
+                    <div class="despacho-materiales-grupo-v2" style="margin-bottom: ${margenInferior}; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #cbd5e1;">
+                        <div class="despacho-grupo-header-v2" style="background: ${config.bgColor}; padding: 12px; border-bottom: 1px solid #1e3a8a;">
+                            <h4 class="despacho-titulo-grupo-v2" style="margin: 0; color: ${config.color} !important; font-size: 14px; font-weight: 600;">
+                                ${config.icon} ${titulo} (${items.length} ${items.length === 1 ? 'item' : 'items'})
+                            </h4>
+                        </div>
+                        <table class="tabla-despacho-inventario" style="width: 100%; border-collapse: collapse;">
+                            <thead style="background: #f8fafc;">
+                                <tr>
+                                    <th style="padding: 8px; text-align: left; border-bottom: 1px solid #1e3a8a !important;">Material</th>
+                                    <th style="padding: 8px; text-align: center; border-bottom: 1px solid #1e3a8a !important; width: 80px;">Cant.</th>
+                                    <th style="padding: 8px; text-align: center; border-bottom: 1px solid #1e3a8a !important; width: 80px;">Estado</th>
+                                    <th style="padding: 8px; text-align: center; border-bottom: 1px solid #1e3a8a !important; width: 80px;">Stock</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+
+                // Procesar cada item de forma asíncrona
+                for (const it of items) {
+                    const stock = await obtenerStockDesdeVistas(it.codigo_material);
+                    const stockClass = stock >= it.cantidad_solicitada ? 'despacho-stock-ok' : 'despacho-stock-bad';
+
+                    // Materiales específicos adicionales - usar nombre_material directamente
+                    let nombreDisplay = it.nombre_material || 'Material Específico';
+
+                    tabla += `
+                        <tr>
+                            <td style="padding: 8px; border-bottom: 1px solid #0353a3;">
+                                <strong class="despacho-nombre-material-v2" style="color: #991b1b !important;">${nombreDisplay}</strong><br>
+                                <small style="color: #20252b;">Código: ${it.codigo_material}${it.medidas ? ` (${it.medidas})` : ''}${it.color ? ` - ${it.color}` : ''}</small>
+                            </td>
+                            <td style="padding: 8px; text-align: center; border-bottom: 1px solid #0353a3;">${it.cantidad_solicitada}</td>
+                            <td style="padding: 8px; text-align: center; border-bottom: 1px solid #0353a3;">${it.estado === 'pendiente' ? 'Pendiente' : (it.estado || 'Nuevo')}</td>
+                            <td style="padding: 8px; text-align: center; border-bottom: 1px solid #055cb3; ${stockClass ? `color: ${stock >= it.cantidad_solicitada ? '#16a34a' : '#dc2626'}; font-weight: bold;` : ''}">${stock}</td>
+                        </tr>`;
+                }
+
+                tabla += `
+                            </tbody>
+                        </table>
+                    </div>`;
+
+                return tabla;
+            }
+
+            // Función para renderizar plantillas adicionales
+            async function renderMaterialesPlantillasAdicionales(items, esUltimo = false) {
+                if (items.length === 0) return '';
+
+                const config = { color: '#dc2626', bgColor: '#fef2f2', icon: '📦' };
+                const titulo = '📦 Plantillas Adicionales';
+                const margenInferior = esUltimo ? '0' : '15px';
+
+                let tabla = `
+                    <div class="despacho-materiales-grupo-v2" style="margin-bottom: ${margenInferior}; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #cbd5e1;">
+                        <div class="despacho-grupo-header-v2" style="background: ${config.bgColor}; padding: 12px; border-bottom: 1px solid #1e3a8a;">
+                            <h4 class="despacho-titulo-grupo-v2" style="margin: 0; color: ${config.color} !important; font-size: 14px; font-weight: 600;">
+                                ${config.icon} ${titulo} (${items.length} ${items.length === 1 ? 'item' : 'items'})
+                            </h4>
+                        </div>
+                        <table class="tabla-despacho-inventario" style="width: 100%; border-collapse: collapse;">
+                            <thead style="background: #f8fafc;">
+                                <tr>
+                                    <th style="padding: 8px; text-align: left; border-bottom: 1px solid #1e3a8a !important;">Material</th>
+                                    <th style="padding: 8px; text-align: center; border-bottom: 1px solid #1e3a8a !important; width: 60px;">Buscar</th>
+                                    <th style="padding: 8px; text-align: center; border-bottom: 1px solid #1e3a8a !important; width: 80px;">Cant.</th>
+                                    <th style="padding: 8px; text-align: center; border-bottom: 1px solid #1e3a8a !important; width: 80px;">Estado</th>
+                                    <th style="padding: 8px; text-align: center; border-bottom: 1px solid #1e3a8a !important; width: 80px;">Stock</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+
+                // Procesar cada item de forma asíncrona
+                for (const it of items) {
+                    const stock = await obtenerStockDesdeVistas(it.codigo_material);
+                    const stockClass = stock >= it.cantidad_solicitada ? 'despacho-stock-ok' : 'despacho-stock-bad';
+
+                    // Plantillas adicionales - usar nombre_material o 'Plantilla' si está vacío
+                    let nombreDisplay = it.nombre_material || 'Plantilla';
+                    console.log('Plantilla Adicional:', { codigo: it.codigo_material, nombre: it.nombre_material, observacion: it.observacion });
+
+                    tabla += `
+                        <tr>
+                            <td style="padding: 8px; border-bottom: 1px solid #0353a3;">
+                                <strong class="despacho-nombre-material-v2" style="color: #991b1b !important;">${nombreDisplay}</strong><br>
+                                <small style="color: #20252b;">Código: ${it.codigo_material}${it.medidas ? ` (${it.medidas})` : ''}${it.color ? ` - ${it.color}` : ''}</small>
+                            </td>
+                            <td style="padding: 8px; text-align: center; border-bottom: 1px solid #0353a3;">
+                                <button class="btn-despacho-outline btn-xs" onclick="window.buscarMaterialesSimilares('${it.id}', '${it.codigo_material}', '${it.nombre_material === 'Desconocido' ? it.codigo_material : (it.nombre_material || it.codigo_material)}')">
+                                    🔍
+                                </button>
+                            </td>
+                            <td style="padding: 8px; text-align: center; border-bottom: 1px solid #0353a3;">${it.cantidad_solicitada}</td>
+                            <td style="padding: 8px; text-align: center; border-bottom: 1px solid #0353a3;">${it.estado === 'pendiente' ? 'Pendiente' : (it.estado || 'Nuevo')}</td>
+                            <td style="padding: 8px; text-align: center; border-bottom: 1px solid #055cb3; ${stockClass ? `color: ${stock >= it.cantidad_solicitada ? '#16a34a' : '#dc2626'}; font-weight: bold;` : ''}">${stock}</td>
+                        </tr>`;
+                }
+
+                tabla += `
+                            </tbody>
+                        </table>
+                    </div>`;
+
+                return tabla;
+            }
+
+            let estadoHeader = `Confirmación de Salida: ${solicitud.id}`;
+            let botonesHTML = '';
+
+            // Si hay materiales de plantilla, mostrar botón de asignación primero
+            if (tieneMaterialesPlantilla) {
+                botonesHTML += `
+                    <div class="despacho-alert" style="background: #fef3c7; border-color: #f59e0b;">
+                        <div class="despacho-alert-title" style="color: #92400e;">⚠️ Materiales de Plantilla Pendientes</div>
+                        <div class="despacho-alert-body" style="color: #78350f;">
+                            Esta solicitud contiene materiales genéricos que deben ser asignados a códigos específicos antes de despachar.
+                        </div>
+                    </div>
+                    <div class="despacho-actions">
+                        <button class="btn-despacho-solido despacho-action-main" style="background: #f59e0b;" onclick="window.abrirModalAsignacionPlantilla('${solicitud.id}')">🔄 ASIGNAR MATERIALES DE PLANTILLA</button>
+                        <button class="btn-despacho-outline despacho-action-secondary" onclick="window.limpiarVistaDetallada()">VOLVER</button>
+                    </div>`;
+            } else {
+                botonesHTML = `
+                    <div class="despacho-actions">
+                        <button class="btn-despacho-solido despacho-action-main" onclick="window.confirmarDespachoOficial('${solicitud.id}')">✅ CONFIRMAR Y GENERAR ACTA</button>
+                        <button class="btn-despacho-outline despacho-action-secondary" onclick="window.limpiarVistaDetallada()">VOLVER</button>
+                    </div>`;
+            }
+
+
+            // Si la solicitud ya fue procesada (tiene fecha_procesamiento) o tiene un despacho existente, mostrar información diferente
+            if (solicitud.fecha_procesamiento || (!errorDespachoExistente && despachoExistente && despachoExistente.length > 0)) {
+                estadoHeader = `Solicitud Procesada: ${solicitud.id}`;
+                const numeroDespacho = despachoExistente?.[0]?.numero_despacho || 'N/A';
+                const fechaDespacho = despachoExistente?.[0]?.fecha_despacho ? new Date(despachoExistente[0].fecha_despacho).toLocaleDateString('es-ES') : solicitud.fecha_procesamiento ? new Date(solicitud.fecha_procesamiento).toLocaleDateString('es-ES') : 'N/A';
+
+                botonesHTML = `
+                    <div class="despacho-alert">
+                        <div class="despacho-alert-title">📋 Esta solicitud ya fue procesada</div>
+                        <div class="despacho-alert-body">
+                            <strong>Número de Despacho:</strong> ${numeroDespacho}<br>
+                            <strong>Fecha de Procesamiento:</strong> ${fechaDespacho}<br>
+                            <strong>Estado:</strong> Procesada
+                        </div>
+                    </div>
+                    <div class="despacho-actions">
+                        <button class="btn-despacho-outline despacho-action-full" onclick="window.limpiarVistaDetallada()">VOLVER A LA LISTA</button>
+                    </div>`;
+            }
+
+            document.getElementById("panelVistaDetallada").innerHTML = `
+                <div class="despacho-section-header">
+                    <h3 class="despacho-section-title">${estadoHeader}</h3>
+                </div>
+
+                ${materialesHTML}
+
+                <!-- Panel de información del evento -->
+                <div id="panelResumenEventoDetalle" class="despacho-evento-panel">
+
+                    <h4 class="despacho-evento-title">📋 Información del Evento</h4>
+                    <div class="despacho-evento-grid">
+                        <div>
+                            <label class="despacho-evento-label">Nombre</label>
+                            <div id="resumen-nombre" class="despacho-evento-value-strong">${eventoData?.nombre || eventoData?.evento || "—"}</div>
+                        </div>
+                        <div>
+                            <label class="despacho-evento-label">Cliente</label>
+                            <div id="resumen-cliente" class="despacho-evento-value">${eventoData?.cliente || "—"}</div>
+                        </div>
+                        <div>
+                            <label class="despacho-evento-label">Lugar</label>
+                            <div id="resumen-lugar" class="despacho-evento-value">${eventoData?.lugar || "—"}</div>
+                        </div>
+                        <div>
+                            <label class="despacho-evento-label">Tipo</label>
+                            <div id="resumen-tipo" class="despacho-evento-value">${eventoData?.tipo_evento || eventoData?.tipo || "Evento"}</div>
+                        </div>
+                    </div>
+                    <div class="despacho-evento-block">
+                        <label class="despacho-evento-label">Tiempos</label>
+                        <div class="despacho-evento-time" id="resumen-montaje">${formatDateTime(eventoData?.fecha_montaje, eventoData?.hora_montaje)}</div>
+                        <div class="despacho-evento-time-danger" id="resumen-desmontaje">${formatDateTime(eventoData?.fecha_desmontaje, eventoData?.hora_desmontaje)}</div>
+                    </div>
+                    <div class="despacho-evento-block">
+                        <label class="despacho-evento-label">Servicios</label>
+                        <div id="resumen-descripcion" class="despacho-evento-desc">${serviciosTexto}</div>
+                    </div>
+                </div>
+
+                ${botonesHTML}`;
+        } catch (error) {
+            console.error('Error en verPedidoDespacho:', error);
+            alert('Error al cargar los detalles del despacho');
+        }
+    };
+
+
+    // Función para actualizar contador de asignaciones
+    window.actualizarEstadoAsignacion = function() {
+        const selects = document.querySelectorAll('.select-material-especifico');
+        const asignados = Array.from(selects).filter(select => select.value !== '').length;
+        const total = selects.length;
+        const estadoDiv = document.getElementById('estado-asignacion');
+        if (estadoDiv) {
+            estadoDiv.textContent = `Materiales asignados: ${asignados}/${total}`;
+        }
+
+        const btnConfirmar = document.getElementById('btn-confirmar-asignaciones');
+        if (btnConfirmar) {
+            btnConfirmar.disabled = asignados !== total;
+            btnConfirmar.style.opacity = asignados === total ? '1' : '0.5';
+        }
+    };
+
+    // MODAL DE ASIGNACIÓN DE MATERIALES DE PLANTILLA
+    window.abrirModalAsignacionPlantilla = async function(solicitudId) {
+        try {
+            // Obtener solicitud completa
+            const { data: solicitud, error } = await window.supabaseClient
+                .from('solicitudes_logistica')
+                .select('*, items_solicitud_logistica(*)')
+                .eq('id', solicitudId)
+                .single();
+
+            if (error || !solicitud) {
+                alert('Error al cargar la solicitud');
+                return;
+            }
+
+            // Filtrar solo materiales de plantilla
+            const materialesPlantilla = solicitud.items_solicitud_logistica.filter(item =>
+                item.observacion && item.observacion.toLowerCase().includes('plantilla')
+            );
+
+            if (materialesPlantilla.length === 0) {
+                alert('No hay materiales de plantilla para asignar');
+                return;
+            }
+
+            // Obtener catálogo de materiales disponibles
+            const { data: catalogo, error: errorCatalogo } = await window.supabaseClient
+                .from('catalogo')
+                .select('codigo, nombre, bodega_principal, bodega_secundaria, tipo_material, tipo_uso')
+                .order('nombre');
+
+            if (errorCatalogo) {
+                console.error('Error al cargar catálogo:', errorCatalogo);
+                alert('Error al cargar el catálogo de materiales');
+                return;
+            }
+
+            // Obtener stock actual
+            const { data: stockData, error: errorStock } = await window.supabaseClient
+                .from('stock_actual_con_precio')
+                .select('material_codigo, existencia, bodega_principal, bodega_secundaria');
+
+            const stockMap = new Map();
+            if (!errorStock && stockData) {
+                stockData.forEach(item => {
+                    const key = `${item.material_codigo}-${item.bodega_principal}-${item.bodega_secundaria}`;
+                    stockMap.set(key, item.existencia || 0);
+                });
+            }
+
+            // Crear modal
+            const modal = document.createElement('div');
+            modal.id = 'modal-asignacion-plantilla';
+            modal.style = `
+                position: fixed;
+                top: 0; left: 0; right: 0; bottom: 0;
+                background: rgba(0,0,0,0.8);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 4000;
+                padding: 20px;
+            `;
+
+            let tablaHTML = `
+                <table class="tabla-asignacion">
+                    <thead>
+                        <tr>
+                            <th>Material Plantilla</th>
+                            <th>Cantidad</th>
+                            <th>Material Específico</th>
+                            <th>Stock Disponible</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+            materialesPlantilla.forEach((item, index) => {
+                // Para plantillas, el nombre_material es el nombre_plantilla
+                // Necesitamos buscar materiales del catálogo que puedan corresponder
+                let materialesFiltrados = catalogo.filter(mat =>
+                    mat.nombre && mat.nombre.toLowerCase().includes(item.nombre_material.toLowerCase())
+                );
+
+                // Si no hay coincidencias directas, buscar por palabras clave
+                if (materialesFiltrados.length === 0) {
+                    const palabrasClave = item.nombre_material.toLowerCase().split(/[\s,x]+/).filter(p => p.length > 2);
+                    materialesFiltrados = catalogo.filter(mat => {
+                        const nombreMat = mat.nombre.toLowerCase();
+                        return palabrasClave.some(palabra => nombreMat.includes(palabra));
+                    });
+                }
+
+                // Limitar a las mejores sugerencias
+                materialesFiltrados = materialesFiltrados.slice(0, 20);
+
+                const opcionesHTML = materialesFiltrados.map(mat => {
+                    const stockKey = `${mat.codigo}-${mat.bodega_principal}-${mat.bodega_secundaria}`;
+                    const stock = stockMap.get(stockKey) || 0;
+                    return `<option value="${mat.codigo}" data-stock="${stock}" data-nombre="${mat.nombre}">${mat.nombre} (${mat.codigo}) - Stock: ${stock}</option>`;
+                }).join('');
+
+                tablaHTML += `
+                    <tr data-item-id="${item.id}" data-index="${index}">
+                        <td>
+                            <strong>${item.nombre_material}</strong><br>
+                            <small>Cantidad: ${item.cantidad_solicitada}</small>
+                        </td>
+                        <td class="despacho-td-center">${item.cantidad_solicitada}</td>
+                        <td>
+                            <select class="select-material-especifico" data-item-id="${item.id}" style="width: 100%; padding: 4px;">
+                                <option value="">Seleccionar material...</option>
+                                ${opcionesHTML}
+                            </select>
+                        </td>
+                        <td class="despacho-td-center stock-display" id="stock-${item.id}">0</td>
+                        <td class="despacho-td-center">
+                            <button class="btn-despacho-outline btn-xs" onclick="window.asignarMaterialEspecifico('${item.id}', '${solicitudId}')">Asignar</button>
+                        </td>
+                    </tr>`;
+            });
+
+            tablaHTML += `</tbody></table>`;
+
+            modal.innerHTML = `
+                <div style="background: white; width: 95%; max-width: 1200px; max-height: 90vh; border-radius: 12px; display: flex; flex-direction: column;">
+                    <div style="padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                        <h3 style="margin: 0; font-size: 18px; color: #1a365d;">🔄 Asignar Materiales Específicos a Plantillas</h3>
+                        <button id="btn-cerrar-modal-asignacion" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">×</button>
+                    </div>
+                    <div style="overflow-y: auto; padding: 20px; flex: 1;">
+                        <div style="margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 8px;">
+                            <p style="margin: 0; color: #374151;">
+                                <strong>Instrucciones:</strong> Para cada material de plantilla, selecciona un material específico del catálogo que tenga stock disponible.
+                                Una vez asignados todos los materiales, podrás confirmar el despacho.
+                            </p>
+                        </div>
+                        ${tablaHTML}
+                    </div>
+                    <div style="padding: 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                        <div id="estado-asignacion" style="color: #6b7280;">Materiales asignados: 0/${materialesPlantilla.length}</div>
+                        <div>
+                            <button class="btn-despacho-outline" id="btn-cerrar-modal-asignacion-bottom">CANCELAR</button>
+                            <button class="btn-despacho-solido" id="btn-confirmar-asignaciones" disabled>CONFIRMAR ASIGNACIONES</button>
+                        </div>
+                    </div>
+                </div>`;
+
+            document.body.appendChild(modal);
+
+            // Event listeners
+            document.getElementById('btn-cerrar-modal-asignacion').onclick = () => modal.remove();
+            document.getElementById('btn-cerrar-modal-asignacion-bottom').onclick = () => modal.remove();
+
+            document.getElementById('btn-confirmar-asignaciones').onclick = () => {
+                window.confirmarAsignacionesPlantilla(solicitudId);
+                modal.remove();
+            };
+
+            // Event listener para actualizar stock cuando cambia selección
+            document.querySelectorAll('.select-material-especifico').forEach(select => {
+                select.addEventListener('change', function() {
+                    const itemId = this.dataset.itemId;
+                    const selectedOption = this.options[this.selectedIndex];
+                    const stock = selectedOption ? selectedOption.dataset.stock || 0 : 0;
+                    document.getElementById(`stock-${itemId}`).textContent = stock;
+                    window.actualizarEstadoAsignacion();
+                });
+            });
+
+            // Función para actualizar contador de asignaciones
+            window.actualizarEstadoAsignacion = function() {
+                const selects = document.querySelectorAll('.select-material-especifico');
+                const asignados = Array.from(selects).filter(select => select.value !== '').length;
+                const total = materialesPlantilla.length;
+                document.getElementById('estado-asignacion').textContent = `Materiales asignados: ${asignados}/${total}`;
+
+                const btnConfirmar = document.getElementById('btn-confirmar-asignaciones');
+                btnConfirmar.disabled = asignados !== total;
+                btnConfirmar.style.opacity = asignados === total ? '1' : '0.5';
+            };
+
+            window.actualizarEstadoAsignacion();
+
+        } catch (error) {
+            console.error('Error al abrir modal de asignación:', error);
+            alert('Error al abrir el modal de asignación');
+        }
+    };
+
+    // Función para asignar material específico
+    window.asignarMaterialEspecifico = function(itemId, solicitudId) {
+        const select = document.querySelector(`.select-material-especifico[data-item-id="${itemId}"]`);
+        if (!select || !select.value) {
+            alert('Selecciona un material específico primero');
+            return;
+        }
+
+        const selectedOption = select.options[select.selectedIndex];
+        const materialNombre = selectedOption.dataset.nombre;
+        const materialCodigo = select.value;
+
+        // Aquí podríamos guardar la asignación temporalmente
+        // Por ahora solo actualizamos la UI
+        console.log(`Asignando ${materialNombre} (${materialCodigo}) al item ${itemId}`);
+        window.actualizarEstadoAsignacion();
+    };
+
+    // Función para confirmar todas las asignaciones
+    window.confirmarAsignacionesPlantilla = async function(solicitudId) {
+        try {
+            const asignaciones = [];
+            document.querySelectorAll('.select-material-especifico').forEach(select => {
+                if (select.value) {
+                    const itemId = select.dataset.itemId;
+                    const selectedOption = select.options[select.selectedIndex];
+                    asignaciones.push({
+                        itemId: itemId,
+                        codigoOriginal: '', // El código original era genérico
+                        codigoEspecifico: select.value,
+                        nombreEspecifico: selectedOption.dataset.nombre
+                    });
+                }
+            });
+
+            if (asignaciones.length === 0) {
+                alert('No hay asignaciones para confirmar');
+                return;
+            }
+
+            // Actualizar los items en la base de datos
+            for (const asignacion of asignaciones) {
+                await window.supabaseClient
+                    .from('items_solicitud_logistica')
+                    .update({
+                        codigo_material: asignacion.codigoEspecifico,
+                        nombre_material: asignacion.nombreEspecifico,
+                        observacion: 'especifico' // Cambiar de plantilla a específico
+                    })
+                    .eq('id', asignacion.itemId);
+            }
+
+            alert(`✅ ${asignaciones.length} materiales asignados correctamente. Ahora puedes confirmar el despacho.`);
+
+            // Recargar la vista para mostrar los cambios
+            window.verPedidoDespacho(solicitudId);
+
+        } catch (error) {
+            console.error('Error al confirmar asignaciones:', error);
+            alert('Error al guardar las asignaciones');
+        }
+    };
+
+
+    // 4. LÓGICA DE CIERRE: VALIDAR STOCK + PDF CON DATOS COMPLETOS
+    window.confirmarDespachoOficial = async function(id) {
+        try {
+            // Obtener solicitud completa desde Supabase
+            const { data: solicitud, error: errorSolicitud } = await window.supabaseClient
+                .from('solicitudes_logistica')
+                .select('*, items_solicitud_logistica(*)')
+                .eq('id', id)
+                .single();
+
+            if (errorSolicitud || !solicitud) {
+                console.error('Error al obtener solicitud:', errorSolicitud);
+                alert('Error al obtener la solicitud');
+                return;
+            }
+
+            // ✅ VALIDAR QUE LA SOLICITUD NO HAYA SIDO DESPACHADA ANTERIORMENTE
+            // Nota: Las solicitudes completadas tienen estado 'completada' y fecha_procesamiento
+            if (solicitud.fecha_procesamiento) {
+                alert(`❌ Esta solicitud ya fue procesada el ${new Date(solicitud.fecha_procesamiento).toLocaleDateString('es-ES')}`);
+                console.log('Intento de despachar solicitud ya procesada:', solicitud);
+                // Recargar la lista para reflejar el estado actual
+                renderLista();
+                return;
+            }
+
+            // ✅ VALIDAR QUE NO EXISTA YA UN DESPACHO PARA ESTA SOLICITUD
+            const { data: despachoExistente, error: errorDespachoExistente } = await window.supabaseClient
+                .from('despachos_logistica')
+                .select('id, numero_despacho')
+                .eq('solicitud_id', id);
+
+            if (!errorDespachoExistente && despachoExistente && despachoExistente.length > 0) {
+                alert(`❌ Esta solicitud ya tiene un despacho registrado: ${despachoExistente[0].numero_despacho}`);
+                console.log('Despacho ya existente:', despachoExistente[0]);
+                renderLista();
+                return;
+            }
+
+
+            // ✅ VALIDAR QUE NO QUEDEN MATERIALES DE PLANTILLA SIN ASIGNAR
+            const materialesPlantillaPendientes = solicitud.items_solicitud_logistica.filter(item =>
+                item.observacion && item.observacion.toLowerCase().includes('plantilla')
+            );
+
+            if (materialesPlantillaPendientes.length > 0) {
+                alert(`❌ Esta solicitud tiene ${materialesPlantillaPendientes.length} material(es) de plantilla sin asignar. Debes asignar materiales específicos antes de confirmar el despacho.`);
+                // Abrir automáticamente el modal de asignación
+                window.abrirModalAsignacionPlantilla(id);
+                return;
+            }
+
+            // Obtener stock actual calculado desde las 3 tablas de movimientos
+            const tablasMovimientos = ['movimientos_bodega_audiovisual', 'movimientos_bodega_hierros', 'movimientos_bodega_consumibles'];
+            let movimientosStock = [];
+
+            for (const tabla of tablasMovimientos) {
+                const { data: movData, error: errorMov } = await window.supabaseClient
+                    .from(tabla)
+                    .select('material_codigo, cantidad, signo')
+                    .eq('estado', 'completado');
+
+                if (errorMov) {
+                    console.error(`Error al obtener stock de ${tabla}:`, errorMov);
+                    continue;
+                }
+
+                movimientosStock = movimientosStock.concat(movData || []);
+            }
+
+
+            // Calcular stock por material
+            const stockPorMaterial = {};
+            movimientosStock?.forEach(mov => {
+                if (!stockPorMaterial[mov.material_codigo]) {
+                    stockPorMaterial[mov.material_codigo] = 0;
+                }
+                stockPorMaterial[mov.material_codigo] += (mov.cantidad * mov.signo);
+            });
+
+            // ✅ VALIDAR STOCK ANTES DE DESPACHAR
+            let stockInsuficiente = false;
+            solicitud.items_solicitud_logistica.forEach(item => {
+                // Los CASE genéricos se resuelven luego a códigos reales.
+                if (isCaseBaseCodigo(item.codigo_material)) return;
+                const stock = stockPorMaterial[item.codigo_material] || 0;
+                if (stock < item.cantidad_solicitada) {
+                    stockInsuficiente = true;
+                }
+            });
+
+            if (stockInsuficiente) {
+                alert("❌ STOCK INSUFICIENTE: No se puede despachar material con existencia insuficiente.");
+                return;
+            }
+
+            // ✅ CORRECCIÓN: Obtener datos del evento desde Supabase
+            const { data: eventoData, error: errorEvento } = await window.supabaseClient
+                .from('eventos')
+                .select('*')
+                .eq('nombre', solicitud.evento);
+            
+            const numeroRegistro = await generarCorrelativo();
+
+            // Se usará también fuera del try (PDF).
+            let itemsResueltos = null;
+            
+            // 🔄 INTEGRACIÓN CON SUPABASE: Crear registro de despacho y movimientos
+            try {
+                // 1. Crear registro maestro del despacho
+                const despachoData = {
+                    numero_despacho: numeroRegistro,
+                    solicitud_id: solicitud.id,
+                    evento: solicitud.evento,
+                    encargado_evento: solicitud.encargado_evento,
+                    cliente: (eventoData && eventoData.length > 0) ? eventoData[0].cliente : null,
+                    lugar_montaje: (eventoData && eventoData.length > 0) ? eventoData[0].lugar : null,
+                    fecha_montaje: (eventoData && eventoData.length > 0 && eventoData[0].fecha_montaje) ? new Date(eventoData[0].fecha_montaje + 'T' + (eventoData[0].hora_montaje || '00:00')).toISOString() : null,
+                    fecha_desmontaje: (eventoData && eventoData.length > 0 && eventoData[0].fecha_desmontaje) ? new Date(eventoData[0].fecha_desmontaje + 'T' + (eventoData[0].hora_desmontaje || '00:00')).toISOString() : null,
+                    numero_acta: numeroRegistro,
+                    fecha_despacho: new Date().toISOString(),
+                    estado: 'completado',
+
+                    observaciones: `Despacho generado desde solicitud ${solicitud.id}`,
+                    usuario_id: window.currentUser?.id
+
+                };
+
+                const { data: despachoCreado, error: errorDespacho } = await window.supabaseClient
+                    .from('despachos_logistica')
+                    .insert(despachoData)
+                    .select('id')
+                    .single();
+
+                if (errorDespacho) {
+                    console.error('Error al crear despacho:', errorDespacho);
+                    alert('❌ Error al registrar el despacho en la base de datos.');
+                    return;
+                }
+
+                console.log('✅ Despacho creado:', despachoCreado);
+
+
+                // Log de auditoría para despacho
+                await window.logAuditoria('INSERT', 'despachos_logistica', despachoCreado.id, despachoData);
+
+                // 1.5. Guardar items del despacho en items_despacho_logistica
+                const itemsDespachoParaInsertar = (solicitud.items_solicitud_logistica || []).map(item => ({
+                    despacho_id: despachoCreado.id,
+                    codigo_material: item.codigo_material,
+                    nombre_material: item.nombre_material,
+                    cantidad_despachada: item.cantidad_solicitada,
+                    estado: 'despachado',
+                    observacion: item.observacion,
+                    medidas: item.medidas,
+                    color: item.color,
+                    usuario_id: window.currentUser?.id,
+                    bodega_principal: null, // Se determinará después al crear movimientos
+                    bodega_secundaria: null  // Se determinará después al crear movimientos
+                }));
+
+                const { error: errorItemsDespacho } = await window.supabaseClient
+                    .from('items_despacho_logistica')
+                    .insert(itemsDespachoParaInsertar);
+
+                if (errorItemsDespacho) {
+                    console.error('Error al guardar items del despacho:', errorItemsDespacho);
+                    alert('❌ Error al guardar los items del despacho.');
+                    return;
+                }
+
+                console.log('✅ Items del despacho guardados');
+
+                // Log de auditoría para items del despacho
+                itemsDespachoParaInsertar.forEach(item => {
+                    window.logAuditoria('INSERT', 'items_despacho_logistica', null, item);
+                });
+
+
+                // 2. Crear movimientos de bodega referenciando al despacho
+                // IMPORTANTE (Bodegas V2): registrar bodega_principal/bodega_secundaria reales para que el stock se descuente correctamente.
+                // isCaseBaseCodigo/getCaseBaseFromCodigo definidos arriba
+
+                // Resolver items genéricos tipo CASEBASE|<base> a códigos reales antes de despachar.
+                const itemsOriginales = (solicitud.items_solicitud_logistica || []);
+                itemsResueltos = [];
+
+                for (const it of itemsOriginales) {
+                    const cod = it.codigo_material;
+                    const qty = Number(it.cantidad_solicitada) || 0;
+                    if (!cod || qty <= 0) continue;
+
+                    if (!isCaseBaseCodigo(cod)) {
+                        itemsResueltos.push(it);
+                        continue;
+                    }
+
+                    const base = getCaseBaseFromCodigo(cod) || 'Case';
+
+
+                    // 1) Buscar Cases físicos candidatos en las 3 tablas de catálogo
+                    let candidatos = [];
+                    try {
+                        const tablasCatalogo = ['catalogo_audiovisual', 'catalogo_hierros', 'catalogo_consumibles'];
+
+                        for (const tabla of tablasCatalogo) {
+                            const { data: catData, error: catErr } = await window.supabaseClient
+                                .from(tabla)
+                                .select('codigo, nombre, bodega_principal, bodega_secundaria, es_contenedor, tipo_material, tipo_uso, campos_personalizados')
+                                .eq('es_contenedor', true)
+                                .or(`tipo_material.ilike.%case%,tipo_uso.ilike.%case%,nombre.ilike.%case%`);
+
+                            if (catErr) {
+                                console.warn(`Error consultando ${tabla}:`, catErr);
+                                continue;
+                            }
+
+                            const rows = catData || [];
+                            const matchBase = (row) => {
+                                const cps = row.campos_personalizados;
+                                if (Array.isArray(cps)) {
+                                    const nb = cps.find(x => (x?.nombre || '').toString().trim().toLowerCase() === 'nombre base' && (x?.valor || '').toString().trim());
+                                    const v = (nb?.valor || '').toString().trim();
+                                    if (v && v.toLowerCase() === base.toLowerCase()) return true;
+                                }
+                                const nm = (row.nombre || '').toString().trim().toLowerCase();
+                                return nm.startsWith(base.toLowerCase());
+                            };
+
+                            candidatos = candidatos.concat(rows.filter(r => matchBase(r)).map(r => ({
+                                codigo: r.codigo,
+                                nombre: r.nombre || r.codigo,
+                                bodega_principal: r.bodega_principal || tabla.replace('catalogo_', ''), // Extraer tipo de bodega del nombre de tabla
+                                bodega_secundaria: r.bodega_secundaria || 'General'
+                            })));
+                        }
+
+                    } catch (e) {
+                        console.error('Error cargando catálogo para resolver CASEBASE:', e);
+                        alert(`❌ No se pudo cargar catálogo para resolver ${base}.`);
+                        return;
+                    }
+
+                    if (candidatos.length === 0) {
+                        alert(`❌ No hay Cases físicos disponibles en catálogo para: ${base}`);
+                        return;
+                    }
+
+
+                    // 2) Filtrar por stock > 0 desde las vistas separadas
+                    let disponibles = [];
+                    try {
+                        const cods = candidatos.map(c => c.codigo).filter(Boolean);
+                        const vistasStock = ['stock_audiovisual', 'stock_hierros', 'stock_consumibles'];
+
+                        const stockMap = new Map();
+
+                        for (const vista of vistasStock) {
+                            const { data: stockData, error: stockErr } = await window.supabaseClient
+                                .from(vista)
+                                .select('material_codigo, bodega_principal, bodega_secundaria, stock_actual')
+                                .in('material_codigo', cods);
+
+                            if (stockErr) {
+                                console.warn(`Error consultando stock en ${vista}:`, stockErr);
+                                continue;
+                            }
+
+                            (stockData || []).forEach(r => {
+                                stockMap.set((r.material_codigo || '').toString(), Number(r.stock_actual) || 0);
+                            });
+                        }
+
+
+                        disponibles = candidatos
+                            .map(c => ({ ...c, existencia: stockMap.get(c.codigo) || 0 }))
+                            .filter(c => (Number(c.existencia) || 0) > 0)
+                            .sort((a, b) => (b.existencia || 0) - (a.existencia || 0));
+                    } catch (e) {
+                        console.warn('No se pudo cargar stock para resolver CASEBASE; usando candidatos sin validar existencia:', e);
+                        disponibles = candidatos.map(c => ({ ...c, existencia: 0 }));
+                    }
+
+                    if (disponibles.length === 0) {
+                        alert(`❌ No hay stock disponible para cases de: ${base}`);
+                        return;
+                    }
+
+                    // 3) Pedir selección manual de códigos
+                    const lista = disponibles.slice(0, 30).map(d => `${d.codigo} (${d.bodega_principal}/${d.bodega_secundaria}) x${d.existencia}`).join('\n');
+                    const promptTxt = `Resolver CASE genérico: ${base}\nCantidad requerida: ${qty}\n\nEscriba los códigos a despachar, separados por coma (deben ser ${qty}):\n\nDisponibles (top 30):\n${lista}`;
+                    const resp = window.prompt(promptTxt, '');
+                    if (!resp) {
+                        alert('❌ Debe seleccionar los códigos de Case para continuar.');
+                        return;
+                    }
+                    const elegidos = resp.split(',').map(s => s.trim()).filter(Boolean);
+                    if (elegidos.length !== qty) {
+                        alert(`❌ Debe ingresar exactamente ${qty} códigos. Ingresó: ${elegidos.length}`);
+                        return;
+                    }
+
+                    const setDisp = new Set(disponibles.map(d => d.codigo));
+                    for (const c of elegidos) {
+                        if (!setDisp.has(c)) {
+                            alert(`❌ Código no válido o sin stock: ${c}`);
+                            return;
+                        }
+                        itemsResueltos.push({
+                            ...it,
+                            codigo_material: c,
+                            nombre_material: base,
+                            cantidad_solicitada: 1,
+                            observacion: `Resuelto de ${cod}. ${it.observacion || ''}`.trim()
+                        });
+                    }
+
+                    // Opcional: actualizar la BD para reflejar resolución (best-effort)
+                    try {
+                        if (it.id) {
+                            await window.supabaseClient
+                                .from('items_solicitud_logistica')
+                                .delete()
+                                .eq('id', it.id);
+                        }
+                        const inserts = elegidos.map(c => ({
+                            solicitud_id: solicitud.id,
+                            codigo_material: c,
+                            nombre_material: base,
+                            cantidad_solicitada: 1,
+                            estado: it.estado || 'pendiente',
+                            observacion: `Resuelto de ${cod}. ${it.observacion || ''}`.trim(),
+                            medidas: it.medidas || null,
+                            color: it.color || null
+                        }));
+                        if (inserts.length) {
+                            await window.supabaseClient.from('items_solicitud_logistica').insert(inserts);
+                        }
+                    } catch (e) {
+                        console.warn('No se pudo actualizar items_solicitud_logistica al resolver CASEBASE (se continúa):', e);
+                    }
+                }
+
+                const codigosUnicos = Array.from(new Set((itemsResueltos || []).map(i => i.codigo_material).filter(Boolean)));
+
+                let stockRows = [];
+                if (codigosUnicos.length > 0) {
+
+                    const vistasStock = ['stock_audiovisual', 'stock_hierros', 'stock_consumibles'];
+
+                    for (const vista of vistasStock) {
+                        const { data: stockData, error: stockDataErr } = await window.supabaseClient
+                            .from(vista)
+                            .select('material_codigo, bodega_principal, bodega_secundaria, stock_actual')
+                            .in('material_codigo', codigosUnicos);
+
+                        if (stockDataErr) {
+                            console.warn(`No se pudo cargar stock de ${vista}:`, stockDataErr);
+                            continue;
+                        }
+
+                        stockRows = stockRows.concat(stockData || []);
+
+                    }
+                }
+
+                const stockPorCodigo = new Map();
+                (stockRows || []).forEach(r => {
+                    const c = (r?.material_codigo || '').toString();
+                    if (!c) return;
+                    const arr = stockPorCodigo.get(c) || [];
+                    arr.push({
+                        bodega_principal: r.bodega_principal || 'Principal',
+                        bodega_secundaria: r.bodega_secundaria || 'General',
+
+                        existencia: Number(r.stock_actual) || 0
+
+                    });
+                    stockPorCodigo.set(c, arr);
+                });
+                // Ordenar por existencia desc para despachar primero de la bodega con más stock
+                for (const [c, arr] of stockPorCodigo.entries()) {
+                    arr.sort((a, b) => (b.existencia || 0) - (a.existencia || 0));
+                }
+
+                const movimientos = [];
+                for (const item of (itemsResueltos || [])) {
+                    const codigo = item.codigo_material;
+                    let restante = parseFloat(item.cantidad_solicitada) || 0;
+                    if (!codigo || restante <= 0) continue;
+
+                    const filas = stockPorCodigo.get(codigo) || [];
+                    for (const f of filas) {
+                        if (restante <= 0) break;
+                        const disp = Number(f.existencia) || 0;
+                        if (disp <= 0) continue;
+                        const usar = Math.min(restante, disp);
+                        movimientos.push({
+                            material_codigo: codigo,
+                            material_nombre: item.nombre_material || '',
+                            bodega_principal: f.bodega_principal,
+                            bodega_secundaria: f.bodega_secundaria,
+                            tipo_movimiento: 'despacho',
+                            cantidad: usar,
+                            signo: -1,
+                            referencia_documento: numeroRegistro,
+                            referencia_tipo: 'despacho_bodega',
+                            responsable: solicitud.encargado_evento,
+                            observaciones: `Despacho ${numeroRegistro} - Evento: ${solicitud.evento}. Estado: ${item.estado || 'Nuevo'}. ${item.observacion || ''}`,
+                            estado: 'completado',
+
+                            usuario_id: window.currentUser?.id,
+
+                            // Ubicación fina (contenedor) no aplica aquí
+                            ubicacion_codigo: null,
+                            ubicacion_nombre: null
+                        });
+                        restante -= usar;
+                    }
+
+                    // Si por alguna razón no se pudo asignar bodega (o quedó restante), hacemos fallback.
+                    if (restante > 0) {
+                        movimientos.push({
+                            material_codigo: codigo,
+                            material_nombre: item.nombre_material || '',
+                            bodega_principal: 'Principal',
+                            bodega_secundaria: 'General',
+                            tipo_movimiento: 'despacho',
+                            cantidad: restante,
+                            signo: -1,
+                            referencia_documento: numeroRegistro,
+                            referencia_tipo: 'despacho_bodega',
+                            responsable: solicitud.encargado_evento,
+                            observaciones: `Despacho ${numeroRegistro} - Evento: ${solicitud.evento}. Estado: ${item.estado || 'Nuevo'}. ${item.observacion || ''}`,
+                            estado: 'completado',
+
+                            usuario_id: window.currentUser?.id,
+
+                            ubicacion_codigo: null,
+                            ubicacion_nombre: null
+                        });
+                    }
+                }
+
+
+                // 3. Insertar movimientos en las tablas separadas según bodega
+                const movimientosPorTabla = {
+                    movimientos_bodega_audiovisual: [],
+                    movimientos_bodega_hierros: [],
+                    movimientos_bodega_consumibles: []
+                };
+
+                // Agrupar movimientos por tabla
+                movimientos.forEach(mov => {
+                    const tabla = getTablaMovimientos(mov.material_codigo);
+                    movimientosPorTabla[tabla].push(mov);
+                });
+
+                // Insertar en cada tabla
+                let movimientosInsertados = [];
+                for (const [tabla, movs] of Object.entries(movimientosPorTabla)) {
+                    if (movs.length > 0) {
+                        const { data: insertados, error: errorTabla } = await window.supabaseClient
+                            .from(tabla)
+                            .insert(movs)
+                            .select();
+
+                        if (errorTabla) {
+                            console.error(`Error al registrar movimientos en ${tabla}:`, errorTabla);
+                            alert(`❌ Error al registrar movimientos en ${tabla}.`);
+                            return;
+                        } else {
+                            console.log(`✅ Movimientos registrados en ${tabla}:`, insertados);
+                            movimientosInsertados = movimientosInsertados.concat(insertados || []);
+                            // Log de auditoría para movimientos
+                            (insertados || []).forEach(mov => {
+                                window.logAuditoria('INSERT', tabla, mov.id, mov);
+                            });
+                        }
+                    }
+                }
+
+                if (movimientosInsertados.length === 0) {
+                    console.warn('No se registraron movimientos en ninguna tabla');
+
+                }
+            } catch (error) {
+                console.error('Error en integración con Supabase:', error);
+                alert('❌ Error en integración con base de datos. El despacho se realizó localmente.');
+            }
+            
+            const datosPDF = {
+                numeroRegistro,
+                fechaDespacho: formatDate(new Date()),
+                personalEntrega: solicitud.encargado_evento,
+                evento: solicitud.evento,
+                clienteEvento: eventoData?.cliente || "",
+                lugarMontaje: eventoData?.lugar || "",
+                itemsSalida: (itemsResueltos || solicitud.items_solicitud_logistica || []).map(it => ({
+                    material: (isCaseBaseCodigo(it.codigo_material)
+                      ? `CASE ${getCaseBaseFromCodigo(it.codigo_material) || it.nombre_material || 'Case'}`
+                      : (it.nombre_material || it.codigo_material + (it.medidas ? ` (${it.medidas})` : ""))),
+                    cantidad: it.cantidad_solicitada,
+                    estado: it.estado || "Nuevo",
+                    observacion: it.observacion || ""
+                })),
+                eventoCompleto: eventoData || {} // ✅ Ahora contiene todos los datos
+            };
+
+            // Generar Acta
+            generarActaDeEntregaPDF(datosPDF);
+
+// ✅ Actualizar información de procesamiento en la solicitud
+            const { error: errorUpdateSolicitud } = await window.supabaseClient
+                .from('solicitudes_logistica')
+                .update({
+                    estado: 'completada',
+                    fecha_procesamiento: new Date().toISOString(),
+                    observaciones: `${solicitud.observaciones || ''}\n[DESPACHO: ${numeroRegistro} - ${new Date().toLocaleString()}]`.trim(),
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', id);
+
+            if (errorUpdateSolicitud) {
+                console.error('Error al actualizar solicitud:', errorUpdateSolicitud);
+                alert('❌ Error al actualizar el estado de la solicitud.');
+            }
+
+            alert(`✅ Despacho ${numeroRegistro} procesado y guardado.`);
+            renderLista();
+        } catch (error) {
+            console.error('Error en confirmarDespachoOficial:', error);
+            alert('❌ Error al procesar el despacho.');
+        }
+    };
+
+    // 5. TU FUNCIÓN DE PDF ORIGINAL (ya correcta, pero ahora con datos completos)
+    function generarActaDeEntregaPDF(data) {
+        const recibe = data.personalEntrega;
+        const copias = [
+            { leyenda: "Original – Bodega" },
+            { leyenda: "Copia – Caseta de Seguridad" },
+            { leyenda: "Copia – Encargado" }
+        ];
+        let contenidoCompleto = "";
+        copias.forEach(copia => {
+            const tablaEncabezados = `
+                <tr style="background-color: #f1f5f9; color: #1e40af; font-size: 10pt; font-weight: bold;">
+                    <th style="padding: 6pt; border: 1px solid #e2e8f0;">Material</th>
+                    <th style="padding: 6pt; border: 1px solid #e2e8f0;">Cantidad</th>
+                    <th style="padding: 6pt; border: 1px solid #e2e8f0;">Estado</th>
+                    <th style="padding: 6pt; border: 1px solid #e2e8f0;">Observación</th>
+                </tr>`;
+            const tablaFilas = data.itemsSalida.map(item => `
+                <tr style="font-size: 9pt;">
+                    <td style="padding: 6pt; border: 1px solid #e2e8f0;">${item.material}</td>
+                    <td style="padding: 6pt; border: 1px solid #e2e8f0; text-align: center;">${item.cantidad}</td>
+                    <td style="padding: 6pt; border: 1px solid #e2e8f0;">${item.estado}</td>
+                    <td style="padding: 6pt; border: 1px solid #e2e8f0;">${item.observacion}</td>
+                </tr>`).join("");
+            
+            let servicioHTML = "No disponible";
+            if (data.eventoCompleto && Array.isArray(data.eventoCompleto.descripcion)) {
+                servicioHTML = '<ul style="margin: 4pt 0; padding-left: 16pt; font-size: 9pt;">' +
+                    data.eventoCompleto.descripcion.map(item => `<li><em>${item}</em></li>`).join('') + '</ul>';
+            }
+
+            const montaje = data.eventoCompleto ? formatDateTime(data.eventoCompleto.fecha_montaje, data.eventoCompleto.hora_montaje) : "—";
+            const desmontaje = data.eventoCompleto ? formatDateTime(data.eventoCompleto.fecha_desmontaje, data.eventoCompleto.hora_desmontaje) : "—";
+            
+            contenidoCompleto += `
+            <div style="width: 185mm; font-family: Arial, sans-serif; color: #333; line-height: 1.3; font-size: 10pt; page-break-after: always; padding: 10mm; background: white;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10pt; border-bottom: 2px solid #1e40af; padding-bottom: 6pt;">
+                    <img src="assets/logo.png" alt="Logo" style="height: 20mm; margin-right: 8mm;">
+                    <div style="text-align: center; flex: 1;">
+                        <h1 style="color: #1e40af; margin: 0; font-size: 16pt;">Acta de Despacho – Interno</h1>
+                        <p style="margin: 3pt 0 0 0; color: #555; font-size: 9pt;">Fecha: ${data.fechaDespacho}</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 24pt; font-weight: bold; color: #1e40af; letter-spacing: 1px;">${data.numeroRegistro}</div>
+                    </div>
+                </div>
+                <div style="background: #f8fafc; padding: 6pt; border-radius: 4pt; margin: 8pt 0; font-size: 9pt; border: 1px solid #e2e8f0;">
+                    <p><strong>Número de Despacho:</strong> <em>${data.numeroRegistro}</em></p>
+                    <p><strong>Encargado del Evento:</strong> <em>${recibe}</em></p>
+                </div>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4pt; padding: 6pt; margin: 8pt 0; font-size: 9pt;">
+                    <h4 style="margin: 0 0 6pt 0; color: #1e40af; font-size: 10pt; border-bottom: 1px solid #cbd5e1; padding-bottom: 4pt;">📋 Información del Evento</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8pt; font-size: 9pt;">
+                        <div>
+                            <p style="margin: 4pt 0;"><strong>Evento:</strong> <em>${data.evento || 'N/A'}</em></p>
+                            <p style="margin: 4pt 0;"><strong>Cliente:</strong> <em>${data.clienteEvento || 'N/A'}</em></p>
+                            <p style="margin: 4pt 0;"><strong>Lugar:</strong> <em>${data.lugarMontaje || 'N/A'}</em></p>
+                        </div>
+                        <div>
+                            <p style="margin: 4pt 0;"><strong>Montaje:</strong> <em>${montaje}</em></p>
+                            <p style="margin: 4pt 0;"><strong>Desmontaje:</strong> <em>${desmontaje}</em></p>
+                        </div>
+                    </div>
+                    <div style="margin-top: 8pt;"><p style="margin: 4pt 0;"><strong>Servicio Solicitado:</strong></p>${servicioHTML}</div>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; font-size: 9pt;"><thead>${tablaEncabezados}</thead><tbody>${tablaFilas}</tbody></table>
+                <div style="display: flex; justify-content: space-around; margin-top: 20mm;">
+                    <div style="text-align: center; width: 30%;"><div style="border-top: 1px solid black; padding-top: 5pt; font-weight: bold;">Bodega</div><p style="margin: 5pt 0 0 0; font-size: 8pt;">Entrega</p></div>
+                    <div style="text-align: center; width: 30%;"><div style="border-top: 1px solid black; padding-top: 5pt; font-weight: bold;">${recibe}</div><p style="margin: 5pt 0 0 0; font-size: 8pt;">Recibe</p></div>
+                    <div style="text-align: center; width: 30%;"><div style="border-top: 1px solid black; padding-top: 5pt; font-weight: bold;">Jefe de Operaciones</div><p style="margin: 5pt 0 0 0; font-size: 8pt;">Autoriza</p></div>
+                </div>
+                <div style="margin-top: 10mm; text-align: center; font-size: 9pt; color: #666; border-top: 1px solid #eee; padding-top: 4pt;">${copia.leyenda}</div>
+            </div>`;
+        });
+
+        const options = {
+            margin: [0, 0, 0, 0],
+            filename: `Acta_Despacho_${data.numeroRegistro}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+            jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
+        };
+        html2pdf().from(contenidoCompleto).set(options).save();
+    }
+
+    function actualizarPanelEvento(data, serviciosTexto = 'No disponible') {
+        console.log('🔄 Ejecutando actualizarPanelEvento con:', { data, serviciosTexto });
+
+
+        // Buscar primero el panel de detalle (cuando hay una solicitud cargada)
+        let panel = document.getElementById("panelResumenEventoDetalle");
+        if (!panel) {
+            // Si no existe, buscar el panel estático (estado inicial)
+            panel = document.getElementById("panelResumenEvento");
+        }
+        console.log('Panel encontrado:', panel);
+
+        if (!panel) {
+            console.error('❌ Ningún panel de evento encontrado');
+
+            return;
+        }
+
+        // Ocultar el panel si no hay datos o si los datos están vacíos
+        if (!data || !data.nombre || Object.keys(data).length === 0) {
+            console.log('Ocultando panel - no hay datos válidos');
+            panel.style.display = "none";
+            return;
+        }
+
+        console.log('Mostrando panel con datos');
+        panel.style.display = "block";
+
+        // Mostrar información del evento con los nombres correctos de campos de la tabla eventos
+        const nombreEl = document.getElementById("resumen-nombre");
+        const clienteEl = document.getElementById("resumen-cliente");
+        const lugarEl = document.getElementById("resumen-lugar");
+        const montajeEl = document.getElementById("resumen-montaje");
+        const desmontajeEl = document.getElementById("resumen-desmontaje");
+        const tipoEl = document.getElementById("resumen-tipo");
+        const descripcionEl = document.getElementById("resumen-descripcion");
+
+        console.log('Elementos encontrados:', {
+            nombreEl, clienteEl, lugarEl, montajeEl, desmontajeEl, tipoEl, descripcionEl
+        });
+
+        if (nombreEl) {
+            nombreEl.textContent = data.nombre || data.evento || "—";
+            console.log('Nombre actualizado:', nombreEl.textContent);
+        }
+        if (clienteEl) {
+            clienteEl.textContent = data.cliente || "—";
+            console.log('Cliente actualizado:', clienteEl.textContent);
+        }
+        if (lugarEl) {
+            lugarEl.textContent = data.lugar || "—";
+            console.log('Lugar actualizado:', lugarEl.textContent);
+        }
+        if (montajeEl) {
+            montajeEl.textContent = formatDateTime(data.fecha_montaje, data.hora_montaje);
+            console.log('Montaje actualizado:', montajeEl.textContent);
+        }
+        if (desmontajeEl) {
+            desmontajeEl.textContent = formatDateTime(data.fecha_desmontaje, data.hora_desmontaje);
+            console.log('Desmontaje actualizado:', desmontajeEl.textContent);
+        }
+        if (tipoEl) {
+            tipoEl.textContent = data.tipo_evento || data.tipo || "Evento";
+            console.log('Tipo actualizado:', tipoEl.textContent);
+        }
+        if (descripcionEl) {
+            descripcionEl.innerHTML = serviciosTexto;
+            console.log('Descripción actualizada:', descripcionEl.innerHTML);
+        }
+
+        // Debug: mostrar todos los campos disponibles del evento
+        console.log('Datos del evento disponibles:', data);
+        console.log('Campos del evento:', Object.keys(data));
+        console.log('Servicios texto:', serviciosTexto);
+    }
+
+    // Función para limpiar la vista detallada y volver al estado inicial
+    window.limpiarVistaDetallada = function() {
+        document.getElementById("panelVistaDetallada").innerHTML = `
+            <div class="despacho-hint">
+                <h3 class="despacho-hint-title">📋 Vista de Despacho</h3>
+                <p class="despacho-hint-text">Selecciona una solicitud de la lista para ver los detalles</p>
+            </div>
+            <!-- Panel de información del evento vacío -->
+            <div id="panelResumenEvento" class="despacho-evento-panel" style="display: none;">
+                <h4 class="despacho-evento-title">📋 Información del Evento</h4>
+                <div class="despacho-evento-empty">Selecciona una solicitud para ver la información del evento</div>
+            </div>`;
+    };
+
+    window.renderLista = renderLista;
+    renderLista();
+
+
+    // CSS específico para asegurar que los colores se apliquen correctamente
+    const style = document.createElement('style');
+    style.textContent = `
+        .despacho-nombre-material-v2 {
+            color: #991b1b !important;
+        }
+        .despacho-materiales-grupo-v2 .despacho-grupo-header-v2 {
+            border-bottom: 1px solid #1e3a8a !important;
+        }
+        .despacho-materiales-grupo-v2 table thead th {
+            border-bottom: 1px solid #1e3a8a !important;
+            color: #1e3a8a !important;
+        }
+        .despacho-materiales-grupo-v2 table tbody td {
+            color: #1e3a8a !important;
+        }
+        .despacho-materiales-grupo-v2 table tbody td strong {
+            color: #991b1b !important;
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Función para buscar materiales similares en el catálogo
+    window.buscarMaterialesSimilares = async function(itemId, codigoActual, nombreBase) {
+        try {
+            // Mostrar loading
+            const loadingModal = crearModalLoading('Buscando materiales similares...');
+            document.body.appendChild(loadingModal);
+
+            // Buscar en las vistas de stock
+            const resultados = [];
+
+            // Determinar si nombreBase es un código o un nombre descriptivo
+            const esCodigo = /^[A-Z]+[-_]\d+/.test(nombreBase) || /^\d+/.test(nombreBase) || nombreBase.includes('-');
+
+            if (esCodigo) {
+                // Si es un código, buscar códigos similares y también por nombre si tiene palabras
+                const palabrasClave = nombreBase.toLowerCase().split(/[\s\-_]+/).filter(p => p.length > 1);
+
+                // Buscar en stock_hierros
+                try {
+                    let query = window.supabaseClient.from('stock_hierros').select('material_codigo, material_nombre, stock_actual');
+                    // Buscar por código similar
+                    query = query.ilike('material_codigo', `%${codigoActual.split('-')[0]}%`);
+                    const { data: hierros, error } = await query.limit(10);
+                    if (!error && hierros) {
+                        resultados.push(...hierros.map(h => ({ ...h, tipo: 'hierros' })));
+                    }
+                } catch (e) { console.log('Error buscando en hierros:', e); }
+
+                // Buscar en stock_audiovisual
+                try {
+                    let query = window.supabaseClient.from('stock_audiovisual').select('material_codigo, material_nombre, stock_actual');
+                    query = query.ilike('material_codigo', `%${codigoActual.split('-')[0]}%`);
+                    const { data: audiovisual, error } = await query.limit(10);
+                    if (!error && audiovisual) {
+                        resultados.push(...audiovisual.map(a => ({ ...a, tipo: 'audiovisual' })));
+                    }
+                } catch (e) { console.log('Error buscando en audiovisual:', e); }
+
+                // Buscar en stock_consumibles
+                try {
+                    let query = window.supabaseClient.from('stock_consumibles').select('material_codigo, material_nombre, stock_actual');
+                    query = query.ilike('material_codigo', `%${codigoActual.split('-')[0]}%`);
+                    const { data: consumibles, error } = await query.limit(10);
+                    if (!error && consumibles) {
+                        resultados.push(...consumibles.map(c => ({ ...c, tipo: 'consumibles' })));
+                    }
+                } catch (e) { console.log('Error buscando en consumibles:', e); }
+            } else {
+                // Si es un nombre descriptivo, buscar por palabras individuales (lógica OR más flexible)
+                const palabrasClave = nombreBase.toLowerCase()
+                    .split(/[\s\-_]+/)
+                    .filter(p => p.length > 1) // Reducido a > 1 para incluir palabras cortas como "150"
+                    .filter(p => !['para', 'con', 'del', 'las', 'los', 'una', 'uno', 'por', 'sin', 'sobre', 'tras', 'entre'].includes(p)); // Filtrar palabras comunes
+
+                if (palabrasClave.length === 0) {
+                    document.body.removeChild(loadingModal);
+                    alert('No hay suficientes palabras para buscar materiales similares.');
+                    return;
+                }
+
+                console.log('Buscando por palabras clave:', palabrasClave);
+
+                // Función auxiliar para construir consulta OR con palabras clave
+                function construirConsultaOR(query, palabras) {
+                    let condiciones = [];
+                    palabras.forEach(palabra => {
+                        // Buscar tanto en nombre como en código
+                        condiciones.push(`material_nombre.ilike.%${palabra}%`);
+                        condiciones.push(`material_codigo.ilike.%${palabra}%`);
+                    });
+                    return query.or(condiciones.join(','));
+                }
+
+                // Buscar en stock_hierros
+                try {
+                    let query = window.supabaseClient.from('stock_hierros').select('material_codigo, material_nombre, stock_actual');
+                    query = construirConsultaOR(query, palabrasClave);
+                    const { data: hierros, error } = await query.limit(15);
+                    if (!error && hierros) {
+                        resultados.push(...hierros.map(h => ({ ...h, tipo: 'hierros' })));
+                    }
+                } catch (e) { console.log('Error buscando en hierros:', e); }
+
+                // Buscar en stock_audiovisual
+                try {
+                    let query = window.supabaseClient.from('stock_audiovisual').select('material_codigo, material_nombre, stock_actual');
+                    query = construirConsultaOR(query, palabrasClave);
+                    const { data: audiovisual, error } = await query.limit(15);
+                    if (!error && audiovisual) {
+                        resultados.push(...audiovisual.map(a => ({ ...a, tipo: 'audiovisual' })));
+                    }
+                } catch (e) { console.log('Error buscando en audiovisual:', e); }
+
+                // Buscar en stock_consumibles
+                try {
+                    let query = window.supabaseClient.from('stock_consumibles').select('material_codigo, material_nombre, stock_actual');
+                    query = construirConsultaOR(query, palabrasClave);
+                    const { data: consumibles, error } = await query.limit(15);
+                    if (!error && consumibles) {
+                        resultados.push(...consumibles.map(c => ({ ...c, tipo: 'consumibles' })));
+                    }
+                } catch (e) { console.log('Error buscando en consumibles:', e); }
+            }
+
+            // Remover loading
+            document.body.removeChild(loadingModal);
+
+            if (resultados.length === 0) {
+                alert(`No se encontraron materiales similares a "${nombreBase}".`);
+                return;
+            }
+
+            // Remover duplicados
+            const unicos = resultados.filter((item, index, self) =>
+                index === self.findIndex(t => t.material_codigo === item.material_codigo)
+            ).slice(0, 15); // Limitar a 15 resultados
+
+            // Crear y mostrar modal de selección
+            const modal = crearModalSeleccionMateriales(itemId, codigoActual, nombreBase, unicos);
+            document.body.appendChild(modal);
+
+        } catch (error) {
+            console.error('Error en buscarMaterialesSimilares:', error);
+            // Remover loading si existe
+            const loading = document.querySelector('.modal-loading');
+            if (loading) document.body.removeChild(loading);
+            alert('Error al buscar materiales similares.');
+        }
+    };
+
+    // Función para crear modal de loading
+    function crearModalLoading(mensaje) {
+        const modal = document.createElement('div');
+        modal.className = 'modal-loading';
+        modal.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+            z-index: 10000; font-family: Arial, sans-serif;
+        `;
+        modal.innerHTML = `
+            <div style="background: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                <div style="margin-bottom: 15px;">🔍</div>
+                <div>${mensaje}</div>
+            </div>
+        `;
+        return modal;
+    }
+
+    // Función para crear modal de selección de materiales
+    function crearModalSeleccionMateriales(codigoActual, nombreBase, materiales) {
+        const modal = document.createElement('div');
+        modal.className = 'modal-seleccion-materiales';
+        modal.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center;
+            z-index: 10001; font-family: Arial, sans-serif;
+        `;
+
+        const contenido = `
+            <div style="background: white; border-radius: 12px; width: 90%; max-width: 600px; max-height: 80vh; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.4);">
+                <div style="padding: 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                    <h3 style="margin: 0; color: #1e293b; font-size: 18px;">🔍 Seleccionar Material Similar</h3>
+                    <p style="margin: 5px 0 0 0; color: #64748b; font-size: 14px;">Material actual: <strong>${codigoActual}</strong> (${nombreBase})</p>
+                </div>
+                <div style="max-height: 400px; overflow-y: auto; padding: 0;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead style="background: #f1f5f9; position: sticky; top: 0;">
+                            <tr>
+                                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #cbd5e1; font-weight: 600; color: #374151;">Código</th>
+                                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #cbd5e1; font-weight: 600; color: #374151;">Nombre</th>
+                                <th style="padding: 12px; text-align: center; border-bottom: 1px solid #cbd5e1; font-weight: 600; color: #374151;">Stock</th>
+                                <th style="padding: 12px; text-align: center; border-bottom: 1px solid #cbd5e1; font-weight: 600; color: #374151;">Tipo</th>
+                                <th style="padding: 12px; text-align: center; border-bottom: 1px solid #cbd5e1; font-weight: 600; color: #374151;">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${materiales.map(mat => `
+                                <tr style="border-bottom: 1px solid #f1f5f9; hover: background: #f8fafc;">
+                                    <td style="padding: 12px; font-family: monospace; font-size: 13px; color: #1e293b;">${mat.material_codigo}</td>
+                                    <td style="padding: 12px; color: #374151;">${mat.material_nombre}</td>
+                                    <td style="padding: 12px; text-align: center; font-weight: 600; color: ${mat.stock_actual > 0 ? '#16a34a' : '#dc2626'};">${mat.stock_actual}</td>
+                                    <td style="padding: 12px; text-align: center;">
+                                        <span style="background: ${mat.tipo === 'hierros' ? '#ef4444' : mat.tipo === 'audiovisual' ? '#3b82f6' : '#10b981'}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 500;">
+                                            ${mat.tipo}
+                                        </span>
+                                    </td>
+                                    <td style="padding: 12px; text-align: center;">
+                                        <button onclick="window.seleccionarMaterial('${itemId}', '${codigoActual}', '${mat.material_codigo}', '${mat.material_nombre}')"
+                                                style="background: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;">
+                                            Seleccionar
+                                        </button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <div style="padding: 16px; background: #f8fafc; border-top: 1px solid #e2e8f0; text-align: right;">
+                    <button onclick="this.closest('.modal-seleccion-materiales').remove()"
+                            style="background: #6b7280; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-right: 8px;">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        `;
+
+        modal.innerHTML = contenido;
+        return modal;
+    }
+
+    // Función para seleccionar un material del modal
+    window.seleccionarMaterial = async function(itemId, codigoActual, codigoNuevo, nombreNuevo) {
+        if (!confirm(`¿Estás seguro de que quieres reemplazar "${codigoActual}" con "${codigoNuevo}" (${nombreNuevo}) en este material?`)) {
+            return;
+        }
+
+        try {
+            // Primero obtener el item actual para saber de dónde viene
+            const { data: itemActual, error: errorConsulta } = await window.supabaseClient
+                .from('items_solicitud_logistica')
+                .select('observacion')
+                .eq('id', itemId)
+                .single();
+
+            if (errorConsulta) {
+                console.error('Error al obtener item actual:', errorConsulta);
+                alert('Error al obtener información del material');
+                return;
+            }
+
+            // Determinar qué tipo de actualización hacer según la observación actual
+            let updateData = {
+                codigo_material: codigoNuevo,
+                nombre_material: nombreNuevo
+            };
+
+            // Si viene de plantillas adicionales, convertir a específico adicional
+            if (itemActual.observacion && itemActual.observacion.includes('Plantilla adicional')) {
+                updateData.observacion = `Material adicional específico - Original: ${codigoActual}`;
+            } else {
+                // Para otros casos, mantener la observación existente pero agregar nota de actualización
+                updateData.observacion = itemActual.observacion
+                    ? `${itemActual.observacion} - Actualizado desde búsqueda: ${codigoActual} → ${codigoNuevo}`
+                    : `Material actualizado desde búsqueda - Original: ${codigoActual}`;
+            }
+
+            // Actualizar el material existente
+            const { data: materialActualizado, error } = await window.supabaseClient
+                .from('items_solicitud_logistica')
+                .update(updateData)
+                .eq('id', itemId)
+                .select()
+                .single();
+
+            if (error) {
+                console.error('Error al actualizar material:', error);
+                alert('Error al actualizar el material');
+                return;
+            }
+
+            // Cerrar modal
+            const modal = document.querySelector('.modal-seleccion-materiales');
+            if (modal) modal.remove();
+
+            // Mostrar confirmación y refrescar la vista
+            alert(`✅ Material actualizado exitosamente.\n\n"${codigoActual}" → "${codigoNuevo}" (${nombreNuevo})`);
+
+            // Refrescar la vista para mostrar el material actualizado
+            if (window.solicitudActualId) {
+                window.verPedidoDespacho(window.solicitudActualId);
+            }
+
+        } catch (error) {
+            console.error('Error en seleccionarMaterial:', error);
+            alert('Error al procesar la selección del material');
+        }
+    };
+
+    // Función para buscar materiales similares en el catálogo
+    window.buscarMaterialesSimilares = async function(itemId, codigoActual, nombreBase) {
+        try {
+            // Mostrar loading
+            const loadingModal = crearModalLoading('Buscando materiales similares...');
+            document.body.appendChild(loadingModal);
+
+            // Buscar en las vistas de stock
+            const resultados = [];
+
+            // Determinar si nombreBase es un código o un nombre descriptivo
+            const esCodigo = /^[A-Z]+[-_]\d+/.test(nombreBase) || /^\d+/.test(nombreBase) || nombreBase.includes('-');
+
+            if (esCodigo) {
+                // Si es un código, buscar códigos similares y también por nombre si tiene palabras
+                const palabrasClave = nombreBase.toLowerCase().split(/[\s\-_]+/).filter(p => p.length > 1);
+
+                // Buscar en stock_hierros
+                try {
+                    let query = window.supabaseClient.from('stock_hierros').select('material_codigo, material_nombre, stock_actual');
+                    // Buscar por código similar
+                    query = query.ilike('material_codigo', `%${codigoActual.split('-')[0]}%`);
+                    const { data: hierros, error } = await query.limit(10);
+                    if (!error && hierros) {
+                        resultados.push(...hierros.map(h => ({ ...h, tipo: 'hierros' })));
+                    }
+                } catch (e) { console.log('Error buscando en hierros:', e); }
+
+                // Buscar en stock_audiovisual
+                try {
+                    let query = window.supabaseClient.from('stock_audiovisual').select('material_codigo, material_nombre, stock_actual');
+                    query = query.ilike('material_codigo', `%${codigoActual.split('-')[0]}%`);
+                    const { data: audiovisual, error } = await query.limit(10);
+                    if (!error && audiovisual) {
+                        resultados.push(...audiovisual.map(a => ({ ...a, tipo: 'audiovisual' })));
+                    }
+                } catch (e) { console.log('Error buscando en audiovisual:', e); }
+
+                // Buscar en stock_consumibles
+                try {
+                    let query = window.supabaseClient.from('stock_consumibles').select('material_codigo, material_nombre, stock_actual');
+                    query = query.ilike('material_codigo', `%${codigoActual.split('-')[0]}%`);
+                    const { data: consumibles, error } = await query.limit(10);
+                    if (!error && consumibles) {
+                        resultados.push(...consumibles.map(c => ({ ...c, tipo: 'consumibles' })));
+                    }
+                } catch (e) { console.log('Error buscando en consumibles:', e); }
+            } else {
+                // Si es un nombre descriptivo, buscar solo por la primera palabra (clave principal)
+                const primeraPalabra = nombreBase.toLowerCase().split(/[\s\-_]+/)[0];
+
+                if (!primeraPalabra || primeraPalabra.length < 2) {
+                    document.body.removeChild(loadingModal);
+                    alert('No hay una palabra clave válida para buscar materiales similares.');
+                    return;
+                }
+
+                console.log('Buscando por primera palabra:', primeraPalabra);
+
+                // Buscar en stock_hierros
+                try {
+                    let query = window.supabaseClient.from('stock_hierros').select('material_codigo, material_nombre, stock_actual');
+                    query = query.or(`material_nombre.ilike.%${primeraPalabra}%,material_codigo.ilike.%${primeraPalabra}%`);
+                    const { data: hierros, error } = await query.limit(15);
+                    if (!error && hierros) {
+                        resultados.push(...hierros.map(h => ({ ...h, tipo: 'hierros' })));
+                    }
+                } catch (e) { console.log('Error buscando en hierros:', e); }
+
+                // Buscar en stock_audiovisual
+                try {
+                    let query = window.supabaseClient.from('stock_audiovisual').select('material_codigo, material_nombre, stock_actual');
+                    query = query.or(`material_nombre.ilike.%${primeraPalabra}%,material_codigo.ilike.%${primeraPalabra}%`);
+                    const { data: audiovisual, error } = await query.limit(15);
+                    if (!error && audiovisual) {
+                        resultados.push(...audiovisual.map(a => ({ ...a, tipo: 'audiovisual' })));
+                    }
+                } catch (e) { console.log('Error buscando en audiovisual:', e); }
+
+                // Buscar en stock_consumibles
+                try {
+                    let query = window.supabaseClient.from('stock_consumibles').select('material_codigo, material_nombre, stock_actual');
+                    query = query.or(`material_nombre.ilike.%${primeraPalabra}%,material_codigo.ilike.%${primeraPalabra}%`);
+                    const { data: consumibles, error } = await query.limit(15);
+                    if (!error && consumibles) {
+                        resultados.push(...consumibles.map(c => ({ ...c, tipo: 'consumibles' })));
+                    }
+                } catch (e) { console.log('Error buscando en consumibles:', e); }
+            }
+
+            // Remover loading
+            document.body.removeChild(loadingModal);
+
+            if (resultados.length === 0) {
+                alert(`No se encontraron materiales similares a "${nombreBase}".`);
+                return;
+            }
+
+            // Remover duplicados
+            const unicos = resultados.filter((item, index, self) =>
+                index === self.findIndex(t => t.material_codigo === item.material_codigo)
+            ).slice(0, 15); // Limitar a 15 resultados
+
+            // Crear y mostrar modal de selección
+            const modal = crearModalSeleccionMateriales(itemId, codigoActual, nombreBase, unicos);
+            document.body.appendChild(modal);
+
+        } catch (error) {
+            console.error('Error en buscarMaterialesSimilares:', error);
+            // Remover loading si existe
+            const loading = document.querySelector('.modal-loading');
+            if (loading) document.body.removeChild(loading);
+            alert('Error al buscar materiales similares.');
+        }
+    };
+
+    // Función para crear modal de loading
+    function crearModalLoading(mensaje) {
+        const modal = document.createElement('div');
+        modal.className = 'modal-loading';
+        modal.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+            z-index: 10000; font-family: Arial, sans-serif;
+        `;
+        modal.innerHTML = `
+            <div style="background: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                <div style="margin-bottom: 15px;">🔍</div>
+                <div>${mensaje}</div>
+            </div>
+        `;
+        return modal;
+    }
+
+    // Función para crear modal de selección de materiales
+    function crearModalSeleccionMateriales(itemId, codigoActual, nombreBase, materiales) {
+        const modal = document.createElement('div');
+        modal.className = 'modal-seleccion-materiales';
+        modal.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center;
+            z-index: 10001; font-family: Arial, sans-serif;
+        `;
+
+        const contenido = `
+            <div style="background: white; border-radius: 12px; width: 90%; max-width: 600px; max-height: 80vh; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.4);">
+                <div style="padding: 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                    <h3 style="margin: 0; color: #1e293b; font-size: 18px;">🔍 Seleccionar Material Similar</h3>
+                    <p style="margin: 5px 0 0 0; color: #64748b; font-size: 14px;">Material actual: <strong>${codigoActual}</strong> (${nombreBase})</p>
+                </div>
+                <div style="max-height: 400px; overflow-y: auto; padding: 0;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead style="background: #f1f5f9; position: sticky; top: 0;">
+                            <tr>
+                                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #cbd5e1; font-weight: 600; color: #374151;">Código</th>
+                                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #cbd5e1; font-weight: 600; color: #374151;">Nombre</th>
+                                <th style="padding: 12px; text-align: center; border-bottom: 1px solid #cbd5e1; font-weight: 600; color: #374151;">Stock</th>
+                                <th style="padding: 12px; text-align: center; border-bottom: 1px solid #cbd5e1; font-weight: 600; color: #374151;">Tipo</th>
+                                <th style="padding: 12px; text-align: center; border-bottom: 1px solid #cbd5e1; font-weight: 600; color: #374151;">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${materiales.map(mat => `
+                                <tr style="border-bottom: 1px solid #f1f5f9; hover: background: #f8fafc;">
+                                    <td style="padding: 12px; font-family: monospace; font-size: 13px; color: #1e293b;">${mat.material_codigo}</td>
+                                    <td style="padding: 12px; color: #374151;">${mat.material_nombre}</td>
+                                    <td style="padding: 12px; text-align: center; font-weight: 600; color: ${mat.stock_actual > 0 ? '#16a34a' : '#dc2626'};">${mat.stock_actual}</td>
+                                    <td style="padding: 12px; text-align: center;">
+                                        <span style="background: ${mat.tipo === 'hierros' ? '#ef4444' : mat.tipo === 'audiovisual' ? '#3b82f6' : '#10b981'}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 500;">
+                                            ${mat.tipo}
+                                        </span>
+                                    </td>
+                                    <td style="padding: 12px; text-align: center;">
+                                        <button onclick="window.seleccionarMaterial('${itemId}', '${codigoActual}', '${mat.material_codigo}', '${mat.material_nombre}')"
+                                                style="background: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;">
+                                            Seleccionar
+                                        </button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <div style="padding: 16px; background: #f8fafc; border-top: 1px solid #e2e8f0; text-align: right;">
+                    <button onclick="this.closest('.modal-seleccion-materiales').remove()"
+                            style="background: #6b7280; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-right: 8px;">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        `;
+
+        modal.innerHTML = contenido;
+        return modal;
+    }
+
+
+})();
+</script>

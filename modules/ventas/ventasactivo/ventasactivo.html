@@ -303,11 +303,41 @@
     // =============================================================================
     // 🔹 FUNCIONES AUXILIARES
     // =============================================================================
-    function generarIdVenta() {
-      let ultimoNumero = parseInt(localStorage.getItem('ultimo_num_venta') || "0");
-      ultimoNumero++;
-      localStorage.setItem('ultimo_num_venta', ultimoNumero.toString());
-      return `V-${String(ultimoNumero).padStart(4, '0')}`;
+    function formatearIdVenta(numero) {
+      return `V-${String(numero).padStart(4, '0')}`;
+    }
+
+    function extraerNumeroVenta(idVenta) {
+      const m = String(idVenta || '').trim().match(/^V-(\d+)$/);
+      return m ? (parseInt(m[1], 10) || 0) : 0;
+    }
+
+    async function obtenerUltimoNumeroVentaEnDB() {
+      try {
+        const { data, error } = await window.supabaseClient
+          .from('ventas_activas')
+          .select('id')
+          .like('id', 'V-%')
+          .order('id', { ascending: false })
+          .limit(1);
+
+        if (error) {
+          console.warn('No se pudo leer el último id de ventas_activas:', error);
+          return 0;
+        }
+
+        const lastId = data && data[0] ? data[0].id : null;
+        return extraerNumeroVenta(lastId);
+      } catch (err) {
+        console.warn('Error obteniendo último id de ventas_activas:', err);
+        return 0;
+      }
+    }
+
+    async function obtenerSiguienteNumeroVenta() {
+      const ultimoDb = await obtenerUltimoNumeroVentaEnDB();
+      const ultimoLocal = parseInt(localStorage.getItem('ultimo_num_venta') || '0', 10) || 0;
+      return Math.max(ultimoDb, ultimoLocal) + 1;
     }
 
     function agregarAlCarrito(codigo, nombre, precio) {
@@ -514,61 +544,87 @@
       });
 
       try {
-        // Generar ID de venta
-        const idVenta = generarIdVenta();
+        const maxIntentos = 20;
+        const baseNumero = await obtenerSiguienteNumeroVenta();
 
-        // Insertar venta principal
-        const { data: venta, error: errorVenta } = await window.supabaseClient
-          .from('ventas_activas')
-          .insert({
+        for (let intento = 0; intento < maxIntentos; intento++) {
+          const numeroVenta = baseNumero + intento;
+          const idVenta = formatearIdVenta(numeroVenta);
+
+          // Insertar venta principal
+          const { data: venta, error: errorVenta } = await window.supabaseClient
+            .from('ventas_activas')
+            .insert({
+              id: idVenta,
+              cliente: cliente,
+              fecha: fecha,
+              fecha_registro: new Date().toISOString(),
+              total: total,
+              estado: 'activa'
+            })
+            .select()
+            .single();
+
+          if (errorVenta) {
+            const esDuplicado = errorVenta.code === '23505';
+            if (esDuplicado) {
+              console.warn('Conflicto de ID en ventas_activas, reintentando...', { idVenta, intento: intento + 1, error: errorVenta });
+              continue;
+            }
+            console.error('Error al guardar venta:', errorVenta);
+            alert('❌ Error al guardar la venta.');
+            return false;
+          }
+
+          // Insertar items de la venta
+          const itemsParaInsertar = carrito.map(item => ({
+            venta_id: idVenta,
+            codigo_material: item.codigo,
+            nombre_material: item.nombre,
+            cantidad: item.cantidad,
+            precio_unitario: item.precio
+          }));
+
+          const { error: errorItems } = await window.supabaseClient
+            .from('items_venta_activa')
+            .insert(itemsParaInsertar);
+
+          if (errorItems) {
+            console.error('Error al guardar items de venta:', errorItems);
+            alert('❌ Error al guardar los items de la venta.');
+            return false;
+          }
+
+          const localPrev = parseInt(localStorage.getItem('ultimo_num_venta') || '0', 10) || 0;
+          if (numeroVenta > localPrev) {
+            localStorage.setItem('ultimo_num_venta', String(numeroVenta));
+          }
+
+          alert(`✅ Venta ${idVenta} registrada exitosamente.`);
+          // Mostrar notificación del sistema
+          if (window.showSystemNotification) {
+            window.showSystemNotification('Venta Registrada', `Venta ${idVenta} por ${cliente} registrada exitosamente.`);
+          }
+          return {
             id: idVenta,
+            venta: venta,
+            items: itemsParaInsertar,
             cliente: cliente,
             fecha: fecha,
-            fecha_registro: new Date().toISOString(),
-            total: total,
-            estado: 'activa'
-          })
-          .select()
-          .single();
-
-        if (errorVenta) {
-          console.error('Error al guardar venta:', errorVenta);
-          alert('❌ Error al guardar la venta.');
-          return false;
+            total: total
+          };
         }
 
-        // Insertar items de la venta
-        const itemsParaInsertar = carrito.map(item => ({
-          venta_id: idVenta,
-          codigo_material: item.codigo,
-          nombre_material: item.nombre,
-          cantidad: item.cantidad,
-          precio_unitario: item.precio
-        }));
-
-        const { error: errorItems } = await window.supabaseClient
-          .from('items_venta_activa')
-          .insert(itemsParaInsertar);
-
-        if (errorItems) {
-          console.error('Error al guardar items de venta:', errorItems);
-          alert('❌ Error al guardar los items de la venta.');
-          return false;
-        }
-
-        alert(`✅ Venta ${idVenta} registrada exitosamente.`);
-        return { 
-          id: idVenta, 
-          venta: venta, 
-          items: itemsParaInsertar,
-          cliente: cliente,
-          fecha: fecha,
-          total: total
-        };
+        alert('❌ No se pudo generar un ID de venta único. Intente nuevamente.');
+        return false;
 
       } catch (err) {
         console.error('Error:', err);
         alert('❌ Error al guardar la venta.');
+        // Mostrar notificación de error
+        if (window.showSystemNotification) {
+          window.showSystemNotification('Error en Venta', 'No se pudo registrar la venta. Verifique los datos.');
+        }
         return false;
       }
     }

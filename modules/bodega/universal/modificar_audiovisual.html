@@ -160,23 +160,61 @@
     }
 
     async function loadContenedores() {
+      const DEBUG = !!window.__DEBUG_CONTENEDORES;
+
+      // En esta pantalla siempre trabajamos dentro de una secundaria.
+      if (!state.secundariaNombre) {
+        state.contenedoresCache = [];
+        const host = document.getElementById('contenedores-container');
+        if (host) host.innerHTML = '';
+        const sel = document.getElementById('mover-destino');
+        if (sel) sel.innerHTML = '<option value="">Destino...</option>';
+        return;
+      }
+
+      // Importante: si no filtramos por secundaria, Supabase/PostgREST devuelve por defecto 1000 filas,
+      // lo cual puede cortar contenedores válidos (como LOTE-03/04) aunque existan.
       const { data, error } = await supa
         .from(TABLE_CATALOGO)
         .select('id, codigo, contenedor, contenedor_tipo, bodega_secundaria, es_contenedor, tipo_alta, campos_personalizados')
+        .eq('bodega_secundaria', state.secundariaNombre)
         .not('contenedor', 'is', null)
         .neq('contenedor', '')
         .order('contenedor');
       if (error) {
+        if (DEBUG) console.warn('[modificar_audiovisual] Error cargando contenedores', error);
         alert('Error cargando contenedores: ' + error.message);
         return;
       }
 
+      try {
+        if (DEBUG) console.log('[modificar_audiovisual] loadContenedores: total rows=', (data || []).length, 'secundaria=', state.secundariaNombre);
+        const debugLotes = ['00994-AUDI-SONI-LOTE-02', '00995-AUDI-SONI-LOTE-03', '01090-AUDI-SONI-LOTE-04'];
+        const lotes = (data || []).filter(r => debugLotes.includes(String(r.codigo || '')));
+        if (DEBUG) console.log('[modificar_audiovisual] LOTE rows in query=', lotes.length, lotes.map(r => ({
+          codigo: r.codigo,
+          contenedor: r.contenedor,
+          bodega_secundaria: r.bodega_secundaria,
+          es_contenedor: r.es_contenedor,
+          tipo_alta: r.tipo_alta
+        })));
+      } catch (_) { /* ignore */ }
+
       const filtered = (data || []).filter(r => {
-        const esCont = (r.es_contenedor === true) || (String(r.tipo_alta || '').toUpperCase() === 'CONTENEDOR');
+        // compatibilidad con datos antiguos / tipos inconsistentes
+        const esCont =
+          (r.es_contenedor === true) ||
+          (String(r.es_contenedor || '').toLowerCase() === 'true') ||
+          (Number(r.es_contenedor) === 1) ||
+          (String(r.tipo_alta || '').toUpperCase() === 'CONTENEDOR');
         if (!esCont) return false;
-        if (!state.secundariaNombre) return false;
-        return String(r.bodega_secundaria || '') === String(state.secundariaNombre);
+        // Ya filtramos por secundaria en la query; aquí solo validamos que no venga vacío
+        return true;
       });
+
+      try {
+        if (DEBUG) console.log('[modificar_audiovisual] loadContenedores: filtered rows=', filtered.length);
+      } catch (_) { /* ignore */ }
 
       state.contenedoresCache = filtered;
 
@@ -211,13 +249,8 @@
     function selectSecundaria(id, nombre, btn) {
       state.secundariaId = id;
       state.secundariaNombre = nombre;
-<<<<<<< HEAD
       document.querySelectorAll('.secundaria-btn').forEach(b => b.classList.remove('bodega-secundaria-seleccionada'));
       btn.classList.add('bodega-secundaria-seleccionada');
-=======
-      document.querySelectorAll('.secundaria-btn').forEach(b => b.classList.remove('secundaria-selected'));
-      btn.classList.add('secundaria-selected');
->>>>>>> 00f8ec356b853f00031e7bc52f627b8631e7b503
 
       // limpiar contenedor seleccionado
       state.contenedorId = null;

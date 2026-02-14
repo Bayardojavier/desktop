@@ -1,0 +1,1612 @@
+<div class="movimientos-view">
+  <div class="despacho-wrapper-custom" style="max-width: 1200px; margin: 0 auto; padding: 16px;">
+    <div class="despacho-header" style="display:flex; justify-content: space-between; align-items: center; gap: 12px;">
+      <div>
+        <h2 class="despacho-header-title" style="margin:0;">📤 Despacho Audiovisual</h2>
+        <p class="despacho-txt-muted" style="margin:4px 0 0; color:#64748b;">Despacho directo (Audiovisual obligatorio + Consumibles opcional) con validación estricta de stock.</p>
+      </div>
+      <div id="badge-despacho" class="despacho-badge" style="background:#0ea5e9; color:#fff; padding:8px 12px; border-radius: 999px; font-weight: 600;">Audiovisual</div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px;">
+      <!-- PANEL IZQUIERDO: DATOS DEL EVENTO -->
+      <div id="sidebar-evento" style="background:#fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; height: fit-content;">
+        <h3 style="margin:0 0 12px; display:flex; align-items:center; gap:8px;">
+          📋 Detalles del Evento
+          <span id="evento-status" style="font-size:11px; padding:2px 6px; border-radius:4px; background:#f1f5f9; color:#64748b; display:none;">Sin seleccionar</span>
+        </h3>
+
+        <div id="evento-detalles" style="display:none;">
+          <div style="margin-bottom:12px;">
+            <div style="font-weight:600; font-size:14px; margin-bottom:4px; color:#0f172a;" id="detalle-nombre">—</div>
+            <div style="font-size:12px; color:#64748b;" id="detalle-estado">—</div>
+          </div>
+
+          <div style="display:grid; gap:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px; background:#f8fafc; border-radius:6px;">
+              <span style="font-size:12px; color:#64748b;">Cliente:</span>
+              <span style="font-weight:500; font-size:13px;" id="detalle-cliente">—</span>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; padding:8px; background:#f8fafc; border-radius:6px;">
+              <span style="font-size:12px; color:#64748b;">Lugar:</span>
+              <span style="font-weight:500; font-size:13px; text-align:right; flex:1;" id="detalle-lugar">—</span>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px; background:#f8fafc; border-radius:6px;">
+              <span style="font-size:12px; color:#64748b;">Fecha Montaje:</span>
+              <span style="font-weight:500; font-size:13px;" id="detalle-fecha-montaje">—</span>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px; background:#f8fafc; border-radius:6px;">
+              <span style="font-size:12px; color:#64748b;">Hora Montaje:</span>
+              <span style="font-weight:500; font-size:13px;" id="detalle-hora-montaje">—</span>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px; background:#f8fafc; border-radius:6px;">
+              <span style="font-size:12px; color:#64748b;">Fecha Desmontaje:</span>
+              <span style="font-weight:500; font-size:13px;" id="detalle-fecha-desmontaje">—</span>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px; background:#f8fafc; border-radius:6px;">
+              <span style="font-size:12px; color:#64748b;">Hora Desmontaje:</span>
+              <span style="font-weight:500; font-size:13px;" id="detalle-hora-desmontaje">—</span>
+            </div>
+
+            <div style="padding:8px; background:#f8fafc; border-radius:6px;" id="detalle-descripcion-container" style="display:none;">
+              <span style="font-size:12px; color:#64748b; display:block; margin-bottom:4px;">Descripción:</span>
+              <span style="font-size:13px;" id="detalle-descripcion">—</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="evento-placeholder" style="text-align:center; padding:20px; color:#94a3b8;">
+          <div style="font-size:24px; margin-bottom:8px;">📅</div>
+          <div>Selecciona un evento para ver sus detalles</div>
+        </div>
+      </div>
+
+      <!-- PANEL DERECHO: ITEMS Y FORMULARIO -->
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        <!-- Formulario simplificado -->
+        <div style="background:#fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px;">
+          <h3 style="margin:0 0 12px;">🧾 Datos del despacho</h3>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <label style="display:flex; flex-direction:column; gap:6px;">
+              <span style="font-size: 12px; color:#475569;">Evento</span>
+              <div style="display:flex; gap:8px;">
+                <input id="input-evento" class="despacho-input" placeholder="Seleccionar evento..." readonly style="padding:10px; border:1px solid #cbd5e1; border-radius:8px; flex:1;" />
+                <button id="btn-seleccionar-evento" style="padding:10px 12px; border:1px solid #334155; border-radius:10px; background:#334155; color:#fff;">📅 Seleccionar</button>
+              </div>
+            </label>
+            <label style="display:flex; flex-direction:column; gap:6px;">
+              <span style="font-size: 12px; color:#475569;">Responsable</span>
+              <select id="select-responsable" class="despacho-input" style="padding:10px; border:1px solid #cbd5e1; border-radius:8px;">
+                <option value="">Seleccionar responsable...</option>
+              </select>
+            </label>
+
+            <div style="grid-column: 1 / -1; display:flex; gap:10px; align-items:center; justify-content:flex-end;">
+              <button id="btn-limpiar" class="btn-despacho-outline" style="padding:10px 12px; border:1px solid #cbd5e1; border-radius:10px; background:#fff;">🧹 Limpiar</button>
+              <button id="btn-confirmar" class="btn-despacho-solido" style="padding:10px 12px; border:1px solid #0ea5e9; border-radius:10px; background:#0ea5e9; color:#fff; font-weight: 700;">✅ Confirmar y Generar Acta</button>
+            </div>
+          </div>
+
+          <div id="alerta" style="margin-top: 10px; display:none; padding: 10px; border-radius: 10px;"></div>
+        </div>
+
+      <div style="background:#fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px;">
+        <h3 style="margin:0 0 12px;">🔎 Agregar materiales</h3>
+        <div style="display:flex; justify-content:flex-end;">
+          <button id="btn-open-search-modal" style="padding:10px 12px; border:1px solid #334155; border-radius:10px; background:#334155; color:#fff;">Agregar materiales</button>
+        </div>
+      </div>
+    </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr; gap: 16px; margin-top: 16px;">
+      <div style="background:#fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px;">
+        <h3 style="margin:0 0 12px;">📦 Items seleccionados</h3>
+        <div id="tabla-seleccion" style="overflow:auto;"></div>
+      </div>
+    </div>
+
+    <div id="print-area" style="position:fixed; left:-99999px; top:-99999px;"></div>
+  </div>
+
+  <!-- MODAL PARA SELECCIONAR EVENTO -->
+  <div id="modal-seleccionar-evento" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:none; z-index:2000; align-items:center; justify-content:center;">
+    <div style="background:#fff; -webkit-font-smoothing:antialiased; backface-visibility:hidden; will-change:transform,opacity; border-radius:12px; padding:20px; width:90%; max-width:800px; max-height:80vh; overflow:auto; display:flex; flex-direction:column;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
+        <h3 style="margin:0; color:#0f172a;">Seleccionar Evento</h3>
+        <button id="btn-cerrar-modal-evento" style="background:none; border:none; font-size:20px; cursor:pointer; color:#64748b;">✕</button>
+      </div>
+
+      <div id="lista-eventos-modal" style="flex:1; overflow:auto;">
+        <!-- Eventos se cargarán aquí -->
+      </div>
+    </div>
+  </div>
+  
+  <!-- MODAL PARA EXPLORAR CONTENEDOR -->
+  <div id="modal-contenedor" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:none; z-index:2400; align-items:center; justify-content:center;">
+    <div style="background:#fff; -webkit-font-smoothing:antialiased; backface-visibility:hidden; will-change:transform,opacity; border-radius:12px; padding:20px; width:92%; max-width:900px; max-height:80vh; overflow:auto; display:flex; flex-direction:column;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3 id="modal-contenedor-title" style="margin:0; color:#0f172a;">Contenedor</h3>
+        <button id="btn-cerrar-modal-contenedor" style="background:none; border:none; font-size:20px; cursor:pointer; color:#64748b;">✕</button>
+      </div>
+      <div id="modal-contenedor-list" style="flex:1; overflow:auto; border-top:1px solid #e2e8f0; padding-top:12px;"></div>
+      <div style="margin-top:12px; color:#0f172a; font-weight:600;">¿Desea agregar todos los materiales del contenedor (incluyéndolo)?</div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:12px;">
+        <button id="btn-cancel-contenedor" style="padding:10px 12px; border:1px solid #cbd5e1; border-radius:10px; background:#fff;">Cancelar</button>
+        <button id="btn-add-all-contenedor" style="padding:10px 12px; border:1px solid #0ea5e9; border-radius:10px; background:#0ea5e9; color:#fff; font-weight:700;">Agregar todo</button>
+        <button id="btn-add-contenedor" style="padding:10px 12px; border:1px solid #10b981; border-radius:10px; background:#10b981; color:#fff; font-weight:700;">Agregar seleccionados</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PARA MENSAJES (warnings/ok) -->
+  <div id="modal-mensaje" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:none; z-index:2500; align-items:center; justify-content:center;">
+    <div style="background:#fff; -webkit-font-smoothing:antialiased; backface-visibility:hidden; will-change:transform,opacity; border-radius:12px; padding:18px; width:90%; max-width:560px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <h4 id="modal-mensaje-title" style="margin:0; color:#0f172a;">Mensaje</h4>
+        <button id="btn-cerrar-modal-mensaje" style="background:none; border:none; font-size:18px; cursor:pointer; color:#64748b;">✕</button>
+      </div>
+      <div id="modal-mensaje-body" style="color:#334155; font-size:14px;">Mensaje...</div>
+      <div style="display:flex; justify-content:flex-end; margin-top:12px;">
+        <button id="btn-ok-modal-mensaje" style="padding:8px 12px; border-radius:8px; border:1px solid #cbd5e1; background:#fff;">Cerrar</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Placeholder oculto para panel de búsqueda (se moverá al modal) -->
+  <div id="search-placeholder" style="display:none;"></div>
+
+  <!-- Panel de búsqueda (oculto hasta que se abra el modal). Contiene los inputs y resultados originales -->
+  <div id="search-panel" style="display:none;">
+    <div style="background:#fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px;">
+      <h3 style="margin:0 0 12px;">🔎 Buscar y agregar</h3>
+
+      <div style="display:grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end;">
+        <label style="display:flex; flex-direction:column; gap:6px;">
+          <span style="font-size: 12px; color:#475569;">Buscar en Audiovisual</span>
+          <input id="search-audiovisual" placeholder="Código o nombre (mín. 2 letras)" style="padding:10px; border:1px solid #cbd5e1; border-radius:8px;" />
+          <div style="font-size:12px; color:#475569; margin-top:6px; display:flex; gap:12px; align-items:center;">
+            <label style="display:flex; align-items:center; gap:8px;"><input id="mode-items" name="search-audio-mode" type="radio" checked/> Items</label>
+            <label style="display:flex; align-items:center; gap:8px;"><input id="mode-contenedores" name="search-audio-mode" type="radio" /> Contenedores</label>
+          </div>
+        </label>
+        <button id="btn-buscar-audiovisual" style="padding:10px 12px; border:1px solid #334155; border-radius:10px; background:#334155; color:#fff;">Buscar</button>
+      </div>
+
+      <div style="margin-top: 12px; display:flex; gap:10px; align-items:center;">
+        <input id="toggle-consumibles" type="checkbox" />
+        <label for="toggle-consumibles" style="cursor:pointer;">Agregar Consumibles extra (opcional)</label>
+      </div>
+
+      <div id="panel-consumibles" style="margin-top: 12px; display:none;">
+        <div style="display:grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end;">
+          <label style="display:flex; flex-direction:column; gap:6px;">
+            <span style="font-size: 12px; color:#475569;">Buscar en Consumibles</span>
+            <input id="search-consumibles" placeholder="Código o nombre (mín. 2 letras)" style="padding:10px; border:1px solid #cbd5e1; border-radius:8px;" />
+          </label>
+          <button id="btn-buscar-consumibles" style="padding:10px 12px; border:1px solid #334155; border-radius:10px; background:#334155; color:#fff;">Buscar</button>
+        </div>
+      </div>
+
+      <div id="resultados" style="margin-top: 12px; max-height: 360px; overflow:auto; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; background:#f8fafc;">
+        <div style="color:#64748b;">Escribe un término y presiona Buscar.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PARA BUSCAR/AGREGAR MATERIALES -->
+  <div id="modal-buscar" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:none; z-index:2300; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:12px; padding:20px; width:92%; max-width:900px; max-height:80vh; overflow:auto; display:flex; flex-direction:column;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3 style="margin:0; color:#0f172a;">Buscar y agregar materiales</h3>
+        <button id="btn-close-modal-buscar" style="background:none; border:none; font-size:20px; cursor:pointer; color:#64748b;">✕</button>
+      </div>
+      <div id="modal-buscar-body" style="flex:1; overflow:auto; border-top:1px solid #e2e8f0; padding-top:12px;"></div>
+    </div>
+  </div>
+</div>
+
+<script src="../../../src/config/supabaseClient.js"></script>
+<script>
+(function() {
+  if (!window.supabaseClient) {
+    console.error('supabaseClient no está disponible');
+    return;
+  }
+
+  if (!window.html2pdf) {
+    const script = document.createElement('script');
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
+    document.head.appendChild(script);
+  }
+
+  const el = (id) => document.getElementById(id);
+
+  function sanitizeTerm(term) {
+    return String(term || '').trim();
+  }
+
+  const state = {
+    processing: false,
+    modoBusqueda: 'audiovisual',
+    audiovisual: new Map(),
+    consumibles: new Map(),
+    // contenedores actualmente representados en la selección (por contenedor de hijos)
+    addedContainers: new Set()
+  };
+
+  function showAlert(type, msg) {
+    const a = el('alerta');
+    a.style.display = 'block';
+    a.textContent = msg;
+    if (type === 'ok') {
+      a.style.background = '#ecfdf5';
+      a.style.border = '1px solid #10b981';
+      a.style.color = '#065f46';
+    } else if (type === 'warn') {
+      a.style.background = '#fffbeb';
+      a.style.border = '1px solid #f59e0b';
+      a.style.color = '#92400e';
+    } else {
+      a.style.background = '#fef2f2';
+      a.style.border = '1px solid #ef4444';
+      a.style.color = '#991b1b';
+    }
+  }
+
+  function hideAlert() {
+    const a = el('alerta');
+    a.style.display = 'none';
+    a.textContent = '';
+  }
+
+  // Modal message helper (usa modal en vez del banner en el HTML principal)
+  function showModalMessage(type, msg) {
+    const m = el('modal-mensaje');
+    const body = el('modal-mensaje-body');
+    const title = el('modal-mensaje-title');
+    body.textContent = msg;
+    if (type === 'ok') {
+      title.textContent = 'OK';
+    } else if (type === 'warn') {
+      title.textContent = 'Atención';
+    } else {
+      title.textContent = 'Error';
+    }
+    m.style.display = 'flex';
+  }
+
+  function hideModalMessage() {
+    const m = el('modal-mensaje');
+    m.style.display = 'none';
+  }
+
+  async function cargarEventosModal() {
+    const modal = el('modal-seleccionar-evento');
+    const lista = el('lista-eventos-modal');
+    
+    // Mostrar loading
+    lista.innerHTML = '<div style="text-align:center; padding:20px;">Cargando eventos...</div>';
+    modal.style.display = 'flex';
+
+    try {
+      const { data: eventos, error } = await window.supabaseClient
+        .from('eventos')
+        .select('id, nombre, cliente, lugar, fecha_montaje, fecha_desmontaje, hora_montaje, hora_desmontaje, descripcion, estado')
+        .in('estado', ['activo', 'pendiente'])
+        .order('fecha_montaje', { ascending: false });
+
+      if (error) {
+        console.error('Error cargando eventos:', error);
+        lista.innerHTML = '<div style="text-align:center; padding:20px; color:red;">Error al cargar eventos</div>';
+        return;
+      }
+
+      if (!eventos || eventos.length === 0) {
+        lista.innerHTML = '<div style="text-align:center; padding:20px;">No hay eventos disponibles</div>';
+        return;
+      }
+
+      let html = '<div style="display:grid; gap:8px;">';
+      eventos.forEach(evento => {
+        const fechaMontaje = evento.fecha_montaje ? new Date(evento.fecha_montaje).toLocaleDateString('es-ES') : '—';
+        const fechaDesmontaje = evento.fecha_desmontaje ? new Date(evento.fecha_desmontaje).toLocaleDateString('es-ES') : '—';
+        
+        html += `
+          <div class="evento-item" data-evento-id="${evento.id}" style="padding:12px; border:1px solid #e2e8f0; border-radius:6px; cursor:pointer; background:#fff; transition:background 0.2s;">
+            <div style="font-weight:600; margin-bottom:4px;">${evento.nombre}</div>
+            <div style="font-size:13px; color:#64748b; margin-bottom:2px;">Cliente: ${evento.cliente || '—'}</div>
+            <div style="font-size:13px; color:#64748b; margin-bottom:2px;">Lugar: ${evento.lugar || '—'}</div>
+            <div style="font-size:12px; color:#94a3b8;">Montaje: ${fechaMontaje} • Desmontaje: ${fechaDesmontaje}</div>
+          </div>
+        `;
+      });
+      html += '</div>';
+      
+      lista.innerHTML = html;
+
+      // Agregar event listeners para selección
+      lista.querySelectorAll('.evento-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const eventoId = item.dataset.eventoId;
+          const eventoSeleccionado = eventos.find(e => e.id == eventoId);
+          if (eventoSeleccionado) {
+            seleccionarEvento(eventoSeleccionado);
+            modal.style.display = 'none';
+          }
+        });
+      });
+
+    } catch (error) {
+      console.error('Error en cargarEventosModal:', error);
+      lista.innerHTML = '<div style="text-align:center; padding:20px; color:red;">Error al cargar eventos</div>';
+    }
+  }
+
+
+
+  function seleccionarEvento(evento) {
+    if (!evento) return;
+
+    // Actualizar campos del formulario
+    el('input-evento').value = evento.nombre;
+
+    // Actualizar sidebar con detalles completos
+    actualizarSidebarEvento(evento);
+
+    // Guardar evento seleccionado para usar en confirmación
+    state.selectedEvento = evento;
+  }
+
+  function actualizarSidebarEvento(evento) {
+    if (!evento) {
+      // Ocultar detalles y mostrar placeholder
+      el('evento-detalles').style.display = 'none';
+      el('evento-placeholder').style.display = 'block';
+      el('evento-status').textContent = 'Sin seleccionar';
+      el('evento-status').style.display = 'none';
+      return;
+    }
+
+    // Mostrar detalles y ocultar placeholder
+    el('evento-detalles').style.display = 'block';
+    el('evento-placeholder').style.display = 'none';
+    el('evento-status').textContent = evento.estado || 'activo';
+    el('evento-status').style.display = 'inline-block';
+
+    // Actualizar campos de la sidebar
+    el('detalle-nombre').textContent = evento.nombre || '—';
+    el('detalle-estado').textContent = `Estado: ${evento.estado || 'activo'}`;
+    el('detalle-cliente').textContent = evento.cliente || '—';
+    el('detalle-lugar').textContent = evento.lugar || '—';
+
+    // Fechas y horas
+    el('detalle-fecha-montaje').textContent = evento.fecha_montaje ? new Date(evento.fecha_montaje).toLocaleDateString('es-ES') : '—';
+    el('detalle-hora-montaje').textContent = evento.hora_montaje || '—';
+    el('detalle-fecha-desmontaje').textContent = evento.fecha_desmontaje ? new Date(evento.fecha_desmontaje).toLocaleDateString('es-ES') : '—';
+    el('detalle-hora-desmontaje').textContent = evento.hora_desmontaje || '—';
+
+    // Descripción (si existe)
+    if (evento.descripcion) {
+      el('detalle-descripcion').textContent = evento.descripcion;
+      el('detalle-descripcion-container').style.display = 'block';
+    } else {
+      el('detalle-descripcion-container').style.display = 'none';
+    }
+  }
+
+  async function cargarEmpleados() {
+    try {
+      const { data: empleados, error } = await window.supabaseClient
+        .from('empleados')
+        .select('id, codigo_empleado, nombres, apellidos')
+        .eq('estatus_general', 'Activo')
+        .order('nombres');
+
+      if (error) {
+        console.error('Error cargando empleados:', error);
+        return;
+      }
+
+      const select = el('select-responsable');
+      select.innerHTML = '<option value="">Seleccionar responsable...</option>';
+
+      empleados.forEach(empleado => {
+        const option = document.createElement('option');
+        option.value = empleado.id;
+        option.textContent = `${empleado.nombres} ${empleado.apellidos} (${empleado.codigo_empleado})`;
+        select.appendChild(option);
+      });
+    } catch (error) {
+      console.error('Error en cargarEmpleados:', error);
+    }
+  }
+
+  async function generarCorrelativoPrefijo(prefijo) {
+    const k = `ultimo_correlativo_${prefijo}`;
+    const parsePrefijo = (raw) => {
+      const m = String(raw || '').trim().match(new RegExp(`^${prefijo}-(\\d+)$`, 'i'));
+      return m ? (parseInt(m[1], 10) || 0) : 0;
+    };
+
+    try {
+      let maxEncontrado = 0;
+
+      const { data: despachos, error: errDesp } = await window.supabaseClient
+        .from('despachos_logistica')
+        .select('numero_despacho')
+        .ilike('numero_despacho', `${prefijo}-%`)
+        .order('numero_despacho', { ascending: false })
+        .limit(1);
+
+      if (!errDesp && despachos && despachos.length > 0) {
+        maxEncontrado = Math.max(maxEncontrado, parsePrefijo(despachos[0].numero_despacho));
+      }
+
+      const { data: solicitudes, error: errSol } = await window.supabaseClient
+        .from('solicitudes_logistica')
+        .select('id')
+        .ilike('id', `SOL-${prefijo}-%`)
+        .order('id', { ascending: false })
+        .limit(1);
+
+      if (!errSol && solicitudes && solicitudes.length > 0) {
+        const m = String(solicitudes[0].id || '').trim().match(new RegExp(`^SOL-${prefijo}-(\\d+)$`, 'i'));
+        if (m) maxEncontrado = Math.max(maxEncontrado, parseInt(m[1], 10) || 0);
+      }
+
+      const local = parseInt(localStorage.getItem(k) || '0', 10) || 0;
+      const nuevoNumero = Math.max(maxEncontrado, local) + 1;
+      return `${prefijo}-` + String(nuevoNumero).padStart(5, '0');
+    } catch (e) {
+      console.error('Error generarCorrelativoPrefijo:', e);
+      const local = parseInt(localStorage.getItem(k) || '0', 10) || 0;
+      const nuevo = local + 1;
+      return `${prefijo}-` + String(nuevo).padStart(5, '0');
+    }
+  }
+
+  function actualizarUltimoCorrelativoPrefijo(prefijo, correlativo) {
+    const k = `ultimo_correlativo_${prefijo}`;
+    const m = String(correlativo || '').trim().match(new RegExp(`^${prefijo}-(\\d+)$`, 'i'));
+    const n = m ? (parseInt(m[1], 10) || 0) : 0;
+    if (n > 0) {
+      const prev = parseInt(localStorage.getItem(k) || '0', 10) || 0;
+      if (n > prev) localStorage.setItem(k, String(n));
+    }
+  }
+
+  // buscarEnCatalogo: busca en catálogo. Si includeContainers=true incluye también items marcados como contenedor
+  async function buscarEnCatalogo(tablaCatalogo, term, includeContainers = false) {
+    const t = sanitizeTerm(term);
+    if (t.length < 2) return [];
+
+    // Ampliar campos buscados para atrapar 'apodo' y variaciones de nombre
+    let q = window.supabaseClient
+      .from(tablaCatalogo)
+      .select('codigo, nombre, dimensiones, color, bodega_principal, bodega_secundaria, contenedor, tipo_material, tipo_uso, es_contenedor, apodo, nombre_base, nombre_numero')
+      .or(`codigo.ilike.%${t}%,nombre.ilike.%${t}%,apodo.ilike.%${t}%,nombre_base.ilike.%${t}%,nombre_numero.ilike.%${t}%,contenedor.ilike.%${t}%`)
+      .limit(200);
+
+    if (!includeContainers) q = q.eq('es_contenedor', false);
+
+    const { data, error } = await q;
+
+    if (error) {
+      console.error('Error buscarEnCatalogo:', error);
+      throw error;
+    }
+
+    // LOG TEMPORAL: inspección de resultados de la consulta
+    console.log('buscarEnCatalogo ->', { tablaCatalogo, term: t, includeContainers, rows: data });
+
+    return (data || []).map(r => ({
+      codigo: r.codigo,
+      nombre: r.nombre,
+      dimensiones: r.dimensiones || '',
+      color: r.color || '',
+      bodega_principal: r.bodega_principal || '',
+      bodega_secundaria: r.bodega_secundaria || '',
+      contenedor: r.contenedor || '',
+      tipo_material: r.tipo_material || '',
+      tipo_uso: r.tipo_uso || '',
+      es_contenedor: !!r.es_contenedor
+    }));
+  }
+
+  async function obtenerStockTotalDesdeVista(vista, codigo) {
+    const { data, error } = await window.supabaseClient
+      .from(vista)
+      .select('stock_actual')
+      .eq('material_codigo', codigo);
+
+    if (error) {
+      console.warn('No se pudo leer stock en', vista, error);
+      return null;
+    }
+
+    return (data || []).reduce((acc, r) => acc + (Number(r.stock_actual) || 0), 0);
+  }
+
+  // Buscar todos los materiales que pertenecen a un contenedor específico (campo `contenedor` en catálogo)
+  async function fetchItemsForContainer(tablaCatalogo, containerCodigo) {
+    const c = String(containerCodigo || '').trim();
+    if (!c) return [];
+    // 1) Intentar buscar por campo `contenedor`
+    let { data, error } = await window.supabaseClient
+      .from(tablaCatalogo)
+      .select('codigo, nombre, dimensiones, color, bodega_principal, bodega_secundaria, contenedor, tipo_material, tipo_uso')
+      .eq('contenedor', c)
+      .limit(200);
+
+    if (error) {
+      console.error('Error fetchItemsForContainer (by contenedor):', error);
+      // no lanzar todavía, intentamos fallback
+    }
+
+    // Si no hay resultados probamos un fallback por coincidencia en el código (ilike)
+    if (!data || data.length === 0) {
+      try {
+        const res2 = await window.supabaseClient
+          .from(tablaCatalogo)
+          .select('codigo, nombre, dimensiones, color, bodega_principal, bodega_secundaria, contenedor, tipo_material, tipo_uso')
+          .ilike('codigo', `%${c}%`)
+          .limit(200);
+        data = res2.data || [];
+        if (res2.error) console.warn('Warning fetchItemsForContainer (by codigo ilike) error:', res2.error);
+      } catch (e) {
+        console.error('Error fetchItemsForContainer (fallback):', e);
+        throw e;
+      }
+    }
+
+    // Si aún no encontramos hijos (o solo encontramos el mismo código padre), intentar buscar por "apodo"/sufijo.
+    // Ej: padre = 00001-AUDI-PANT-CASE-01  -> hijos contienen "AUDI-PANT-CASE-01" o los últimos tokens.
+    const onlyParentFound = (data && data.length === 1 && String(data[0].codigo || '').trim() === c);
+    if ((!data || data.length === 0) || onlyParentFound) {
+      try {
+        // 1) remover prefijo numérico hasta el primer '-' (ej: 00001-... -> ...)
+        const noPrefix = c.replace(/^[^-]+-/, '');
+        // 2) intentar buscar por esa porción (sin prefijo numérico)
+        const trySuffix = await window.supabaseClient
+          .from(tablaCatalogo)
+          .select('codigo, nombre, dimensiones, color, bodega_principal, bodega_secundaria, contenedor, tipo_material, tipo_uso')
+          .ilike('codigo', `%${noPrefix}%`)
+          .limit(200);
+        if (!trySuffix.error && trySuffix.data && trySuffix.data.length > 0) {
+          // preferir resultados que no sean exactamente el padre
+          const filtered = (trySuffix.data || []).filter(r => String(r.codigo || '').trim() !== c);
+          if (filtered.length > 0) {
+            data = trySuffix.data;
+          } else if (!data || data.length === 0) {
+            data = trySuffix.data;
+          }
+        }
+        // 3) si aún no hay resultados, intentar con los últimos 3 tokens unidos por '-'
+        if (!data || data.length === 0 || onlyParentFound) {
+          const parts = noPrefix.split('-').filter(Boolean);
+          const last3 = parts.slice(-3).join('-');
+          if (last3) {
+            const tryLast3 = await window.supabaseClient
+              .from(tablaCatalogo)
+              .select('codigo, nombre, dimensiones, color, bodega_principal, bodega_secundaria, contenedor, tipo_material, tipo_uso')
+              .ilike('codigo', `%${last3}%`)
+              .limit(200);
+            if (!tryLast3.error && tryLast3.data && tryLast3.data.length > 0) {
+              data = tryLast3.data;
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Error fetchItemsForContainer (suffix fallbacks):', e);
+      }
+    }
+
+    return (data || []).map(r => ({
+      codigo: r.codigo,
+      nombre: r.nombre,
+      dimensiones: r.dimensiones || '',
+      color: r.color || '',
+      bodega_principal: r.bodega_principal || '',
+      bodega_secundaria: r.bodega_secundaria || '',
+      contenedor: r.contenedor || '',
+      tipo_material: r.tipo_material || '',
+      tipo_uso: r.tipo_uso || ''
+    }));
+  }
+
+  // Reconstruye el conjunto de contenedores que ya están representados por los items seleccionados
+  function recomputeAddedContainers() {
+    // Preserve any explicitly-added container codes already tracked in state.addedContainers,
+    // and also include container codes derived from selected children and items that are themselves containers.
+    const s = new Set(state.addedContainers || []);
+    for (const it of state.audiovisual.values()) {
+      if (it.contenedor) s.add(it.contenedor);
+      if (it.es_contenedor) s.add(it.codigo);
+    }
+    for (const it of state.consumibles.values()) {
+      if (it.contenedor) s.add(it.contenedor);
+      if (it.es_contenedor) s.add(it.codigo);
+    }
+    state.addedContainers = s;
+  }
+
+  // Expande un contenedor: obtiene sus items y los agrega a la selección
+  // Abre modal para mostrar items del contenedor para que el usuario confirme
+  let __containerModalState = null;
+  async function openContainerModal(tipo, containerCodigo, items) {
+    __containerModalState = { tipo, containerCodigo, items };
+    const title = el('modal-contenedor-title');
+    const list = el('modal-contenedor-list');
+    title.textContent = `Contenedor ${containerCodigo} — ${items.length} materiales`;
+
+    if (!items || items.length === 0) {
+      list.innerHTML = '<div style="padding:12px; color:#64748b;">Contenedor vacío o no se encontraron materiales.</div>';
+      el('modal-contenedor').style.display = 'flex';
+      return;
+    }
+
+    // Ocultar temporalmente el modal principal (si está abierto) para que el sub-modal sea visible
+    try {
+      const modalBuscar = el('modal-buscar');
+      if (modalBuscar && modalBuscar.style.display === 'flex') {
+        modalBuscar._wasOpenBeforeContainer = true;
+        modalBuscar.style.display = 'none';
+      }
+    } catch (_) {}
+
+    // Obtener stock para cada item (paralelo)
+    try {
+      const vista = (tipo === 'audiovisual') ? 'stock_audiovisual' : 'stock_consumibles';
+      const stocks = await Promise.all(items.map(it => obtenerStockTotalDesdeVista(vista, it.codigo)));
+      // Guardar stocks en el estado del modal para uso posterior
+      __containerModalState.stocks = stocks;
+
+      let html = '<div style="display:flex; flex-direction:column; gap:8px;">';
+      for (let i = 0; i < items.length; i++) {
+        const it = items[i];
+        const stock = (typeof stocks[i] === 'number') ? stocks[i] : null;
+        // Si stock es null lo dejamos seleccionable; si stock <= 1 deshabilitamos
+        const disabled = (stock !== null && Number(stock) <= 0) ? 'disabled' : '';
+        const nota = (stock === null) ? '' : ` (stock: ${stock})`;
+        html += `<label style="display:flex; align-items:center; gap:8px; padding:6px; border:1px solid #eef2f7; border-radius:8px;${disabled? ' background:#f8fafc;':''}"><input type="checkbox" data-codigo="${it.codigo}" ${disabled} checked/> <div style="flex:1;"><div style="font-weight:700;">${it.codigo}${nota}</div><div style="color:#64748b; font-size:13px;">${it.nombre || ''}</div></div></label>`;
+      }
+      html += '</div>';
+      list.innerHTML = html;
+
+      // Adjuntar listeners a checkboxes para actualizar el UI en tiempo real
+      list.querySelectorAll('input[type="checkbox"][data-codigo]').forEach(chk => {
+        chk.addEventListener('change', () => updateContainerModalUI(containerCodigo, items));
+      });
+
+      // Actualizar estado visual según si el contenedor ya fue agregado
+      updateContainerModalUI(containerCodigo, items);
+    } catch (e) {
+      console.error('Error obteniendo stock para contenedor:', e);
+      list.innerHTML = '<div style="padding:12px; color:#64748b;">No se pudo obtener stock de materiales.</div>';
+    }
+
+    el('modal-contenedor').style.display = 'flex';
+  }
+
+  // Añade los items seleccionados desde el modal a la selección principal
+  async function addChildrenToSelectionFromModal() {
+    if (!__containerModalState) return;
+    const { tipo, containerCodigo, items } = __containerModalState;
+    const list = el('modal-contenedor-list');
+    const checks = list.querySelectorAll('input[type="checkbox"][data-codigo]:checked');
+    if (!checks || checks.length === 0) {
+      showModalMessage('warn', 'No seleccionaste materiales para agregar.');
+      return;
+    }
+
+    const selectedCodes = Array.from(checks).map(c => c.dataset.codigo);
+    const toAdd = items.filter(it => selectedCodes.includes(it.codigo));
+
+    // Agregar o actualizar cada item usando su stock total como cantidad solicitada
+    const vista = (tipo === 'audiovisual') ? 'stock_audiovisual' : 'stock_consumibles';
+    let addedCount = 0;
+    const map = (tipo === 'audiovisual') ? state.audiovisual : state.consumibles;
+    for (const it of toAdd) {
+      try {
+        const stockTotal = await obtenerStockTotalDesdeVista(vista, it.codigo);
+        const desiredQty = (typeof stockTotal === 'number' && stockTotal >= 1) ? Number(stockTotal) : 1;
+        const prev = map.get(it.codigo);
+        if (prev) {
+          // Actualizar cantidad a stock disponible
+          map.set(it.codigo, { ...prev, qty: desiredQty, stock_total: stockTotal });
+        } else {
+          map.set(it.codigo, { ...it, qty: desiredQty, stock_total: stockTotal });
+          addedCount++;
+        }
+      } catch (e) {
+        // En caso de error leyendo stock, añadir con qty=1
+        const prev = map.get(it.codigo);
+        if (prev) {
+          map.set(it.codigo, { ...prev, qty: 1 });
+        } else {
+          map.set(it.codigo, { ...it, qty: 1, stock_total: null });
+          addedCount++;
+        }
+      }
+    }
+
+    // Marcar contenedor como representado
+    state.addedContainers.add(containerCodigo);
+    renderTablaSeleccion();
+    // Cerrar modal de contenedor y volver al modal-buscar (Agregar materiales)
+    hideModalContainer();
+    // Refrescar resultados del buscador para ocultar el contenedor recién agregado
+    refreshSearchIfOpen();
+    showModalMessage('ok', `Se agregaron/actualizaron ${toAdd.length} materiales del contenedor ${containerCodigo}.`);
+  }
+
+  function hideModalContainer() {
+    el('modal-contenedor').style.display = 'none';
+    // Restaurar modal-buscar si estaba abierto antes
+    try {
+      const modalBuscar = el('modal-buscar');
+      if (modalBuscar && modalBuscar._wasOpenBeforeContainer) {
+        modalBuscar.style.display = 'flex';
+        modalBuscar._wasOpenBeforeContainer = false;
+      }
+    } catch (_) {}
+    __containerModalState = null;
+  }
+
+  // Si el modal de búsqueda está abierto, refrescar sus resultados usando el término actual
+  function refreshSearchIfOpen() {
+    try {
+      const modalBuscar = el('modal-buscar');
+      if (!modalBuscar || modalBuscar.style.display !== 'flex') return;
+      // Determinar si estamos en audiovisual o consumibles (por presencia de inputs)
+      // Preferir audiovisual panel por defecto
+      const modoAudio = el('mode-contenedores') || el('mode-items');
+      // Detectar si el panel consumibles está visible y tiene término
+      const consVisible = el('panel-consumibles') && el('panel-consumibles').style.display !== 'none' && el('search-consumibles');
+      if (consVisible) {
+        // refrescar consumibles si hay término
+        const termC = sanitizeTerm(el('search-consumibles').value || '');
+        if (termC.length >= 2) onBuscar('consumibles');
+        return;
+      }
+      // por defecto refrescar audiovisual
+      const termA = sanitizeTerm(el('search-audiovisual').value || '');
+      if (termA.length >= 2) onBuscar('audiovisual');
+    } catch (e) {
+      console.warn('refreshSearchIfOpen error', e);
+    }
+  }
+
+  // Añadir todos los hijos (que no tengan conflicto ni stock<=1) desde el modal
+  async function addAllChildrenFromModal() {
+    if (!__containerModalState) return;
+    const { tipo, containerCodigo, items } = __containerModalState;
+
+    // Filtrar items que ya están seleccionados
+    const notSelected = items.filter(it => !(state.audiovisual.has(it.codigo) || state.consumibles.has(it.codigo)));
+    // Usar stocks previamente cargados (si están) para determinar disponibilidad
+    const stocks = (__containerModalState && __containerModalState.stocks) || [];
+    const available = notSelected.filter((it) => {
+      // Encontrar índice original del item en `items` para mapear al array `stocks`
+      const origIndex = items.findIndex(x => x.codigo === it.codigo);
+      const stok = (origIndex >= 0 && stocks && stocks.length > origIndex) ? stocks[origIndex] : undefined;
+      // Si stock es null/undefined, considerarlo disponible; si <=0, considerarlo no disponible
+      if (typeof stok === 'number') return Number(stok) >= 1;
+      return true;
+    });
+
+    if (!available || available.length === 0) {
+      showModalMessage('warn', 'No hay materiales disponibles para agregar (posible stock insuficiente o ya seleccionados).');
+      return;
+    }
+
+    try {
+      const vista = (tipo === 'audiovisual') ? 'stock_audiovisual' : 'stock_consumibles';
+      let addedCount = 0;
+      const map = (tipo === 'audiovisual') ? state.audiovisual : state.consumibles;
+      for (const it of available) {
+        try {
+          const stockTotal = await obtenerStockTotalDesdeVista(vista, it.codigo);
+          const desiredQty = (typeof stockTotal === 'number' && stockTotal >= 1) ? Number(stockTotal) : 1;
+          const cur = map.get(it.codigo);
+          if (cur) {
+            map.set(it.codigo, { ...cur, qty: desiredQty, stock_total: stockTotal });
+          } else {
+            map.set(it.codigo, { ...it, qty: desiredQty, stock_total: stockTotal });
+            addedCount++;
+          }
+        } catch (e) {
+          // Fallback: agregar con qty=1
+          const cur = map.get(it.codigo);
+          if (cur) {
+            map.set(it.codigo, { ...cur, qty: 1 });
+          } else {
+            map.set(it.codigo, { ...it, qty: 1, stock_total: null });
+            addedCount++;
+          }
+        }
+      }
+
+      if (addedCount > 0) {
+        state.addedContainers.add(containerCodigo);
+        renderTablaSeleccion();
+        hideModalContainer();
+        // Refrescar resultados del buscador para ocultar el contenedor recién agregado
+        refreshSearchIfOpen();
+        showModalMessage('ok', `Se agregaron ${addedCount} materiales del contenedor ${containerCodigo}.`);
+      } else {
+        showModalMessage('warn', 'No se agregaron materiales (posible stock insuficiente).');
+      }
+    } catch (e) {
+      console.error('Error agregando todos los hijos:', e);
+      showModalMessage('err', `Error agregando hijos: ${e.message || e}`);
+    }
+  }
+
+  // Actualiza la UI del modal de contenedor (deshabilita checkboxes si el contenedor ya fue agregado
+  // o si el stock del item <= 1; además actualiza el estado del botón de agregar)
+  function updateContainerModalUI(containerCodigo, items) {
+    const list = el('modal-contenedor-list');
+    const addBtn = el('btn-add-contenedor');
+    if (!list || !addBtn) return;
+    // Count currently checked (and not disabled) checkboxes
+    const checksAll = list.querySelectorAll('input[type="checkbox"][data-codigo]');
+    let checkedCount = 0;
+    checksAll.forEach(c => { if (c.checked && !c.disabled) checkedCount++; });
+
+    const anyChildSelected = items && items.some(it => (state.audiovisual.has(it.codigo) || state.consumibles.has(it.codigo)));
+    const containerAdded = state.addedContainers && state.addedContainers.has(containerCodigo);
+
+
+    // Iterate checkboxes and update visual/disabled state
+    const checks = list.querySelectorAll('input[type="checkbox"][data-codigo]');
+    checks.forEach(chk => {
+      const code = chk.dataset.codigo;
+      const lab = chk.closest('label');
+      // If container already added, disable child checkbox
+      if (containerAdded) {
+        chk.disabled = true;
+        chk.checked = false;
+        if (lab) lab.style.opacity = '0.5';
+        return;
+      }
+
+      // If child already selected globally, disable
+      if (state.audiovisual.has(code) || state.consumibles.has(code)) {
+        chk.disabled = true;
+        chk.checked = false;
+        if (lab) lab.style.opacity = '0.6';
+        return;
+      }
+
+      // Otherwise, ensure enabled
+      if (lab) lab.style.opacity = '1';
+      // Keep any pre-rendered disabled state (e.g., stock<=1)
+      // If previously disabled due to stock, keep disabled and lower opacity
+      if (chk.hasAttribute('disabled') && !chk.disabled) {
+        chk.disabled = true;
+        if (lab) lab.style.opacity = '0.6';
+      }
+    });
+
+    // Update add button state: if container added, show disabled state and different label
+    if (containerAdded) {
+      addBtn.textContent = 'Contenedor agregado';
+      addBtn.disabled = true;
+      addBtn.style.background = '#94a3b8';
+      addBtn.style.borderColor = '#94a3b8';
+      addBtn.style.color = '#fff';
+    } else if (checkedCount === 0) {
+      addBtn.textContent = 'No hay seleccionados';
+      addBtn.disabled = true;
+      addBtn.style.background = '#94a3b8';
+      addBtn.style.borderColor = '#94a3b8';
+      addBtn.style.color = '#fff';
+    } else if (anyChildSelected) {
+      addBtn.textContent = 'Algunos ya seleccionados';
+      addBtn.disabled = true;
+      addBtn.style.background = '#f59e0b';
+      addBtn.style.borderColor = '#f59e0b';
+      addBtn.style.color = '#fff';
+    } else {
+      addBtn.textContent = 'Agregar seleccionados';
+      addBtn.disabled = false;
+      addBtn.style.background = '#10b981';
+      addBtn.style.borderColor = '#10b981';
+      addBtn.style.color = '#fff';
+    }
+  }
+
+  function upsertSeleccion(tipo, item) {
+    const map = (tipo === 'audiovisual') ? state.audiovisual : state.consumibles;
+    // Si este item pertenece a un contenedor que ya fue agregado, impedir la inserción
+    if (item.contenedor && state.addedContainers && state.addedContainers.has(item.contenedor)) {
+      showAlert('warn', `No se puede agregar ${item.codigo}: su contenedor ya fue agregado.`);
+      return;
+    }
+
+    const prev = map.get(item.codigo);
+    if (prev) {
+      map.set(item.codigo, { ...prev, qty: (Number(prev.qty) || 0) + 1 });
+    } else {
+      map.set(item.codigo, { ...item, qty: 1, stock_total: null });
+    }
+    // Si el item que añadimos es él mismo un contenedor, marcarlo como agregado
+    try {
+      if (item && item.es_contenedor) {
+        state.addedContainers.add(item.codigo);
+      }
+    } catch (_) {}
+  }
+
+  function removeSeleccion(tipo, codigo) {
+    const map = (tipo === 'audiovisual') ? state.audiovisual : state.consumibles;
+    map.delete(codigo);
+    // Después de eliminar, recomputar contenedores representados
+    recomputeAddedContainers();
+  }
+
+  function setQty(tipo, codigo, qty) {
+    const map = (tipo === 'audiovisual') ? state.audiovisual : state.consumibles;
+    const item = map.get(codigo);
+    if (!item) return;
+    map.set(codigo, { ...item, qty });
+  }
+
+  function renderTablaSeleccion() {
+    const rows = [];
+
+    function addRowsFromMap(tipo, map, titulo) {
+      rows.push({ __header: true, titulo });
+      if (map.size === 0) {
+        rows.push({ __empty: true, msg: 'Sin items.' });
+        return;
+      }
+      for (const item of map.values()) {
+        rows.push({ ...item, __tipo: tipo });
+      }
+    }
+
+    addRowsFromMap('audiovisual', state.audiovisual, '🧩 Audiovisual (obligatorio)');
+    addRowsFromMap('consumibles', state.consumibles, '🧰 Consumibles (opcional)');
+
+    let html = '<table style="width:100%; border-collapse: collapse;">';
+    html += '<thead><tr style="text-align:left; background:#f1f5f9;">' +
+      '<th style="padding:8px; border-bottom:1px solid #e2e8f0;">Tipo</th>' +
+      '<th style="padding:8px; border-bottom:1px solid #e2e8f0;">Código</th>' +
+      '<th style="padding:8px; border-bottom:1px solid #e2e8f0;">Nombre</th>' +
+      '<th style="padding:8px; border-bottom:1px solid #e2e8f0;">Stock total</th>' +
+      '<th style="padding:8px; border-bottom:1px solid #e2e8f0;">Cantidad</th>' +
+      '<th style="padding:8px; border-bottom:1px solid #e2e8f0;"></th>' +
+    '</tr></thead><tbody>';
+
+    rows.forEach(r => {
+      if (r.__header) {
+        html += `<tr><td colspan="6" style="padding:10px 8px; font-weight: 800; color:#0f172a; border-top:1px solid #e2e8f0;">${r.titulo}</td></tr>`;
+        return;
+      }
+      if (r.__empty) {
+        html += `<tr><td colspan="6" style="padding:10px 8px; color:#64748b;">${r.msg}</td></tr>`;
+        return;
+      }
+
+      const tipoLabel = (r.__tipo === 'audiovisual') ? 'Audiovisual' : 'Consumibles';
+      const stockTxt = (r.stock_total === null || typeof r.stock_total === 'undefined') ? '—' : String(r.stock_total);
+      const qtyVal = Number(r.qty) || 0;
+
+      html += '<tr>' +
+        `<td style="padding:8px; border-top:1px solid #e2e8f0;">${tipoLabel}</td>` +
+        `<td style="padding:8px; border-top:1px solid #e2e8f0;"><b>${r.codigo}</b></td>` +
+        `<td style="padding:8px; border-top:1px solid #e2e8f0;">${r.nombre || ''}<div style="color:#64748b; font-size:12px;">${r.dimensiones || ''}</div></td>` +
+        `<td style="padding:8px; border-top:1px solid #e2e8f0;">${stockTxt}</td>` +
+        `<td style="padding:8px; border-top:1px solid #e2e8f0;">` +
+          `<input data-tipo="${r.__tipo}" data-codigo="${r.codigo}" class="qty-input" type="number" min="0" step="1" value="${qtyVal}" style="width: 90px; padding:6px; border:1px solid #cbd5e1; border-radius:8px;" />` +
+        `</td>` +
+        `<td style="padding:8px; border-top:1px solid #e2e8f0;">` +
+          `<button data-remove="1" data-tipo="${r.__tipo}" data-codigo="${r.codigo}" style="padding:6px 10px; border:1px solid #ef4444; background:#fff; color:#ef4444; border-radius:10px;">Eliminar</button>` +
+        `</td>` +
+      '</tr>';
+    });
+
+    html += '</tbody></table>';
+    el('tabla-seleccion').innerHTML = html;
+
+    // Listeners
+    el('tabla-seleccion').querySelectorAll('.qty-input').forEach(inp => {
+      inp.addEventListener('change', () => {
+        const tipo = inp.dataset.tipo;
+        const codigo = inp.dataset.codigo;
+        const qty = Math.max(0, Math.floor(Number(inp.value) || 0));
+        setQty(tipo, codigo, qty);
+      });
+    });
+
+    el('tabla-seleccion').querySelectorAll('button[data-remove="1"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        removeSeleccion(btn.dataset.tipo, btn.dataset.codigo);
+        renderTablaSeleccion();
+      });
+    });
+
+    // Después de renderizar la tabla, recomputar contenedores representados
+    recomputeAddedContainers();
+  }
+
+  async function renderResultados(tipo, items) {
+    const cont = el('resultados');
+
+    if (!items || items.length === 0) {
+      cont.innerHTML = '<div style="color:#64748b;">Sin resultados.</div>';
+      return;
+    }
+
+    // LOG TEMPORAL: cómo llegan los items y estado de contenedores añadidos
+    try { console.log('renderResultados entrada ->', { tipo, items: items.map(i=>i.codigo), addedContainers: Array.from(state.addedContainers || []) }); } catch(_) {}
+
+    // Filtrar resultados para no mostrar items ya seleccionados o pertenecientes a contenedores ya agregados
+    try {
+      items = (items || []).filter(it => {
+        if (!it) return false;
+        const codigo = String(it.codigo || '').trim();
+        if (!codigo) return false;
+        if ((state.audiovisual && state.audiovisual.has(codigo)) || (state.consumibles && state.consumibles.has(codigo))) return false;
+        if (state.addedContainers && state.addedContainers.has(codigo)) return false;
+        if (it.contenedor && state.addedContainers && state.addedContainers.has(it.contenedor)) return false;
+        return true;
+      });
+    } catch (_) {}
+
+    try { console.log('renderResultados filtrados ->', { tipo, items: items.map(i=>i.codigo) }); } catch(_) {}
+
+
+    let html = '';
+    for (const it of items) {
+      const stockVista = (tipo === 'audiovisual') ? 'stock_audiovisual' : 'stock_consumibles';
+      const stockTotal = await obtenerStockTotalDesdeVista(stockVista, it.codigo);
+
+      html += `
+        <div style="background:#fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; margin-bottom: 10px; display:flex; justify-content: space-between; align-items: center; gap: 12px;">
+          <div>
+            <div style="font-weight: 800;">${it.nombre || it.codigo}</div>
+            <div style="color:#64748b; font-size: 12px;">Código: <b>${it.codigo}</b> • ${it.dimensiones || ''} • ${it.color || ''}</div>
+            <div style="color:#0f172a; font-size: 12px; margin-top: 4px;">Stock total: <b>${(stockTotal === null) ? '—' : stockTotal}</b></div>
+          </div>
+          <button data-add="1" data-tipo="${tipo}" data-codigo="${it.codigo}" style="padding:8px 12px; border:1px solid #10b981; background:#10b981; color:#fff; border-radius: 10px; font-weight: 800;">Agregar</button>
+        </div>
+      `;
+    }
+
+    cont.innerHTML = html;
+
+    cont.querySelectorAll('button[data-add="1"]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const codigo = btn.dataset.codigo;
+        const selected = items.find(x => x.codigo === codigo);
+        if (!selected) return;
+
+        // If the selected item is a container, expand its contents instead of adding the container itself
+        if (selected.es_contenedor) {
+          // Prevent re-adding a container if any of its items are already present
+          if (state.addedContainers && state.addedContainers.has(selected.codigo)) {
+            showModalMessage('warn', `El contenedor ${selected.codigo} ya está agregado.`);
+            return;
+          }
+
+          // Also prevent adding container if any of its would-be children already exist individually
+          const tabla = (btn.dataset.tipo === 'audiovisual') ? 'catalogo_audiovisual' : 'catalogo_consumibles';
+          try {
+            const children = await fetchItemsForContainer(tabla, selected.codigo);
+            // Incluir el contenedor mismo como primer elemento (si existe en catálogo)
+            try {
+              const { data: contData, error: contErr } = await window.supabaseClient
+                .from(tabla)
+                .select('codigo, nombre, dimensiones, color, bodega_principal, bodega_secundaria, contenedor, tipo_material, tipo_uso, es_contenedor')
+                .eq('codigo', selected.codigo)
+                .limit(1);
+              if (!contErr && contData && contData.length > 0) {
+                const c = contData[0];
+                const containerItem = {
+                  codigo: c.codigo,
+                  nombre: c.nombre,
+                  dimensiones: c.dimensiones || '',
+                  color: c.color || '',
+                  bodega_principal: c.bodega_principal || '',
+                  bodega_secundaria: c.bodega_secundaria || '',
+                  contenedor: c.contenedor || '',
+                  tipo_material: c.tipo_material || '',
+                  tipo_uso: c.tipo_uso || '',
+                  es_contenedor: !!c.es_contenedor
+                };
+                // Prepend container item if it's not already in children
+                if (!children.find(x => x.codigo === containerItem.codigo)) {
+                  children.unshift(containerItem);
+                }
+              }
+            } catch (e) {
+              // ignore
+            }
+            // Abrir modal para que el usuario confirme qué hijos agregar
+            // (si algunos hijos ya están seleccionados, el modal los mostrará deshabilitados)
+            openContainerModal(tipo, selected.codigo, children);
+          } catch (e) {
+            console.error('Error expandiendo contenedor:', e);
+            showModalMessage('err', `Error expandiendo contenedor: ${e.message || e}`);
+          }
+          return;
+        }
+
+        // Prevent adding an individual item if its parent container is already represented
+        if (selected.contenedor && state.addedContainers && state.addedContainers.has(selected.contenedor)) {
+          showAlert('warn', `No se puede agregar ${selected.codigo}: su contenedor ${selected.contenedor} ya fue agregado.`);
+          return;
+        }
+
+        // Prevent adding if the item is already in selection
+        const map = (btn.dataset.tipo === 'audiovisual') ? state.audiovisual : state.consumibles;
+        if (map.has(selected.codigo)) {
+          showAlert('warn', `${selected.codigo} ya está en la selección.`);
+          return;
+        }
+
+        upsertSeleccion(btn.dataset.tipo, selected);
+
+        // Actualizar stock_total en el item seleccionado
+        try {
+          const vista = (btn.dataset.tipo === 'audiovisual') ? 'stock_audiovisual' : 'stock_consumibles';
+          const stockTotal = await obtenerStockTotalDesdeVista(vista, codigo);
+          const cur = map.get(codigo);
+          if (cur) map.set(codigo, { ...cur, stock_total: stockTotal });
+        } catch (_) {}
+
+        renderTablaSeleccion();
+      });
+    });
+  }
+
+  async function onBuscar(tipo) {
+    hideAlert();
+    const term = (tipo === 'audiovisual') ? el('search-audiovisual').value : el('search-consumibles').value;
+    const t = sanitizeTerm(term);
+    if (t.length < 2) {
+      showAlert('warn', 'Escribe al menos 2 caracteres para buscar.');
+      return;
+    }
+
+    el('resultados').innerHTML = '<div style="color:#64748b;">Buscando...</div>';
+
+    try {
+      const tabla = (tipo === 'audiovisual') ? 'catalogo_audiovisual' : 'catalogo_consumibles';
+      // Determinar modo de búsqueda: items o contenedores (solo para audiovisual)
+      let includeContainers = false;
+      if (tipo === 'audiovisual') {
+        includeContainers = (el('mode-contenedores') && el('mode-contenedores').checked === true);
+      }
+      const rows = await buscarEnCatalogo(tabla, t, includeContainers);
+      // Si estamos buscando contenedores, mostrar únicamente resultados marcados como contenedor
+      if (tipo === 'audiovisual' && includeContainers) {
+        const filtered = (rows || []).filter(r => r && r.es_contenedor === true);
+        await renderResultados(tipo, filtered);
+      } else {
+        await renderResultados(tipo, rows);
+      }
+    } catch (e) {
+      showAlert('err', `Error buscando en catálogo: ${e.message || e}`);
+      el('resultados').innerHTML = '<div style="color:#ef4444;">Error buscando.</div>';
+    }
+  }
+
+  async function cargarStockParaSeleccionados() {
+    for (const [codigo, item] of state.audiovisual.entries()) {
+      const stockTotal = await obtenerStockTotalDesdeVista('stock_audiovisual', codigo);
+      state.audiovisual.set(codigo, { ...item, stock_total: stockTotal });
+    }
+    for (const [codigo, item] of state.consumibles.entries()) {
+      const stockTotal = await obtenerStockTotalDesdeVista('stock_consumibles', codigo);
+      state.consumibles.set(codigo, { ...item, stock_total: stockTotal });
+    }
+  }
+
+  async function fetchStockRows(vista, codigos) {
+    if (!codigos.length) return [];
+    const { data, error } = await window.supabaseClient
+      .from(vista)
+      .select('material_codigo, material_nombre, stock_actual, bodega_principal, bodega_secundaria, contenedor, ubicacion_nombre, precio, fecha_compra')
+      .in('material_codigo', codigos);
+    if (error) throw error;
+    return data || [];
+  }
+
+  function allocateMovements(stockRows, requestedMap, numeroRegistro, evento, responsable, observBase) {
+    const byCode = new Map();
+    (stockRows || []).forEach(r => {
+      const c = String(r.material_codigo || '').trim();
+      if (!c) return;
+      const arr = byCode.get(c) || [];
+      arr.push({
+        material_codigo: c,
+        material_nombre: r.material_nombre || '',
+        stock_actual: Number(r.stock_actual) || 0,
+        bodega_principal: r.bodega_principal || 'Principal',
+        bodega_secundaria: r.bodega_secundaria || 'General',
+        contenedor: r.contenedor || null,
+        ubicacion_nombre: r.ubicacion_nombre || null,
+        precio: Number(r.precio) || 0,
+        fecha_compra: r.fecha_compra || null
+      });
+      byCode.set(c, arr);
+    });
+
+    for (const [c, arr] of byCode.entries()) {
+      arr.sort((a, b) => (b.stock_actual || 0) - (a.stock_actual || 0));
+    }
+
+    const movimientos = [];
+    const faltantes = [];
+
+    for (const [codigo, qty] of requestedMap.entries()) {
+      const req = Number(qty) || 0;
+      if (req <= 0) continue;
+
+      const filas = (byCode.get(codigo) || []).filter(x => (Number(x.stock_actual) || 0) > 0);
+      const total = filas.reduce((acc, r) => acc + (Number(r.stock_actual) || 0), 0);
+
+      if (total < req) {
+        faltantes.push({ codigo, requerido: req, disponible: total });
+        continue;
+      }
+
+      let restante = req;
+      for (const f of filas) {
+        if (restante <= 0) break;
+        const disp = Number(f.stock_actual) || 0;
+        const usar = Math.min(restante, disp);
+        if (usar <= 0) continue;
+
+        movimientos.push({
+          material_codigo: codigo,
+          material_nombre: f.material_nombre,
+          bodega_principal: f.bodega_principal,
+          bodega_secundaria: f.bodega_secundaria,
+          tipo_movimiento: 'despacho',
+          cantidad: usar,
+          signo: -1,
+          referencia_documento: numeroRegistro,
+          referencia_tipo: 'despacho_audiovisual',
+          responsable,
+          observaciones: `Despacho ${numeroRegistro} - Evento: ${evento}. ${observBase || ''}`.trim(),
+          estado: 'completado',
+          usuario_id: window.currentUser?.id,
+          precio: f.precio,
+          fecha_compra: f.fecha_compra,
+          ubicacion_codigo: f.contenedor || f.ubicacion_nombre || null,
+          ubicacion_nombre: f.ubicacion_nombre || f.contenedor || null
+        });
+
+        restante -= usar;
+      }
+
+      if (restante > 0) {
+        faltantes.push({ codigo, requerido: req, disponible: req - restante });
+      }
+    }
+
+    return { movimientos, faltantes };
+  }
+
+  function getItemsList() {
+    const audio = Array.from(state.audiovisual.values()).map(x => ({ ...x, __tipo: 'audiovisual' }));
+    const cons = Array.from(state.consumibles.values()).map(x => ({ ...x, __tipo: 'consumibles' }));
+    return [...audio, ...cons];
+  }
+
+  function buildActaHTML(numeroRegistro, evento, responsable, items) {
+    const fecha = new Date().toLocaleString('es-ES');
+
+    function rowHtml(x) {
+      const tipo = (x.__tipo === 'audiovisual') ? 'Audiovisual' : 'Consumibles';
+      return `
+        <tr>
+          <td style="border:1px solid #cbd5e1; padding: 6px;">${tipo}</td>
+          <td style="border:1px solid #cbd5e1; padding: 6px;"><b>${x.codigo}</b></td>
+          <td style="border:1px solid #cbd5e1; padding: 6px;">${x.nombre || ''}</td>
+          <td style="border:1px solid #cbd5e1; padding: 6px; text-align:right;">${Number(x.qty) || 0}</td>
+        </tr>
+      `;
+    }
+
+    return `
+      <div style="font-family: Arial, sans-serif; color:#0f172a;">
+        <h2 style="margin:0;">Acta de Despacho</h2>
+        <div style="margin-top: 8px; font-size: 12px; color:#334155;">
+          <div><b>Número:</b> ${numeroRegistro}</div>
+          <div><b>Fecha:</b> ${fecha}</div>
+          <div><b>Evento:</b> ${evento || '—'}</div>
+          <div><b>Responsable:</b> ${responsable || '—'}</div>
+        </div>
+
+        <h3 style="margin:16px 0 8px;">Materiales</h3>
+        <table style="width:100%; border-collapse: collapse; font-size: 12px;">
+          <thead>
+            <tr style="background:#f1f5f9;">
+              <th style="border:1px solid #cbd5e1; padding: 6px; text-align:left;">Tipo</th>
+              <th style="border:1px solid #cbd5e1; padding: 6px; text-align:left;">Código</th>
+              <th style="border:1px solid #cbd5e1; padding: 6px; text-align:left;">Nombre</th>
+              <th style="border:1px solid #cbd5e1; padding: 6px; text-align:right;">Cantidad</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${items.map(rowHtml).join('')}
+          </tbody>
+        </table>
+
+        <div style="margin-top: 28px; display:flex; justify-content: space-between; gap: 24px;">
+          <div style="width: 45%;">
+            <div style="border-top: 1px solid #0f172a; padding-top: 6px; font-size: 12px;">Firma Responsable</div>
+          </div>
+          <div style="width: 45%;">
+            <div style="border-top: 1px solid #0f172a; padding-top: 6px; font-size: 12px;">Firma Bodega</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  async function generarPDF(numeroRegistro, evento, responsable, items) {
+    const area = el('print-area');
+    area.innerHTML = buildActaHTML(numeroRegistro, evento, responsable, items);
+
+    // Esperar que html2pdf esté disponible
+    for (let i = 0; i < 40; i++) {
+      if (window.html2pdf) break;
+      await new Promise(r => setTimeout(r, 100));
+    }
+
+    if (!window.html2pdf) {
+      throw new Error('No se pudo cargar html2pdf');
+    }
+
+    const opt = {
+      margin: 10,
+      filename: `Acta-${numeroRegistro}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    await window.html2pdf().set(opt).from(area).save();
+  }
+
+  async function onConfirmar() {
+    hideAlert();
+
+    if (state.processing) return;
+
+    const evento = String(el('input-evento').value || '').trim();
+    const responsableId = String(el('select-responsable').value || '').trim();
+    const responsableNombre = (() => {
+      const select = el('select-responsable');
+      const opt = select && select.selectedOptions && select.selectedOptions[0];
+      return String((opt && opt.textContent) || '').trim();
+    })();
+
+    if (!evento) {
+      showAlert('warn', 'Evento es obligatorio.');
+      return;
+    }
+    if (!responsableId) {
+      showAlert('warn', 'Responsable es obligatorio.');
+      return;
+    }
+    if (!state.selectedEvento) {
+      showAlert('warn', 'Debe seleccionar un evento válido de la lista.');
+      return;
+    }
+
+    const itemsAudio = Array.from(state.audiovisual.values()).filter(x => (Number(x.qty) || 0) > 0);
+    if (itemsAudio.length === 0) {
+      showAlert('warn', 'Debes agregar al menos 1 material de Audiovisual.');
+      return;
+    }
+
+    const allItems = getItemsList().filter(x => (Number(x.qty) || 0) > 0);
+    if (allItems.length === 0) {
+      showAlert('warn', 'No hay items con cantidad > 0.');
+      return;
+    }
+
+    state.processing = true;
+    const btn = el('btn-confirmar');
+    const prevTxt = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Procesando...';
+
+    try {
+      // 1) Recalcular stock total para mostrar coherente
+      await cargarStockParaSeleccionados();
+      renderTablaSeleccion();
+
+      // 2) Generar correlativo
+      const numeroRegistro = await generarCorrelativoPrefijo('DEAU');
+
+      // 3) Validar y asignar stock por bodega desde vistas
+      const reqAudio = new Map(itemsAudio.map(x => [x.codigo, Number(x.qty) || 0]));
+      const itemsCons = Array.from(state.consumibles.values()).filter(x => (Number(x.qty) || 0) > 0);
+      const reqCons = new Map(itemsCons.map(x => [x.codigo, Number(x.qty) || 0]));
+
+      const [stockAudioRows, stockConsRows] = await Promise.all([
+        fetchStockRows('stock_audiovisual', Array.from(reqAudio.keys())),
+        fetchStockRows('stock_consumibles', Array.from(reqCons.keys()))
+      ]);
+
+      const baseObs = '';
+
+      const responsablePrint = responsableNombre || responsableId;
+      const allocAudio = allocateMovements(stockAudioRows, reqAudio, numeroRegistro, evento, responsablePrint, baseObs);
+      const allocCons = allocateMovements(stockConsRows, reqCons, numeroRegistro, evento, responsablePrint, baseObs);
+
+      const faltantes = [...allocAudio.faltantes, ...allocCons.faltantes];
+      if (faltantes.length > 0) {
+        const lines = faltantes.map(f => `${f.codigo} (req ${f.requerido}, disp ${f.disponible})`).join(' | ');
+        showAlert('err', `❌ Stock insuficiente: ${lines}`);
+        return;
+      }
+
+      // 4) Crear una solicitud en Logística en lugar de ejecutar movimientos aquí.
+      // Construir payload básico de solicitud y items para enviarlos al helper central en Logística.
+      try {
+        const solicitudId = `SOL-${numeroRegistro}`;
+        const solicitudPayload = {
+          id: solicitudId,
+          tipo: 'despacho',
+          estado: 'pendiente_bodega',
+          evento: evento || 'Despacho directo',
+          // Guardar el nombre legible (evita que el PDF muestre un UUID)
+          encargado_evento: (responsableNombre || responsableId) || null,
+          observaciones: 'Solicitud generada automáticamente desde Despacho Audiovisual',
+          fecha_solicitud: new Date().toISOString()
+        };
+
+        const itemsParaSolicitud = allItems.map(it => ({
+          codigo: it.codigo,
+          nombre: it.nombre || it.nombre_material || null,
+          cantidad: Number(it.qty) || 0,
+          __tipo: it.__tipo,
+          dimensiones: it.dimensiones || it.medidas || null,
+          color: it.color || null
+        }));
+
+        if (!window.createSolicitudFromExternal) {
+          throw new Error('createSolicitudFromExternal no está disponible en Logística');
+        }
+
+        const res = await window.createSolicitudFromExternal(solicitudPayload, itemsParaSolicitud);
+        if (!res || !res.success) {
+          const msg = res && res.error ? (res.error.message || res.error) : 'Error desconocido';
+          showAlert('err', `❌ Error creando solicitud: ${msg}`);
+          return;
+        }
+
+        actualizarUltimoCorrelativoPrefijo('DEAU', numeroRegistro);
+
+        // Solicitud creada correctamente. Mostrar confirmación y generar acta localmente.
+        const createdId = res.solicitudId;
+        await generarPDF(numeroRegistro, evento, (responsableNombre || responsableId), allItems);
+        showAlert('ok', `✅ Solicitud ${createdId} creada y enviada a Bodega. Acta generada.`);
+      } catch (e) {
+        console.error('Error creando solicitud centralizada:', e);
+        showAlert('err', `❌ Error creando solicitud: ${e.message || e}`);
+        return;
+      }
+
+      // 8) Generar PDF
+      await generarPDF(numeroRegistro, evento, (responsableNombre || responsableId), allItems);
+
+      showAlert('ok', `✅ Despacho ${numeroRegistro} registrado y acta generada.`);
+
+    } catch (e) {
+      console.error(e);
+      showAlert('err', `❌ Error: ${e.message || e}`);
+    } finally {
+      state.processing = false;
+      btn.disabled = false;
+      btn.textContent = prevTxt;
+    }
+  }
+
+  function onLimpiar() {
+    hideAlert();
+    el('input-evento').value = '';
+    el('select-responsable').value = '';
+    state.audiovisual.clear();
+    state.consumibles.clear();
+    state.selectedEvento = null;
+    el('resultados').innerHTML = '<div style="color:#64748b;">Escribe un término y presiona Buscar.</div>';
+    renderTablaSeleccion();
+    // Limpiar sidebar del evento
+    actualizarSidebarEvento(null);
+  }
+
+  // Wiring
+  el('btn-buscar-audiovisual').addEventListener('click', () => onBuscar('audiovisual'));
+  el('btn-buscar-consumibles').addEventListener('click', () => onBuscar('consumibles'));
+  el('btn-confirmar').addEventListener('click', onConfirmar);
+  el('btn-limpiar').addEventListener('click', onLimpiar);
+
+  // Modal message buttons
+  el('btn-cerrar-modal-mensaje').addEventListener('click', hideModalMessage);
+  el('btn-ok-modal-mensaje').addEventListener('click', hideModalMessage);
+
+  // Modal contenedor buttons
+  el('btn-cerrar-modal-contenedor').addEventListener('click', hideModalContainer);
+  el('btn-cancel-contenedor').addEventListener('click', hideModalContainer);
+  el('btn-add-contenedor').addEventListener('click', addChildrenToSelectionFromModal);
+  // Add all children button
+  el('btn-add-all-contenedor').addEventListener('click', addAllChildrenFromModal);
+
+  // Modal buscar/añadir materials wiring
+  function openSearchModal() {
+    const placeholder = el('search-placeholder');
+    const panel = el('search-panel');
+    const body = el('modal-buscar-body');
+    if (!panel || !body) return;
+    // Move the panel into modal body
+    body.appendChild(panel);
+    panel.style.display = 'block';
+    el('modal-buscar').style.display = 'flex';
+  }
+
+  function hideSearchModal() {
+    const placeholder = el('search-placeholder');
+    const panel = el('search-panel');
+    const body = el('modal-buscar-body');
+    if (!panel || !placeholder) return;
+    // Move panel back to placeholder and hide
+    panel.style.display = 'none';
+    placeholder.appendChild(panel);
+    el('modal-buscar').style.display = 'none';
+  }
+
+  el('btn-open-search-modal').addEventListener('click', openSearchModal);
+  el('btn-close-modal-buscar').addEventListener('click', hideSearchModal);
+
+  el('toggle-consumibles').addEventListener('change', (e) => {
+    el('panel-consumibles').style.display = e.target.checked ? 'block' : 'none';
+  });
+
+  // Enter = buscar
+  el('search-audiovisual').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') onBuscar('audiovisual');
+  });
+  el('search-consumibles').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') onBuscar('consumibles');
+  });
+
+  // Evento para abrir modal de selección de eventos
+  el('btn-seleccionar-evento').addEventListener('click', () => {
+    cargarEventosModal();
+  });
+
+  // Cerrar modal al hacer click en la X o fuera del contenido
+  el('modal-seleccionar-evento').addEventListener('click', (e) => {
+    if (e.target.id === 'modal-seleccionar-evento' || e.target.id === 'btn-cerrar-modal-evento') {
+      el('modal-seleccionar-evento').style.display = 'none';
+    }
+  });
+
+  renderTablaSeleccion();
+
+  // Inicializar sidebar del evento
+  actualizarSidebarEvento(null);
+
+  // Cargar empleados
+  cargarEmpleados();
+})();
+</script>

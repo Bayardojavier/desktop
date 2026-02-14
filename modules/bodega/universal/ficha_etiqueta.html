@@ -2,73 +2,74 @@
 <div style="display:flex; gap:16px; height:100%;">
   <!-- Panel configuración -->
   <div style="width: 360px; background: rgba(20, 30, 60, 0.45); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; padding: 12px; overflow:auto;">
-    <div style="font-weight: 900; color:#e5e7eb; margin-bottom:8px;">🪪 Ficha & Etiqueta</div>
-    <div style="color:#94a3b8; font-size:12px; line-height:1.35; margin-bottom:12px;">
+    <div style="font-weight: 900; color:lightgray; margin-bottom:8px;">🪪 Ficha & Etiqueta</div>
+    <div style="color:slategray; font-size:12px; line-height:1.35; margin-bottom:12px;">
       Configura qué datos aparecen y en qué posiciones. La ficha es para detalles (más grande). La etiqueta es compacta.
     </div>
 
     <div style="border-top:1px solid rgba(148,163,184,0.15); padding-top:10px;">
-      <div style="font-weight:800; color:#cbd5e1; margin-bottom:6px;">Buscar material</div>
-      <label style="display:block; margin:6px 0 6px; font-weight:700; color:#cbd5e1;">Bodega</label>
+      <div style="font-weight:800; color:lightsteelblue; margin-bottom:6px;">Buscar material</div>
+      <label style="display:block; margin:6px 0 6px; font-weight:700; color:lightsteelblue;">Bodega</label>
       <select id="fe-bodega-select" class="audiovisual-input"></select>
-      <label style="display:block; margin:8px 0 6px; font-weight:700; color:#cbd5e1;">Tipo de alta</label>
+      <label style="display:block; margin:8px 0 6px; font-weight:700; color:lightsteelblue;">Tipo de alta</label>
       <select id="fe-buscar-tipo" class="audiovisual-input">
         <option value="MATERIAL">Material</option>
         <option value="CONTENEDOR">Contenedor</option>
       </select>
-      <div style="margin-top:6px; color:#94a3b8; font-size:12px; line-height:1.25;">Equivale a la columna <b>tipo_alta</b> del catálogo: Material o Contenedor.</div>
+      <div style="margin-top:6px; color:slategray; font-size:12px; line-height:1.25;">Equivale a la columna <b>tipo_alta</b> del catálogo: Material o Contenedor.</div>
       <input id="fe-codigo-buscar" class="audiovisual-input" placeholder="Código (ej: 2001-AUD-ILU-... )" />
       <div style="display:flex; gap:8px; margin-top:8px;">
         <button type="button" id="fe-btn-buscar" class="audiovisual-boton audiovisual-new" style="padding:8px 12px;">🔎 Cargar</button>
         <button type="button" id="fe-btn-abrir-buscador" class="bodega-export-pdf-btn" style="padding:8px 12px;">🧾 Buscar</button>
         <button type="button" id="fe-btn-limpiar" class="bodega-export-pdf-btn" style="padding:8px 12px;">Limpiar</button>
       </div>
-      <div id="fe-status" style="margin-top:8px; color:#94a3b8; font-size:12px;">(sin material cargado)</div>
+      <div id="fe-status" style="margin-top:8px; color:slategray; font-size:12px;">(sin material cargado)</div>
     </div>
 
     <div style="border-top:1px solid rgba(148,163,184,0.15); padding-top:10px; margin-top:10px;">
-      <div style="font-weight:800; color:#cbd5e1; margin-bottom:6px;">Ficha (layout)</div>
+      <div style="font-weight:800; color:lightsteelblue; margin-bottom:6px;">Ficha (layout)</div>
 
-      <label style="display:block; margin:8px 0 6px; font-weight:700; color:#cbd5e1;">Paleta / Tema</label>
+      <label style="display:block; margin:8px 0 6px; font-weight:700; color:lightsteelblue;">Paleta / Tema</label>
       <select id="fe-ficha-theme" class="audiovisual-input"></select>
 
-      <label style="display:block; margin:8px 0 6px; font-weight:700; color:#cbd5e1;">Principal</label>
+      <label style="display:block; margin:8px 0 6px; font-weight:700; color:lightsteelblue;">Principal</label>
       <select id="fe-ficha-principal" class="audiovisual-input"></select>
 
-      <label style="display:block; margin:8px 0 6px; font-weight:700; color:#cbd5e1;">Secundario</label>
+      <label style="display:block; margin:8px 0 6px; font-weight:700; color:lightsteelblue;">Secundario</label>
       <select id="fe-ficha-secundario" class="audiovisual-input"></select>
 
-      <label style="display:block; margin:8px 0 6px; font-weight:700; color:#cbd5e1;">Foto</label>
+      <label style="display:block; margin:8px 0 6px; font-weight:700; color:lightsteelblue;">Foto</label>
       <select id="fe-ficha-foto-pos" class="audiovisual-input">
         <option value="left">Izquierda</option>
         <option value="right">Derecha</option>
         <option value="hide">Ocultar</option>
       </select>
 
-      <label style="display:block; margin:8px 0 6px; font-weight:700; color:#cbd5e1;">Campos (hasta 12 líneas)</label>
+      <label style="display:block; margin:8px 0 6px; font-weight:700; color:lightsteelblue;">Campos (hasta 12 líneas)</label>
       <div id="fe-ficha-campos" style="display:flex; flex-direction:column; gap:8px;"></div>
     </div>
 
     <div style="border-top:1px solid rgba(148,163,184,0.15); padding-top:10px; margin-top:10px;">
-      <div style="font-weight:800; color:#cbd5e1; margin-bottom:6px;">Etiqueta (layout)</div>
+      <div style="font-weight:800; color:lightsteelblue; margin-bottom:6px;">Etiqueta (layout)</div>
 
-      <label style="display:block; margin:8px 0 6px; font-weight:700; color:#cbd5e1;">Paleta / Tema</label>
-      <select id="fe-etiq-theme" class="audiovisual-input"></select>
+      <div style="margin:6px 0 10px; color:slategray; font-size:12px; line-height:1.25;">
+        La etiqueta usa la misma paleta/tema que la ficha.
+      </div>
 
-      <label style="display:block; margin:8px 0 6px; font-weight:700; color:#cbd5e1;">Principal</label>
+      <label style="display:block; margin:8px 0 6px; font-weight:700; color:lightsteelblue;">Principal</label>
       <select id="fe-etiq-principal" class="audiovisual-input"></select>
 
-      <label style="display:block; margin:8px 0 6px; font-weight:700; color:#cbd5e1;">Secundario</label>
+      <label style="display:block; margin:8px 0 6px; font-weight:700; color:lightsteelblue;">Secundario</label>
       <select id="fe-etiq-secundario" class="audiovisual-input"></select>
 
-      <label style="display:block; margin:8px 0 6px; font-weight:700; color:#cbd5e1;">Foto</label>
+      <label style="display:block; margin:8px 0 6px; font-weight:700; color:lightsteelblue;">Foto</label>
       <select id="fe-etiq-foto-pos" class="audiovisual-input">
         <option value="hide">Ocultar</option>
         <option value="left">Izquierda</option>
         <option value="right">Derecha</option>
       </select>
 
-      <label style="display:block; margin:8px 0 6px; font-weight:700; color:#cbd5e1;">Campos (hasta 3 líneas)</label>
+      <label style="display:block; margin:8px 0 6px; font-weight:700; color:lightsteelblue;">Campos (hasta 3 líneas)</label>
       <div id="fe-etiq-campos" style="display:flex; flex-direction:column; gap:8px;"></div>
     </div>
 
@@ -76,31 +77,34 @@
       <button type="button" id="fe-btn-guardar" class="audiovisual-boton audiovisual-save" style="padding:10px 12px; flex:1;">💾 Guardar configuración</button>
       <button type="button" id="fe-btn-reset" class="bodega-export-pdf-btn" style="padding:10px 12px;">Reset</button>
     </div>
-
-    <div style="border-top:1px solid rgba(148,163,184,0.15); padding-top:10px; margin-top:10px; display:flex; gap:8px;">
-      <button type="button" id="fe-btn-export-pdf" class="audiovisual-boton audiovisual-new" style="padding:10px 12px; flex:1;">📄 Exportar PDF (Ficha + Etiquetas)</button>
-
-      <button type="button" id="fe-btn-export-png" class="audiovisual-boton audiovisual-new" style="padding:10px 12px; flex:1;">🖼️ Exportar PNG</button>
-
-    </div>
   </div>
 
   <!-- Preview -->
   <div style="flex:1; min-width:520px; overflow:auto;">
     <div class="bodega-encabezado" style="margin-bottom: 12px;">
-      <h1 class="bodega-titulo" style="margin:0;">🪪 Ficha & Etiqueta</h1>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <button id="fe-btn-prev" class="bodega-export-pdf-btn" style="padding:6px 10px; font-size:16px;">⬅️</button>
+        <h1 class="bodega-titulo" style="margin:0;">🪪 Ficha & Etiqueta</h1>
+        <button id="fe-btn-next" class="bodega-export-pdf-btn" style="padding:6px 10px; font-size:16px;">➡️</button>
+
+        <div style="margin-left: auto; display:flex; gap:8px;">
+          <button type="button" id="fe-btn-export-pdf" class="audiovisual-boton audiovisual-new" style="padding:8px 10px; font-size:14px;">📄 PDF</button>
+          <button type="button" id="fe-btn-export-ficha-png" class="audiovisual-boton audiovisual-new" style="padding:8px 10px; font-size:14px;">🖼️ Ficha PNG</button>
+          <button type="button" id="fe-btn-export-etiq-png" class="audiovisual-boton audiovisual-new" style="padding:8px 10px; font-size:14px;">🏷️ Etiqueta PNG</button>
+        </div>
+      </div>
       <p class="bodega-subtitulo" style="margin:6px 0 0 0;">Vista previa y configuración dinámica.</p>
     </div>
 
     <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:flex-start;">
       <!-- Ficha preview -->
       <div id="fe-preview-ficha" style="width: 720px; max-width: 100%; background: rgba(15,23,42,0.35); border: 1px solid rgba(148,163,184,0.15); border-radius: 12px; padding: 14px;">
-        <div id="fe-ficha-print-area" style="background:white; color:#0f172a; border-radius: 10px; overflow:hidden;"></div>
+        <div id="fe-ficha-print-area" style="background:white; color:darkslateblue; border-radius: 10px; overflow:hidden;"></div>
       </div>
 
       <!-- Etiqueta preview -->
       <div id="fe-preview-etiq" style="width: 420px; background: rgba(15,23,42,0.35); border: 1px solid rgba(148,163,184,0.15); border-radius: 12px; padding: 14px;">
-        <div id="fe-etiq-print-area" style="background:white; color:#0f172a; border-radius: 10px; overflow:hidden;"></div>
+        <div id="fe-etiq-print-area" style="background:white; color:darkslateblue; border-radius: 10px; overflow:hidden;"></div>
       </div>
     </div>
   </div>
@@ -110,7 +114,7 @@
 <div id="fe-modal-buscador" style="position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.55); z-index: 9999;">
   <div style="width: 720px; max-width: calc(100vw - 32px); max-height: calc(100vh - 32px); background: rgba(15,23,42,0.98); border: 1px solid rgba(99,102,241,0.28); border-radius: 12px; padding: 14px; display:flex; flex-direction:column;">
     <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
-      <div style="font-weight: 900; color: #e5e7eb;">🧾 Buscar material</div>
+      <div style="font-weight: 900; color: lightgray;">🧾 Buscar material</div>
       <button type="button" id="fe-modal-x" class="bodega-export-pdf-btn" style="padding:6px 10px;">✕</button>
     </div>
 
@@ -119,7 +123,7 @@
       <input id="fe-modal-q" class="audiovisual-input" placeholder="Buscar por código, nombre, contenedor o tipo..." style="flex:1;" />
       <button type="button" id="fe-modal-buscar" class="audiovisual-boton audiovisual-new" style="padding:8px 12px;">🔎 Buscar</button>
     </div>
-    <div id="fe-modal-hint" style="margin-top: 6px; color:#94a3b8; font-size:12px;">Tip: busca por código, nombre, contenedor o tipo de contenedor.</div>
+    <div id="fe-modal-hint" style="margin-top: 6px; color:slategray; font-size:12px;">Tip: busca por código, nombre, contenedor o tipo de contenedor.</div>
 
 
     <div id="fe-modal-resultados" style="margin-top: 10px; overflow:auto; padding-right:6px; display:flex; flex-direction:column; gap:8px;"></div>
@@ -130,32 +134,16 @@
   </div>
 </div>
 
-
-<!-- Modal export PNG -->
-<div id="fe-modal-png" class="fe-modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
-  <div class="fe-modal-content" style="background:#1e293b; border:1px solid #334155; border-radius:10px; padding:20px; max-width:500px; width:90%; max-height:80vh; overflow:auto;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-      <div style="font-weight: 900; color: #e5e7eb;">🖼️ Exportar PNG</div>
-      <button type="button" id="fe-modal-png-x" class="bodega-export-pdf-btn" style="padding:6px 10px;">✕</button>
-    </div>
-
-    <div style="margin-bottom: 15px;">
-      <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Tipo de exportación</label>
-      <select id="fe-png-select-tipo" class="audiovisual-input" style="width:100%; margin-bottom:10px;">
-        <option value="etiqueta">Etiqueta</option>
-        <option value="ficha">Ficha</option>
-      </select>
-      <label style="display:block; margin-bottom:6px; font-weight:700; color:#cbd5e1;">Seleccionar código</label>
-      <select id="fe-png-select-codigo" class="audiovisual-input" style="width:100%;"></select>
-    </div>
-
-    <div style="display:flex; justify-content:flex-end; gap:10px;">
-      <button type="button" id="fe-modal-png-cancel" class="bodega-export-pdf-btn" style="padding:8px 12px;">Cancelar</button>
-      <button type="button" id="fe-modal-png-export" class="audiovisual-boton audiovisual-new" style="padding:8px 12px;">📥 Exportar PNG</button>
+<!-- Modal de Espera -->
+<div id="fe-modal-espera" class="devolucion-modal-overlay" style="display: none;">
+  <div class="devolucion-modal-content">
+    <div class="devolucion-modal-body" style="text-align: center;">
+      <div class="spinner" style="border: 4px solid whitesmoke; border-top: 4px solid blue; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 16px;"></div>
+      <h3 class="devolucion-modal-title">Generando PDF</h3>
+      <p>Por favor espere mientras se genera el archivo PDF...</p>
     </div>
   </div>
 </div>
-
 
 <!-- Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -165,50 +153,130 @@
 
 <style>
 /* Plantilla ficha/etiqueta (estilo tipo tu ejemplo) */
-.fe-ficha { width: 792px; max-width: 100%; margin: 0 auto; background: white; border: 1px solid #eee; }
+.fe-ficha { width: 792px; max-width: 100%; margin: 0 auto; background: white; border: 1px solid #eee; position: relative; padding-bottom: 60px; }
 .fe-ficha-header { padding: 25px; display:flex; align-items:center; justify-content:space-between; gap:14px; }
 .fe-ficha-header h1 { color: white; margin: 0; font-size: 26px; letter-spacing: 1px; font-weight: 800; }
 .fe-ficha-header p { color: rgba(255,255,255,0.9); font-size: 14px; margin: 5px 0 0 0; font-weight: bold; }
 .fe-logo-box { background: white; padding: 8px; border-radius: 8px; display:flex; align-items:center; justify-content:center; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
 .fe-logo { height: 65px; width: auto; object-fit: contain; }
 .fe-ficha-content { padding: 30px; display:flex; gap: 30px; }
-.fe-photo { width: 220px; height: 220px; border: 1px solid #e2e8f0; border-radius: 10px; overflow:hidden; flex-shrink: 0; background: #f8fafc; display:flex; align-items:center; justify-content:center; }
-.fe-photo-placeholder { font-size: 60px; color: #cbd5e1; }
-.fe-grid { flex: 1; display:grid; grid-template-columns: 1fr 1fr; gap: 15px 25px; color: #1e293b; font-size: 14px; }
-.fe-item { border-bottom: 1px solid #f1f5f9; padding-bottom: 4px; }
+.fe-photo { width: 220px; height: 220px; border: 1px solid lightgray; border-radius: 10px; overflow:hidden; flex-shrink: 0; background: aliceblue; display:flex; align-items:center; justify-content:center; }
+.fe-photo-placeholder { font-size: 60px; color: lightsteelblue; }
+.fe-grid { flex: 1; display:grid; grid-template-columns: 1fr 1fr; gap: 15px 25px; color: darkslategray; font-size: 14px; }
+.fe-item { border-bottom: 1px solid whitesmoke; padding-bottom: 4px; }
 .fe-label { font-weight: bold; }
-.fe-footer { text-align:center; padding: 20px; background: #f8fafc; font-size: 42px; font-weight: 900; letter-spacing: 3px; word-break: break-word; }
+.fe-footer {
+  text-align: center;
+  padding: 20px;
+  background: aliceblue;
+  font-size: 42px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  word-break: break-word;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
 
-.fe-etiq { width: 380px; max-width: 100%; background: white; border: 2px solid black; padding: 15px; font-family: Arial, sans-serif; }
+.fe-etiq { width: 380px; max-width: 100%; background: white; border: 2px solid black; padding: 15px; font-family: Arial, sans-serif; position: relative; }
 .fe-etiq-row { display:flex; gap:12px; align-items:flex-start; }
-.fe-etiq-photo { width: 70px; height: 70px; border: 1px solid #e2e8f0; border-radius: 8px; overflow:hidden; flex-shrink: 0; background: #f8fafc; display:flex; align-items:center; justify-content:center; }
+.fe-etiq-photo { width: 70px; height: 70px; border: 1px solid lightgray; border-radius: 8px; overflow:hidden; flex-shrink: 0; background: aliceblue; display:flex; align-items:center; justify-content:center; }
 .fe-etiq-photo img { width:100%; height:100%; object-fit:cover; }
-.fe-etiq-photo-placeholder { font-size: 30px; color: #cbd5e1; }
+.fe-etiq-photo-placeholder { font-size: 30px; color: lightsteelblue; }
 .fe-etiq-right { flex: 1; min-width: 0; }
 .fe-etiq-grid { display:flex; flex-wrap:wrap; gap:12px; padding: 10px; }
 .fe-hijos-table { width:100%; border-collapse: collapse; font-size: 12px; margin-top: 12px; }
-.fe-hijos-table th, .fe-hijos-table td { border:1px solid #e2e8f0; padding: 6px 8px; text-align:left; vertical-align: top; }
-.fe-hijos-table th { background:#f8fafc; }
-.fe-hijos-thumb { width: 34px; height: 34px; border-radius: 6px; overflow:hidden; border:1px solid #e2e8f0; background:#f8fafc; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.fe-hijos-table th, .fe-hijos-table td { border:1px solid lightgray; padding: 6px 8px; text-align:left; vertical-align: top; }
+.fe-hijos-table th { background:aliceblue; }
+.fe-hijos-thumb { width: 34px; height: 34px; border-radius: 6px; overflow:hidden; border:1px solid lightgray; background:aliceblue; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 .fe-hijos-thumb img { width:100%; height:100%; object-fit:cover; }
-.fe-hijos-thumb span { font-size: 16px; color:#cbd5e1; }
+.fe-hijos-thumb span { font-size: 16px; color:lightsteelblue; }
 .fe-barcode { display:none; }
 .fe-bar { display:none; }
 .fe-bar4 { display:none; }
 .fe-etiq-codigo { text-align:center; font-size: 22px; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 10px; word-break: break-all; font-weight: 900; }
 .fe-etiq-nombre { font-weight: 900; font-size: 16px; text-transform: uppercase; margin-bottom: 4px; }
 .fe-etiq-detalle { font-size: 14px; color: #444; margin-bottom: 15px; }
-.fe-etiq-footer { display:flex; align-items:center; justify-content:space-between; border-top: 1px dashed #ccc; padding-top: 10px; font-family: Arial, sans-serif; font-size: 12px; color: #888; }
+.fe-etiq-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  border-top: 1px dashed #ccc;
+  padding-top: 10px;
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  color: #888;
+}
 .fe-etiq-logo { height: 25px; width: auto; object-fit: contain; }
 .fe-qr-box { display:none; }
 .fe-etiq-qr { display:none; }
 .fe-pagebreak { page-break-before: always; break-before: page; }
+
+/* Indicador de cantidad */
+.fe-cantidad-indicator {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* En ficha: que la cantidad se vea grande (similar al código del footer) */
+.fe-footer .fe-cantidad-indicator {
+  width: 78px;
+  height: 78px;
+  font-size: inherit;
+  line-height: 1;
+}
 
 /* Impresión: solo se imprime el área seleccionada */
 @media print {
   body * { visibility: hidden !important; }
   .fe-print-root, .fe-print-root * { visibility: visible !important; }
   .fe-print-root { position: fixed; left: 0; top: 0; width: 100%; }
+}
+
+/* Estilos para modal de espera */
+.devolucion-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+.devolucion-modal-content {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+.devolucion-modal-title {
+  margin: 0 0 16px 0;
+  color: mediumblue;
+  font-size: 20px;
+}
+.devolucion-modal-body {
+  margin-bottom: 20px;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 </style>
 
@@ -225,12 +293,17 @@
 
   const THEMES = [
     { key: 'AUTO', name: 'Auto (por bodega)', start: null, end: null, accent: null },
-    { key: 'AZUL', name: 'Azul', start: '#1e40af', end: '#0ea5e9', accent: '#1e40af' },
-    { key: 'MORADO', name: 'Morado', start: '#7c3aed', end: '#d946ef', accent: '#7c3aed' },
-    { key: 'VERDE', name: 'Verde', start: '#0f766e', end: '#22c55e', accent: '#0f766e' },
-    { key: 'NARANJA', name: 'Naranja', start: '#b45309', end: '#f97316', accent: '#b45309' },
-    { key: 'ROJO', name: 'Rojo', start: '#be123c', end: '#ef4444', accent: '#be123c' },
-    { key: 'GRIS', name: 'Gris', start: '#334155', end: '#94a3b8', accent: '#334155' }
+    { key: 'AZUL', name: 'Azul', start: 'mediumblue', end: 'skyblue', accent: 'mediumblue' },
+    { key: 'MORADO', name: 'Morado', start: 'mediumpurple', end: 'hotpink', accent: 'mediumpurple' },
+    { key: 'VERDE', name: 'Verde', start: 'teal', end: 'limegreen', accent: 'teal' },
+    { key: 'NARANJA', name: 'Naranja', start: 'chocolate', end: 'darkorange', accent: 'chocolate' },
+    { key: 'ROJO', name: 'Rojo', start: 'crimson', end: 'red', accent: 'crimson' },
+    { key: 'GRIS', name: 'Gris', start: 'darkslategray', end: 'slategray', accent: 'darkslategray' },
+    { key: 'AMARILLO', name: 'Amarillo', start: 'goldenrod', end: 'khaki', accent: 'goldenrod' },
+    { key: 'TURQUESA', name: 'Turquesa', start: 'darkcyan', end: 'paleturquoise', accent: 'darkcyan' },
+    { key: 'ROSA', name: 'Rosa', start: 'deeppink', end: 'pink', accent: 'deeppink' },
+    { key: 'MARRON', name: 'Marrón', start: 'saddlebrown', end: 'burlywood', accent: 'saddlebrown' },
+    { key: 'LIMA', name: 'Lima', start: 'seagreen', end: 'greenyellow', accent: 'seagreen' }
   ];
 
   const ALLOWED = [
@@ -267,7 +340,6 @@
     secundario: 'NOMBRE',
     fotoPos: 'hide',
     campos: ['COLOR', 'UBICACION', 'NADA'],
-    themeKey: 'AUTO'
   };
 
   const state = {
@@ -276,16 +348,18 @@
     material: null,
     hijos: [],
     ficha: null,
-    etiq: null
+    etiq: null,
+    allCodes: [],
+    currentIndex: -1
   };
 
   const BUSCAR_TIPO_STORAGE_KEY = 'bodega_ficha_etiqueta_buscar_tipo_v1';
 
   const BODEGA_STORAGE_KEY = 'bodega_ficha_etiqueta_bodega_v1';
   const BODEGAS = [
-    { key: 'AUDIOVISUAL', label: 'Audiovisual', catalogo: 'catalogo_audiovisual', movimientos: 'movimientos_bodega_audiovisual' },
-    { key: 'HIERROS', label: 'Hierros', catalogo: 'catalogo_hierros', movimientos: 'movimientos_bodega_hierros' },
-    { key: 'CONSUMIBLES', label: 'Consumibles', catalogo: 'catalogo_consumibles', movimientos: 'movimientos_bodega_consumibles' }
+    { key: 'AUDIOVISUAL', label: 'Audiovisual', catalogo: 'catalogo_audiovisual', movimientos: 'movimientos_bodega_audiovisual', stock: 'stock_audiovisual' },
+    { key: 'HIERROS', label: 'Hierros', catalogo: 'catalogo_hierros', movimientos: 'movimientos_bodega_hierros', stock: 'stock_hierros' },
+    { key: 'CONSUMIBLES', label: 'Consumibles', catalogo: 'catalogo_consumibles', movimientos: 'movimientos_bodega_consumibles', stock: 'stock_consumibles' }
   ];
 
   function normalizeBodegaKey(k) {
@@ -317,7 +391,7 @@
 
   function getActiveTables() {
     const b = getActiveBodega();
-    return { catalogo: b.catalogo, movimientos: b.movimientos };
+    return { catalogo: b.catalogo, movimientos: b.movimientos, stock: b.stock };
   }
 
   function setActiveBodega(key, opts = {}) {
@@ -330,6 +404,9 @@
     if (clearMaterial) {
       state.material = null;
       state.hijos = [];
+      state.currentIndex = -1;
+      state.allCodes = [];
+      loadAllCodes();
       const status = document.getElementById('fe-status');
       if (status) status.textContent = `(sin material cargado) — Bodega: ${getActiveBodega().label}`;
       renderAll();
@@ -395,7 +472,7 @@
   function abrirModalBuscador() {
     if (!modal) return;
     modal.style.display = 'flex';
-    if (modalResultados) modalResultados.innerHTML = '<div style="color:#94a3b8; font-size:12px;">Escribe para buscar...</div>';
+    if (modalResultados) modalResultados.innerHTML = '<div style="color:slategray; font-size:12px;">Escribe para buscar...</div>';
     setTimeout(() => modalQ?.focus(), 0);
   }
 
@@ -425,15 +502,18 @@
   }
 
   function normalizeThemeKey(key) {
-    const k = (key || 'AUTO').toString().toUpperCase();
-    return THEMES.some(t => t.key === k) ? k : 'AUTO';
+    const raw = (key ?? 'AUTO').toString().trim();
+    const k = raw.toUpperCase();
+    if (THEMES.some(t => t.key === k)) return k;
+    const byName = THEMES.find(t => String(t.name || '').trim().toUpperCase() === k);
+    return byName ? byName.key : 'AUTO';
   }
 
   function getGradienteYColor(bodegaActual, themeKey) {
     const k = normalizeThemeKey(themeKey);
     if (k === 'AUTO') {
       // Paleta estable por nombre de bodega
-      const palette = ['#1e40af', '#7c3aed', '#0f766e', '#b45309', '#be123c', '#0ea5e9'];
+      const palette = ['mediumblue', 'mediumpurple', 'teal', 'chocolate', 'crimson', 'skyblue'];
       const idx = hashStringToIndex(bodegaActual, palette.length);
       const base = palette[idx];
       return { gradienteStart: base, gradienteEnd: `${base}99`, colorAcento: base };
@@ -441,34 +521,58 @@
 
     const t = THEMES.find(x => x.key === k);
     return {
-      gradienteStart: t?.start || '#1e40af',
-      gradienteEnd: t?.end || '#0ea5e9',
-      colorAcento: t?.accent || '#1e40af'
+      gradienteStart: t?.start || 'mediumblue',
+      gradienteEnd: t?.end || 'skyblue',
+      colorAcento: t?.accent || 'mediumblue'
     };
   }
 
   function getColorHex(colorNombre) {
     const c = String(colorNombre || '').trim().toLowerCase();
     const map = {
-      'sin color': '#94a3b8',
-      'negro': '#000000',
-      'blanco': '#ffffff',
-      'rojo': '#ef4444',
-      'rojo oscuro': '#b91c1c',
-      'azul': '#3b82f6',
-      'azul oscuro': '#1e40af',
-      'celeste': '#3b82f6',
-      'verde': '#22c55e',
-      'verde lima': '#22c55e',
-      'verde oscuro': '#166534',
-      'amarillo': '#fde047',
-      'naranja': '#f97316',
-      'gris': '#9ca3af',
-      'gris oscuro': '#4b5563',
-      'violeta': '#8b5cf6',
-      'fucsia': '#d946ef'
+      'sin color': 'slategray',
+      'negro': 'black',
+      'blanco': 'white',
+      'rojo': 'red',
+      'rojo oscuro': 'darkred',
+      'azul': 'blue',
+      'azul oscuro': 'mediumblue',
+      'celeste': 'blue',
+      'verde': 'limegreen',
+      'verde lima': 'limegreen',
+      'verde oscuro': 'darkgreen',
+      'amarillo': 'yellow',
+      'naranja': 'darkorange',
+      'gris': 'gray',
+      'gris oscuro': 'darkgray',
+      'violeta': 'violet',
+      'fucsia': 'hotpink'
     };
-    return map[c] || '#94a3b8';
+    return map[c] || 'slategray';
+  }
+
+  function hexToColorName(hex) {
+    const map = {
+      '#94a3b8': 'sin color',
+      '#000000': 'negro',
+      '#ffffff': 'blanco',
+      '#ef4444': 'rojo',
+      '#b91c1c': 'rojo oscuro',
+      '#3b82f6': 'azul',
+      '#1e40af': 'azul oscuro',
+      '#3b82f6': 'celeste',
+      '#22c55e': 'verde',
+      '#22c55e': 'verde lima',
+      '#166534': 'verde oscuro',
+      '#fde047': 'amarillo',
+      '#f97316': 'naranja',
+      '#9ca3af': 'gris',
+      '#4b5563': 'gris oscuro',
+      '#8b5cf6': 'violeta',
+      '#d946ef': 'fucsia',
+      '#0f172a': 'gris oscuro'
+    };
+    return map[hex] || hex;
   }
 
   function buildDimensionesStr(m) {
@@ -545,7 +649,7 @@
   function renderResultados(items) {
     if (!modalResultados) return;
     if (!items.length) {
-      modalResultados.innerHTML = '<div style="color:#94a3b8; font-size:12px;">Sin resultados.</div>';
+      modalResultados.innerHTML = '<div style="color:slategray; font-size:12px;">Sin resultados.</div>';
       return;
     }
 
@@ -560,10 +664,10 @@
       btn.style.background = 'rgba(15,23,42,0.18)';
       btn.innerHTML = `
         <div style="display:flex; justify-content:space-between; gap:10px;">
-          <div style="font-weight:900; color:#e5e7eb;">${escapeHtml(it.nombre || '')}</div>
-          <div style="color:#cbd5e1; font-weight:800;">${escapeHtml(it.codigo || '')}</div>
+          <div style="font-weight:900; color:lightgray;">${escapeHtml(it.nombre || '')}</div>
+          <div style="color:lightsteelblue; font-weight:800;">${escapeHtml(it.codigo || '')}</div>
         </div>
-        <div style="margin-top:4px; color:#94a3b8; font-size:12px;">
+        <div style="margin-top:4px; color:slategray; font-size:12px;">
           ${escapeHtml(it.bodega_principal || '')} / ${escapeHtml(it.bodega_secundaria || '')}
         </div>
       `;
@@ -589,7 +693,7 @@
       renderResultados([]);
       return;
     }
-    if (modalResultados) modalResultados.innerHTML = '<div style="color:#94a3b8; font-size:12px;">Buscando...</div>';
+    if (modalResultados) modalResultados.innerHTML = '<div style="color:slategray; font-size:12px;">Buscando...</div>';
     const items = await buscarMateriales(q);
     renderResultados(items);
   }
@@ -598,13 +702,16 @@
     try {
       const raw = JSON.parse(localStorage.getItem(key) || 'null');
       if (!raw || typeof raw !== 'object') return { ...fallback };
-      return {
+      const base = {
         principal: raw.principal || fallback.principal,
         secundario: raw.secundario || fallback.secundario,
         fotoPos: raw.fotoPos || fallback.fotoPos,
-        campos: Array.isArray(raw.campos) ? raw.campos.slice(0, fallback.campos.length) : fallback.campos.slice(),
-        themeKey: normalizeThemeKey(raw.themeKey || fallback.themeKey || 'AUTO')
+        campos: Array.isArray(raw.campos) ? raw.campos.slice(0, fallback.campos.length) : fallback.campos.slice()
       };
+      if ('themeKey' in fallback) {
+        base.themeKey = normalizeThemeKey(raw.themeKey || fallback.themeKey || 'AUTO');
+      }
+      return base;
     } catch {
       return { ...fallback };
     }
@@ -640,7 +747,10 @@
       case 'CONTENEDOR': return (m.__contenedores_str || m.contenedor_nombre || '').toString();
       case 'TIPO_USO': return (m.tipo_uso || '').toString();
       case 'TIPO_MATERIAL': return (m.tipo_material || '').toString();
-      case 'COLOR': return (m.color || '').toString();
+      case 'COLOR': {
+        const colorValue = (m.color || '').toString();
+        return /^#[0-9a-fA-F]{6}$/.test(colorValue) ? hexToColorName(colorValue) : colorValue;
+      }
       case 'UNIDAD': return (m.unidad_medida || '').toString();
       case 'DIMENSIONES': return (m.__dimensiones_str || '').toString();
       case 'MARCA': return (m.marca || '').toString();
@@ -656,7 +766,7 @@
     const cleaned = list
       .map(r => ({
         nombre: (r?.ubicacion_nombre ?? '').toString().trim(),
-        existencia: Number(r?.existencia ?? 0)
+        existencia: Number(r?.cantidad ?? 0)
       }))
       .filter(x => x.nombre && isFinite(x.existencia) && x.existencia !== 0);
 
@@ -701,6 +811,9 @@
     const { gradienteStart, gradienteEnd, colorAcento } = getGradienteYColor(bodegaActual, cfg.themeKey);
 
     const codigoFooter = (material.codigo || '').toString() || '—';
+    const cantidadFooter = (m && !m.__es_contenedor)
+      ? (m.__stock_total ?? m.cantidad ?? 1)
+      : null;
 
     const fotoUrl = material.foto_url ? String(material.foto_url) : '';
     const fotoBlock = (cfg.fotoPos === 'hide')
@@ -724,7 +837,7 @@
         return `
           <div class="fe-item">
             <span class="fe-label" style="color:${colorAcento};">${labelOf(f)}:</span><br>
-            <span style="display:inline-block;width:12px;height:12px;background:${hex};border:1px solid #94a3b8;border-radius:2px;margin-right:5px;"></span>
+            <span style="display:inline-block;width:12px;height:12px;background:${hex};border:1px solid slategray;border-radius:2px;margin-right:5px;"></span>
             ${escapeHtml(String(v))}
           </div>
         `;
@@ -796,7 +909,12 @@
         </div>
 
         ${hijosBlock}
-        <div class="fe-footer" style="border-top: 5px solid ${colorAcento}; color:${colorAcento};">${escapeHtml(codigoFooter)}</div>
+        <div class="fe-footer" style="border-top: 5px solid ${colorAcento}; color:${colorAcento};">
+          <div>${escapeHtml(codigoFooter)}</div>
+          ${(cantidadFooter !== null && cantidadFooter !== undefined)
+            ? `<div class="fe-cantidad-indicator" style="background:${colorAcento};">${escapeHtml(String(cantidadFooter))}</div>`
+            : ''}
+        </div>
       </div>
     `;
   }
@@ -810,7 +928,7 @@
 
     const material = m || {};
     const bodegaActual = (material.bodega_principal || material.bodega_secundaria || 'Bodega').toString();
-    const { colorAcento } = getGradienteYColor(bodegaActual, cfg.themeKey);
+    const { colorAcento } = getGradienteYColor(bodegaActual, state.ficha?.themeKey || 'AUTO');
 
     function renderEtiquetaDeItem(item) {
       const principalCfg = (cfg.principal || '').toString().toUpperCase();
@@ -838,32 +956,27 @@
         `;
 
       const qrBlock = '';
+      const qty = (item?.__cantidad ?? item?.__stock_total ?? item?.cantidad ?? 1);
 
       return `
-
         <div class="fe-etiq" style="border-color:${colorAcento}; width: 384px; position: relative;">
-
           <div class="fe-etiq-row" style="flex-direction:${cfg.fotoPos === 'right' ? 'row-reverse' : 'row'};">
             ${fotoBlock}
             <div class="fe-etiq-right">
               <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px;">
                 <div style="flex:1; min-width:0;">
-
-
                   <div class="fe-etiq-nombre">${escapeHtml(String(nombre))}</div>
                   <div class="fe-etiq-detalle">${escapeHtml(detalle)}</div>
                 </div>
                 ${qrBlock}
               </div>
               <div class="fe-etiq-footer" style="border-top-color:${colorAcento};">
-
-                <div class="fe-etiq-codigo" style="border-bottom-color:${colorAcento}; color:${colorAcento}; font-size: 18px; font-weight: bold;">${escapeHtml(String(codigo))}</div>
+                <div class="fe-etiq-codigo" style="border-bottom-color:${colorAcento} !important; color:${colorAcento} !important; font-size: 18px; font-weight: bold;">${escapeHtml(String(codigo))}</div>
+                <div class="fe-cantidad-indicator" style="background:${colorAcento};">${escapeHtml(String(qty))}</div>
               </div>
             </div>
           </div>
           <img class="fe-etiq-logo" src="./assets/logo.png" alt="Logo" style="position: absolute; top: 10px; right: 10px; width: 120px; height: auto; z-index: 10;" />
-        </div>
-
         </div>
       `;
     }
@@ -872,7 +985,7 @@
       const hijos = Array.isArray(state.hijos) ? state.hijos : [];
       if (!hijos.length) {
         printArea.innerHTML = `
-          <div style="padding: 10px; color:#334155; font-size: 13px;">
+          <div style="padding: 10px; color:darkslategray; font-size: 13px;">
             (Contenedor cargado sin hijos)
           </div>
         `;
@@ -906,7 +1019,6 @@
     const etiqPrincipal = document.getElementById('fe-etiq-principal');
     const etiqSec = document.getElementById('fe-etiq-secundario');
     const etiqFoto = document.getElementById('fe-etiq-foto-pos');
-    const etiqTheme = document.getElementById('fe-etiq-theme');
     const etiqCampos = document.getElementById('fe-etiq-campos');
 
     if (bodegaSelect) {
@@ -929,9 +1041,6 @@
     if (fichaTheme) {
       fichaTheme.innerHTML = THEMES.map(t => `<option value="${t.key}">${t.name}</option>`).join('');
     }
-    if (etiqTheme) {
-      etiqTheme.innerHTML = THEMES.map(t => `<option value="${t.key}">${t.name}</option>`).join('');
-    }
 
     fichaPrincipal.value = state.ficha.principal;
     fichaSec.value = state.ficha.secundario;
@@ -941,7 +1050,6 @@
     etiqPrincipal.value = state.etiq.principal;
     etiqSec.value = state.etiq.secundario;
     etiqFoto.value = state.etiq.fotoPos;
-    if (etiqTheme) etiqTheme.value = normalizeThemeKey(state.etiq.themeKey);
 
     renderFieldsList(fichaCampos, state.ficha.campos, 12);
     renderFieldsList(etiqCampos, state.etiq.campos, 3);
@@ -957,12 +1065,11 @@
       state.etiq.secundario = etiqSec.value;
       state.etiq.fotoPos = etiqFoto.value;
       state.etiq.campos = readFieldsList(etiqCampos).slice(0, 3);
-      state.etiq.themeKey = normalizeThemeKey(etiqTheme?.value || state.etiq.themeKey);
 
       renderAll();
     };
 
-    [fichaPrincipal, fichaSec, fichaFoto, fichaTheme, etiqPrincipal, etiqSec, etiqFoto, etiqTheme]
+    [fichaPrincipal, fichaSec, fichaFoto, fichaTheme, etiqPrincipal, etiqSec, etiqFoto]
       .filter(Boolean)
       .forEach(el => el.addEventListener('change', onChange));
     fichaCampos.addEventListener('change', onChange);
@@ -984,6 +1091,7 @@
 
     document.getElementById('fe-btn-limpiar').addEventListener('click', () => {
       state.material = null;
+      state.currentIndex = -1;
       document.getElementById('fe-status').textContent = `(sin material cargado) — Bodega: ${getActiveBodega().label}`;
       state.hijos = [];
       renderAll();
@@ -1042,54 +1150,51 @@
     });
 
 
-    document.getElementById('fe-btn-export-png')?.addEventListener('click', () => {
-      abrirModalPNG();
-    });
-
-    // Modal PNG
-    const modalPNG = document.getElementById('fe-modal-png');
-    const selectTipoPNG = document.getElementById('fe-png-select-tipo');
-    const selectCodigoPNG = document.getElementById('fe-png-select-codigo');
-    const btnModalPNGExport = document.getElementById('fe-modal-png-export');
-    const btnModalPNGCancel = document.getElementById('fe-modal-png-cancel');
-    const btnModalPNGX = document.getElementById('fe-modal-png-x');
-
-    function abrirModalPNG() {
-      if (!modalPNG || !selectCodigoPNG) return;
-      // Populate select with current material code
-      const currentMaterial = state.material;
-      if (currentMaterial && currentMaterial.codigo) {
-        selectCodigoPNG.innerHTML = `<option value="${escapeHtml(currentMaterial.codigo)}">${escapeHtml(currentMaterial.codigo)}</option>`;
-      } else {
-        selectCodigoPNG.innerHTML = '<option value="">No hay material cargado</option>';
-      }
-      modalPNG.style.display = 'flex';
-    }
-
-    function cerrarModalPNG() {
-      if (!modalPNG) return;
-      modalPNG.style.display = 'none';
-    }
-
-    btnModalPNGExport?.addEventListener('click', () => {
-      const selectedTipo = selectTipoPNG?.value || 'etiqueta';
-      const selectedCode = selectCodigoPNG?.value;
-      if (!selectedCode) {
-        alert('Selecciona un código válido.');
+    document.getElementById('fe-btn-export-ficha-png')?.addEventListener('click', async () => {
+      if (!state.material) {
+        alert('❌ Primero carga un material o contenedor.');
         return;
       }
-      exportarPNG(selectedTipo, selectedCode).catch(err => {
-        console.error(err);
-        alert('❌ Error exportando PNG: ' + (err.message || err));
-      });
-      cerrarModalPNG();
+      try {
+        await exportarPNG('ficha', state.material.codigo);
+        alert('✅ Ficha PNG exportada correctamente.');
+      } catch (err) {
+        alert('❌ Error al exportar ficha PNG: ' + (err.message || err));
+      }
     });
 
-    btnModalPNGCancel?.addEventListener('click', cerrarModalPNG);
-    btnModalPNGX?.addEventListener('click', cerrarModalPNG);
+    document.getElementById('fe-btn-export-etiq-png')?.addEventListener('click', async () => {
+      if (!state.material) {
+        alert('❌ Primero carga un material o contenedor.');
+        return;
+      }
+      try {
+        await exportarPNG('etiqueta', state.material.codigo);
+        alert('✅ Etiqueta PNG exportada correctamente.');
+      } catch (err) {
+        alert('❌ Error al exportar etiqueta PNG: ' + (err.message || err));
+      }
+    });
 
-    modalPNG?.addEventListener('click', (e) => {
-      if (e.target === modalPNG) cerrarModalPNG();
+    // Navigation buttons
+    document.getElementById('fe-btn-prev')?.addEventListener('click', () => {
+      if (state.allCodes.length === 0) {
+        loadAllCodes().then(() => {
+          if (state.currentIndex > 0) navigateToCode(state.currentIndex - 1);
+        });
+      } else {
+        if (state.currentIndex > 0) navigateToCode(state.currentIndex - 1);
+      }
+    });
+
+    document.getElementById('fe-btn-next')?.addEventListener('click', () => {
+      if (state.allCodes.length === 0) {
+        loadAllCodes().then(() => {
+          if (state.currentIndex < state.allCodes.length - 1) navigateToCode(state.currentIndex + 1);
+        });
+      } else {
+        if (state.currentIndex < state.allCodes.length - 1) navigateToCode(state.currentIndex + 1);
+      }
     });
 
   }
@@ -1118,7 +1223,14 @@
 
   async function exportarPDF() {
     if (!state.material) throw new Error('Primero carga un material o contenedor.');
-    if (!window.html2pdf) throw new Error('html2pdf no está disponible.');
+    if (!window.electronAPI || typeof window.electronAPI.renderHtmlToPdf !== 'function') {
+      throw new Error('PDF nativo de Electron no está disponible.');
+    }
+
+    // Mostrar modal de espera
+    document.getElementById('fe-modal-espera').style.display = 'flex';
+
+    try {
 
     const fichaEl = document.getElementById('fe-ficha-print-area');
     const etiqEl = document.getElementById('fe-etiq-print-area');
@@ -1128,65 +1240,60 @@
     const etiqHtml = (etiqEl.innerHTML || '').trim();
     if (!fichaHtml && !etiqHtml) throw new Error('La ficha/etiquetas están vacías (no hay nada que exportar).');
 
-    // Preferido en Electron: PDF nativo (evita PDFs en blanco de html2canvas)
-    if (window.electronAPI && typeof window.electronAPI.renderHtmlToPdf === 'function') {
-      const codigo = String(state.material.codigo || 'material');
-      const filename = `${codigo}-ficha-etiquetas.pdf`;
+    const codigo = String(state.material.codigo || 'material');
+    const filename = `${codigo}-ficha-etiquetas.pdf`;
 
-      // Tomar el src ABSOLUTO del logo tal cual está cargando bien en la UI
-      // (en export PDF, el HTML va en data URL y las rutas relativas suelen romperse).
-      const logoSrcAbs = (() => {
+    // Tomar el src ABSOLUTO del logo tal cual está cargando bien en la UI
+    // (en export PDF, el HTML va en data URL y las rutas relativas suelen romperse).
+    const logoSrcAbs = (() => {
+      try {
+        const img = document.querySelector('img.fe-logo') || document.querySelector('img.fe-etiq-logo');
+        const src = img && img.src ? String(img.src) : '';
+        return src;
+      } catch (_) {
+        return '';
+      }
+    })();
+
+    const normalizeLogoInHtml = (html) => {
+      if (!logoSrcAbs) return html;
+      const safe = logoSrcAbs.replace(/"/g, '&quot;');
+      return String(html)
+        .replaceAll('src="./assets/logo.png"', `src="${safe}"`)
+        .replaceAll("src='./assets/logo.png'", `src='${safe}'`)
+        .replaceAll('src="assets/logo.png"', `src="${safe}"`)
+        .replaceAll("src='assets/logo.png'", `src='${safe}'`);
+    };
+
+    const fichaHtmlFixed = normalizeLogoInHtml(fichaHtml);
+    const etiqHtmlFixed = normalizeLogoInHtml(etiqHtml);
+
+    const cssText = Array.from(document.querySelectorAll('style'))
+      .map(s => s.textContent || '')
+      .join('\n');
+
+    const baseHref = (() => {
+      try {
+        const href = String(window.location.href || '');
+        return new URL('../../../', href).href;
+      } catch (_) {
         try {
-          const img = document.querySelector('img.fe-logo') || document.querySelector('img.fe-etiq-logo');
-          const src = img && img.src ? String(img.src) : '';
-          return src;
-        } catch (_) {
+          const href = String(window.location.href || '');
+          return href.replace(/[^/]*$/, '');
+        } catch (_2) {
           return '';
         }
-      })();
+      }
+    })();
 
-      const normalizeLogoInHtml = (html) => {
-        if (!logoSrcAbs) return html;
-        const safe = logoSrcAbs.replace(/"/g, '&quot;');
-        return String(html)
-          .replaceAll('src="./assets/logo.png"', `src="${safe}"`)
-          .replaceAll("src='./assets/logo.png'", `src='${safe}'`)
-          .replaceAll('src="assets/logo.png"', `src="${safe}"`)
-          .replaceAll("src='assets/logo.png'", `src='${safe}'`);
-      };
-
-      const fichaHtmlFixed = normalizeLogoInHtml(fichaHtml);
-      const etiqHtmlFixed = normalizeLogoInHtml(etiqHtml);
-
-      const cssText = Array.from(document.querySelectorAll('style'))
-        .map(s => s.textContent || '')
-        .join('\n');
-
-      const baseHref = (() => {
-        try {
-          // Esta página vive en desktop/modules/bodega/universal/
-          // En cambio, los assets (logo) viven relativos a desktop/ (ej: ./assets/logo.png).
-          // Para el export PDF (data URL) forzamos el base a "desktop/" para que resuelva bien.
-          const href = String(window.location.href || '');
-          return new URL('../../../', href).href;
-        } catch (_) {
-          try {
-            const href = String(window.location.href || '');
-            return href.replace(/[^/]*$/, '');
-          } catch (_2) {
-            return '';
-          }
-        }
-      })();
-
-      const htmlDoc = `<!doctype html>
+    const htmlDoc = `<!doctype html>
 <html>
 <head>
   <meta charset="utf-8" />
   ${baseHref ? `<base href="${baseHref}">` : ''}
   <style>
     ${cssText}
-    html, body { margin: 0; padding: 0; background: #ffffff; }
+    html, body { margin: 0; padding: 0; background: white; }
 
     /* Override de impresión para export PDF multi-página:
        La app usa .fe-print-root fixed para impresión “por área”, pero eso rompe el flujo del PDF.
@@ -1206,87 +1313,16 @@
 </body>
 </html>`;
 
-      const res = await window.electronAPI.renderHtmlToPdf({ filename, html: htmlDoc, baseUrl: baseHref });
-      if (res && res.canceled) return;
-      if (res && res.filePath) {
-        alert('✅ PDF guardado: ' + res.filePath);
-        return;
-      }
-      // Si no devolvió nada útil, caemos al fallback html2pdf
+    const res = await window.electronAPI.renderHtmlToPdf({ filename, html: htmlDoc, baseUrl: baseHref });
+    if (res && res.canceled) return;
+    if (res && res.filePath) {
+      alert('✅ PDF guardado: ' + res.filePath);
+      return;
     }
-
-    const exportRoot = document.createElement('div');
-    // Nota: en Electron/html2canvas, si el nodo está MUY fuera de pantalla puede salir PDF en blanco.
-    // Lo dejamos en (0,0) pero invisible y sin interferir con la UI.
-    exportRoot.style.position = 'fixed';
-    exportRoot.style.left = '0';
-    exportRoot.style.top = '0';
-    exportRoot.style.zIndex = '-1';
-    exportRoot.style.opacity = '0.01';
-    exportRoot.style.pointerEvents = 'none';
-    exportRoot.style.width = '850px';
-    exportRoot.style.background = '#ffffff';
-    exportRoot.style.padding = '10px';
-
-    const fichaWrap = document.createElement('div');
-    fichaWrap.innerHTML = fichaHtml;
-    const breakEl = document.createElement('div');
-    breakEl.className = 'fe-pagebreak';
-    const etiqWrap = document.createElement('div');
-    etiqWrap.innerHTML = etiqHtml;
-
-    exportRoot.appendChild(fichaWrap);
-    exportRoot.appendChild(breakEl);
-    exportRoot.appendChild(etiqWrap);
-    document.body.appendChild(exportRoot);
-
-    await waitForImages(exportRoot);
-
-    const codigo = String(state.material.codigo || 'material');
-    const filename = `${codigo}-ficha-etiquetas.pdf`;
-
-    const opts = {
-      margin: [12, 12, 12, 12],
-      filename,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: exportRoot.scrollWidth || 850,
-        windowHeight: exportRoot.scrollHeight || 1100,
-      },
-      jsPDF: { unit: 'pt', format: 'letter', orientation: 'portrait' },
-      pagebreak: { mode: ['css', 'legacy'] }
-    };
-
-    try {
-      // En Electron, el flujo "download" puede no funcionar con file://.
-      // Si hay API expuesta por preload, guardamos vía diálogo nativo.
-      if (window.electronAPI && typeof window.electronAPI.savePdf === 'function') {
-        try {
-          const worker = window.html2pdf().set(opts).from(exportRoot);
-          const pdf = await worker.toPdf().get('pdf');
-          const arrayBuffer = pdf.output('arraybuffer');
-          const dataBase64 = arrayBufferToBase64(arrayBuffer);
-          const res = await window.electronAPI.savePdf({ filename, dataBase64 });
-          if (res && res.canceled) return;
-          if (res && res.filePath) {
-            alert('✅ PDF guardado: ' + res.filePath);
-            return;
-          }
-        } catch (err) {
-          console.warn('savePdf IPC falló, uso fallback html2pdf.save()', err);
-          // fallback abajo
-        }
-      }
-
-      await window.html2pdf().set(opts).from(exportRoot).save();
+    throw new Error('Error al generar el PDF');
     } finally {
-      exportRoot.remove();
+      // Ocultar modal de espera
+      document.getElementById('fe-modal-espera').style.display = 'none';
     }
   }
 
@@ -1316,7 +1352,7 @@
         scale: 2, // Alta resolución
         useCORS: true,
         allowTaint: true,
-        backgroundColor: '#ffffff'
+        backgroundColor: 'white'
       });
 
       // Convertir a blob y descargar
@@ -1344,7 +1380,7 @@
   async function cargarMaterial(codigo) {
     if (!supa) throw new Error('Supabase no está inicializado.');
 
-    const { catalogo, movimientos } = getActiveTables();
+    const { catalogo, movimientos, stock } = getActiveTables();
     const isConsumibles = (catalogo === 'catalogo_consumibles');
 
     // 1) Catálogo
@@ -1413,6 +1449,7 @@
     // Si NO es contenedor: deducir ubicación por RPC/último movimiento (comportamiento actual).
     let contenedor_nombre = '';
     let __contenedores_str = '';
+    let stockTotal = null;
     let hijos = [];
 
     if (isContenedor) {
@@ -1517,6 +1554,27 @@
         hijos = [];
       }
 
+      // Cargar stock para hijos
+      if (hijos.length > 0) {
+        try {
+          const stockMap = {};
+          for (const cod of hijosCodigos) {
+            const { data: movRows, error: err } = await supa
+              .from(movimientos)
+              .select('cantidad')
+              .eq('material_codigo', cod)
+              .eq('tipo_movimiento', 'INGRESO');
+            if (!err && movRows) {
+              const sum = movRows.reduce((s, r) => s + (parseFloat(r.cantidad) || 0), 0);
+              stockMap[cod] = sum;
+            }
+          }
+          hijos = hijos.map(h => ({ ...h, __cantidad: stockMap[h.codigo] || 0 }));
+        } catch (e) {
+          // si falla, dejar __cantidad como 0
+        }
+      }
+
       // Cantidad por hijo (por movimientos dentro de este contenedor)
       try {
         const contKey = computeContenedorKeys(data)[0] || '';
@@ -1587,11 +1645,30 @@
     else {
       // Soporta multi-lote
       try {
-        const { data: rows, error: rpcErr } = await supa
-          .rpc('inv2_stock_por_contenedor', { material_codigo_input: codigo });
-        if (rpcErr) throw rpcErr;
+        const { data: movRows, error: movErr } = await supa
+          .from(movimientos)
+          .select('ubicacion_nombre, cantidad, signo')
+          .eq('material_codigo', codigo)
+          .limit(8000);
+        if (movErr) throw movErr;
+
+        // Agrupar por ubicacion_nombre y sumar cantidad * signo (misma lógica que el contenedor)
+        const ubicaciones = {};
+        (movRows || []).forEach(row => {
+          const ubi = row.ubicacion_nombre || '';
+          const qty = Number(row?.cantidad ?? 0);
+          const sign = Number(row?.signo ?? 1);
+          const delta = (isFinite(qty) ? qty : 0) * (isFinite(sign) ? sign : 1);
+          ubicaciones[ubi] = (ubicaciones[ubi] || 0) + delta;
+        });
+        const rows = Object.entries(ubicaciones)
+          .map(([ubi, cant]) => ({ ubicacion_nombre: ubi, cantidad: cant }))
+          .filter(r => String(r.ubicacion_nombre || '').trim() !== '');
 
         __contenedores_str = buildContenedoresStr(rows);
+        stockTotal = (Array.isArray(rows) && rows.length)
+          ? rows.reduce((sum, r) => sum + r.cantidad, 0)
+          : null;
         if (Array.isArray(rows) && rows.length === 1) {
           contenedor_nombre = (rows[0]?.ubicacion_nombre || '').toString();
         } else if (Array.isArray(rows) && rows.length > 1) {
@@ -1620,6 +1697,7 @@
       __es_contenedor: isContenedor,
       contenedor_nombre,
       __contenedores_str,
+      __stock_total: stockTotal,
       __dimensiones_str: buildDimensionesStr(data),
 
       __estado_str: esHechizo ? 'Fabricación Local' : 'Original',
@@ -1627,9 +1705,11 @@
       __fecha_str: hoy
     };
     state.hijos = hijos;
+    state.currentIndex = state.allCodes.indexOf(codigo);
+    const positionStr = state.allCodes.length > 0 ? ` (${state.currentIndex + 1}/${state.allCodes.length})` : '';
     document.getElementById('fe-status').textContent = isContenedor
-      ? `✅ Contenedor cargado: ${data.nombre} (${data.codigo}) — Hijos: ${hijos.length}`
-      : `✅ Cargado: ${data.nombre} (${data.codigo})`;
+      ? `✅ Contenedor cargado: ${data.nombre} (${data.codigo})${positionStr} — Hijos: ${hijos.length}`
+      : `✅ Cargado: ${data.nombre} (${data.codigo})${positionStr}`;
     renderAll();
   }
 
@@ -1649,6 +1729,33 @@
     }, 250);
   }
 
+  async function loadAllCodes() {
+    if (!supa) return;
+    try {
+      const bodega = getActiveBodega();
+      const res = await supa
+        .from(bodega.catalogo)
+        .select('codigo')
+        .order('codigo', { ascending: true });
+      if (res.error) throw res.error;
+      state.allCodes = (res.data || []).map(row => row.codigo).filter(Boolean);
+    } catch (err) {
+      console.error('Error loading all codes:', err);
+      state.allCodes = [];
+    }
+  }
+
+  function navigateToCode(index) {
+    if (index < 0 || index >= state.allCodes.length) return;
+    const codigo = state.allCodes[index];
+    state.currentIndex = index;
+    document.getElementById('fe-codigo-buscar').value = codigo;
+    cargarMaterial(codigo).catch(err => {
+      console.error(err);
+      alert('❌ No se pudo cargar: ' + (err.message || err));
+    });
+  }
+
   // Init
   state.bodegaKey = loadBodegaKey();
   state.buscarTipo = loadBuscarTipo();
@@ -1657,6 +1764,7 @@
   wireUI();
   setActiveBodega(state.bodegaKey, { persist: false, clearMaterial: true });
   renderAll();
+  loadAllCodes();
 
 })();
 </script>

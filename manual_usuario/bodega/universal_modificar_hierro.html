@@ -1,0 +1,559 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario - Modificar Material de Hierro</title>
+    <style>
+        /* c:/Users/BAYAR/absolute/desktop/manual_usuario/styles/manual.css */
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            background-color: #0f172a; /* slate-900 */
+            color: #cbd5e1; /* slate-300 */
+        }
+
+        header {
+            background-color: #1e293b; /* slate-800 */
+            color: #e2e8f0; /* slate-200 */
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #334155; /* slate-700 */
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.25rem;
+            font-weight: 800;
+        }
+
+        header p {
+            margin: 0.25rem 0 0;
+            font-size: 1rem;
+            color: #94a3b8; /* slate-400 */
+        }
+
+        nav {
+            background-color: rgba(30, 41, 59, 0.5);
+            padding: 1rem 2rem;
+            text-align: center;
+            border-bottom: 1px solid #334155; /* slate-700 */
+        }
+
+        nav a {
+            color: #e2e8f0; /* slate-200 */
+            text-decoration: none;
+            margin: 0 1rem;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+
+        nav a:hover {
+            background-color: #475569; /* slate-600 */
+        }
+
+        main {
+            padding: 2rem;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        section {
+            background-color: #1e293b; /* slate-800 */
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid #334155; /* slate-700 */
+            margin-bottom: 2rem;
+        }
+
+        section h2 {
+            font-size: 1.75rem;
+            color: #f1f5f9; /* slate-100 */
+            margin-top: 0;
+            border-bottom: 2px solid #475569; /* slate-600 */
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        section h3 {
+            font-size: 1.4rem;
+            color: #e2e8f0; /* slate-200 */
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        p,
+        li {
+            color: #cbd5e1; /* slate-300 */
+            font-size: 1rem;
+        }
+
+        ul,
+        ol {
+            padding-left: 1.5rem;
+        }
+
+        ul li,
+        ol li {
+            margin-bottom: 0.75rem;
+        }
+
+        code {
+            background-color: #334155; /* slate-700 */
+            color: #f1f5f9; /* slate-100 */
+            padding: 0.2em 0.4em;
+            margin: 0;
+            font-size: 85%;
+            border-radius: 6px;
+            font-family: "Fira Code", "Courier New", monospace;
+        }
+
+        .description {
+            font-size: 1.1rem;
+            color: #94a3b8; /* slate-400 */
+            margin-bottom: 2rem;
+            border-left: 4px solid #6366f1; /* indigo-500 */
+            padding-left: 1rem;
+        }
+
+        .feature-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .feature-gallery figure {
+            margin: 0;
+            background-color: #0f172a; /* slate-900 */
+            border: 1px solid #334155; /* slate-700 */
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .feature-gallery img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .feature-gallery figcaption {
+            padding: 1rem;
+            font-size: 0.9rem;
+            color: #94a3b8; /* slate-400 */
+            text-align: center;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            color: #64748b; /* slate-500 */
+            border-top: 1px solid #334155; /* slate-700 */
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Módulo de Bodega: Modificar Material de Hierro</h1>
+    </header>
+    <nav>
+        <a href="../index.html">Volver al Índice</a>
+    </nav>
+    <main>
+        <section>
+            <h2>Modificar Material de Hierro</h2>
+            <p>Esta interfaz permite editar tanto contenedores como materiales de hierro existentes. Es una herramienta especializada para el mantenimiento de estructuras metálicas, perfiles y equipos de construcción, permitiendo actualizar información tóncnica crítica sin afectar movimientos históricos.</p>
+            <div style="background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin: 20px 0; font-family: 'Fira Code', 'Courier New', monospace; font-size: 12px; line-height: 1.4; color: #cbd5e1;">
+                <div style="display: flex; gap: 16px; height: 700px;">
+                    <!-- Panel Lateral Izquierdo -->
+                    <div style="width: 340px; background: rgba(20, 30, 60, 0.45); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; padding: 12px; overflow: auto;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px;">
+                            <div style="font-weight: 800; color: #cbd5e1;">Modificar</div>
+                            <div style="color: #94a3b8; font-size: 12px;">Hierros</div>
+                        </div>
+                        
+                        <!-- Secundaria -->
+                        <div style="border-top: 1px solid rgba(148,163,184,0.15); padding-top: 10px;">
+                            <div style="font-weight: 700; color: #cbd5e1;">Secundaria</div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px;">
+                                <button style="padding: 6px 10px; background: rgba(2,6,23,0.3); color: #cbd5e1; border: 1px solid rgba(148,163,184,0.2); border-radius: 6px;">Estructuras</button>
+                                <button style="padding: 6px 10px; background: #6366f1; color: white; border: none; border-radius: 6px;">Piezas</button>
+                                <button style="padding: 6px 10px; background: rgba(2,6,23,0.3); color: #cbd5e1; border: 1px solid rgba(148,163,184,0.2); border-radius: 6px;">Tubos</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Contenedor -->
+                        <div style="border-top: 1px solid rgba(148,163,184,0.15); padding-top: 10px; margin-top: 10px;">
+                            <div style="font-weight: 700; color: #cbd5e1;">Contenedor</div>
+                            <div style="color: #94a3b8; font-size: 12px; line-height: 1.3; margin-top: 6px;">
+                                Selecciona un contenedor para editar su identificación (Nombre Base + Número), su tipo y su estado (cerrado). Tambiónn puedes mover/sacar materiales.
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
+                                <button style="padding: 8px 12px; background: rgba(2,6,23,0.3); color: #cbd5e1; border: 1px solid rgba(148,163,184,0.2); border-radius: 6px; text-align: left;">Lote 01 - Perfiles C</button>
+                                <button style="padding: 8px 12px; background: #6366f1; color: white; border: none; border-radius: 6px; text-align: left;">Burra 02 - Tubos</button>
+                                <button style="padding: 8px 12px; background: rgba(2,6,23,0.3); color: #cbd5e1; border: 1px solid rgba(148,163,184,0.2); border-radius: 6px; text-align: left;">Andamio 03 - Vigas</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Panel Principal Derecho -->
+                    <div style="flex: 1; min-width: 520px; overflow: auto;">
+                        <div style="margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <h1 style="margin: 0; color: #f1f5f9; font-size: 24px; font-weight: 800;">Modificar (Hierros)</h1>
+                            </div>
+                            <div style="color: #94a3b8; font-size: 12px;">No altera movimientos históricos</div>
+                        </div>
+                        
+                        <!-- Resumen de Selección -->
+                        <div style="margin-bottom: 12px; color: #cbd5e1;">
+                            <strong>Selección:</strong> S: Piezas > Cont: Burra 02 - Tubos
+                        </div>
+                        
+                        <!-- Formulario -->
+                        <div style="display: flex; flex-direction: column; gap: 14px; max-width: 980px;">
+                            <!-- Editar Contenedor -->
+                            <div style="background: rgba(15,23,42,0.22); border: 1px solid rgba(148,163,184,0.15); border-radius: 10px; padding: 10px;">
+                                <div style="font-weight: 800; color: #cbd5e1; margin-bottom: 10px;">Editar contenedor</div>
+                                
+                                <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;">
+                                    <div style="width: 180px;">
+                                        <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #cbd5e1;">Tipo</label>
+                                        <select style="width: 100%; padding: 8px; border: 1px solid rgba(148,163,184,0.2); border-radius: 6px; background: rgba(2,6,23,0.3); color: #cbd5e1;">
+                                            <option value="Lote">Lote</option>
+                                            <option value="Burra" selected>Burra</option>
+                                            <option value="Andamio">Andamio</option>
+                                            <option value="Cuarto">Cuarto</option>
+                                            <option value="Patio">Patio</option>
+                                            <option value="Balde">Balde</option>
+                                            <option value="Otro">Otro</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div style="flex: 1; min-width: 260px;">
+                                        <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #cbd5e1;">Nombre Base</label>
+                                        <input style="width: 100%; padding: 8px; border: 1px solid rgba(148,163,184,0.2); border-radius: 6px; background: rgba(2,6,23,0.3); color: #cbd5e1;" placeholder="Ej: Lote / Burra / Cuarto / Balde" value="Tubos" />
+                                    </div>
+                                    
+                                    <div style="width: 140px;">
+                                        <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #cbd5e1;">Número</label>
+                                        <input style="width: 100%; padding: 8px; border: 1px solid rgba(148,163,184,0.2); border-radius: 6px; background: rgba(2,6,23,0.3); color: #cbd5e1;" placeholder="01" value="02" />
+                                    </div>
+                                    
+                                    <div style="width: 260px;">
+                                        <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #cbd5e1;">Contenedor (texto visible)</label>
+                                        <input style="width: 100%; padding: 8px; border: 1px solid rgba(148,163,184,0.2); border-radius: 6px; background: #11182755; color: #94a3b8;" value="Burra 02 - Tubos" readonly />
+                                    </div>
+                                    
+                                    <label style="display: inline-flex; gap: 10px; align-items: center; padding: 8px 10px; border: 1px solid rgba(148,163,184,0.18); border-radius: 10px; background: rgba(2,6,23,0.22);">
+                                        <input type="checkbox" />
+                                        <span style="font-weight: 700; color: #cbd5e1;">Contenedor cerrado</span>
+                                        <span style="color: #94a3b8; font-size: 12px;">(bloquea altas)</span>
+                                    </label>
+                                    
+                                    <button style="padding: 10px 14px; background: #059669; color: white; border: none; border-radius: 6px;">Guardar cambios</button>
+                                </div>
+                                <div style="margin-top: 8px; color: #94a3b8; font-size: 12px;">Nota: si cambias el nombre visible del contenedor, tambiónn se actualizarán los materiales que estónn dentro (campo "contenedor").</div>
+                            </div>
+                            
+                            <!-- Materiales dentro del Contenedor -->
+                            <div style="background: rgba(15,23,42,0.22); border: 1px solid rgba(148,163,184,0.15); border-radius: 10px; padding: 10px;">
+                                <div style="display: flex; justify-content: space-between; gap: 10px; align-items: center; margin-bottom: 10px;">
+                                    <div style="font-weight: 800; color: #cbd5e1;">Materiales dentro del contenedor</div>
+                                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                                        <select style="width: 240px; padding: 6px; border: 1px solid rgba(148,163,184,0.2); border-radius: 6px; background: rgba(2,6,23,0.3); color: #cbd5e1;">
+                                            <option>Mover a contenedor...</option>
+                                            <option>Lote 01 - Perfiles C</option>
+                                            <option>Andamio 03 - Vigas</option>
+                                        </select>
+                                        <button style="padding: 10px 14px; background: #6366f1; color: white; border: none; border-radius: 6px;">Mover a...</button>
+                                        <button style="padding: 10px 14px; background: #059669; color: white; border: none; border-radius: 6px;">Sacar del contenedor</button>
+                                    </div>
+                                </div>
+                                
+                                <div style="color: #94a3b8; font-size: 12px; line-height: 1.35; margin-bottom: 10px;">
+                                    Mover/Sacar solo actualiza el catálogo (campo "contenedor"). Los movimientos quedan intactos (histórico).
+                                </div>
+                                
+                                <!-- Lista de Materiales -->
+                                <div style="display: flex; flex-direction: column; gap: 6px;">
+                                    <div style="display: flex; align-items: center; gap: 10px; padding: 8px; background: rgba(2,6,23,0.3); border: 1px solid rgba(148,163,184,0.2); border-radius: 6px;">
+                                        <input type="checkbox" />
+                                        <div style="flex: 1;">
+                                            <div style="font-weight: 700; color: #cbd5e1;">TUB-001</div>
+                                            <div style="color: #94a3b8; font-size: 12px;">Tubo rectangular 2x3"</div>
+                                        </div>
+                                        <div style="color: #94a3b8; font-size: 12px;">Cant: 15</div>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 10px; padding: 8px; background: #ec4899; border: 1px solid rgba(236,72,153,0.9); border-radius: 6px; outline: 2px solid rgba(255,255,255,0.85);">
+                                        <input type="checkbox" checked />
+                                        <div style="flex: 1;">
+                                            <div style="font-weight: 700; color: #cbd5e1;">TUB-002</div>
+                                            <div style="color: #94a3b8; font-size: 12px;">Tubo redondo 1.5"</div>
+                                        </div>
+                                        <div style="color: #94a3b8; font-size: 12px;">Cant: 8</div>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 10px; padding: 8px; background: rgba(2,6,23,0.3); border: 1px solid rgba(148,163,184,0.2); border-radius: 6px;">
+                                        <input type="checkbox" />
+                                        <div style="flex: 1;">
+                                            <div style="font-weight: 700; color: #cbd5e1;">TUB-003</div>
+                                            <div style="color: #94a3b8; font-size: 12px;">Tubo cuadrado 2x2"</div>
+                                        </div>
+                                        <div style="color: #94a3b8; font-size: 12px;">Cant: 12</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Editar Material Seleccionado -->
+                            <div style="background: rgba(15,23,42,0.22); border: 1px solid rgba(148,163,184,0.15); border-radius: 10px; padding: 10px;">
+                                <div style="font-weight: 800; color: #cbd5e1; margin-bottom: 10px;">Editar material seleccionado: TUB-002</div>
+                                
+                                <!-- Primera fila -->
+                                <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;">
+                                    <div style="width: 240px;">
+                                        <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #cbd5e1;">Código (solo lectura)</label>
+                                        <input style="width: 100%; padding: 8px; border: 1px solid rgba(148,163,184,0.2); border-radius: 6px; background: #11182755; color: #94a3b8;" value="TUB-002" readonly />
+                                    </div>
+                                    
+                                    <div style="flex: 1; min-width: 260px;">
+                                        <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #cbd5e1;">Nombre</label>
+                                        <input style="width: 100%; padding: 8px; border: 1px solid rgba(148,163,184,0.2); border-radius: 6px; background: rgba(2,6,23,0.3); color: #cbd5e1;" placeholder="Ej: Perfil C" value="Tubo redondo 1.5&quot;" />
+                                    </div>
+                                    
+                                    <div style="width: 220px;">
+                                        <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #cbd5e1;">Abreviación</label>
+                                        <input style="width: 100%; padding: 8px; border: 1px solid rgba(148,163,184,0.2); border-radius: 6px; background: rgba(2,6,23,0.3); color: #cbd5e1;" placeholder="Ej: PRFC" maxlength="8" value="TUBR15" />
+                                    </div>
+                                    
+                                    <div style="flex: 1; min-width: 240px;">
+                                        <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #cbd5e1;">Tipo de Uso</label>
+                                        <input style="width: 100%; padding: 8px; border: 1px solid rgba(148,163,184,0.2); border-radius: 6px; background: rgba(2,6,23,0.3); color: #cbd5e1;" placeholder="Ej: Estructura" value="Estructura" />
+                                    </div>
+                                    
+                                    <div style="flex: 1; min-width: 240px;">
+                                        <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #cbd5e1;">Tipo de Material</label>
+                                        <input style="width: 100%; padding: 8px; border: 1px solid rgba(148,163,184,0.2); border-radius: 6px; background: rgba(2,6,23,0.3); color: #cbd5e1;" placeholder="Ej: Acero" value="Acero al carbono" />
+                                    </div>
+                                    
+                                    <div style="width: 220px;">
+                                        <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #cbd5e1;">Marca</label>
+                                        <input style="width: 100%; padding: 8px; border: 1px solid rgba(148,163,184,0.2); border-radius: 6px; background: rgba(2,6,23,0.3); color: #cbd5e1;" value="Tubos del Sur" />
+                                    </div>
+                                    
+                                    <div style="width: 220px;">
+                                        <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #cbd5e1;">Modelo</label>
+                                        <input style="width: 100%; padding: 8px; border: 1px solid rgba(148,163,184,0.2); border-radius: 6px; background: rgba(2,6,23,0.3); color: #cbd5e1;" value="TR-15" />
+                                    </div>
+                                </div>
+                                
+                                <!-- Segunda fila: Dimensiones -->
+                                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px;">
+                                    <div style="width: 180px;">
+                                        <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #cbd5e1;">Unidad</label>
+                                        <input style="width: 100%; padding: 8px; border: 1px solid rgba(148,163,184,0.2); border-radius: 6px; background: #11182755; color: #94a3b8;" value="CMT" readonly />
+                                    </div>
+                                    <div style="width: 160px;">
+                                        <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #cbd5e1;">Ancho</label>
+                                        <input type="number" step="any" style="width: 100%; padding: 8px; border: 1px solid rgba(148,163,184,0.2); border-radius: 6px; background: rgba(2,6,23,0.3); color: #cbd5e1;" value="3.81" />
+                                    </div>
+                                    <div style="width: 160px;">
+                                        <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #cbd5e1;">Largo</label>
+                                        <input type="number" step="any" style="width: 100%; padding: 8px; border: 1px solid rgba(148,163,184,0.2); border-radius: 6px; background: rgba(2,6,23,0.3); color: #cbd5e1;" value="600" />
+                                    </div>
+                                    <div style="width: 160px;">
+                                        <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #cbd5e1;">Grosor</label>
+                                        <input type="number" step="any" style="width: 100%; padding: 8px; border: 1px solid rgba(148,163,184,0.2); border-radius: 6px; background: rgba(2,6,23,0.3); color: #cbd5e1;" value="0.2" />
+                                    </div>
+                                    <div style="width: 160px;">
+                                        <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #cbd5e1;">Peso</label>
+                                        <input type="number" step="any" style="width: 100%; padding: 8px; border: 1px solid rgba(148,163,184,0.2); border-radius: 6px; background: rgba(2,6,23,0.3); color: #cbd5e1;" value="2.5" />
+                                    </div>
+                                    <div style="width: 180px;">
+                                        <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #cbd5e1;">Precio Unitario</label>
+                                        <input type="number" step="any" style="width: 100%; padding: 8px; border: 1px solid rgba(148,163,184,0.2); border-radius: 6px; background: rgba(2,6,23,0.3); color: #cbd5e1;" value="15.50" />
+                                    </div>
+                                </div>
+                                
+                                <!-- Color -->
+                                <div style="margin-top: 12px;">
+                                    <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #cbd5e1;">Color</label>
+                                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                        <div style="width: 30px; height: 30px; border-radius: 50%; background: #64748b; border: 2px solid #cbd5e1;"></div>
+                                        <div style="width: 30px; height: 30px; border-radius: 50%; background: #374151;"></div>
+                                        <div style="width: 30px; height: 30px; border-radius: 50%; background: #1f2937;"></div>
+                                        <div style="width: 30px; height: 30px; border-radius: 50%; background: #111827;"></div>
+                                        <span style="color: #94a3b8; align-self: center;">[Paleta de colores completa]</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Foto -->
+                                <div style="margin-top: 12px;">
+                                    <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #cbd5e1;">Foto (opcional)</label>
+                                    <div style="display: flex; align-items: flex-start; gap: 12px;">
+                                        <div style="width: 110px; height: 110px; border: 2px dashed rgba(148,163,184,0.35); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 14px; background: rgba(15,23,42,0.35);">
+                                            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiMxMTE4MjciLz4KPHBhdGggZD0iTTIwIDIwQzIyLjc2MTQgMjAgMjUgMTcuNzYxNCAyNSAxNUMyNSAyMi4yMzg2IDIyLjIzODYgMjUgMjAgMjVDMTcuNzYxNCAyNSAxNSAyMi4yMzg2IDEUgMTUuNzYxNCAyMCAxNSAyMi4yMzg2IDE1IDI1QzIyLjIzODYgMTUgMjUgMTcuNzYxNCAyNSAyMFoiIGZpbGw9IiM5NGEzYjgiLz4KPC9zdmc+" style="width: 40px; height: 40px; opacity: 0.5;" />
+                                        </div>
+                                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                                            <button style="padding: 8px 14px; background: #10b981; color: white; border: none; border-radius: 6px;">Seleccionar Foto</button>
+                                            <small style="color: #94a3b8;">Se sube a Supabase Storage si está configurado.</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Notas -->
+                                <div style="margin-top: 12px;">
+                                    <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #cbd5e1;">Notas</label>
+                                    <textarea style="width: 100%; padding: 8px; border: 1px solid rgba(148,163,184,0.2); border-radius: 6px; background: rgba(2,6,23,0.3); color: #cbd5e1; min-height: 80px; resize: vertical;">Tubo redondo de acero al carbono para estructuras metálicas. Diámetro nominal 1.5".</textarea>
+                                </div>
+                                
+                                <!-- Botones -->
+                                <div style="display: flex; gap: 10px; margin-top: 12px;">
+                                    <button style="padding: 10px 14px; background: #059669; color: white; border: none; border-radius: 6px;">Guardar cambios</button>
+                                    <div style="color: #94a3b8; padding-top: 10px;">Material actualizado correctamente</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Características Principales</h3>
+            <ul>
+                <li><strong>Edición de Contenedores:</strong> Modificar tipo, nombre base, número y estado de contenedores.</li>
+                <li><strong>Edición de Materiales:</strong> Actualizar propiedades tóncnicas de materiales de hierro.</li>
+                <li><strong>Dimensiones Críticas:</strong> Control preciso de ancho, largo, grosor y peso.</li>
+                <li><strong>Reubicación:</strong> Mover materiales entre contenedores o extraerlos.</li>
+                <li><strong>Unidad Fija:</strong> Centímetros como unidad de medida estándar para hierros.</li>
+                <li><strong>Histórico Preservado:</strong> Los cambios no afectan movimientos históricos.</li>
+            </ul>
+
+            <h3>Flujo de Trabajo</h3>
+            <ol>
+                <li><strong>Selección de Ubicación:</strong>
+                    <ul>
+                        <li>Seleccionar una bodega secundaria de la lista disponible.</li>
+                        <li>Elegir un contenedor específico para editar.</li>
+                    </ul>
+                </li>
+                <li><strong>Edición del Contenedor:</strong>
+                    <ul>
+                        <li>Seleccionar el tipo de contenedor (Lote, Burra, Andamio, Cuarto, Patio, Balde, Otro).</li>
+                        <li>Modificar el nombre base (ej. "Lote", "Burra", "Cuarto").</li>
+                        <li>Ajustar el número identificador (ej. "01", "02").</li>
+                        <li>Marcar/desmarcar como "Contenedor cerrado" para bloquear nuevas altas.</li>
+                        <li>Guardar los cambios del contenedor.</li>
+                    </ul>
+                </li>
+                <li><strong>Selección del Material:</strong>
+                    <ul>
+                        <li>Revisar la lista de materiales en el contenedor seleccionado.</li>
+                        <li>Hacer clic en un material para cargarlo en el formulario de edición.</li>
+                    </ul>
+                </li>
+                <li><strong>Edición de Propiedades Tóncnicas:</strong>
+                    <ul>
+                        <li>Modificar el nombre del material (ej. "Perfil C", "Tubo redondo").</li>
+                        <li>Actualizar la abreviación para códigos (máximo 8 caracteres).</li>
+                        <li>Cambiar tipos de uso (ej. "Estructura", "Montaje") y material (ej. "Acero", "Aluminio").</li>
+                        <li>Actualizar marca y modelo.</li>
+                        <li>Ajustar dimensiones: ancho, largo, grosor (en centímetros).</li>
+                        <li>Modificar peso en kilogramos y precio unitario.</li>
+                        <li>Seleccionar color representativo.</li>
+                        <li>Agregar o actualizar notas tóncnicas.</li>
+                    </ul>
+                </li>
+                <li><strong>Gestión de Fotos:</strong>
+                    <ul>
+                        <li>Seleccionar una nueva foto para reemplazar la existente.</li>
+                        <li>Visualizar la imagen actual en el preview.</li>
+                        <li>Las fotos se suben automáticamente a Supabase Storage.</li>
+                    </ul>
+                </li>
+                <li><strong>Guardar Cambios:</strong>
+                    <ul>
+                        <li>Guardar las modificaciones del material seleccionado.</li>
+                        <li>El código único permanece inalterable.</li>
+                    </ul>
+                </li>
+                <li><strong>Reubicación (Opcional):</strong>
+                    <ul>
+                        <li>Seleccionar materiales en la lista.</li>
+                        <li>Elegir contenedor destino.</li>
+                        <li>Utilizar "Mover a..." para reubicar o "Sacar del contenedor" para extraer.</li>
+                    </ul>
+                </li>
+            </ol>
+
+            <h3>Campos Específicos para Hierros</h3>
+            <h4>Contenedor</h4>
+            <ul>
+                <li><strong>Tipo:</strong> Lote, Burra, Andamio, Cuarto, Patio, Balde, Otro.</li>
+                <li><strong>Nombre Base:</strong> Identificador base del contenedor.</li>
+                <li><strong>Número:</strong> Identificador numónrico (01, 02, etc.).</li>
+                <li><strong>Contenedor (Texto Visible):</strong> Nombre completo generado automáticamente.</li>
+                <li><strong>Estado Cerrado:</strong> Bloquea la posibilidad de agregar nuevos materiales.</li>
+            </ul>
+
+            <h4>Material</h4>
+            <ul>
+                <li><strong>Unidad:</strong> Fija en centímetros (CMT) para mediciones precisas.</li>
+                <li><strong>Dimensiones:</strong> Ancho, Largo, Grosor - medidas críticas para estructuras.</li>
+                <li><strong>Peso:</strong> Peso en kilogramos - esencial para cálculos de carga.</li>
+                <li><strong>Precio Unitario:</strong> Costo por unidad del material.</li>
+                <li><strong>Color:</strong> Identificación visual del material.</li>
+                <li><strong>Notas:</strong> Información tóncnica adicional o especificaciones.</li>
+            </ul>
+
+            <h3>Consideraciones Tóncnicas</h3>
+            <ul>
+                <li><strong>Dimensiones Críticas:</strong> Ancho, largo y grosor son fundamentales para el diseño estructural.</li>
+                <li><strong>Peso Importante:</strong> El peso en kg es crucial para cálculos de resistencia y transporte.</li>
+                <li><strong>Unidad Estandarizada:</strong> Centímetros como medida estándar para mayor precisión.</li>
+                <li><strong>Códigos Inalterables:</strong> Los códigos únicos de materiales no pueden modificarse.</li>
+                <li><strong>Actualización en Cascada:</strong> Cambiar el nombre del contenedor actualiza automáticamente los materiales contenidos.</li>
+            </ul>
+
+            <h3>Operaciones de Reubicación</h3>
+            <ul>
+                <li><strong>Mover entre Contenedores:</strong> Reubica materiales dentro de la misma secundaria.</li>
+                <li><strong>Sacar del Contenedor:</strong> Remueve materiales sin asignar nuevo destino.</li>
+            </ul>
+            <p><strong>Nota:</strong> Estas operaciones solo actualizan el catálogo, manteniendo intacto el histórico de movimientos.</p>
+
+            <h3>Casos de Uso Comunes</h3>
+            <ul>
+                <li><strong>Corrección de Dimensiones:</strong> Actualizar medidas erróneas de perfiles o tubos.</li>
+                <li><strong>Actualización de Precios:</strong> Modificar costos por cambios en proveedores.</li>
+                <li><strong>Reclasificación:</strong> Cambiar tipos de uso o material por mejor categorización.</li>
+                <li><strong>Mantenimiento de Contenedores:</strong> Actualizar nombres o estados de contenedores.</li>
+                <li><strong>Control de Inventario:</strong> Cerrar contenedores completos para evitar modificaciones.</li>
+                <li><strong>Reorganización:</strong> Mover materiales por cambios en el layout de almacenamiento.</li>
+            </ul>
+
+            <h3>Limitaciones</h3>
+            <ul>
+                <li>La unidad de medida está fija en centímetros.</li>
+                <li>No se pueden modificar los códigos únicos de los materiales.</li>
+                <li>Los cambios solo afectan al catálogo, no a movimientos históricos.</li>
+                <li>La reubicación solo funciona dentro de la misma bodega principal.</li>
+            </ul>
+
+            <h3>Importancia de la Precisión</h3>
+            <p>Para materiales de hierro, la precisión en dimensiones y peso es crítica porque:</p>
+            <ul>
+                <li>Afecta los cálculos estructurales y de resistencia.</li>
+                <li>Determina la capacidad de carga de estructuras.</li>
+                <li>Influencia los costos de transporte y manejo.</li>
+                <li>Es esencial para presupuestos y cotizaciones.</li>
+            </ul>
+        </section>
+    </main>
+</body>
+</html>
+

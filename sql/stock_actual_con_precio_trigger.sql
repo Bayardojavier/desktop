@@ -3,6 +3,22 @@
 
 create extension if not exists pgcrypto;
 
+-- Si existe una vista con el mismo nombre, eliminarla para crear la tabla
+-- (No usar DROP VIEW IF EXISTS directo porque falla si el objeto es una TABLA)
+DO $$
+begin
+  if exists (
+    select 1
+    from pg_class c
+    join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'public'
+      and c.relname = 'stock_actual_con_precio'
+      and c.relkind in ('v','m')
+  ) then
+    execute 'drop view if exists public.stock_actual_con_precio cascade';
+  end if;
+end $$;
+
 -- Tabla cache (si ya existe, solo asegura columnas/PK)
 create table if not exists public.stock_actual_con_precio (
   material_codigo text not null,
@@ -94,30 +110,79 @@ returns trigger
 language plpgsql
 as $$
 declare
+  j jsonb;
   v_codigo text;
+  v_nombre text;
   v_bodega text;
+  v_bodega_missing boolean;
   v_bodega2 text;
+  v_bodega2_missing boolean;
   v_qty numeric;
   v_signo numeric;
+  v_signo_txt text;
   v_delta numeric;
   v_precio numeric;
 begin
-  v_codigo := nullif(trim(new.material_codigo), '');
+  j := to_jsonb(new);
+
+  v_codigo := nullif(trim(coalesce(j->>'material_codigo','')), '');
   if v_codigo is null then
     return new;
   end if;
 
-  v_bodega := coalesce(nullif(trim(new.bodega_principal), ''), 'Principal');
-  v_bodega2 := coalesce(nullif(trim(new.bodega_secundaria), ''), 'General');
-  v_qty := coalesce(new.cantidad, 0);
-  v_signo := coalesce(new.signo, 1);
+  v_nombre := nullif(trim(coalesce(j->>'material_nombre','')), '');
+
+  v_bodega_missing := (nullif(trim(coalesce(j->>'bodega_principal','')), '') is null);
+  v_bodega2_missing := (nullif(trim(coalesce(j->>'bodega_secundaria','')), '') is null);
+
+  v_bodega := coalesce(nullif(trim(coalesce(j->>'bodega_principal','')), ''), 'Principal');
+  v_bodega2 := coalesce(nullif(trim(coalesce(j->>'bodega_secundaria','')), ''), 'General');
+
+  -- Si el movimiento no trae bodega_principal (histórico o inserciones antiguas),
+  -- inferir una bodega coherente según la tabla origen del trigger.
+  if v_bodega_missing then
+    if TG_TABLE_NAME = 'movimientos_bodega_hierros' then
+      v_bodega := 'Hierros';
+    elsif TG_TABLE_NAME = 'movimientos_bodega_audiovisual' then
+      v_bodega := 'Audiovisual';
+    elsif TG_TABLE_NAME = 'movimientos_bodega_consumibles' then
+      v_bodega := 'Consumibles';
+    end if;
+  end if;
+
+  begin
+    v_qty := coalesce(nullif(j->>'cantidad','')::numeric, 0);
+  exception when others then
+    v_qty := 0;
+  end;
+
+  v_signo_txt := nullif(trim(coalesce(j->>'signo','')), '');
+  if v_signo_txt is null then
+    v_signo := 1;
+  elsif v_signo_txt in ('-','-1') then
+    v_signo := -1;
+  elsif v_signo_txt in ('+','1') then
+    v_signo := 1;
+  else
+    begin
+      v_signo := v_signo_txt::numeric;
+    exception when others then
+      v_signo := 1;
+    end;
+  end if;
+
   v_delta := v_qty * v_signo;
-  v_precio := coalesce(new.precio_unitario, 0);
+  -- Aceptar tanto 'precio_unitario' como 'precio' sin romper si la columna no existe
+  begin
+    v_precio := coalesce(nullif(j->>'precio_unitario','')::numeric, nullif(j->>'precio','')::numeric, 0);
+  exception when others then
+    v_precio := 0;
+  end;
 
   insert into public.stock_actual_con_precio (material_codigo, material_nombre, bodega_principal, bodega_secundaria, existencia, precio_promedio, updated_at)
   values (
     v_codigo,
-    nullif(trim(new.material_nombre), ''),
+    v_nombre,
     v_bodega,
     v_bodega2,
     greatest(0, v_delta),
@@ -145,45 +210,74 @@ begin
 end;
 $$;
 
--- Trigger en movimientos_bodega
--- Nota: requiere que exista public.movimientos_bodega con columnas usadas (material_codigo, material_nombre, bodega_principal, cantidad, signo, precio_unitario)
+-- Crear triggers para tablas de movimientos (por bodega y genérica) con filtro por estado si existe
 DO $$
+declare
+  tname text;
+  tables_to_check text[] := array[
+    'movimientos_bodega',
+    'movimientos_bodega_hierros',
+    'movimientos_bodega_audiovisual',
+    'movimientos_bodega_consumibles'
+  ];
+  has_estado boolean;
 begin
-  if exists (
-    select 1
-    from pg_class c
-    join pg_namespace n on n.oid = c.relnamespace
-    where n.nspname = 'public'
-      and c.relname = 'movimientos_bodega'
-      and c.relkind = 'r'
-  ) then
-    -- Asegurar columnas mínimas para el doble filtro
-    begin
-      execute 'alter table public.movimientos_bodega add column if not exists bodega_principal text';
-    exception when others then
-      null;
-    end;
-    begin
-      execute 'alter table public.movimientos_bodega add column if not exists bodega_secundaria text';
-      execute 'alter table public.movimientos_bodega alter column bodega_principal set default ''Principal''';
-      execute 'alter table public.movimientos_bodega alter column bodega_secundaria set default ''General''';
-    exception when others then
-      null;
-    end;
-
-    if not exists (
-      select 1
-      from pg_trigger t
-      join pg_class c on c.oid = t.tgrelid
+  foreach tname in array tables_to_check loop
+    if exists (
+      select 1 from pg_class c
       join pg_namespace n on n.oid = c.relnamespace
       where n.nspname = 'public'
-        and c.relname = 'movimientos_bodega'
-        and t.tgname = 'trg_apply_movimiento_to_stock_actual'
+        and c.relname = tname
+        and c.relkind = 'r'
     ) then
-      execute 'create trigger trg_apply_movimiento_to_stock_actual
-        after insert on public.movimientos_bodega
-        for each row
-        execute function public.apply_movimiento_to_stock_actual()';
+      -- Asegurar columnas mínimas para bodega (si no existían en versiones anteriores)
+      begin
+        execute format('alter table public.%I add column if not exists bodega_principal text', tname);
+      exception when others then null;
+      end;
+      begin
+        execute format('alter table public.%I add column if not exists bodega_secundaria text', tname);
+        execute format('alter table public.%I alter column bodega_principal set default ''Principal''', tname);
+        execute format('alter table public.%I alter column bodega_secundaria set default ''General''', tname);
+      exception when others then null;
+      end;
+
+      select exists (
+        select 1
+        from information_schema.columns
+        where table_schema = 'public'
+          and table_name = tname
+          and column_name = 'estado'
+      ) into has_estado;
+
+      -- AFTER INSERT
+      begin
+        execute format('drop trigger if exists trg_apply_movimiento_to_stock_actual on public.%I', tname);
+      exception when others then null;
+      end;
+      if has_estado then
+        execute format(
+          'create trigger trg_apply_movimiento_to_stock_actual after insert on public.%I for each row when (coalesce(new.estado, ''completado'') = ''completado'') execute function public.apply_movimiento_to_stock_actual()',
+          tname
+        );
+      else
+        execute format(
+          'create trigger trg_apply_movimiento_to_stock_actual after insert on public.%I for each row execute function public.apply_movimiento_to_stock_actual()',
+          tname
+        );
+      end if;
+
+      -- AFTER UPDATE OF estado (si existe): cuando pase a completado
+      if has_estado then
+        begin
+          execute format('drop trigger if exists trg_apply_movimiento_to_stock_actual_estado on public.%I', tname);
+        exception when others then null;
+        end;
+        execute format(
+          'create trigger trg_apply_movimiento_to_stock_actual_estado after update of estado on public.%I for each row when (coalesce(new.estado, ''completado'') = ''completado'' and (coalesce(old.estado, ''completado'') is distinct from ''completado'')) execute function public.apply_movimiento_to_stock_actual()',
+          tname
+        );
+      end if;
     end if;
-  end if;
+  end loop;
 end $$;

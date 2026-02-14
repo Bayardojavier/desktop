@@ -49,6 +49,21 @@
   color: rgba(224, 224, 255, 0.86);
   border-bottom: 1px solid rgba(55, 148, 255, 0.18);
   padding-bottom: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.bodega-menu-lateral h3:hover {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.bodega-menu-grupo {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.bodega-menu-grupo.collapsed {
+  display: none;
 }
 
 .bodega-submenu-btn {
@@ -1578,9 +1593,11 @@
 .bodega-area-dinamica .movimientos-view .devolucion-actions {
   display: flex;
   gap: 10px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  overflow-x: auto;
+  white-space: nowrap;
+  justify-content: flex-start;
   margin-top: 16px;
+  padding: 10px 0;
 }
 
 /* Devolución: tabla/grilla de items (mejor legibilidad) */
@@ -1589,7 +1606,6 @@
   border-radius: 12px;
   border: 1px solid rgba(55, 148, 255, 0.14);
   background: rgba(0, 0, 0, 0.10);
-  overflow: hidden;
 }
 
 .bodega-area-dinamica .movimientos-view .devolucion-table-header,
@@ -2515,4 +2531,10 @@
   .bodega-area-dinamica .movimientos-view .devolucion-panel-lateral-pestana {
     transition: none;
   }
+}
+
+/* CLASES PERSONALIZADAS PARA DEVOLUCION - AISLADAS DEL SISTEMA DE CARGA */
+.devolucion-filas-contenedor-custom {
+  max-height: 450px !important; /* Reducido 50px para mejor UX */
+  overflow-y: auto !important;
 }

@@ -1,0 +1,366 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario - Despacho de Ventas de Materiales</title>
+        <style>
+        /* c:/Users/BAYAR/absolute/desktop/manual_usuario/styles/manual.css */
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            background-color: #0f172a; /* slate-900 */
+            color: #cbd5e1; /* slate-300 */
+        }
+
+        header {
+            background-color: #1e293b; /* slate-800 */
+            color: #e2e8f0; /* slate-200 */
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #334155; /* slate-700 */
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.25rem;
+            font-weight: 800;
+        }
+
+        header p {
+            margin: 0.25rem 0 0;
+            font-size: 1rem;
+            color: #94a3b8; /* slate-400 */
+        }
+
+        nav {
+            background-color: rgba(30, 41, 59, 0.5);
+            padding: 1rem 2rem;
+            text-align: center;
+            border-bottom: 1px solid #334155; /* slate-700 */
+        }
+
+        nav a {
+            color: #e2e8f0; /* slate-200 */
+            text-decoration: none;
+            margin: 0 1rem;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+
+        nav a:hover {
+            background-color: #475569; /* slate-600 */
+        }
+
+        main {
+            padding: 2rem;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        section {
+            background-color: #1e293b; /* slate-800 */
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid #334155; /* slate-700 */
+            margin-bottom: 2rem;
+        }
+
+        section h2 {
+            font-size: 1.75rem;
+            color: #f1f5f9; /* slate-100 */
+            margin-top: 0;
+            border-bottom: 2px solid #475569; /* slate-600 */
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        section h3 {
+            font-size: 1.4rem;
+            color: #e2e8f0; /* slate-200 */
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        p,
+        li {
+            color: #cbd5e1; /* slate-300 */
+            font-size: 1rem;
+        }
+
+        ul,
+        ol {
+            padding-left: 1.5rem;
+        }
+
+        ul li,
+        ol li {
+            margin-bottom: 0.75rem;
+        }
+
+        code {
+            background-color: #334155; /* slate-700 */
+            color: #f1f5f9; /* slate-100 */
+            padding: 0.2em 0.4em;
+            margin: 0;
+            font-size: 85%;
+            border-radius: 6px;
+            font-family: "Fira Code", "Courier New", monospace;
+        }
+
+        .description {
+            font-size: 1.1rem;
+            color: #94a3b8; /* slate-400 */
+            margin-bottom: 2rem;
+            border-left: 4px solid #6366f1; /* indigo-500 */
+            padding-left: 1rem;
+        }
+
+        .feature-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .feature-gallery figure {
+            margin: 0;
+            background-color: #0f172a; /* slate-900 */
+            border: 1px solid #334155; /* slate-700 */
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .feature-gallery img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .feature-gallery figcaption {
+            padding: 1rem;
+            font-size: 0.9rem;
+            color: #94a3b8; /* slate-400 */
+            text-align: center;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            color: #64748b; /* slate-500 */
+            border-top: 1px solid #334155; /* slate-700 */
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Manual de Usuario</h1>
+        <p>Sección: Bodega - Movimientos</p>
+    </header>
+
+    <nav>
+        <a href="../index.html">Volver al Índice</a>
+    </nav>
+
+    <main>
+        <section id="ventas">
+            <h2>📤 Despacho por Venta de Materiales</h2>
+            <p class="description">
+                Esta interfaz conecta la bodega con el módulo de "Ventas Activas". Su única función es gestionar la salida de inventario para las ventas de materiales que ya han sido concretadas y registradas en el sistema.
+            </p>
+
+            <div class="feature-gallery">
+                <figure>
+                    <div style="background: linear-gradient(180deg, rgba(13, 29, 53, 0.94), rgba(10, 18, 30, 0.94)); border-radius: 10px; padding: 20px; border: 1px solid rgba(55, 148, 255, 0.22); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);">
+                        <div style="display: flex; gap: 18px;">
+                            <!-- Columna Principal - Formulario -->
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="background: linear-gradient(180deg, rgba(17, 32, 56, 0.70), rgba(10, 18, 30, 0.70)); border: 1px solid rgba(55, 148, 255, 0.18); border-radius: 14px; padding: 20px; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.30);">
+                                    <h2 style="margin: 0 0 6px 0; font-size: 22px; font-weight: 800; color: rgba(255, 255, 255, 0.96); text-shadow: 0 0 18px rgba(55, 148, 255, 0.16);">📤 Despachar Venta Activa</h2>
+                                    <p style="margin: 0 0 16px 0; color: rgba(224, 224, 255, 0.72); font-size: 13px;">Confirma y despacha materiales para ventas activas</p>
+
+                                    <!-- Sección de Información General -->
+                                    <div style="margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(55, 148, 255, 0.12);">
+                                        <div style="display: grid; grid-template-columns: repeat(4, minmax(160px, 1fr)); gap: 12px;">
+                                            <div>
+                                                <label style="display: block; margin: 0 0 6px 0; font-size: 12px; font-weight: 700; color: rgba(224, 224, 255, 0.84);">Personal que Solicita</label>
+                                                <select style="width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(55, 148, 255, 0.18); background: rgba(0, 0, 0, 0.14); color: rgba(255, 255, 255, 0.92);">
+                                                    <option style="background: rgba(10, 18, 30, 0.95); color: rgba(255, 255, 255, 0.92);">María González</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label style="display: block; margin: 0 0 6px 0; font-size: 12px; font-weight: 700; color: rgba(224, 224, 255, 0.84);">Fecha</label>
+                                                <input type="date" value="2024-01-25" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(55, 148, 255, 0.18); background: rgba(0, 0, 0, 0.14); color: rgba(255, 255, 255, 0.92);" />
+                                            </div>
+                                            <div>
+                                                <label style="display: block; margin: 0 0 6px 0; font-size: 12px; font-weight: 700; color: rgba(224, 224, 255, 0.84);">Número de Venta Activa</label>
+                                                <select style="width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(55, 148, 255, 0.18); background: rgba(0, 0, 0, 0.14); color: rgba(255, 255, 255, 0.92);">
+                                                    <option style="background: rgba(10, 18, 30, 0.95); color: rgba(255, 255, 255, 0.92);" value="">VENT-00123 - Empresa ABC (25/01/2024)</option>
+                                                    <option style="background: rgba(10, 18, 30, 0.95); color: rgba(255, 255, 255, 0.92);" value="VENT-00123">VENT-00123 - Empresa ABC (25/01/2024)</option>
+                                                    <option style="background: rgba(10, 18, 30, 0.95); color: rgba(255, 255, 255, 0.92);" value="VENT-00122">VENT-00122 - Corporación XYZ (20/01/2024)</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label style="display: block; margin: 0 0 6px 0; font-size: 12px; font-weight: 700; color: rgba(224, 224, 255, 0.84);">Cliente</label>
+                                                <input type="text" value="Empresa ABC S.A." readonly style="width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(55, 148, 255, 0.18); background: rgba(0, 0, 0, 0.14); color: rgba(255, 255, 255, 0.92);" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Tabla de Materiales de la Venta -->
+                                    <div style="margin-top: 24px;">
+                                        <div style="width: 100%; border-collapse: separate; border-spacing: 0; overflow: hidden; border-radius: 12px; border: 1px solid rgba(55, 148, 255, 0.14); background: rgba(0, 0, 0, 0.10);">
+                                            <!-- Header -->
+                                            <div style="text-align: left; font-size: 12px; letter-spacing: 0.6px; text-transform: uppercase; padding: 10px 12px; color: rgba(255, 255, 255, 0.92); background: rgba(55, 148, 255, 0.10); border-bottom: 1px solid rgba(55, 148, 255, 0.14); display: flex;">
+                                                <div style="width: 55%;">Material</div>
+                                                <div style="width: 15%; text-align: center;">Cantidad</div>
+                                                <div style="width: 30%;">Observación</div>
+                                            </div>
+                                            
+                                            <!-- Fila 1 -->
+                                            <div style="padding: 10px 12px; border-bottom: 1px solid rgba(55, 148, 255, 0.10); color: rgba(224, 224, 255, 0.88); display: flex; align-items: center;">
+                                                <div style="width: 55%; font-weight: 500;">AUDI-0001 – Micrófono Shure SM58</div>
+                                                <div style="width: 15%; text-align: center; font-weight: 500;">2</div>
+                                                <div style="width: 30%;">
+                                                    <input type="text" placeholder="Observación" value="Equipos en perfectas condiciones" style="width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(55, 148, 255, 0.18); background: rgba(0, 0, 0, 0.14); color: rgba(255, 255, 255, 0.92);" />
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Fila 2 -->
+                                            <div style="padding: 10px 12px; border-bottom: 1px solid rgba(55, 148, 255, 0.10); color: rgba(224, 224, 255, 0.88); display: flex; align-items: center;">
+                                                <div style="width: 55%; font-weight: 500;">HIER-0005 – Trípode de Aluminio</div>
+                                                <div style="width: 15%; text-align: center; font-weight: 500;">1</div>
+                                                <div style="width: 30%;">
+                                                    <input type="text" placeholder="Observación" value="Incluye bolsa de transporte" style="width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(55, 148, 255, 0.18); background: rgba(0, 0, 0, 0.14); color: rgba(255, 255, 255, 0.92);" />
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Fila 3 -->
+                                            <div style="padding: 10px 12px; color: rgba(224, 224, 255, 0.88); display: flex; align-items: center;">
+                                                <div style="width: 55%; font-weight: 500;">CONS-0023 – Cable XLR 10m</div>
+                                                <div style="width: 15%; text-align: center; font-weight: 500;">3</div>
+                                                <div style="width: 30%;">
+                                                    <input type="text" placeholder="Observación" value="" style="width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(55, 148, 255, 0.18); background: rgba(0, 0, 0, 0.14); color: rgba(255, 255, 255, 0.92);" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Botones de Acción -->
+                                    <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; margin-top: 16px;">
+                                        <button style="border-radius: 10px; padding: 10px 14px; border: 1px solid rgba(55, 148, 255, 0.55); background: linear-gradient(135deg, rgba(55, 148, 255, 0.28), rgba(124, 92, 246, 0.20)); color: rgba(255, 255, 255, 0.92); font-weight: 800; cursor: pointer;">Despachar Venta</button>
+                                        <button style="border-radius: 10px; padding: 10px 14px; border: 1px solid rgba(55, 148, 255, 0.22); background: rgba(255, 255, 255, 0.04); color: rgba(255, 255, 255, 0.92); font-weight: 800; cursor: pointer;">Limpiar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <figcaption>Fig. 1 - Formulario principal para despachar una venta activa con tabla de materiales y campos de observaciones.</figcaption>
+                </figure>
+                
+                <figure>
+                    <div style="background: linear-gradient(180deg, rgba(13, 29, 53, 0.94), rgba(10, 18, 30, 0.94)); border-radius: 10px; padding: 20px; border: 1px solid rgba(55, 148, 255, 0.22); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);">
+                        <!-- Panel Lateral - Ventas Procesadas -->
+                        <div style="width: 320px;">
+                            <div style="background: linear-gradient(180deg, rgba(17, 32, 56, 0.70), rgba(10, 18, 30, 0.70)); border: 1px solid rgba(55, 148, 255, 0.18); border-radius: 12px; padding: 16px; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.30);">
+                                <h3 style="margin: 0; font-size: 16px; font-weight: 900; color: rgba(255, 255, 255, 0.96); text-shadow: 0 0 18px rgba(55, 148, 255, 0.18);">📋 Ventas Procesadas</h3>
+                                <p style="margin: 6px 0 0 0; font-size: 12px; color: rgba(224, 224, 255, 0.72);">Historial de despachos realizados - Puede reimprimir PDFs si es necesario</p>
+
+                                <!-- Lista de Ventas Procesadas -->
+                                <div style="margin-top: 12px; background: rgba(0, 0, 0, 0.10); border: 1px solid rgba(55, 148, 255, 0.14); border-radius: 12px; padding: 10px; max-height: 400px; overflow-y: auto;">
+                                    <!-- Item 1 -->
+                                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; border-radius: 12px; padding: 12px; border: 1px solid rgba(55, 148, 255, 0.16); background: rgba(255, 255, 255, 0.04); box-shadow: 0 8px 18px rgba(0, 0, 0, 0.20); margin-bottom: 8px;">
+                                        <div style="min-width: 0; flex: 1;">
+                                            <div style="font-weight: 900; font-size: 13px; color: rgba(255, 255, 255, 0.94); margin-bottom: 8px;">VENTA-00123</div>
+                                            <div style="display: grid; gap: 6px; font-size: 13px; line-height: 1.25; padding: 10px 10px; border-radius: 10px; border: 1px solid #e2e8f0; background: #f8fafc; color: #0f172a; box-shadow: 0 6px 16px rgba(2, 6, 23, 0.12); overflow-wrap: anywhere;">
+                                                <div><strong>Cliente:</strong> Empresa ABC S.A.</div>
+                                                <div><strong>Fecha:</strong> 25/01/2024</div>
+                                                <div><strong>Items:</strong> 3</div>
+                                                <div><strong>Total:</strong> $2,450.00</div>
+                                            </div>
+                                        </div>
+                                        <div style="display: flex; align-items: flex-start;">
+                                            <button style="border-radius: 10px; padding: 10px 12px; border: 1px solid rgba(55, 148, 255, 0.22); background: rgba(255, 255, 255, 0.04); color: rgba(255, 255, 255, 0.92); font-weight: 900; cursor: pointer;">🖨️</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Item 2 -->
+                                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; border-radius: 12px; padding: 12px; border: 1px solid rgba(55, 148, 255, 0.16); background: rgba(255, 255, 255, 0.04); box-shadow: 0 8px 18px rgba(0, 0, 0, 0.20); margin-bottom: 8px;">
+                                        <div style="min-width: 0; flex: 1;">
+                                            <div style="font-weight: 900; font-size: 13px; color: rgba(255, 255, 255, 0.94); margin-bottom: 8px;">VENTA-00122</div>
+                                            <div style="display: grid; gap: 6px; font-size: 13px; line-height: 1.25; padding: 10px 10px; border-radius: 10px; border: 1px solid #e2e8f0; background: #f8fafc; color: #0f172a; box-shadow: 0 6px 16px rgba(2, 6, 23, 0.12); overflow-wrap: anywhere;">
+                                                <div><strong>Cliente:</strong> Corporación XYZ</div>
+                                                <div><strong>Fecha:</strong> 20/01/2024</div>
+                                                <div><strong>Items:</strong> 5</div>
+                                                <div><strong>Total:</strong> $3,750.00</div>
+                                            </div>
+                                        </div>
+                                        <div style="display: flex; align-items: flex-start;">
+                                            <button style="border-radius: 10px; padding: 10px 12px; border: 1px solid rgba(55, 148, 255, 0.22); background: rgba(255, 255, 255, 0.04); color: rgba(255, 255, 255, 0.92); font-weight: 900; cursor: pointer;">🖨️</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Item 3 -->
+                                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; border-radius: 12px; padding: 12px; border: 1px solid rgba(55, 148, 255, 0.16); background: rgba(255, 255, 255, 0.04); box-shadow: 0 8px 18px rgba(0, 0, 0, 0.20);">
+                                        <div style="min-width: 0; flex: 1;">
+                                            <div style="font-weight: 900; font-size: 13px; color: rgba(255, 255, 255, 0.94); margin-bottom: 8px;">VENTA-00121</div>
+                                            <div style="display: grid; gap: 6px; font-size: 13px; line-height: 1.25; padding: 10px 10px; border-radius: 10px; border: 1px solid #e2e8f0; background: #f8fafc; color: #0f172a; box-shadow: 0 6px 16px rgba(2, 6, 23, 0.12); overflow-wrap: anywhere;">
+                                                <div><strong>Cliente:</strong> Startup Tech</div>
+                                                <div><strong>Fecha:</strong> 18/01/2024</div>
+                                                <div><strong>Items:</strong> 2</div>
+                                                <div><strong>Total:</strong> $1,200.00</div>
+                                            </div>
+                                        </div>
+                                        <div style="display: flex; align-items: flex-start;">
+                                            <button style="border-radius: 10px; padding: 10px 12px; border: 1px solid rgba(55, 148, 255, 0.22); background: rgba(255, 255, 255, 0.04); color: rgba(255, 255, 255, 0.92); font-weight: 900; cursor: pointer;">🖨️</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <figcaption>Fig. 2 - Panel lateral con historial de ventas procesadas mostrando detalles de cada despacho y opción de reimpresión.</figcaption>
+                </figure>
+            </div>
+
+            <h3>Características Principales</h3>
+            <ul>
+                <li><strong>Integración con Ventas Activas:</strong> El formulario se alimenta directamente de la tabla <code>ventas_activas</code>. El usuario selecciona una venta con estado "activa" de un menú desplegable.</li>
+                <li><strong>Carga Automática de Datos:</strong> Al seleccionar una venta, el sistema carga automáticamente el nombre del cliente y la lista de materiales y cantidades que se vendieron.</li>
+                <li><strong>Proceso de Despacho:</strong> El bodeguero selecciona su nombre como responsable del despacho y confirma la fecha. Puede añadir observaciones a cada material si es necesario.</li>
+                <li><strong>Actualización de Inventario y Venta:</strong> Al hacer clic en "Despachar Venta", el sistema realiza dos operaciones clave:
+                    <ol>
+                        <li>Registra un movimiento de <strong>salida (-)</strong> en la tabla <code>movimientos_bodega</code> para cada material, disminuyendo el stock disponible. El tipo de movimiento se registra como "venta".</li>
+                        <li>Actualiza el estado de la venta en la tabla <code>ventas_activas</code>, cambiándolo de "activa" a <strong>"despachada"</strong>.</li>
+                    </ol>
+                </li>
+                <li><strong>Generación de Comprobante (PDF):</strong> Se genera un documento PDF de "Despacho de Venta Activa" con un correlativo único (ej. <code>DESV-00001</code>). Este documento sirve como comprobante de entrega para el cliente.</li>
+                <li><strong>Historial de Despachos:</strong> Un panel lateral muestra un historial de las ventas que ya han sido despachadas, permitiendo reimprimir el comprobante en PDF en cualquier momento.</li>
+            </ul>
+
+            <h3>Flujo de Trabajo Típico</h3>
+            <ol>
+                <li>El bodeguero selecciona su nombre y verifica la fecha del despacho.</li>
+                <li>En el menú desplegable "Número de Venta Activa", elige la venta que va a preparar.</li>
+                <li>El sistema muestra los materiales y las cantidades de esa venta. El bodeguero los prepara físicamente.</li>
+                <li>Hace clic en el botón "Despachar Venta".</li>
+                <li>El sistema confirma la operación, actualiza el inventario y el estado de la venta.</li>
+                <li>Se ofrece la opción de imprimir el comprobante de despacho en PDF para entregarlo al cliente.</li>
+                <li>La venta despachada ahora aparecerá en el historial del panel derecho.</li>
+            </ol>
+        </section>
+    </main>
+
+    <footer>
+        <p>Manual de Usuario - Absolute de Nicaragua &copy; 2026</p>
+    </footer>
+
+</body>
+</html>

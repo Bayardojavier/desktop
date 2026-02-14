@@ -5,29 +5,40 @@
   <!-- Menú lateral (misma estructura que otros módulos) -->
   <div class="bodega-menu-lateral">
     <h3>🧩 Audiovisual</h3>
-    <button class="bodega-submenu-btn" data-vista="universal-agregar-electronicos">➕ Agregar – Materiales Electrónicos</button>
-    <button class="bodega-submenu-btn" data-vista="audiovisual-modificar">✏️ Modificar – Contenedores / Módulos</button>
+    <div class="bodega-menu-grupo">
+      <button class="bodega-submenu-btn" data-vista="universal-agregar-electronicos">➕ Agregar – Materiales Electrónicos</button>
+      <button class="bodega-submenu-btn" data-vista="audiovisual-modificar">✏️ Modificar – Contenedores / Módulos</button>
+    </div>
 
     <h3>🧱 Hierros</h3>
-    <button class="bodega-submenu-btn" data-vista="hierro-agregar">➕ Agregar – Hierros</button>
-    <button class="bodega-submenu-btn" data-vista="hierro-modificar">✏️ Modificar – Contenedores / Materiales</button>
+    <div class="bodega-menu-grupo">
+      <button class="bodega-submenu-btn" data-vista="hierro-agregar">➕ Agregar – Hierros</button>
+      <button class="bodega-submenu-btn" data-vista="hierro-modificar">✏️ Modificar – Contenedores / Materiales</button>
+    </div>
 
     <h3>🧩 Universal</h3>
-
-    <button class="bodega-submenu-btn" data-vista="universal-agregar-consumibles">➕ Agregar – Consumibles</button>
-    <button class="bodega-submenu-btn" data-vista="universal-modificar-consumibles">✏️ Modificar – Consumibles</button>
-    <button class="bodega-submenu-btn" data-vista="universal-ficha-etiqueta">🪪 Ficha y Etiqueta</button>
+    <div class="bodega-menu-grupo">
+      <button class="bodega-submenu-btn" data-vista="universal-agregar-consumibles">➕ Agregar – Consumibles</button>
+      <button class="bodega-submenu-btn" data-vista="universal-modificar-consumibles">✏️ Modificar – Consumibles</button>
+      <button class="bodega-submenu-btn" data-vista="universal-ficha-etiqueta">🪪 Ficha y Etiqueta</button>
+      <button class="bodega-submenu-btn" data-vista="universal-ficha-etiqueta-bulk">🪪 Ficha y Etiqueta (Masiva)</button>
+    </div>
 
     <h3>🚚 Movimientos</h3>
-    <button class="bodega-submenu-btn" data-vista="movimientos-ingreso">📥 Ingreso</button>
-    <button class="bodega-submenu-btn" data-vista="movimientos-fabricacion">🛠️ Fabricación</button>
-    <button class="bodega-submenu-btn" data-vista="movimientos-devolucion">🔄 Devolución</button>
-    <button class="bodega-submenu-btn" data-vista="movimientos-despachobodega">📤 Despacho</button>
-    <button class="bodega-submenu-btn" data-vista="movimientos-ventasmateriales">💸 Ventas</button>
-    <button class="bodega-submenu-btn" data-vista="movimientos-bajasmateriales">📉 Bajas</button>
+    <div class="bodega-menu-grupo">
+      <button class="bodega-submenu-btn" data-vista="movimientos-ingreso">📥 Ingreso</button>
+      <button class="bodega-submenu-btn" data-vista="movimientos-fabricacion">🛠️ Fabricación</button>
+      <button class="bodega-submenu-btn" data-vista="movimientos-mantenimiento">🔧 Mantenimiento</button>
+      <button class="bodega-submenu-btn" data-vista="movimientos-devolucion">🔄 Devolución</button>
+      <button class="bodega-submenu-btn" data-vista="movimientos-despachobodega">📤 Despacho</button>
+      <button class="bodega-submenu-btn" data-vista="movimientos-ventasmateriales">💸 Ventas</button>
+      <button class="bodega-submenu-btn" data-vista="movimientos-bajasmateriales">📉 Bajas</button>
+    </div>
 
     <h3>📊 Exportar Datos</h3>
-    <button class="bodega-submenu-btn" onclick="exportarBodegaAExcel()">📊 Exportar Bodega a Excel</button>
+    <div class="bodega-menu-grupo">
+      <button class="bodega-submenu-btn" onclick="exportarBodegaAExcel()">📊 Exportar Bodega a Excel</button>
+    </div>
   </div>
 
   <!-- Área dinámica -->
@@ -68,6 +79,7 @@
           <div class="bodega-atajos-grid">
             <button class="bodega-atajo-btn" data-vista="movimientos-ingreso">📥 Nuevo Ingreso</button>
             <button class="bodega-atajo-btn" data-vista="movimientos-despachobodega">📤 Nuevo Despacho</button>
+         
             <button class="bodega-atajo-btn" data-vista="universal-agregar-electronicos">➕ Agregar (Electrónicos)</button>
           </div>
         </div>

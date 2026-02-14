@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mantenimiento de Materiales</title>
+</head>
+  <body class="mantenimiento-theme">
+  <style>
+    :root{
+      --mnt-accent: #0ea5a4;
+      --mnt-accent-dark: #0b948f;
+      --mnt-card-bg: linear-gradient(180deg, rgba(14,165,164,0.06), rgba(3,105,118,0.02));
+      --mnt-highlight: #ecfeff;
+    }
+    .movimientos-view{
+      width: 100%;
+      max-width: 1400px;
+      margin: 0 auto;
+      box-sizing: border-box;
+      position: relative;
+      color: rgba(224, 224, 255, 0.92);
+    }
+    .mantenimiento-theme .mnt-contenedor{ width: 100%; box-sizing: border-box; }
+    .mantenimiento-theme .mnt-tarjeta{
+      background: var(--mnt-card-bg);
+      border: 1px solid rgba(14,165,164,0.12);
+      box-shadow: 0 8px 20px rgba(3,105,118,0.06);
+      padding: 18px;
+      border-radius: 12px;
+    }
+    .mantenimiento-theme .mnt-titulo{ color: var(--mnt-accent); margin-bottom: 6px; }
+    .mantenimiento-theme .mnt-subtitulo{ color: #065f5b; margin-bottom: 12px; }
+    .mantenimiento-theme .mnt-seccion{ margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(14,165,164,0.18); }
+    .mantenimiento-theme .mnt-seccion:first-of-type{ margin-top: 0; padding-top: 0; border-top: none; }
+    .mantenimiento-theme .mnt-seccion-titulo{ color: var(--mnt-accent-dark); font-size: 14px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; margin: 0 0 10px 0; }
+    .mantenimiento-theme .mnt-fila{ display: grid; grid-template-columns: repeat(4, minmax(160px, 1fr)); gap: 12px; }
+    @media (max-width: 1100px){ .mantenimiento-theme .mnt-fila{ grid-template-columns: repeat(2, minmax(160px, 1fr)); } }
+    @media (max-width: 680px){ .mantenimiento-theme .mnt-fila{ grid-template-columns: 1fr; } }
+    .mantenimiento-theme .mnt-columna{ min-width: 0; }
+    .mantenimiento-theme .mnt-etiqueta{ display: block; margin: 0 0 6px 0; font-size: 12px; font-weight: 700; color: rgba(6, 95, 91, 0.92); }
+    .mantenimiento-theme .mnt-entrada,
+    .mantenimiento-theme .mnt-select{
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(14,165,164,0.28);
+      background: rgba(0, 0, 0, 0.10);
+      color: rgba(255, 255, 255, 0.92);
+      outline: none;
+    }
+    .mantenimiento-theme .mnt-entrada::placeholder{ color: rgba(6, 95, 91, 0.60); }
+    .mantenimiento-theme .mnt-entrada:focus,
+    .mantenimiento-theme .mnt-select:focus{ border-color: rgba(14,165,164,0.70); box-shadow: 0 0 0 2px rgba(14,165,164,0.18); }
+    .mantenimiento-theme .mnt-entrada[readonly]{ background: #f0fdfa; color: #0f172a; }
+    .mantenimiento-theme .mnt-acciones{ display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; margin-top: 16px; }
+    .mantenimiento-theme .lista-solicitudes{ border: 1px solid rgba(14,165,164,0.06); background: linear-gradient(180deg, rgba(0,0,0,0.54), rgba(3,105,118,0.04)); }
+    .mantenimiento-theme #lista-solicitudes-mantenimiento{ color: #0f766e; }
+    .mantenimiento-theme .mnt-boton{
+      border-radius: 10px;
+      padding: 10px 14px;
+      border: 1px solid rgba(14,165,164,0.22);
+      background: rgba(255, 255, 255, 0.04);
+      color: rgba(255, 255, 255, 0.92);
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 140ms ease, box-shadow 180ms ease, background-color 180ms ease, border-color 180ms ease;
+    }
+    .mantenimiento-theme .mnt-boton:hover{ background: rgba(14,165,164,0.14); border-color: rgba(14,165,164,0.60); box-shadow: 0 0 14px rgba(14,165,164,0.18); transform: translateY(-1px); }
+    .mantenimiento-theme .mnt-boton:disabled{ opacity: 0.55; cursor: not-allowed; }
+    .mantenimiento-theme .mnt-boton.mnt-boton-primario{ background: var(--mnt-accent); border-color: var(--mnt-accent-dark); color: #003337; }
+    .mantenimiento-theme .mnt-boton.mnt-boton-primario:hover{ background: var(--mnt-accent-dark); }
+    .mantenimiento-theme .mnt-boton.mnt-boton-secundario{ background: rgba(14,165,164,0.06); border-color: rgba(14,165,164,0.12); color: var(--mnt-accent-dark); }
+    .mantenimiento-theme .mnt-boton.mnt-boton-peligro{ background: rgba(220,38,38,0.06); border-color: rgba(220,38,38,0.12); color: #991b1b; }
+    .mantenimiento-theme .mnt-modal-overlay{
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.72);
+      z-index: 10000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 18px;
+      pointer-events: auto;
+    }
+    .mantenimiento-theme .mnt-modal-contenido{
+      width: min(860px, 96vw);
+      max-height: min(80vh, 860px);
+      overflow: auto;
+      background: linear-gradient(180deg, rgba(17, 32, 56, 0.96), rgba(10, 18, 30, 0.96));
+      border: 1px solid rgba(14,165,164,0.22);
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
+    }
+    .mantenimiento-theme .mnt-modal-titulo{ margin: 0 0 8px 0; color: rgba(255, 255, 255, 0.96); }
+    .mantenimiento-theme .mnt-modal-texto{ margin: 0 0 14px 0; color: rgba(224, 224, 255, 0.72); }
+    .mantenimiento-theme .mnt-modal-botones{ display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; margin-top: 12px; }
+    .mantenimiento-theme .mnt-titulo::first-letter{ font-size: 1.15em; }
+    #modal-seleccion-mantenimiento.fab-catalog-overlay{
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.85);
+      z-index: 10000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 18px;
+      pointer-events: auto;
+    }
+    #modal-seleccion-mantenimiento .fab-catalog-modal{ width: min(1100px, 94vw); height: min(78vh, 860px); background: #ffffff; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; animation: fabCatalogIn 160ms ease; }
+    #modal-seleccion-mantenimiento .fab-catalog-header{ display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid #e2e8f0; }
+    #modal-seleccion-mantenimiento .fab-catalog-title{ margin: 0; font-size: 16px; font-weight: 800; color: #0f172a; }
+    #modal-seleccion-mantenimiento .fab-catalog-close{ border: none; background: #f1f5f9; color: #0f172a; border-radius: 10px; width: 34px; height: 34px; cursor: pointer; font-size: 18px; }
+    #modal-seleccion-mantenimiento .fab-catalog-close:hover{ background: #e2e8f0; }
+    #modal-seleccion-mantenimiento .fab-catalog-filters{ padding: 12px 18px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; }
+    #modal-seleccion-mantenimiento .fab-catalog-filters-grid{ display: grid; grid-template-columns: 2fr 1fr auto; gap: 14px; align-items: end; }
+    @media (max-width: 860px){ #modal-seleccion-mantenimiento .fab-catalog-filters-grid{ grid-template-columns: 1fr; } }
+    #modal-seleccion-mantenimiento .fab-catalog-label{ display: block; margin: 0 0 6px 0; font-size: 13px; font-weight: 800; color: #334155; }
+    #modal-seleccion-mantenimiento .mnt-entrada,
+    #modal-seleccion-mantenimiento .mnt-select{ background: #ffffff; color: #0f172a; border-color: #cbd5e1; box-shadow: 0 0 0 1px rgba(2, 6, 23, 0.06) inset; font-size: 14px; padding: 10px 12px; min-height: 42px; }
+    #modal-seleccion-mantenimiento .mnt-entrada::placeholder{ color: #94a3b8; }
+    #modal-seleccion-mantenimiento .mnt-entrada:focus,
+    #modal-seleccion-mantenimiento .mnt-select:focus{ border-color: #0ea5a4; box-shadow: 0 0 0 2px rgba(14, 165, 164, 0.18); }
+    #modal-seleccion-mantenimiento .mnt-boton{ border-radius: 12px; font-weight: 900; letter-spacing: 0.2px; font-size: 14px; padding: 10px 14px; min-height: 42px; }
+    #modal-seleccion-mantenimiento .mnt-boton:focus-visible{ outline: none; box-shadow: 0 0 0 2px rgba(14, 165, 164, 0.22); }
+    #modal-seleccion-mantenimiento .mnt-boton:hover{ transform: translateY(-1px); }
+    #modal-seleccion-mantenimiento .mnt-boton:active{ transform: translateY(0px); }
+    #modal-seleccion-mantenimiento .mnt-boton-primario{ border-color: #0ea5a4; background: #0ea5a4; color: #ffffff; box-shadow: 0 12px 26px rgba(2, 6, 23, 0.18); }
+    #modal-seleccion-mantenimiento .mnt-boton-primario:hover{ border-color: #0b948f; background: #0b948f; box-shadow: 0 16px 34px rgba(2, 6, 23, 0.22); }
+    #modal-seleccion-mantenimiento .mnt-boton-secundario{ background: #e2e8f0; color: #0f172a; border-color: #cbd5e1; box-shadow: 0 0 0 1px rgba(2, 6, 23, 0.06) inset; }
+    #modal-seleccion-mantenimiento .mnt-boton-secundario:hover{ background: #cbd5e1; border-color: #94a3b8; box-shadow: 0 10px 22px rgba(2, 6, 23, 0.12); }
+    #modal-seleccion-mantenimiento .fab-catalog-results-wrap{ flex: 1; overflow: auto; padding: 16px 18px; }
+    #modal-seleccion-mantenimiento .fab-catalog-results{ display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+    #modal-seleccion-mantenimiento .fab-catalog-card{ border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px; background: #ffffff; box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08); display: flex; flex-direction: column; gap: 10px; }
+    #modal-seleccion-mantenimiento .fab-catalog-card:hover{ box-shadow: 0 12px 30px rgba(15, 23, 42, 0.14); }
+    #modal-seleccion-mantenimiento .fab-catalog-card-top{ display: flex; justify-content: space-between; gap: 10px; }
+    #modal-seleccion-mantenimiento .fab-catalog-name{ font-weight: 800; color: #0f172a; }
+    #modal-seleccion-mantenimiento .fab-catalog-code{ color: #64748b; font-size: 12px; }
+    #modal-seleccion-mantenimiento .fab-catalog-existencia{ background: #0ea5a4; color: #ffffff; min-width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 900; }
+    #modal-seleccion-mantenimiento .fab-catalog-tags{ display: flex; flex-wrap: wrap; gap: 6px; }
+    #modal-seleccion-mantenimiento .fab-catalog-tag{ background: #f1f5f9; color: #0f172a; font-weight: 700; font-size: 11px; padding: 4px 8px; border-radius: 999px; }
+    #modal-seleccion-mantenimiento .fab-catalog-tag--secondary{ background: #e2e8f0; }
+    #modal-seleccion-mantenimiento .fab-catalog-select-btn{ width: 100%; }
+    #modal-seleccion-mantenimiento .fab-catalog-footer{ padding: 12px 18px; border-top: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: flex-end; gap: 10px; }
+    #modal-seleccion-mantenimiento .fab-catalog-empty,
+    #modal-seleccion-mantenimiento .fab-catalog-error{ color: #0f172a; font-weight: 700; }
+    #modal-seleccion-mantenimiento .fab-catalog-empty{ text-align: center; }
+    #modal-seleccion-mantenimiento .fab-catalog-error{ color: #b91c1c; }
+  </style>
+  <div class="movimientos-view mantenimiento-theme">
+  <div class="fabricacion-layout" style="display: grid; grid-template-columns: 340px 1fr; gap: 16px; align-items: start; padding: 10px;">
+
+    <!-- Lista lateral de solicitudes -->
+    <aside class="lista-solicitudes" style="background: rgba(15, 23, 42, 0.72); border: 1px solid #0f172a; border-radius: 12px; padding: 16px; box-shadow: 0 6px 14px rgba(0,0,0,0.18);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div>
+          <h3 style="margin: 0; color: #e2e8f0; font-size: 16px;">Solicitudes</h3>
+          <p style="margin: 2px 0 0 0; color: #cbd5e1; font-size: 12px;">Editar o eliminar mientras estén pendientes</p>
+        </div>
+        <button id="fab-refresh-list" class="mnt-boton mnt-boton-secundario" style="padding: 6px 10px; font-size: 12px;">↻</button>
+      </div>
+      <div id="lista-solicitudes-mantenimiento" style="display: flex; flex-direction: column; gap: 10px; max-height: 78vh; overflow-y: auto; background: rgba(255,255,255,0.04); border: 1px solid rgba(226,232,240,0.2); border-radius: 10px; padding: 10px;font-size: 13px; color: #df6e18;"></div>
+    </aside>
+
+    <div class="mnt-contenedor" style="margin: 0;">
+    <div class="mnt-tarjeta">
+      <h1 class="mnt-titulo">🔧 Mantenimiento de Materiales</h1>
+      <p class="mnt-subtitulo">Registre el mantenimiento de materiales existentes y los insumos consumidos en el proceso</p>
+      
+      <div class="mnt-seccion">
+        <div class="mnt-fila">
+          <div class="mnt-columna">
+            <label class="mnt-etiqueta">Responsable de Mantenimiento</label>
+            <select id="responsable-manufactura" class="mnt-select" required>
+              <option value="">Seleccione un empleado...</option>
+            </select>
+          </div>
+          <div class="mnt-columna">
+            <label class="mnt-etiqueta">Fecha</label>
+            <input type="date" id="fecha-manufactura" class="mnt-entrada" required />
+          </div>
+        </div>
+      </div>
+      
+      <!-- MATERIALES CONSUMIDOS -->
+      <div class="mnt-seccion">
+        <h2 class="mnt-seccion-titulo">Materiales Consumidos</h2>
+        <p style="color: #64748b; margin-bottom: 12px; font-size: 14px;">
+          Materiales del inventario que se utilizarán en el mantenimiento (serán dados de baja)
+        </p>
+        <div id="tabla-consumidos"></div>
+        <button id="btn-abrir-modal-consumidos" class="mnt-boton mnt-boton-primario" style="margin-top: 12px; width: auto;">
+          + Seleccionar del Catálogo
+        </button>
+      </div>
+      
+      <!-- MATERIAL EN MANTENIMIENTO -->
+      <div class="mnt-seccion">
+        <h2 class="mnt-seccion-titulo">Material en Mantenimiento</h2>
+        <p style="color: #64748b; margin-bottom: 12px; font-size: 14px;">
+          Material existente que será reparado/mantenido (será dado de baja temporalmente)
+        </p>
+        <div id="tabla-mantenimiento"></div>
+        <button id="btn-abrir-modal-mantenimiento" class="mnt-boton mnt-boton-primario" style="margin-top: 12px; width: auto;">
+          + Seleccionar del Catálogo
+        </button>
+      </div>
+      
+      <div class="mnt-acciones">
+        <button id="btn-guardar-fabricacion" class="mnt-boton mnt-boton-primario">Registrar Mantenimiento</button>
+        <button id="btn-limpiar-fabricacion" class="mnt-boton mnt-boton-secundario">Limpiar</button>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <!-- Modal de éxito -->
+  <div id="modal-fabricacion" class="mnt-modal-overlay" style="display: none;">
+    <div class="mnt-modal-contenido" style="max-width: 800px;">
+      <h2 class="mnt-modal-titulo">✅ Mantenimiento Registrado</h2>
+      <p class="mnt-modal-texto">
+        El mantenimiento ha sido registrado exitosamente. Los materiales han sido dados de baja del inventario.
+      </p>
+      <div id="detalles-mantenimiento" style="margin-top: 20px;">
+        <!-- Aquí se mostrará la tabla del material en mantenimiento -->
+      </div>
+      <div class="mnt-modal-botones">
+        <button id="btn-cerrar-fabricacion" class="mnt-boton mnt-boton-secundario">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    setTimeout(() => {
+      // =============================================================================
+      // 🔹 CARGA SEGURA DE LIBRERÍAS
+      // =============================================================================
+      function loadScriptOnce(src, globalCheck) {
+        return new Promise((resolve, reject) => {
+          if (globalCheck && typeof globalCheck === 'function' && globalCheck()) return resolve();
+          if (document.querySelector(`script[data-dynamic-src="${src}"]`)) {
+            const existing = document.querySelector(`script[data-dynamic-src="${src}"]`);
+            if (existing.getAttribute('data-loaded') === 'true') return resolve();
+            existing.addEventListener('load', () => resolve());
+            existing.addEventListener('error', (e) => reject(e));
+            return;
+          }
+          const s = document.createElement('script');
+          s.src = src;
+          s.async = true;
+          s.setAttribute('data-dynamic-src', src);
+          s.addEventListener('load', () => { s.setAttribute('data-loaded', 'true'); resolve(); });
+          s.addEventListener('error', (e) => reject(e));
+          document.head.appendChild(s);
+        });
+      }
+
+      // =============================================================================
+      // 🔹 VARIABLES GLOBALES
+      // =============================================================================
+      let estado = {
+        itemsConsumidos: [],
+        itemsMantenimiento: [],
+        datosFormulario: {},
+        pdfData: null
+      };
+
+      let editingSolicitudId = null;
+      let editingSolicitudEstado = null;
+      let editingNumeroSolicitud = null;
+      function formatearPrecio(valor) {
+        if (valor === null || valor === undefined || isNaN(valor)) return '—';
+        return `$${Number(valor).toFixed(2)}`;
+      }
+
+      // =============================================================================
+      // 🔹 CARGAR DATOS DE SUPABASE
+      // =============================================================================
+      async function cargarDatos() {
+        try {
+          // Empleados
+          const { data: empleados, error: errEmp } = await window.supabaseClient
+            .from('empleados')
+            .select('nombres, apellidos')
+            .order('nombres', { ascending: true });
+          if (errEmp) throw errEmp;
+          const selectEmpleados = document.getElementById('responsable-manufactura');
+          empleados.forEach(emp => {
+            const nombre = `${emp.nombres} ${emp.apellidos}`;
+            const opt = document.createElement('option');
+            opt.value = nombre;
+            opt.textContent = nombre;
+            selectEmpleados.appendChild(opt);
+          });
+
+          // Fecha actual
+          document.getElementById('fecha-manufactura').value = new Date().toISOString().split('T')[0];
+
+        } catch (err) {
+          console.error('Error al cargar datos:', err);
+          alert('❌ Error al cargar empleados: ' + err.message);
+        }
+      }
+
+      // =============================================================================
+      // 🔹 DETERMINAR BODEGAS (MEJORADO)
+      // =============================================================================
+      function determinarBodegas(material) {
+        if (!material) return { principal: 'Desconocida', secundaria: 'Sin clasificar' };
+        
+        // Si ya tenemos tabla_origen, usarla para determinar la bodega
+        if (material.tabla_origen) {
+          let bodegaPrincipal = 'Desconocida';
+          if (material.tabla_origen === 'catalogo_hierros') {
+            bodegaPrincipal = 'Hierros';
+          } else if (material.tabla_origen === 'catalogo_audiovisual') {
+            bodegaPrincipal = 'Audiovisual';
+          } else if (material.tabla_origen === 'catalogo_consumibles') {
+            bodegaPrincipal = 'Consumibles';
+          }
+          return { principal: bodegaPrincipal, secundaria: material.bodega_secundaria || 'Sin clasificar' };
+        }
+        
+        // Fallback: usar prefijos de código (lógica anterior)
+        let bodegaPrincipal = 'Desconocida';
+        const prefijo = material.codigo?.split('-')[1] || '';
+        if (prefijo === 'HIE') bodegaPrincipal = 'Hierros';
+        else if (prefijo === 'AUD') bodegaPrincipal = 'Audiovisual';
+        else if (['PER', 'MOB', 'SIL', 'HER'].includes(prefijo)) bodegaPrincipal = 'Perfilería y Mobiliario';
+        else if (['ILU', 'LIG', 'FOC'].includes(prefijo)) bodegaPrincipal = 'Iluminación Escénica';
+        else if (['SILL'].includes(prefijo)) bodegaPrincipal = 'Bodega Sillas';
+        else if (['HERR', 'CONS', 'FERR'].includes(prefijo)) bodegaPrincipal = 'Consumibles';
+        else bodegaPrincipal = material.bodega_principal || material.bodega || 'Sin clasificar';
+        
+        const bodegaSecundaria = material.bodega_secundaria || material.bodega || 'Sin clasificar';
+        return { principal: bodegaPrincipal, secundaria: bodegaSecundaria };
+      }
+
+      // =============================================================================
+      // 🔹 MODAL DE SELECCIÓN DE MATERIALES
+      // =============================================================================
+      async function abrirModalManufacturado(tipo) {
+        window.modalTipoActual = tipo;
+        let modal = document.getElementById('modal-seleccion-mantenimiento');
+        if (!modal) {
+          modal = document.createElement('div');
+          modal.id = 'modal-seleccion-mantenimiento';
+          modal.className = 'fab-catalog-overlay';
+          modal.innerHTML = `
+            <div class="fab-catalog-modal" role="dialog" aria-modal="true">
+              <div class="fab-catalog-header">
+                <h2 class="fab-catalog-title">🔍 Seleccionar Material del Catálogo</h2>
+                <button id="btn-cerrar-modal-seleccion" class="fab-catalog-close" aria-label="Cerrar">×</button>
+              </div>
+
+              <div class="fab-catalog-filters">
+                <div class="fab-catalog-filters-grid">
+                    <div class="fab-catalog-filter">
+                      <label class="fab-catalog-label">Buscar por nombre:</label>
+                      <input type="text" id="buscador-nombre-mantenimiento" class="mnt-entrada" placeholder="Escriba para buscar..." />
+                  </div>
+
+                  <div class="fab-catalog-filter">
+                    <label class="fab-catalog-label">Filtrar por Bodega:</label>
+                    <select id="filtro-bodega-mantenimiento" class="mnt-select">
+                      <option value="todas">Todas las Bodegas</option>
+                      <option value="Hierros">Hierros</option>
+                      <option value="Audiovisual">Audiovisual</option>
+                      <option value="Consumibles">Consumibles</option>
+                    </select>
+                  </div>
+
+                  <div class="fab-catalog-filter fab-catalog-filter--actions">
+                    <button id="btn-restablecer-filtros" class="mnt-boton mnt-boton-secundario">Restablecer</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="fab-catalog-results-wrap">
+                <div id="resultados-busqueda-mantenimiento" class="fab-catalog-results"></div>
+              </div>
+
+              <div class="fab-catalog-footer">
+                <button id="btn-cerrar-modal-bottom" class="mnt-boton mnt-boton-secundario">Cancelar</button>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(modal);
+
+          // Eventos del modal
+          document.getElementById('btn-cerrar-modal-seleccion').addEventListener('click', () => modal.style.display = 'none');
+          document.getElementById('btn-cerrar-modal-bottom').addEventListener('click', () => modal.style.display = 'none');
+          
+          let debounceTimer;
+          document.getElementById('buscador-nombre-mantenimiento').addEventListener('input', (e) => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(renderResultadosBusqueda, 300);
+          });
+          
+          document.getElementById('filtro-bodega-mantenimiento').addEventListener('change', renderResultadosBusqueda);
+          document.getElementById('btn-restablecer-filtros').addEventListener('click', () => {
+            document.getElementById('buscador-nombre-mantenimiento').value = '';
+            document.getElementById('filtro-bodega-mantenimiento').value = 'todas';
+            renderResultadosBusqueda();
+          });
+        }
+
+        renderResultadosBusqueda();
+        modal.style.display = 'flex';
+      }
+
+      // =============================================================================
+      // 🔹 RENDERIZAR RESULTADOS DE BÚSQUEDA
+      // =============================================================================
+      async function renderResultadosBusqueda() {
+        const contenedor = document.getElementById('resultados-busqueda-mantenimiento');
+        const terminoBusqueda = document.getElementById('buscador-nombre-mantenimiento').value.toLowerCase();
+        const bodegaFiltro = document.getElementById('filtro-bodega-mantenimiento').value;
+        const tipo = window.modalTipoActual; // 'consumido' o 'mantenimiento'
+
+        try {
+            let materiales = [];
+            if (tipo === 'consumido') {
+                // Para consumidos: usar las 3 vistas de stock separadas
+                let materialesStock = [];
+                const tablasStock = ['stock_hierros', 'stock_audiovisual', 'stock_consumibles'];
+                
+                for (const tabla of tablasStock) {
+                  try {
+                    const { data, error } = await window.supabaseClient
+                      .from(tabla)
+                      .select('material_codigo, material_nombre, bodega_principal, stock_actual, precio')
+                      .gt('stock_actual', 0); // Solo materiales con stock disponible
+                    
+                    if (!error && data) {
+                      // Agregar propiedad tabla_origen para saber de dónde viene
+                      const materialesConOrigen = data.map(m => ({
+                        ...m,
+                        tabla_origen: tabla.replace('stock_', 'catalogo_')
+                      }));
+                      materialesStock = materialesStock.concat(materialesConOrigen);
+                    }
+                  } catch (e) {
+                    console.warn(`Error consultando ${tabla}:`, e.message || e);
+                    continue;
+                  }
+                }
+                
+                materiales = materialesStock.map(m => ({
+                  material_codigo: m.material_codigo,
+                  material_nombre: m.material_nombre,
+                  bodega_principal: m.bodega_principal,
+                  existencia: m.stock_actual,
+                  precio_promedio: m.precio,
+                  tabla_origen: m.tabla_origen
+                }));
+            } else {
+                // Para mantenimiento: usar las 3 vistas de stock separadas (materiales existentes)
+                let materialesStock = [];
+                const tablasStock = ['stock_hierros', 'stock_audiovisual', 'stock_consumibles'];
+                
+                for (const tabla of tablasStock) {
+                  try {
+                    const { data, error } = await window.supabaseClient
+                      .from(tabla)
+                      .select('material_codigo, material_nombre, bodega_principal, stock_actual, precio')
+                      .gt('stock_actual', 0); // Solo materiales con stock disponible
+                    
+                    if (!error && data) {
+                      // Agregar propiedad tabla_origen para saber de dónde viene
+                      const materialesConOrigen = data.map(m => ({
+                        ...m,
+                        tabla_origen: tabla.replace('stock_', 'catalogo_')
+                      }));
+                      materialesStock = materialesStock.concat(materialesConOrigen);
+                    }
+                  } catch (e) {
+                    console.warn(`Error consultando ${tabla}:`, e.message || e);
+                    continue;
+                  }
+                }
+                
+                materiales = materialesStock.map(m => ({
+                  material_codigo: m.material_codigo,
+                  material_nombre: m.material_nombre,
+                  bodega_principal: m.bodega_principal,
+                  existencia: m.stock_actual,
+                  precio_promedio: m.precio,
+                  tabla_origen: m.tabla_origen
+                }));
+            }
+
+          // Filtrar por bodega
+          if (bodegaFiltro !== 'todas') {
+            materiales = materiales.filter(m => 
+              m.bodega === bodegaFiltro || m.bodega_principal === bodegaFiltro
+            );
+          }
+
+          // Filtrar por nombre
+          if (terminoBusqueda) {
+            materiales = materiales.filter(m => {
+              const nombre = (m.material_nombre || m.nombre || '').toLowerCase();
+              const codigo = (m.material_codigo || m.codigo || '').toLowerCase();
+              return nombre.includes(terminoBusqueda) || codigo.includes(terminoBusqueda);
+            });
+          }
+
+          if (!materiales || materiales.length === 0) {
+            contenedor.innerHTML = '<p class="fab-catalog-empty">No se encontraron materiales.</p>';
+            return;
+          }
+
+          contenedor.innerHTML = materiales.map(material => {
+            const nombre = material.material_nombre || material.nombre || 'Sin nombre';
+            const codigo = material.material_codigo || material.codigo || 'Sin código';
+            const bodegas = determinarBodegas({ codigo, bodega: material.bodega, bodega_principal: material.bodega_principal });
+                return `
+              <div class="fab-catalog-card">
+                <div class="fab-catalog-card-top">
+                  <div class="fab-catalog-card-title">
+                    <div class="fab-catalog-name">${nombre}</div>
+                    <div class="fab-catalog-code">${codigo}</div>
+                  </div>
+                  <div class="fab-catalog-existencia" title="Existencia">
+                    ${material.existencia || 0}
+                  </div>
+                </div>
+                <div class="fab-catalog-tags">
+                  <span class="fab-catalog-tag fab-catalog-tag--primary">${bodegas.principal}</span>
+                  <span class="fab-catalog-tag fab-catalog-tag--secondary">${bodegas.secundaria}</span>
+                </div>
+                <button class="mnt-boton mnt-boton-primario fab-catalog-select-btn" data-material='${JSON.stringify({
+                  codigo,
+                  nombre,
+                  bodega: material.bodega,
+                  bodega_principal: material.bodega_principal,
+                  existencia: material.existencia,
+                  precio_promedio: material.precio_promedio
+                })}'>
+                  Seleccionar Material
+                </button>
+              </div>
+            `;
+          }).join('');
+
+          contenedor.querySelectorAll('button[data-material]').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+              const material = JSON.parse(e.currentTarget.dataset.material);
+              if (window.modalTipoActual === 'consumido') {
+                await agregarMaterialAConsumidos(material);
+              } else {
+                agregarMaterialAMantenimiento(material);
+              }
+              document.getElementById('modal-seleccion-mantenimiento').style.display = 'none';
+            });
+          });
+
+        } catch (err) {
+          console.error('Error al buscar materiales:', err);
+          contenedor.innerHTML = '<p class="fab-catalog-error">Error al cargar materiales.</p>';
+        }
+      }
+
+      // =============================================================================
+      // 🔹 LISTA LATERAL DE SOLICITUDES
+      // =============================================================================
+      async function cargarSolicitudesList() {
+        const container = document.getElementById('lista-solicitudes-mantenimiento');
+        if (!container) return;
+
+        container.innerHTML = '<div style="color:#e2e8f0; font-size: 13px;">Cargando...</div>';
+        try {
+          const { data, error } = await window.supabaseClient
+            .from('solicitudes_mantenimiento')
+            .select('id, numero_solicitud, responsable, fecha, estado')
+            .order('fecha', { ascending: false });
+
+          if (error) throw error;
+          if (!data || data.length === 0) {
+            container.innerHTML = '<div style="color:#e2e8f0; font-size: 13px;">No hay solicitudes registradas.</div>';
+            return;
+          }
+
+          const html = data.map(s => {
+            const estadoRaw = (s.estado || 'pendiente').toLowerCase();
+            const bloqueado = estadoRaw === 'completado';
+            const estadoText = bloqueado ? 'Completado' : 'Pendiente';
+            const estadoColor = bloqueado ? '#22c55e' : '#ca8a04';
+
+            return `
+              <div style="border:1px solid #0f172a; border-radius:10px; padding:10px; display:flex; justify-content:space-between; align-items:center; gap:8px; background: rgba(15,23,42,0.14); color:#e2e8f0;">
+                <div style="flex:1;">
+                  <div style="font-weight:700; color:#f8fafc; font-size:13px;">${s.numero_solicitud}</div>
+                  <div style="color:#e2e8f0; font-size:12px;">${s.responsable || 'Sin responsable'}</div>
+                  <div style="color:#cbd5e1; font-size:11px;">${s.fecha || ''}</div>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-end;">
+                  <span style="background:${estadoColor}22; color:${estadoColor}; padding:3px 8px; border-radius:12px; font-size:11px; font-weight:700;">${estadoText}</span>
+                  <div style="display:flex; gap:6px;">
+                    ${bloqueado ? '' : `<button class="fab-list-btn" data-id="${s.id}" data-numero="${s.numero_solicitud}" data-estado="${s.estado || ''}" data-action="edit" style="padding:5px 8px; font-size:11px; background:#1d4ed8; color:white; border:none; border-radius:6px; cursor:pointer;">Editar</button>`}
+                    ${bloqueado ? '' : `<button class="fab-list-btn" data-id="${s.id}" data-numero="${s.numero_solicitud}" data-action="delete" style="padding:5px 8px; font-size:11px; background:#dc2626; color:white; border:none; border-radius:6px; cursor:pointer;">Eliminar</button>`}
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          container.innerHTML = html;
+
+          container.querySelectorAll('.fab-list-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+              const id = e.currentTarget.dataset.id;
+              const numero = e.currentTarget.dataset.numero;
+              const action = e.currentTarget.dataset.action;
+              const est = e.currentTarget.dataset.estado || '';
+              if (action === 'edit') {
+                await cargarSolicitudParaEdicion(id, numero, est);
+              } else if (action === 'delete') {
+                await eliminarSolicitud(id, numero, est);
+              }
+            });
+          });
+
+        } catch (err) {
+          console.error('Error al cargar solicitudes:', err);
+          container.innerHTML = '<div style="color:#ef4444; font-size:13px;">Error al cargar la lista.</div>';
+        }
+      }
+
+      // =============================================================================
+      // 🔹 AGREGAR MATERIALES A LAS LISTAS
+      // =============================================================================
+      async function agregarMaterialAConsumidos(material) {
+        if ((material.existencia || 0) <= 0) {
+          alert('⚠️ No se puede consumir un material con existencia 0 o negativa.');
+          return;
+        }
+        if (estado.itemsConsumidos.some(item => item.codigo === material.codigo)) {
+          alert('⚠️ Este material ya está en la lista de consumidos.');
+          return;
+        }
+        estado.itemsConsumidos.push({
+          codigo: material.codigo,
+          nombre: material.nombre,
+          existencia: material.existencia || 0,
+          precio_promedio: material.precio_promedio || 0,
+          cantidad: 1,
+          observacion: ''
+        });
+        renderTablaConsumidos();
+      }
+
+      function agregarMaterialAMantenimiento(material) {
+        if ((material.existencia || 0) <= 0) {
+          alert('⚠️ No se puede mantener un material con existencia 0 o negativa.');
+          return;
+        }
+        if (estado.itemsMantenimiento.some(item => item.codigo === material.codigo)) {
+          alert('⚠️ Este material ya está en la lista de mantenimiento.');
+          return;
+        }
+        
+        estado.itemsMantenimiento.push({
+          codigo: material.codigo,
+          nombre: material.nombre,
+          existencia: material.existencia || 0,
+          precio_promedio: material.precio_promedio || 0,
+          cantidad: 1,
+          mano_obra: 0,
+          observacion: ''
+        });
+        renderTablaMantenimiento();
+      }
+
+      // =============================================================================
+      // 🔹 RENDERIZADO DE TABLAS
+      // =============================================================================
+      function renderTablaConsumidos() {
+        const contenedor = document.getElementById('tabla-consumidos');
+        contenedor.innerHTML = estado.itemsConsumidos.length > 0
+          ? '<div id="filas-consumidos"></div>'
+          : '<p style="text-align: center; color: #999; margin: 20px 0;">Agregue materiales consumidos.</p>';
+
+        if (estado.itemsConsumidos.length === 0) return;
+
+        const tbody = document.getElementById('filas-consumidos');
+        estado.itemsConsumidos.forEach((item, index) => {
+          const row = document.createElement('div');
+          row.className = 'mov-table-row';
+          row.innerHTML = `
+            <div class="mov-table-col" style="flex: 1.2;">
+              <label class="mnt-etiqueta" style="margin-bottom: 4px;">Código</label>
+              <input type="text" class="mnt-entrada" value="${item.codigo}" readonly />
+            </div>
+            <div class="mov-table-col" style="flex: 2.5;">
+              <label class="mnt-etiqueta" style="margin-bottom: 4px;">Nombre</label>
+              <input type="text" class="mnt-entrada" value="${item.nombre}" readonly />
+            </div>
+            <div class="mov-table-col" style="flex: 0.8; text-align: center;">
+              <label class="mnt-etiqueta" style="margin-bottom: 4px;">Existencia</label>
+              <input type="number" class="mnt-entrada" value="${item.existencia}" readonly style="background: #f0fdf4; color: #047857;" />
+            </div>
+            <div class="mov-table-col" style="flex: 1; text-align: center;">
+              <label class="mnt-etiqueta" style="margin-bottom: 4px;">Precio prom. ingreso</label>
+              <input type="text" class="mnt-entrada" value="${formatearPrecio(item.precio_promedio)}" readonly style="background: #fff7ed; color: #b45309; text-align: center;" />
+            </div>
+            <div class="mov-table-col" style="flex: 0.8; text-align: center;">
+              <label class="mnt-etiqueta" style="margin-bottom: 4px;">Cantidad</label>
+              <input type="number" class="mnt-entrada" value="${item.cantidad}" min="1" data-index="${index}" data-tipo="consumido" />
+            </div>
+            <div class="mov-table-col" style="flex: 1.5;">
+              <label class="mnt-etiqueta" style="margin-bottom: 4px;">Observación</label>
+              <input type="text" class="mnt-entrada" value="${item.observacion}" data-index="${index}" data-tipo="consumido" />
+            </div>
+            <div class="mov-table-col" style="flex: 0.2; text-align: center;">
+              <label class="mnt-etiqueta" style="margin-bottom: 4px;">&nbsp;</label>
+              <button class="mnt-boton mnt-boton-peligro" style="padding: 4px 8px; font-size: 12px;" data-index="${index}" data-tipo="consumido">✕</button>
+            </div>
+          `;
+
+          row.querySelectorAll('input[data-tipo="consumido"]').forEach(input => {
+            input.addEventListener('input', (e) => {
+              const idx = parseInt(e.target.dataset.index);
+              if (e.target.type === 'number') {
+                estado.itemsConsumidos[idx].cantidad = parseInt(e.target.value) || 0;
+              } else {
+                estado.itemsConsumidos[idx].observacion = e.target.value;
+              }
+            });
+          });
+
+          row.querySelector('button').addEventListener('click', (e) => {
+            const idx = parseInt(e.target.dataset.index);
+            estado.itemsConsumidos.splice(idx, 1);
+            renderTablaConsumidos();
+          });
+
+          tbody.appendChild(row);
+        });
+      }
+
+      function renderTablaMantenimiento() {
+        const contenedor = document.getElementById('tabla-mantenimiento');
+        contenedor.innerHTML = estado.itemsMantenimiento.length > 0
+          ? '<div id="filas-mantenimiento"></div>'
+          : '<p style="text-align: center; color: #999; margin: 20px 0;">Agregue el material en mantenimiento.</p>';
+
+        if (estado.itemsMantenimiento.length === 0) return;
+
+        const tbody = document.getElementById('filas-mantenimiento');
+        estado.itemsMantenimiento.forEach((item, index) => {
+          const row = document.createElement('div');
+          row.className = 'mov-table-row';
+          row.innerHTML = `
+            <div class="mov-table-col" style="flex: 1.2;">
+              <label class="mnt-etiqueta" style="margin-bottom: 4px;">Código</label>
+              <input type="text" class="mnt-entrada" value="${item.codigo}" readonly />
+            </div>
+            <div class="mov-table-col" style="flex: 2.5;">
+              <label class="mnt-etiqueta" style="margin-bottom: 4px;">Nombre</label>
+              <input type="text" class="mnt-entrada" value="${item.nombre}" readonly />
+            </div>
+            <div class="mov-table-col" style="flex: 0.8; text-align: center;">
+              <label class="mnt-etiqueta" style="margin-bottom: 4px;">Existencia</label>
+              <input type="number" class="mnt-entrada" value="${item.existencia}" readonly style="background: #f0fdf4; color: #047857;" />
+            </div>
+            <div class="mov-table-col" style="flex: 1; text-align: center;">
+              <label class="mnt-etiqueta" style="margin-bottom: 4px;">Precio prom. ingreso</label>
+              <input type="text" class="mnt-entrada" value="${formatearPrecio(item.precio_promedio)}" readonly style="background: #fff7ed; color: #b45309; text-align: center;" />
+            </div>
+            <div class="mov-table-col" style="flex: 0.8; text-align: center;">
+              <label class="mnt-etiqueta" style="margin-bottom: 4px;">Cantidad</label>
+              <input type="number" class="mnt-entrada" value="${item.cantidad}" min="1" data-index="${index}" data-tipo="mantenimiento" />
+            </div>
+            <div class="mov-table-col" style="flex: 1;">
+              <label class="mnt-etiqueta" style="margin-bottom: 4px;">Mano de obra</label>
+              <input type="number" class="mnt-entrada" value="${item.mano_obra}" min="0" step="0.01" data-index="${index}" data-tipo="mantenimiento" />
+            </div>
+            <div class="mov-table-col" style="flex: 1.5;">
+              <label class="mnt-etiqueta" style="margin-bottom: 4px;">Observación</label>
+              <input type="text" class="mnt-entrada" value="${item.observacion}" data-index="${index}" data-tipo="mantenimiento" />
+            </div>
+            <div class="mov-table-col" style="flex: 0.2; text-align: center;">
+              <label class="mnt-etiqueta" style="margin-bottom: 4px;">&nbsp;</label>
+              <button class="mnt-boton mnt-boton-peligro" style="padding: 4px 8px; font-size: 12px;" data-index="${index}" data-tipo="mantenimiento">✕</button>
+            </div>
+          `;
+
+          row.querySelectorAll('input[data-tipo="mantenimiento"]').forEach(input => {
+            input.addEventListener('input', (e) => {
+              const idx = parseInt(e.target.dataset.index);
+              if (e.target.type === 'number' && e.target.previousElementSibling.textContent.includes('Mano')) {
+                estado.itemsMantenimiento[idx].mano_obra = parseFloat(e.target.value) || 0;
+              } else if (e.target.type === 'number') {
+                estado.itemsMantenimiento[idx].cantidad = parseInt(e.target.value) || 0;
+              } else {
+                estado.itemsMantenimiento[idx].observacion = e.target.value;
+              }
+            });
+          });
+
+          row.querySelector('button').addEventListener('click', (e) => {
+            const idx = parseInt(e.target.dataset.index);
+            estado.itemsMantenimiento.splice(idx, 1);
+            renderTablaMantenimiento();
+          });
+
+          tbody.appendChild(row);
+        });
+      }
+
+      // =============================================================================
+      // 🔹 GENERAR NÚMERO DE SOLICITUD
+      // =============================================================================
+      async function generarNumeroSolicitud() {
+        try {
+          const { data, error } = await window.supabaseClient
+            .from('solicitudes_mantenimiento')
+            .select('numero_solicitud', { count: 'exact' })
+            .order('numero_solicitud', { ascending: false })
+            .limit(1);
+
+          if (error) throw error;
+          const ultimo = data?.[0]?.numero_solicitud || 'MNT-00000';
+          const match = ultimo.match(/MNT-(\d+)$/);
+          const nuevoNumero = match ? parseInt(match[1], 10) + 1 : 1;
+          return `MNT-${String(nuevoNumero).padStart(5, '0')}`;
+        } catch (err) {
+          console.warn('Error al generar número de solicitud:', err);
+          return `MNT-${Date.now().toString().slice(-5)}`;
+        }
+      }
+
+      // =============================================================================
+      // 🔹 CARGAR SOLICITUD PARA EDICIÓN
+      // =============================================================================
+      async function cargarSolicitudParaEdicion(id, numero, estadoActual) {
+        try {
+          const { data: solicitud, error: errSol } = await window.supabaseClient
+            .from('solicitudes_mantenimiento')
+            .select('*')
+            .eq('id', id)
+            .single();
+          if (errSol) throw errSol;
+
+          const { data: consumidos, error: errCons } = await window.supabaseClient
+            .from('materiales_consumidos_mantenimiento')
+            .select('material_codigo, cantidad, observacion')
+            .eq('solicitud_id', id);
+          if (errCons) throw errCons;
+
+          const { data: mantenimiento, error: errMant } = await window.supabaseClient
+            .from('materiales_mantenimiento')
+            .select('material_codigo, cantidad, mano_obra, observacion')
+            .eq('solicitud_id', id);
+          if (errMant) throw errMant;
+
+          const codigosCatalogo = Array.from(new Set([
+            ...(consumidos || []).map(c => c.material_codigo),
+            ...(mantenimiento || []).map(m => m.material_codigo)
+          ].filter(Boolean)));
+
+          let stockMap = new Map();
+          if (codigosCatalogo.length > 0) {
+            const tablasStock = ['stock_hierros', 'stock_audiovisual', 'stock_consumibles'];
+            let stockData = [];
+            
+            for (const tabla of tablasStock) {
+              try {
+                let query = window.supabaseClient
+                  .from(tabla)
+                  .select('material_codigo, material_nombre, bodega_principal, stock_actual, precio');
+                if (codigosCatalogo.length === 1) {
+                  query = query.eq('material_codigo', codigosCatalogo[0]);
+                } else {
+                  query = query.in('material_codigo', codigosCatalogo);
+                }
+                const { data, error } = await query;
+                if (!error && data) {
+                  stockData = stockData.concat(data);
+                }
+              } catch (e) {
+                console.warn(`Error consultando ${tabla}:`, e.message || e);
+                continue;
+              }
+            }
+            
+            (stockData || []).forEach(s => stockMap.set(s.material_codigo, {
+              nombre: s.material_nombre,
+              bodega_principal: s.bodega_principal,
+              existencia: s.stock_actual || 0,
+              precio_promedio: s.precio || 0
+            }));
+          }
+
+          estado.itemsConsumidos = (consumidos || []).map(c => ({
+            codigo: c.material_codigo,
+            nombre: stockMap.get(c.material_codigo)?.nombre || 'Sin nombre',
+            existencia: stockMap.get(c.material_codigo)?.existencia ?? 0,
+            precio_promedio: stockMap.get(c.material_codigo)?.precio_promedio ?? 0,
+            cantidad: c.cantidad,
+            observacion: c.observacion || ''
+          }));
+
+          estado.itemsMantenimiento = (mantenimiento || []).map(m => ({
+            codigo: m.material_codigo,
+            nombre: stockMap.get(m.material_codigo)?.nombre || 'Sin nombre',
+            existencia: stockMap.get(m.material_codigo)?.existencia ?? 0,
+            precio_promedio: stockMap.get(m.material_codigo)?.precio_promedio ?? 0,
+            cantidad: m.cantidad,
+            mano_obra: m.mano_obra || 0,
+            observacion: m.observacion || ''
+          }));
+
+          editingSolicitudId = id;
+          editingNumeroSolicitud = numero;
+          editingSolicitudEstado = estadoActual || solicitud.estado || 'pendiente';
+
+          document.getElementById('responsable-manufactura').value = solicitud.responsable || '';
+          document.getElementById('fecha-manufactura').value = solicitud.fecha || new Date().toISOString().split('T')[0];
+
+          renderTablaConsumidos();
+          renderTablaMantenimiento();
+          alert(`Editando solicitud ${numero}`);
+        } catch (err) {
+          console.error('Error al cargar solicitud:', err);
+          alert('No se pudo cargar la solicitud para edición: ' + err.message);
+        }
+      }
+
+      // =============================================================================
+      // 🔹 ELIMINAR SOLICITUD
+      // =============================================================================
+      async function eliminarSolicitud(id, numero, estadoActual) {
+        const estadoLower = (estadoActual || '').toLowerCase();
+        if (estadoLower === 'completado') {
+          alert('No puede eliminar un mantenimiento completado.');
+          return;
+        }
+        if (!confirm(`¿Eliminar el mantenimiento ${numero}?`)) return;
+        try {
+          await window.supabaseClient
+            .from('materiales_consumidos_mantenimiento')
+            .delete()
+            .eq('solicitud_id', id);
+
+          await window.supabaseClient
+            .from('materiales_mantenimiento')
+            .delete()
+            .eq('solicitud_id', id);
+
+          await window.supabaseClient
+            .from('solicitudes_mantenimiento')
+            .delete()
+            .eq('id', id);
+
+          if (editingSolicitudId === id) {
+            estado = { itemsConsumidos: [], itemsMantenimiento: [], datosFormulario: {}, pdfData: null };
+            editingSolicitudId = null;
+            editingSolicitudEstado = null;
+            editingNumeroSolicitud = null;
+            renderTablaConsumidos();
+            renderTablaMantenimiento();
+          }
+
+          await cargarSolicitudesList();
+          alert(`Mantenimiento ${numero} eliminado`);
+        } catch (err) {
+          console.error('Error al eliminar mantenimiento:', err);
+          alert('No se pudo eliminar el mantenimiento: ' + err.message);
+        }
+      }
+
+      // =============================================================================
+      // 🔹 GUARDAR SOLICITUD EN SUPABASE
+      // =============================================================================
+      async function guardarFabricacion() {
+        const btnGuardar = document.getElementById('btn-guardar-fabricacion');
+        btnGuardar.disabled = true;
+        btnGuardar.textContent = 'Registrando...';
+
+        const responsable = document.getElementById('responsable-manufactura').value;
+        const fecha = document.getElementById('fecha-manufactura').value;
+
+        if (!responsable || !fecha) {
+          alert('⚠️ Complete todos los campos obligatorios.');
+          btnGuardar.disabled = false;
+          btnGuardar.textContent = 'Registrar Mantenimiento';
+          return;
+        }
+
+        const itemsConsumidosValidos = estado.itemsConsumidos
+          .filter(item => item.codigo && (item.cantidad || 0) > 0)
+          .map(item => ({
+            ...item,
+            precio_promedio: item.precio_promedio ?? 0
+          }));
+        const itemsMantenimientoValidos = estado.itemsMantenimiento.filter(item => item.codigo && item.nombre && (item.cantidad || 0) > 0);
+
+        if (itemsConsumidosValidos.length === 0 && itemsMantenimientoValidos.length === 0) {
+          alert('⚠️ Agregue al menos un material consumido o en mantenimiento.');
+          return;
+        }
+
+        try {
+          const esEdicion = Boolean(editingSolicitudId);
+
+          if (esEdicion && editingSolicitudEstado.toLowerCase() === 'completado') {
+            alert('No puede editar un mantenimiento completado.');
+            return;
+          }
+
+          // Validar stock suficiente para consumidos y mantenimiento
+          const codigosMateriales = [
+            ...itemsConsumidosValidos.map(i => i.codigo),
+            ...itemsMantenimientoValidos.map(i => i.codigo)
+          ].filter(Boolean);
+          
+          if (codigosMateriales.length > 0) {
+            const tablasStock = ['stock_hierros', 'stock_audiovisual', 'stock_consumibles'];
+            let stockRows = [];
+            
+            for (const tabla of tablasStock) {
+              try {
+                let query = window.supabaseClient
+                  .from(tabla)
+                  .select('material_codigo, stock_actual');
+                if (codigosMateriales.length === 1) {
+                  query = query.eq('material_codigo', codigosMateriales[0]);
+                } else {
+                  query = query.in('material_codigo', codigosMateriales);
+                }
+                const { data, error } = await query;
+                if (!error && data) {
+                  stockRows = stockRows.concat(data);
+                }
+              } catch (e) {
+                console.warn(`Error consultando ${tabla}:`, e.message || e);
+                continue;
+              }
+            }
+
+            const stockMap = new Map();
+            (stockRows || []).forEach(row => {
+              stockMap.set(row.material_codigo, row.stock_actual || 0);
+            });
+
+            for (const item of [...itemsConsumidosValidos, ...itemsMantenimientoValidos]) {
+              const existencia = stockMap.get(item.codigo) ?? 0;
+              if (existencia < item.cantidad) {
+                alert(`⚠️ No hay suficiente stock para ${item.nombre}.`);
+                return;
+              }
+            }
+          }
+
+          let numeroSolicitud = editingNumeroSolicitud;
+          let solicitudId = editingSolicitudId;
+
+          if (!esEdicion) {
+            numeroSolicitud = await generarNumeroSolicitud();
+            const { data: solicitud, error: errSolicitud } = await window.supabaseClient
+              .from('solicitudes_mantenimiento')
+              .insert([{
+                numero_solicitud: numeroSolicitud,
+                responsable: responsable,
+                fecha: fecha,
+                estado: 'pendiente',
+                observaciones: 'Solicitud de mantenimiento con materiales consumidos y en mantenimiento'
+              }])
+              .select('id');
+
+            if (errSolicitud) throw errSolicitud;
+            solicitudId = solicitud?.[0]?.id;
+          } else {
+            const { error: errUpdate } = await window.supabaseClient
+              .from('solicitudes_mantenimiento')
+              .update({
+                responsable,
+                fecha,
+                estado: editingSolicitudEstado
+              })
+              .eq('id', editingSolicitudId);
+            if (errUpdate) throw errUpdate;
+
+            await window.supabaseClient
+              .from('materiales_consumidos_mantenimiento')
+              .delete()
+              .eq('solicitud_id', editingSolicitudId);
+            await window.supabaseClient
+              .from('materiales_mantenimiento')
+              .delete()
+              .eq('solicitud_id', editingSolicitudId);
+          }
+
+          if (!solicitudId) {
+            throw new Error('No se pudo obtener el ID de la solicitud.');
+          }
+
+          // Obtener info adicional de stock para los materiales
+          const materialCodes = [
+            ...itemsConsumidosValidos.map(i => i.codigo),
+            ...itemsMantenimientoValidos.map(i => i.codigo)
+          ].filter(Boolean);
+          
+          let stockMap = new Map();
+          if (materialCodes.length > 0) {
+            const tablasStock = ['stock_hierros', 'stock_audiovisual', 'stock_consumibles'];
+            
+            for (const tabla of tablasStock) {
+              try {
+                let query = window.supabaseClient
+                  .from(tabla)
+                  .select('material_codigo, material_nombre, bodega_principal, bodega_secundaria, precio');
+                if (materialCodes.length === 1) {
+                  query = query.eq('material_codigo', materialCodes[0]);
+                } else {
+                  query = query.in('material_codigo', materialCodes);
+                }
+                const { data, error } = await query;
+                if (!error && data) {
+                  data.forEach(s => stockMap.set(s.material_codigo, {
+                    nombre: s.material_nombre,
+                    bodega_principal: s.bodega_principal,
+                    bodega_secundaria: s.bodega_secundaria,
+                    precio: s.precio || 0
+                  }));
+                }
+              } catch (e) {
+                console.warn(`Error consultando ${tabla}:`, e.message || e);
+                continue;
+              }
+            }
+          }
+
+          // Guardar materiales consumidos
+          if (itemsConsumidosValidos.length > 0) {
+            const itemsConsumidos = itemsConsumidosValidos.map(item => {
+              const info = stockMap.get(item.codigo) || {};
+              return {
+                solicitud_id: solicitudId,
+                material_codigo: item.codigo,
+                material_nombre: info.nombre || item.nombre,
+                bodega_principal: info.bodega_principal || 'Principal',
+                bodega_secundaria: info.bodega_secundaria || 'General',
+                tipo_movimiento: 'salida',
+                cantidad: item.cantidad,
+                signo: -1,
+                referencia_documento: numeroSolicitud,
+                referencia_tipo: 'mantenimiento',
+                responsable: responsable,
+                fecha_movimiento: fecha,
+                observaciones: item.observacion || '',
+                estado: 'completado',
+                precio: item.precio_promedio,
+                created_at: new Date().toISOString()
+              };
+            });
+
+            const { error: errConsumidos } = await window.supabaseClient
+              .from('materiales_consumidos_mantenimiento')
+              .insert(itemsConsumidos);
+
+            if (errConsumidos) throw errConsumidos;
+          }
+
+          // Guardar materiales en mantenimiento
+          if (itemsMantenimientoValidos.length > 0) {
+            const itemsMantenimiento = itemsMantenimientoValidos.map(item => {
+              const info = stockMap.get(item.codigo) || {};
+              return {
+                solicitud_id: solicitudId,
+                material_codigo: item.codigo,
+                material_nombre: info.nombre || item.nombre,
+                bodega_principal: info.bodega_principal || 'Principal',
+                bodega_secundaria: info.bodega_secundaria || 'General',
+                tipo_movimiento: 'mantenimiento',
+                cantidad: item.cantidad,
+                signo: -1,
+                referencia_documento: numeroSolicitud,
+                referencia_tipo: 'mantenimiento',
+                responsable: responsable,
+                fecha_movimiento: fecha,
+                observaciones: item.observacion || '',
+                estado: 'pendiente', // Pendiente hasta completar el mantenimiento
+                precio: item.precio_promedio,
+                mano_obra: item.mano_obra,
+                created_at: new Date().toISOString()
+              };
+            });
+
+            const { error: errMantenimiento } = await window.supabaseClient
+              .from('materiales_mantenimiento')
+              .insert(itemsMantenimiento);
+
+            if (errMantenimiento) throw errMantenimiento;
+          }
+
+          // Mostrar modal con detalles
+          mostrarModalMantenimiento(itemsMantenimientoValidos, numeroSolicitud);
+
+          alert(esEdicion ? `✅ Mantenimiento ${numeroSolicitud} actualizado.` : `✅ Mantenimiento ${numeroSolicitud} registrado exitosamente.`);
+          editingSolicitudId = solicitudId;
+          editingNumeroSolicitud = numeroSolicitud;
+          editingSolicitudEstado = 'pendiente';
+          await cargarSolicitudesList();
+
+        } catch (err) {
+          console.error('Error al guardar mantenimiento:', err);
+          alert('❌ Error al guardar: ' + err.message);
+          btnGuardar.disabled = false;
+          btnGuardar.textContent = 'Registrar Mantenimiento';
+        }
+      }
+
+      // =============================================================================
+      // 🔹 MOSTRAR MODAL CON DETALLES DEL MANTENIMIENTO
+      // =============================================================================
+      function mostrarModalMantenimiento(itemsMantenimiento, numeroSolicitud) {
+        const detallesDiv = document.getElementById('detalles-mantenimiento');
+        if (itemsMantenimiento.length > 0) {
+          let html = '<h3>Material en Mantenimiento</h3><table style="width:100%; border-collapse:collapse;">';
+          html += '<tr><th>Código</th><th>Nombre</th><th>Cantidad</th><th>Precio Total</th><th>Mano de Obra</th><th>Total</th></tr>';
+          itemsMantenimiento.forEach(item => {
+            const precioTotal = (item.precio_promedio * item.cantidad).toFixed(2);
+            const total = (parseFloat(precioTotal) + item.mano_obra).toFixed(2);
+            html += `<tr><td>${item.codigo}</td><td>${item.nombre}</td><td>${item.cantidad}</td><td>$${precioTotal}</td><td>$${item.mano_obra.toFixed(2)}</td><td>$${total}</td></tr>`;
+          });
+          html += '</table>';
+          detallesDiv.innerHTML = html;
+        }
+        document.getElementById('modal-fabricacion').style.display = 'flex';
+      }
+
+      // =============================================================================
+      // 🔹 INICIALIZACIÓN
+      // =============================================================================
+      function initFabricacion() {
+        document.getElementById('fab-refresh-list').addEventListener('click', cargarSolicitudesList);
+        document.getElementById('btn-abrir-modal-consumidos').addEventListener('click', () => abrirModalManufacturado('consumido'));
+        document.getElementById('btn-abrir-modal-mantenimiento').addEventListener('click', () => abrirModalManufacturado('mantenimiento'));
+        document.getElementById('btn-guardar-fabricacion').addEventListener('click', guardarFabricacion);
+        document.getElementById('btn-limpiar-fabricacion').addEventListener('click', () => {
+          estado = { itemsConsumidos: [], itemsMantenimiento: [], datosFormulario: {}, pdfData: null };
+          editingSolicitudId = null;
+          editingSolicitudEstado = null;
+          editingNumeroSolicitud = null;
+          renderTablaConsumidos();
+          renderTablaMantenimiento();
+          const btnGuardar = document.getElementById('btn-guardar-fabricacion');
+          btnGuardar.disabled = false;
+          btnGuardar.textContent = 'Registrar Mantenimiento';
+        });
+        document.getElementById('btn-cerrar-fabricacion').addEventListener('click', () => {
+          document.getElementById('modal-fabricacion').style.display = 'none';
+          estado = { itemsConsumidos: [], itemsMantenimiento: [], datosFormulario: {}, pdfData: null };
+          editingSolicitudId = null;
+          editingSolicitudEstado = null;
+          editingNumeroSolicitud = null;
+          document.getElementById('responsable-manufactura').value = '';
+          document.getElementById('fecha-manufactura').value = '';
+          renderTablaConsumidos();
+          renderTablaMantenimiento();
+        });
+
+        cargarDatos();
+        cargarSolicitudesList();
+      }
+
+      initFabricacion();
+    }, 50);
+  </script>
+  </div>
+</body>
+</html>

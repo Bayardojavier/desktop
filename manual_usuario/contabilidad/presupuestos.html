@@ -1,0 +1,857 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario - Presupuestos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary-color: #64748b;
+            --accent-color: #f59e0b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --background-primary: #0f172a;
+            --background-secondary: #1e293b;
+            --background-tertiary: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --border-hover: #475569;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--background-primary) 0%, #1e1b4b 100%);
+            color: var(--text-secondary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--background-secondary) 0%, var(--background-tertiary) 100%);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .header-text h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .header-text p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--background-tertiary);
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .nav-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            transform: translateY(-1px);
+        }
+
+        /* Breadcrumb */
+        .breadcrumb {
+            background: var(--background-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .breadcrumb-nav {
+            padding: 1rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .breadcrumb-list {
+            display: flex;
+            align-items: center;
+            list-style: none;
+            gap: 0.5rem;
+        }
+
+        .breadcrumb-item {
+            color: var(--text-muted);
+        }
+
+        .breadcrumb-item a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .breadcrumb-item a:hover {
+            color: var(--primary-color);
+        }
+
+        .breadcrumb-separator {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .breadcrumb-current {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .content-section {
+            background: var(--background-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .section-header {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-description {
+            font-size: 1.125rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        /* Feature Gallery */
+        .feature-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .feature-card {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .feature-image {
+            padding: 1.5rem;
+            background: var(--background-primary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .feature-caption {
+            padding: 1rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            text-align: center;
+            background: var(--background-secondary);
+        }
+
+        /* Content Blocks */
+        .content-block {
+            margin: 2rem 0;
+        }
+
+        .content-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .content-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .content-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .content-list li:last-child {
+            border-bottom: none;
+        }
+
+        .nested-list {
+            margin-left: 1.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .nested-list li {
+            border-bottom: none;
+            padding: 0.25rem 0;
+            color: var(--text-muted);
+        }
+
+        .highlight-box {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .highlight-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Table Styles */
+        .table-container {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .table-header {
+            background: var(--background-secondary);
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .table-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table th {
+            background: var(--background-secondary);
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .data-table td {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .data-table tr:hover td {
+            background: var(--background-primary);
+        }
+
+        .amount-cell {
+            text-align: right;
+            font-family: 'Courier New', monospace;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-md);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .status-on-track {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .status-warning {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .status-over {
+            background: var(--error-color);
+            color: white;
+        }
+
+        /* Budget Cards */
+        .budget-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .budget-card {
+            background: var(--background-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .budget-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .budget-amount {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .budget-progress {
+            width: 100%;
+            height: 8px;
+            background: var(--background-primary);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .budget-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success-color), var(--warning-color), var(--error-color));
+            border-radius: 4px;
+        }
+
+        .budget-status {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--background-secondary);
+            border-top: 1px solid var(--border-color);
+            margin-top: 3rem;
+        }
+
+        .footer-content {
+            padding: 2rem;
+            text-align: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-text {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .feature-card {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .feature-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .nav-buttons {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .main-content {
+                padding: 1rem;
+            }
+
+            .content-section {
+                padding: 1.5rem;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            .feature-gallery {
+                grid-template-columns: 1fr;
+            }
+
+            .data-table {
+                font-size: 0.75rem;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 0.5rem;
+            }
+
+            .budget-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo">
+                    <i class="fas fa-calculator"></i>
+                </div>
+                <div class="header-text">
+                    <h1>Manual de Usuario</h1>
+                    <p>Absolute de Nicaragua</p>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <a href="index.html" class="nav-btn">
+                    <i class="fas fa-arrow-left"></i>
+                    Contabilidad
+                </a>
+                <a href="../index.html" class="nav-btn">
+                    <i class="fas fa-home"></i>
+                    Inicio
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <nav class="breadcrumb">
+        <div class="breadcrumb-nav">
+            <ol class="breadcrumb-list">
+                <li class="breadcrumb-item">
+                    <a href="../index.html">Inicio</a>
+                </li>
+                <li class="breadcrumb-separator">/</li>
+                <li class="breadcrumb-item">
+                    <a href="index.html">Contabilidad</a>
+                </li>
+                <li class="breadcrumb-separator">/</li>
+                <li class="breadcrumb-current">Presupuestos</li>
+            </ol>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <section class="content-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-calculator"></i>
+                    Gestión de Presupuestos
+                </h2>
+                <p class="section-description">
+                    El módulo de presupuestos permite planificar, controlar y analizar los recursos financieros de la organización, estableciendo metas realistas y monitoreando el cumplimiento de objetivos económicos a través de comparaciones entre lo planeado y lo ejecutado.
+                </p>
+            </div>
+
+            <div class="feature-gallery">
+                <div class="feature-card">
+                    <div class="feature-image">
+                        <div style="background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 20px; font-family: 'Fira Code', 'Courier New', monospace; font-size: 12px; line-height: 1.4; color: #cbd5e1;">
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+                                <h3 style="margin: 0 0 12px; color: #0f172a; font-size: 14px; font-weight: 600;">📊 Dashboard de Presupuestos</h3>
+
+                                <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; color: #0f172a;">
+                                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px;">
+                                        <div style="background: linear-gradient(135deg, #10b981, #059669); color: #fff; padding: 12px; border-radius: 8px;">
+                                            <div style="font-size: 18px; font-weight: 700;">C$ 2,450,000</div>
+                                            <div style="font-size: 12px; opacity: 0.9;">Presupuesto Anual</div>
+                                            <div style="font-size: 11px; opacity: 0.7; margin-top: 4px;">85% ejecutado</div>
+                                        </div>
+
+                                        <div style="background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; padding: 12px; border-radius: 8px;">
+                                            <div style="font-size: 18px; font-weight: 700;">C$ 2,082,500</div>
+                                            <div style="font-size: 12px; opacity: 0.9;">Ejecutado</div>
+                                            <div style="font-size: 11px; opacity: 0.7; margin-top: 4px;">↗️ +12% vs presupuesto</div>
+                                        </div>
+                                    </div>
+
+                                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px;">
+                                        <h5 style="margin: 0 0 8px; font-size: 12px; font-weight: 600; color: #374151;">Ejecución por Categoría</h5>
+                                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                                <span style="font-size: 11px; color: #6b7280;">Ventas</span>
+                                                <span style="font-size: 11px; color: #10b981;">95% ejecutado</span>
+                                            </div>
+                                            <div style="background: #e5e7eb; height: 6px; border-radius: 3px;">
+                                                <div style="background: #10b981; height: 100%; width: 95%; border-radius: 3px;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="feature-caption">
+                        Fig. 1 - Dashboard con resumen de ejecución presupuestaria y alertas de desviaciones.
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-image">
+                        <div style="background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 20px; font-family: 'Fira Code', 'Courier New', monospace; font-size: 12px; line-height: 1.4; color: #cbd5e1;">
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+                                <h3 style="margin: 0 0 12px; color: #0f172a; font-size: 14px; font-weight: 600;">📝 Creación de Presupuestos</h3>
+
+                                <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; color: #0f172a;">
+                                    <div style="margin-bottom: 16px;">
+                                        <h4 style="margin: 0 0 8px; font-size: 13px; font-weight: 600;">Nuevo Presupuesto 2026</h4>
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px;">
+                                                <label style="display: block; font-size: 11px; color: #64748b; margin-bottom: 4px;">Categoría</label>
+                                                <select style="width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; font-size: 12px;">
+                                                    <option>Ventas</option>
+                                                    <option>Gastos Operativos</option>
+                                                    <option>Inversiones</option>
+                                                    <option>Financiamiento</option>
+                                                </select>
+                                            </div>
+
+                                            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px;">
+                                                <label style="display: block; font-size: 11px; color: #64748b; margin-bottom: 4px;">Monto Anual</label>
+                                                <input style="width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; font-size: 12px;" type="number" placeholder="0.00" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                                        <button style="padding: 8px 16px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; color: #334155; font-size: 12px;">Cargar desde Año Anterior</button>
+                                        <button style="padding: 8px 16px; border: 1px solid #10b981; border-radius: 6px; background: #10b981; color: #fff; font-size: 12px; font-weight: 600;">Crear Presupuesto</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="feature-caption">
+                        Fig. 2 - Interfaz para crear y configurar presupuestos con distribución mensual automática.
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-chart-pie"></i>
+                    Estado de Presupuestos
+                </h3>
+                <div class="budget-grid">
+                    <div class="budget-card">
+                        <div class="budget-title">Presupuesto Anual</div>
+                        <div class="budget-amount">C$ 2,450,000</div>
+                        <div class="budget-progress">
+                            <div class="budget-progress-bar" style="width: 85%;"></div>
+                        </div>
+                        <div class="budget-status">85% ejecutado</div>
+                    </div>
+                    <div class="budget-card">
+                        <div class="budget-title">Ventas</div>
+                        <div class="budget-amount">C$ 1,800,000</div>
+                        <div class="budget-progress">
+                            <div class="budget-progress-bar" style="width: 95%;"></div>
+                        </div>
+                        <div class="budget-status">95% ejecutado</div>
+                    </div>
+                    <div class="budget-card">
+                        <div class="budget-title">Gastos Operativos</div>
+                        <div class="budget-amount">C$ 450,000</div>
+                        <div class="budget-progress">
+                            <div class="budget-progress-bar" style="width: 78%;"></div>
+                        </div>
+                        <div class="budget-status">78% ejecutado</div>
+                    </div>
+                    <div class="budget-card">
+                        <div class="budget-title">Inversiones</div>
+                        <div class="budget-amount">C$ 200,000</div>
+                        <div class="budget-progress">
+                            <div class="budget-progress-bar" style="width: 65%;"></div>
+                        </div>
+                        <div class="budget-status">65% ejecutado</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-table"></i>
+                    Detalle de Presupuestos por Categoría
+                </h3>
+                <div class="table-container">
+                    <div class="table-header">
+                        <h4 class="table-title">Presupuesto vs Real - Febrero 2026</h4>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Categoría</th>
+                                <th>Presupuesto Mensual</th>
+                                <th>Ejecutado</th>
+                                <th>Variación</th>
+                                <th>% Ejecución</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Ventas</td>
+                                <td class="amount-cell">C$ 150,000</td>
+                                <td class="amount-cell">C$ 142,500</td>
+                                <td class="amount-cell" style="color: var(--error-color);">C$ -7,500</td>
+                                <td>95%</td>
+                                <td><span class="status-badge status-on-track">En Ruta</span></td>
+                            </tr>
+                            <tr>
+                                <td>Gastos Administrativos</td>
+                                <td class="amount-cell">C$ 25,000</td>
+                                <td class="amount-cell">C$ 19,500</td>
+                                <td class="amount-cell" style="color: var(--success-color);">C$ 5,500</td>
+                                <td>78%</td>
+                                <td><span class="status-badge status-on-track">En Ruta</span></td>
+                            </tr>
+                            <tr>
+                                <td>Gastos de Ventas</td>
+                                <td class="amount-cell">C$ 15,000</td>
+                                <td class="amount-cell">C$ 18,750</td>
+                                <td class="amount-cell" style="color: var(--error-color);">C$ -3,750</td>
+                                <td>125%</td>
+                                <td><span class="status-badge status-over">Sobrepaso</span></td>
+                            </tr>
+                            <tr>
+                                <td>Marketing</td>
+                                <td class="amount-cell">C$ 12,000</td>
+                                <td class="amount-cell">C$ 9,800</td>
+                                <td class="amount-cell" style="color: var(--success-color);">C$ 2,200</td>
+                                <td>82%</td>
+                                <td><span class="status-badge status-on-track">En Ruta</span></td>
+                            </tr>
+                            <tr>
+                                <td>Mantenimiento</td>
+                                <td class="amount-cell">C$ 8,000</td>
+                                <td class="amount-cell">C$ 6,200</td>
+                                <td class="amount-cell" style="color: var(--success-color);">C$ 1,800</td>
+                                <td>78%</td>
+                                <td><span class="status-badge status-on-track">En Ruta</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-star"></i>
+                    Funcionalidades Principales
+                </h3>
+                <ul class="content-list">
+                    <li><strong>Creación de Presupuestos:</strong> Diseño de presupuestos anuales con distribución mensual automática y escenarios múltiples.</li>
+                    <li><strong>Monitoreo en Tiempo Real:</strong> Seguimiento continuo de la ejecución presupuestaria con alertas automáticas.</li>
+                    <li><strong>Análisis de Variaciones:</strong> Identificación y explicación de desviaciones entre presupuesto y ejecución real.</li>
+                    <li><strong>Escenarios What-If:</strong> Simulación de diferentes escenarios para toma de decisiones estratégicas.</li>
+                    <li><strong>Reportes Gerenciales:</strong> Dashboards personalizados para diferentes niveles de la organización.</li>
+                    <li><strong>Control por Centros de Costo:</strong> Asignación y seguimiento de presupuestos por áreas o proyectos.</li>
+                    <li><strong>Alertas Automáticas:</strong> Notificaciones cuando se alcanzan umbrales críticos de gasto o ingreso.</li>
+                    <li><strong>Historial y Tendencias:</strong> Análisis histórico de ejecución presupuestaria y patrones de comportamiento.</li>
+                </ul>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-route"></i>
+                    Proceso de Gestión Presupuestaria
+                </h3>
+                <ul class="content-list">
+                    <li><strong>Planificación Estratégica:</strong> Definición de objetivos anuales basados en la estrategia organizacional.</li>
+                    <li><strong>Elaboración de Presupuestos:</strong> Construcción detallada por categorías, centros de costo y períodos.</li>
+                    <li><strong>Aprobación y Validación:</strong> Revisión y aprobación por niveles jerárquicos correspondientes.</li>
+                    <li><strong>Implementación:</strong> Distribución del presupuesto aprobado a los responsables de ejecución.</li>
+                    <li><strong>Monitoreo Continuo:</strong> Seguimiento diario de la ejecución con reportes automáticos.</li>
+                    <li><strong>Control de Desviaciones:</strong> Análisis de variaciones y acciones correctivas cuando sea necesario.</li>
+                    <li><strong>Revisión y Ajustes:</strong> Actualizaciones periódicas del presupuesto basado en cambios en el entorno.</li>
+                    <li><strong>Evaluación Final:</strong> Análisis de cumplimiento y lecciones aprendidas para el siguiente período.</li>
+                </ul>
+            </div>
+
+            <div class="highlight-box">
+                <h4 class="highlight-title">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Sistema de Alertas y Controles
+                </h4>
+                <ul class="content-list" style="margin: 0;">
+                    <li><strong>Alertas de Desviación:</strong> Notificaciones automáticas cuando la ejecución supera el 10% del presupuesto.</li>
+                    <li><strong>Controles de Aprobación:</strong> Requerimiento de autorizaciones adicionales para gastos extraordinarios.</li>
+                    <li><strong>Límites de Gasto:</strong> Restricciones automáticas en categorías críticas para evitar sobrepasos.</li>
+                    <li><strong>Reportes de Riesgo:</strong> Identificación automática de áreas con alto riesgo de desviación.</li>
+                    <li><strong>Escalamiento Gerencial:</strong> Notificaciones a niveles superiores cuando se alcanzan umbrales críticos.</li>
+                </ul>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-layer-group"></i>
+                    Tipos de Presupuestos
+                </h3>
+                <ul class="content-list">
+                    <li><strong>Presupuestos Operativos:</strong> Planificación de ingresos y gastos recurrentes del negocio diario.</li>
+                    <li><strong>Presupuestos de Capital:</strong> Planificación de inversiones en activos fijos y proyectos de largo plazo.</li>
+                    <li><strong>Presupuestos de Efectivo:</strong> Proyección de flujos de entrada y salida de dinero.</li>
+                    <li><strong>Presupuestos por Centro de Costo:</strong> Asignación de recursos por áreas o departamentos específicos.</li>
+                    <li><strong>Presupuestos Flexibles:</strong> Ajustes automáticos basados en niveles de actividad variables.</li>
+                    <li><strong>Presupuestos de Cero Base:</strong> Revisión completa de todos los gastos desde cero cada período.</li>
+                    <li><strong>Presupuestos Participativos:</strong> Elaboración conjunta con participación de diferentes niveles organizacionales.</li>
+                    <li><strong>Presupuestos Rolling:</strong> Actualización continua con horizonte móvil de 12-18 meses.</li>
+                </ul>
+            </div>
+
+            <div class="content-block">
+                <h3 class="content-title">
+                    <i class="fas fa-chart-bar"></i>
+                    Reportes y Análisis
+                </h3>
+                <ul class="content-list">
+                    <li><strong>Reporte Ejecutivo:</strong> Resumen de cumplimiento presupuestario para alta dirección.</li>
+                    <li><strong>Análisis de Variaciones:</strong> Desglose detallado de diferencias entre presupuesto y real por categorías.</li>
+                    <li><strong>Tendencias Históricas:</strong> Comparación de ejecución presupuestaria a través de múltiples períodos.</li>
+                    <li><strong>Análisis de Eficiencia:</strong> Métricas de productividad y eficiencia en el uso de recursos presupuestados.</li>
+                    <li><strong>Proyecciones Futuras:</strong> Estimaciones de ejecución futura basadas en tendencias actuales.</li>
+                    <li><strong>Reportes por Responsable:</strong> Seguimiento individual del cumplimiento por persona o área responsable.</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p class="footer-text">
+                <i class="fas fa-copyright"></i>
+                Manual de Usuario - Absolute de Nicaragua 2026
+            </p>
+        </div>
+    </footer>
+</body>
+</html>

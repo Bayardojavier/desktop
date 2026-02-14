@@ -1,0 +1,36 @@
+<div class="cw">
+  <div class="cw-header">
+    <div>
+      <h3 class="cw-title">Crucigrama educativo</h3>
+      <p class="cw-sub">Completa el crucigrama. Usa las pistas y revisa tu progreso.</p>
+    </div>
+    <div class="cw-actions">
+      <select id="cw-puzzle" class="cw-select" title="Crucigrama">
+        <option value="0">Inventario (básico)</option>
+        <option value="1">Eventos / Audiovisual</option>
+      </select>
+      <button class="cw-btn" id="cw-new">✨ Nuevo</button>
+      <button class="cw-btn" id="cw-check">✓ Verificar</button>
+      <button class="cw-btn" id="cw-reset">↻ Reiniciar</button>
+    </div>
+  </div>
+
+  <div class="cw-layout">
+    <div class="cw-board" id="cw-board" aria-label="Tablero de crucigrama"></div>
+
+    <div class="cw-side">
+      <div class="cw-box">
+        <h4>Horizontales</h4>
+        <ol id="cw-clues-h"></ol>
+      </div>
+      <div class="cw-box">
+        <h4>Verticales</h4>
+        <ol id="cw-clues-v"></ol>
+      </div>
+      <div class="cw-box">
+        <h4>Estado</h4>
+        <p id="cw-status" class="cw-status">Escribe letras en la cuadrícula.</p>
+      </div>
+    </div>
+  </div>
+</div>
