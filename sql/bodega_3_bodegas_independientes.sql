@@ -168,3 +168,43 @@ alter table public.movimientos_bodega_hierros add column if not exists created_a
 alter table public.movimientos_bodega_consumibles add column if not exists created_at timestamp with time zone default now();
 
 commit;
+
+-- Vistas de stock corregidas para incluir tipo_material y color, agrupadas por bodega
+create or replace view public.stock_audiovisual as
+select
+  movimientos_bodega_audiovisual.material_codigo,
+  movimientos_bodega_audiovisual.material_nombre,
+  movimientos_bodega_audiovisual.bodega_principal,
+  movimientos_bodega_audiovisual.bodega_secundaria,
+  sum(movimientos_bodega_audiovisual.cantidad * movimientos_bodega_audiovisual.signo::numeric) as stock_actual,
+  catalogo_audiovisual.tipo_material,
+  catalogo_audiovisual.color
+from movimientos_bodega_audiovisual
+left join catalogo_audiovisual on catalogo_audiovisual.codigo = movimientos_bodega_audiovisual.material_codigo
+group by movimientos_bodega_audiovisual.material_codigo, movimientos_bodega_audiovisual.material_nombre, movimientos_bodega_audiovisual.bodega_principal, movimientos_bodega_audiovisual.bodega_secundaria, catalogo_audiovisual.tipo_material, catalogo_audiovisual.color;
+
+create or replace view public.stock_hierros as
+select
+  movimientos_bodega_hierros.material_codigo,
+  movimientos_bodega_hierros.material_nombre,
+  movimientos_bodega_hierros.bodega_principal,
+  movimientos_bodega_hierros.bodega_secundaria,
+  sum(movimientos_bodega_hierros.cantidad * movimientos_bodega_hierros.signo::numeric) as stock_actual,
+  catalogo_hierros.tipo_material,
+  catalogo_hierros.color
+from movimientos_bodega_hierros
+left join catalogo_hierros on catalogo_hierros.codigo = movimientos_bodega_hierros.material_codigo
+group by movimientos_bodega_hierros.material_codigo, movimientos_bodega_hierros.material_nombre, movimientos_bodega_hierros.bodega_principal, movimientos_bodega_hierros.bodega_secundaria, catalogo_hierros.tipo_material, catalogo_hierros.color;
+
+create or replace view public.stock_consumibles as
+select
+  movimientos_bodega_consumibles.material_codigo,
+  movimientos_bodega_consumibles.material_nombre,
+  movimientos_bodega_consumibles.bodega_principal,
+  movimientos_bodega_consumibles.bodega_secundaria,
+  sum(movimientos_bodega_consumibles.cantidad * movimientos_bodega_consumibles.signo::numeric) as stock_actual,
+  catalogo_consumibles.tipo_material,
+  catalogo_consumibles.color
+from movimientos_bodega_consumibles
+left join catalogo_consumibles on catalogo_consumibles.codigo = movimientos_bodega_consumibles.material_codigo
+group by movimientos_bodega_consumibles.material_codigo, movimientos_bodega_consumibles.material_nombre, movimientos_bodega_consumibles.bodega_principal, movimientos_bodega_consumibles.bodega_secundaria, catalogo_consumibles.tipo_material, catalogo_consumibles.color;

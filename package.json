@@ -1,6 +1,6 @@
 {
   "name": "absolute-desktop",
-  "version": "1.3.3",
+  "version": "1.3.8",
   "description": "App de escritorio de Absolute de Nicaragua",
   "main": "main.js",
   "author": "Bayardo Davila",
@@ -99,7 +99,8 @@
       "license": "build/license.txt",
       "installerSidebar": "build/installerSidebar.bmp",
       "installerHeader": "build/installerHeader.bmp",
-      "warningsAsErrors": false
+      "warningsAsErrors": false,
+      "differentialPackage": false
     },
     "mac": {
       "target": "dmg",

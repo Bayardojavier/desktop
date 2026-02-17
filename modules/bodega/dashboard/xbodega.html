@@ -166,65 +166,23 @@
     const cont = document.getElementById('tabla-inventario-bodega');
     cont.innerHTML = '<p style="color:#cbd5e1; text-align:center; margin-top: 40px;">Cargando inventario…</p>';
 
-    const [{ data: movAudioData, error: movAudioError }, { data: movHierroData, error: movHierroError }, { data: movConsumibleData, error: movConsumibleError }, { data: catAudioData, error: catAudioError }, { data: catHierroData, error: catHierroError }, { data: catConsumibleData, error: catConsumibleError }] = await Promise.all([
+    const [{ data: stockAudioData, error: stockAudioError }, { data: stockHierroData, error: stockHierroError }, { data: stockConsumibleData, error: stockConsumibleError }] = await Promise.all([
       supa
-        .from('movimientos_bodega_audiovisual')
-        .select('material_codigo, bodega_principal, bodega_secundaria, cantidad, signo')
-        .not('cantidad', 'is', null)
-        .not('signo', 'is', null),
+        .from('stock_audiovisual')
+        .select('material_codigo, material_nombre, bodega_principal, bodega_secundaria, ubicacion_nombre, stock_actual, existencia, fuera, tipo_material, color'),
       supa
-        .from('movimientos_bodega_hierros')
-        .select('material_codigo, bodega_principal, bodega_secundaria, cantidad, signo')
-        .not('cantidad', 'is', null)
-        .not('signo', 'is', null),
+        .from('stock_hierros')
+        .select('material_codigo, material_nombre, bodega_principal, bodega_secundaria, ubicacion_nombre, stock_actual, existencia, fuera, tipo_material, color'),
       supa
-        .from('movimientos_bodega_consumibles')
-        .select('material_codigo, bodega_principal, bodega_secundaria, cantidad, signo')
-        .not('cantidad', 'is', null)
-        .not('signo', 'is', null),
-      supa
-        .from('catalogo_audiovisual')
-        .select('codigo, nombre, bodega_principal, bodega_secundaria, tipo_material, color')
-        .eq('es_contenedor', false),
-      supa
-        .from('catalogo_hierros')
-        .select('codigo, nombre, bodega_principal, bodega_secundaria, tipo_material, color')
-        .eq('es_contenedor', false),
-      supa
-        .from('catalogo_consumibles')
-        .select('codigo, nombre, bodega_principal, bodega_secundaria, tipo_material, color')
-        .eq('es_contenedor', false)
+        .from('stock_consumibles')
+        .select('material_codigo, material_nombre, bodega_principal, bodega_secundaria, ubicacion_nombre, stock_actual, existencia, fuera, tipo_material, color'),
     ]);
 
-    // Verificar errores en movimientos
-    if (movAudioError && movHierroError && movConsumibleError) {
-      console.error('Error cargando movimientos:', movAudioError, movHierroError, movConsumibleError);
-      cont.innerHTML = `<p style="color:#ef4444; text-align:center; margin-top: 40px;">Error al cargar movimientos: ${movAudioError?.message || movHierroError?.message || movConsumibleError?.message}</p>`;
+    // Verificar errores en stock
+    if (stockAudioError && stockHierroError && stockConsumibleError) {
+      console.error('Error cargando stock:', stockAudioError, stockHierroError, stockConsumibleError);
+      cont.innerHTML = `<p style="color:#ef4444; text-align:center; margin-top: 40px;">Error al cargar stock: ${stockAudioError?.message || stockHierroError?.message || stockConsumibleError?.message}</p>`;
       return;
-    }
-
-    // Combinar datos de catálogo de las 3 tablas
-    const catMap = new Map();
-    function addToCatMap(data, tipo) {
-      (data || []).forEach(c => {
-        catMap.set(c.codigo, {
-          codigo: c.codigo,
-          nombre: c.nombre,
-          bodega_principal: c.bodega_principal,
-          bodega_secundaria: c.bodega_secundaria,
-          tipo: c.tipo_material,
-          color: c.color,
-          tabla_origen: tipo
-        });
-      });
-    }
-
-    addToCatMap(catAudioData, 'audiovisual');
-    addToCatMap(catHierroData, 'hierros');
-    addToCatMap(catConsumibleData, 'consumibles');
-
-    if (catAudioError && catHierroError && catConsumibleError) {
-      console.warn('No se pudieron cargar los catálogos:', catAudioError, catHierroError, catConsumibleError);
     }
 
     const inventarioMap = new Map();
@@ -232,87 +190,32 @@
       return `${String(codigo || '').trim()}||${normalizarBodega(principal) || 'Principal'}||${normalizarBodega(secundaria) || 'General'}`;
     }
 
-    // Calcular existencia desde movimientos de las 3 tablas
-    const existenciaMap = new Map();
-
-    function procesarMovimientos(movimientos, tipo) {
-      (movimientos || []).forEach(m => {
-        const codigo = String(m.material_codigo || '').trim();
-        if (!codigo) return;
-
-        const bodegaPrincipal = normalizarBodega(m.bodega_principal) || 'Principal';
-        const bodegaSecundaria = normalizarBodega(m.bodega_secundaria) || 'General';
-        const key = makeKey(codigo, bodegaPrincipal, bodegaSecundaria);
-
-        const cantidad = Number(m.cantidad) || 0;
-        const signo = Number(m.signo) || 1;
-        const ajuste = cantidad * signo;
-
-        if (!existenciaMap.has(key)) {
-          existenciaMap.set(key, { existencia: 0, tabla_origen: tipo });
-        }
-        existenciaMap.get(key).existencia += ajuste;
-      });
-    }
-
-    procesarMovimientos(movAudioData, 'audiovisual');
-    procesarMovimientos(movHierroData, 'hierros');
-    procesarMovimientos(movConsumibleData, 'consumibles');
-
-    // Crear inventario con existencias calculadas
-    existenciaMap.forEach((data, key) => {
-      const [codigo, bodegaPrincipal, bodegaSecundaria] = key.split('||');
-      const c = catMap.get(codigo) || {};
-      const bodegaMostrar = bodegaSecundaria || bodegaPrincipal;
-
-      inventarioMap.set(key, {
-        codigo,
-        nombre: c.nombre || codigo,
-        bodega: bodegaMostrar,
-        bodega_principal: bodegaPrincipal,
-        bodega_secundaria: bodegaSecundaria,
-        tipo: c.tipo || '–',
-        color: c.color || '–',
-        existencia: Math.max(0, data.existencia), // No permitir existencias negativas
-        tabla_origen: data.tabla_origen
-      });
-    });
-
-    // Complemento: items del catálogo sin movimientos aún (existencia=0)
-    function addCatalogoSinStock(data, tipo) {
-      (data || []).forEach(c => {
-        const codigo = String(c.codigo || '').trim();
-        if (!codigo) return;
-
-        const bodegaPrincipal = normalizarBodega(c.bodega_principal) || 'Principal';
-        const bodegaSecundaria = normalizarBodega(c.bodega_secundaria) || 'General';
-        const key = makeKey(codigo, bodegaPrincipal, bodegaSecundaria);
-        if (inventarioMap.has(key)) return;
-
-        const bodegaMostrar = bodegaSecundaria || bodegaPrincipal;
+    // Agregar stock de las 3 tablas
+    function addStockToMap(data, tipo) {
+      (data || []).forEach(s => {
+        const key = `${s.material_codigo}||${s.bodega_principal || 'Principal'}||${s.bodega_secundaria || 'General'}||${s.ubicacion_codigo || 'Sin Contenedor'}`;
         inventarioMap.set(key, {
-          codigo,
-          nombre: c.nombre || codigo,
-          bodega: bodegaMostrar,
-          bodega_principal: bodegaPrincipal,
-          bodega_secundaria: bodegaSecundaria,
-          tipo: c.tipo_material || '–',
-          color: c.color || '–',
-          existencia: 0,
+          material_codigo: s.material_codigo,
+          material_nombre: s.material_nombre || s.material_codigo,
+          bodega_principal: s.bodega_principal || 'Principal',
+          bodega_secundaria: s.bodega_secundaria || 'General',
+          ubicacion_codigo: s.ubicacion_codigo || 'Sin Contenedor',
+          ubicacion_nombre: s.ubicacion_nombre || 'Sin Contenedor',
+          stock_actual: Number(s.stock_actual) || 0,
+          existencia: Number(s.existencia) || 0,
+          fuera: Number(s.fuera) || 0,
+          tipo_material: s.tipo_material || '–',
+          color: s.color || '–',
           tabla_origen: tipo
         });
       });
     }
 
-    addCatalogoSinStock(catAudioData, 'audiovisual');
-    addCatalogoSinStock(catHierroData, 'hierros');
-    addCatalogoSinStock(catConsumibleData, 'consumibles');
+    addStockToMap(stockAudioData, 'audiovisual');
+    addStockToMap(stockHierroData, 'hierros');
+    addStockToMap(stockConsumibleData, 'consumibles');
 
-    const inventario = Array.from(inventarioMap.values()).sort((a, b) =>
-      a.bodega_principal.localeCompare(b.bodega_principal)
-      || a.bodega_secundaria.localeCompare(b.bodega_secundaria)
-      || a.codigo.localeCompare(b.codigo)
-    );
+    const inventario = Array.from(inventarioMap.values());
 
     estado.inventario = inventario;
     estado.bodegasPrincipales = Array.from(new Set(inventario.map(i => i.bodega_principal).filter(Boolean))).sort();
@@ -481,23 +384,78 @@
   async function exportXbodegaExcel(){
     try{
       await loadXlsxLib();
-      const inventario = estado.inventario || [];
+      let inventario = estado.inventario || [];
       if(!inventario.length) return alert('No hay datos de inventario para exportar');
 
-      // Mapear columnas
-      const rows = inventario.map(i=>({
-        Codigo: i.codigo || '',
-        Nombre: i.nombre || '',
-        BodegaPrincipal: i.bodega_principal || '',
-        BodegaSecundaria: i.bodega_secundaria || '',
-        Tipo: i.tipo || '',
-        Color: i.color || '',
-        Stock: i.stock || i.cantidad || 0
-      }));
+      // Aplicar filtros actuales
+      const filtroPrincipal = document.getElementById('filtro-bodega-principal')?.value || 'todas';
+      const filtroSecundaria = document.getElementById('filtro-bodega-secundaria')?.value || 'todas';
+      if (filtroPrincipal !== 'todas') {
+        inventario = inventario.filter(item => item.bodega_principal === filtroPrincipal);
+      }
+      if (filtroSecundaria !== 'todas') {
+        inventario = inventario.filter(item => item.bodega_secundaria === filtroSecundaria);
+      }
+
+      // Agrupar por bodega_principal, bodega_secundaria, ubicacion_nombre
+      const grouped = {};
+      inventario.forEach(item => {
+        const pri = item.bodega_principal || 'Sin Principal';
+        const sec = item.bodega_secundaria || 'Sin Secundaria';
+        const cont = item.ubicacion_nombre || 'Sin Contenedor';
+        if (!grouped[pri]) grouped[pri] = {};
+        if (!grouped[pri][sec]) grouped[pri][sec] = {};
+        if (!grouped[pri][sec][cont]) grouped[pri][sec][cont] = [];
+        grouped[pri][sec][cont].push(item);
+      });
 
       const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(rows);
-      XLSX.utils.book_append_sheet(wb, ws, 'Inventario');
+      let sheetIndex = 0;
+
+      for (const pri in grouped) {
+        for (const sec in grouped[pri]) {
+          for (const cont in grouped[pri][sec]) {
+            const items = grouped[pri][sec][cont];
+            const rows = [];
+
+            // Header de sección
+            rows.push({ '': `Bodega Principal: ${pri}` });
+            rows.push({ '': `Bodega Secundaria: ${sec}` });
+            rows.push({ '': `Contenedor: ${cont}` });
+            rows.push({}); // fila vacía
+
+            // Header de tabla
+            rows.push({
+              'Código': 'Código',
+              'Nombre': 'Nombre',
+              'Tipo Material': 'Tipo Material',
+              'Color': 'Color',
+              'Contenedor': 'Contenedor',
+              'En Bodega': 'En Bodega',
+              'Fuera': 'Fuera'
+            });
+
+            // Filas de datos
+            items.forEach(item => {
+              rows.push({
+                'Código': item.material_codigo || '',
+                'Nombre': item.material_nombre || '',
+                'Tipo Material': item.tipo_material || '',
+                'Color': item.color || '',
+                'Contenedor': item.ubicacion_nombre || 'Sin Contenedor',
+                'En Bodega': item.stock_actual || 0,
+                'Fuera': item.fuera || 0
+              });
+            });
+
+            rows.push({}); // fila vacía al final
+
+            const ws = XLSX.utils.json_to_sheet(rows, { skipHeader: true });
+            const sheetName = `${pri.substring(0,5)}_${sec.substring(0,5)}_${cont.substring(0,5)}`.replace(/[^a-zA-Z0-9]/g, '_').substring(0,31);
+            XLSX.utils.book_append_sheet(wb, ws, sheetName || `Sheet${sheetIndex++}`);
+          }
+        }
+      }
 
       const filename = `Inventario_Bodega_${new Date().toISOString().slice(0,10)}.xlsx`;
       XLSX.writeFile(wb, filename);
@@ -507,7 +465,209 @@
     }
   }
 
-  document.getElementById('btn-exportar-xbodega-xlsx')?.addEventListener('click', exportXbodegaExcel);
+  // === EXPORTAR INVENTARIO A PDF ===
+  async function exportXbodegaPDF(){
+    const btn = document.getElementById('btn-exportar-xbodega');
+    if (btn) btn.disabled = true; // Deshabilitar botón durante exportación
+
+    // Mapa de colores hex a nombres
+    const colorMap = {
+      '#94a3b8': 'Sin Color',
+      '#000000': 'Negro',
+      '#ffffff': 'Blanco',
+      '#ef4444': 'Rojo',
+      '#b91c1c': 'Rojo Oscuro',
+      '#3b82f6': 'Azul',
+      '#1e40af': 'Azul Oscuro',
+      '#22c55e': 'Verde',
+      '#166534': 'Verde Oscuro',
+      '#fde047': 'Amarillo',
+      '#f97316': 'Naranja',
+      '#9ca3af': 'Gris',
+      '#4b5563': 'Gris Oscuro',
+      '#8b5cf6': 'Violeta',
+      '#d946ef': 'Fucsia',
+      '#0f172a': 'Azul Oscuro',
+      '#ff0000': 'Rojo',
+      '#00ff00': 'Verde',
+      '#0000ff': 'Azul',
+      '#ffff00': 'Amarillo',
+      '#ff00ff': 'Magenta',
+      '#00ffff': 'Cian',
+      '#808080': 'Gris',
+      '#eab308': 'Amarillo Dorado',
+      '#6366f1': 'Índigo',
+      '#64748b': 'Gris Pizarra',
+      // Agregar más según necesidad
+    };
+
+    function getColorName(hex) {
+      if (!hex || !hex.startsWith('#')) return hex || '';
+      return colorMap[hex.toLowerCase()] || hex;
+    }
+
+    try{
+      if(!window.jspdf || !window.jspdf.jsPDF) throw new Error('jsPDF no cargado');
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      // Agregar logo
+      try {
+        const logoImg = new Image();
+        logoImg.src = 'assets/logo.png';
+        doc.addImage(logoImg, 'PNG', 10, 10, 50, 30); // Ajustar tamaño para que no se vea contraído
+      } catch (e) {
+        console.warn('No se pudo cargar el logo:', e);
+      }
+
+      let inventario = estado.inventario || [];
+      if(!inventario.length) return alert('No hay datos de inventario para exportar');
+
+      // Aplicar filtros actuales
+      const filtroPrincipal = document.getElementById('filtro-bodega-principal')?.value || 'todas';
+      const filtroSecundaria = document.getElementById('filtro-bodega-secundaria')?.value || 'todas';
+      if (filtroPrincipal !== 'todas') {
+        inventario = inventario.filter(item => item.bodega_principal === filtroPrincipal);
+      }
+      if (filtroSecundaria !== 'todas') {
+        inventario = inventario.filter(item => item.bodega_secundaria === filtroSecundaria);
+      }
+
+      // Header del documento
+      doc.setFontSize(18);
+      doc.text('Inventario de Bodega', 105, 20, { align: 'center' });
+      doc.setFontSize(12);
+      doc.text(`Fecha: ${new Date().toLocaleDateString('es-NI')}`, 105, 30, { align: 'center' });
+      if (filtroPrincipal !== 'todas') {
+        doc.text(`Bodega Principal: ${filtroPrincipal}`, 105, 35, { align: 'center' });
+      }
+      if (filtroSecundaria !== 'todas') {
+        doc.text(`Bodega Secundaria: ${filtroSecundaria}`, 105, 40, { align: 'center' });
+      }
+
+      // KPIs del inventario
+      let yPosition = 50;
+      const pageHeight = doc.internal.pageSize.height;
+      const margin = 15; // Mantener margen original para títulos
+      const tableMargin = 6; // Margen aún más reducido para tablas
+
+      // Agrupar por ubicacion_nombre (contenedor)
+      const grouped = {};
+      inventario.forEach(item => {
+        const cont = item.ubicacion_nombre || 'Sin Contenedor';
+        if (!grouped[cont]) grouped[cont] = [];
+        grouped[cont].push(item);
+      });
+
+      doc.setFontSize(14);
+      doc.text('Resumen del Inventario:', margin, yPosition);
+      yPosition += 6;
+
+      const numContenedores = Object.keys(grouped).length;
+      const numMateriales = inventario.length;
+      const tiposUnicos = new Set(inventario.map(i => i.tipo_material)).size;
+
+      // Contenedor moderno para KPIs
+      const kpiHeight = 15;
+      doc.setFillColor(240, 248, 255); // Azul muy claro
+      doc.setDrawColor(59, 130, 246); // Azul
+      doc.setLineWidth(0.5);
+      doc.rect(tableMargin - 3, yPosition - 3, 180, kpiHeight, 'FD'); // Usar tableMargin
+
+      doc.setFontSize(10);
+      const kpiText = `Contenedores: ${numContenedores} | Materiales: ${numMateriales} | Tipos de Material: ${tiposUnicos}`;
+      doc.setTextColor(0, 0, 0); // Negro
+      doc.text(kpiText, tableMargin, yPosition + 5); // Usar tableMargin
+
+      yPosition += kpiHeight + 4;
+
+      // Ordenar contenedores alfabéticamente
+      const sortedContainers = Object.keys(grouped).sort();
+
+      for (const cont of sortedContainers) {
+        const items = grouped[cont].sort((a, b) => a.material_codigo.localeCompare(b.material_codigo)); // Ordenar alfabéticamente por código
+
+        // Título del contenedor
+        if (yPosition + 18 > pageHeight - 3) {
+          doc.addPage();
+          yPosition = 12;
+        }
+        yPosition += 3; // Espacio en blanco ANTES del título para separarlo de la tabla anterior
+        doc.setFontSize(14);
+        doc.text(`Contenedor: ${cont}`, tableMargin, yPosition);
+        yPosition += 2; // Espacio reducido DESPUÉS del título
+
+        // Preparar datos para la tabla
+        const tableData = items.map(item => [
+          item.material_codigo || '',
+          item.material_nombre || '',
+          item.tipo_material || '',
+          getColorName(item.color) || '',
+          item.existencia || 0, // Agregar Existencia Total
+          item.stock_actual || 0,
+          item.fuera || 0
+        ]);
+
+        // Agregar tabla con autoTable
+        doc.autoTable({
+          startY: yPosition,
+          head: [['Código', 'Nombre', 'Tipo Material', 'Color', 'Existencia Total', 'En Bodega', 'Fuera']],
+          body: tableData,
+          tableWidth: 'auto', // Ocupar todo el ancho disponible
+          margin: { 
+            top: tableMargin, 
+            left: tableMargin, 
+            right: tableMargin + 4, // Margen derecho mayor para evitar desbordamiento
+            bottom: tableMargin + 2 // Margen inferior reducido por pie de página cercano
+          },
+          styles: { fontSize: 5, cellPadding: 0.5 }, // Fuente aún más pequeña y padding mínimo
+          headStyles: { fillColor: [59, 130, 246], fontSize: 6 },
+          alternateRowStyles: { fillColor: [245, 245, 245] },
+          columnStyles: {
+            0: { cellWidth: 45 }, // Código - aumentado para códigos más largos
+            1: { cellWidth: 58 }, // Nombre - reducido para dar más espacio al código
+            2: { cellWidth: 25 }, // Tipo Material
+            3: { cellWidth: 20 }, // Color
+            4: { cellWidth: 18 }, // Existencia Total
+            5: { cellWidth: 16 }, // En Bodega
+            6: { cellWidth: 14 }  // Fuera
+          },
+          didDrawPage: (data) => {
+            yPosition = data.cursor.y + 1; // Espacio mínimo entre páginas, ajustado por pie cercano
+          }
+        });
+
+        yPosition = doc.lastAutoTable.finalY + 1; // Espacio mínimo después de tabla
+
+        // Espacio mínimo entre contenedores
+        if (yPosition + 13 > pageHeight - 3) {
+          doc.addPage();
+          yPosition = 12;
+        } else {
+          yPosition += 1; // Espacio mínimo entre contenedores
+        }
+      }
+
+      // Footer
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.text(`Página ${i} de ${pageCount}`, 105, pageHeight - 1.5, { align: 'center' });
+      }
+
+      const filename = `Inventario_Bodega_${new Date().toISOString().slice(0,10)}.pdf`;
+      doc.save(filename);
+    }catch(err){
+      console.error('Error exportando PDF xbodega:', err);
+      alert('Error exportando PDF. Revisa la consola.');
+    } finally {
+      const btn = document.getElementById('btn-exportar-xbodega');
+      if (btn) btn.disabled = false; // Rehabilitar botón
+    }
+  }
+
+  document.getElementById('btn-exportar-xbodega')?.addEventListener('click', exportXbodegaPDF);
 
   function renderizarMovimientos() {
     const container = document.getElementById('panel-movimientos');
@@ -679,27 +839,51 @@
       itemsFiltrados = itemsFiltrados.filter(item => item.bodega_secundaria === bodegaSecundariaFiltro);
     }
 
+    // Agregar per material
+    const materialMap = new Map();
+    itemsFiltrados.forEach(item => {
+      const codigo = item.material_codigo;
+      if (!materialMap.has(codigo)) {
+        materialMap.set(codigo, {
+          codigo,
+          nombre: item.material_nombre,
+          tipo: item.tipo_material,
+          color: item.color,
+          existencia: item.existencia,
+          contenedor: item.ubicacion_nombre || 'Sin Contenedor',
+          en_bodega: 0,
+          fuera: 0,
+          tabla_origen: item.tabla_origen
+        });
+      }
+      materialMap.get(codigo).en_bodega += item.stock_actual;
+      materialMap.get(codigo).fuera += item.fuera;
+    });
+
+    const materiales = Array.from(materialMap.values()).sort((a, b) => a.codigo.localeCompare(b.codigo));
+
     let totalUnidades = 0, agotados = 0;
     let filas = '';
 
-    itemsFiltrados.forEach(item => {
-      const existencia = Number(item.existencia) || 0;
-      totalUnidades += existencia;
-      if (existencia === 0) agotados++;
+    materiales.forEach(item => {
+      const totalExistencia = Number(item.existencia) || 0;
+      totalUnidades += totalExistencia;
+      if (totalExistencia <= 0) agotados++;
       filas += `
         <tr>
           <td>${item.codigo}</td>
           <td>${item.nombre}</td>
-          <td>${item.bodega}</td>
           <td>${item.tipo}</td>
           <td>${renderColorLabel(item.color)}</td>
-          <td>${existencia}</td>
-          <td>${existencia > 0 ? 'Disponible' : 'Agotado'}</td>
+          <td>${item.contenedor}</td>
+          <td>${totalExistencia}</td>
+          <td>${item.en_bodega}</td>
+          <td>${item.fuera}</td>
         </tr>
       `;
     });
 
-    document.getElementById('kpi-unicos').textContent = itemsFiltrados.length;
+    document.getElementById('kpi-unicos').textContent = materiales.length;
     document.getElementById('kpi-unidades').textContent = totalUnidades;
     document.getElementById('kpi-agotados').textContent = agotados;
 
@@ -709,15 +893,16 @@
           <tr>
             <th>Código</th>
             <th>Nombre</th>
-            <th>Bodega</th>
             <th>Tipo</th>
             <th>Color</th>
-            <th>Existencia</th>
-            <th>Estado</th>
+            <th>Contenedor</th>
+            <th>Existencia Total</th>
+            <th>En Bodega</th>
+            <th>Fuera</th>
           </tr>
         </thead>
         <tbody>
-          ${filas || '<tr><td colspan="7" style="text-align:center;color:#aaa;">No hay materiales en esta bodega</td></tr>'}
+          ${filas || '<tr><td colspan="8" style="text-align:center;color:#aaa;">No hay materiales</td></tr>'}
         </tbody>
       </table>
     `;
@@ -795,63 +980,63 @@
     const textoSecundaria = selectSecundaria?.selectedOptions?.[0]?.text || 'Todas';
     const fecha = new Date().toLocaleDateString('es-NI');
 
-    const grupos = {};
+    let inventario = estado.inventario || [];
+    if(!inventario.length) return alert('No hay datos de inventario para exportar');
 
-    document.querySelectorAll('#tabla-inventario-bodega tbody tr').forEach(tr => {
-      const c = tr.children;
-      if (c.length < 7) return;
+    // Aplicar filtros
+    if (valorPrincipal !== 'todas') {
+      inventario = inventario.filter(item => item.bodega_principal === valorPrincipal);
+    }
+    if (valorSecundaria !== 'todas') {
+      inventario = inventario.filter(item => item.bodega_secundaria === valorSecundaria);
+    }
 
-      const bodega = c[2].textContent.trim();
-      if (!grupos[bodega]) grupos[bodega] = [];
-
-      grupos[bodega].push({
-        codigo: c[0].textContent,
-        nombre: c[1].textContent,
-        tipo: c[3].textContent,
-        color: c[4].textContent,
-        existencia: c[5].textContent,
-        estado: c[6].textContent.trim()
-      });
+    // Agrupar por bodega_secundaria, luego por ubicacion_codigo
+    const grouped = {};
+    inventario.forEach(item => {
+      const sec = item.bodega_secundaria || 'Sin Bodega Secundaria';
+      const cont = item.ubicacion_codigo || 'Sin Contenedor';
+      if (!grouped[sec]) grouped[sec] = {};
+      if (!grouped[sec][cont]) grouped[sec][cont] = [];
+      grouped[sec][cont].push(item);
     });
-
-    const bodegas = Object.keys(grupos);
 
     let contenido = '';
-
-    bodegas.forEach(bodega => {
-      if (!grupos[bodega]) return;
-
-      let filas = '';
-      grupos[bodega].forEach(i => {
-        filas += `
-          <tr>
-            <td>${i.codigo}</td>
-            <td>${i.nombre}</td>
-            <td>${i.tipo}</td>
-            <td>${i.color}</td>
-            <td style="text-align:center;">${i.existencia}</td>
-            <td class="${i.estado === 'Disponible' ? 'ok' : 'bad'}">${i.estado}</td>
-          </tr>
-        `;
-      });
-
-      contenido += `
-        <h2 class="grupo-bodega">📦 ${bodega}</h2>
-        <table>
-          <thead>
+    for (const sec in grouped) {
+      contenido += `<div class="grupo-bodega">Bodega Secundaria: ${sec}</div>`;
+      for (const cont in grouped[sec]) {
+        contenido += `<div style="margin:10px 0 5px; font-size:12px; color:#374151; border-left:3px solid #6b7280; padding-left:6px;">Contenedor: ${cont}</div>`;
+        const items = grouped[sec][cont];
+        let filas = '';
+        items.forEach(item => {
+          filas += `
             <tr>
-              <th>Código</th>
-              <th>Nombre</th>
-              <th>Tipo</th>
-              <th>Color</th>
-              <th>Exist.</th>
-              <th>Estado</th>
+              <td>${item.material_codigo}</td>
+              <td>${item.material_nombre}</td>
+              <td>${item.tipo_material}</td>
+              <td>${item.color}</td>
+              <td style="text-align:center;">${item.stock_actual}</td>
+              <td style="text-align:center;">${item.fuera}</td>
             </tr>
-          </thead>
-          <tbody>${filas}</tbody>
-        </table>
-      `;
-    });
+          `;
+        });
+        contenido += `
+          <table>
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Tipo Material</th>
+                <th>Color</th>
+                <th>En Bodega</th>
+                <th>Fuera</th>
+              </tr>
+            </thead>
+            <tbody>${filas}</tbody>
+          </table>
+        `;
+      }
+    }
 
     const html = `
     <style>
@@ -872,19 +1057,8 @@
     <div>
       <div class="header">
         <img src="assets/logo.png" style="height:48px;margin-bottom:4px;">
-        <h1>Inventario General por Bodega</h1>
-        <p>
-          ${
-            (valorPrincipal === 'todas' && valorSecundaria === 'todas')
-              ? 'Todas las bodegas'
-              : (valorPrincipal !== 'todas' && valorSecundaria === 'todas')
-                ? `Bodega Principal: ${textoPrincipal}`
-                : (valorPrincipal === 'todas' && valorSecundaria !== 'todas')
-                  ? `Bodega Secundaria: ${textoSecundaria}`
-                  : `Bodega Principal: ${textoPrincipal} • Secundaria: ${textoSecundaria}`
-          }
-          | Fecha: ${fecha}
-        </p>
+        <h1>Inventario por Bodega y Contenedor</h1>
+        <p>Filtros: ${valorPrincipal === 'todas' && valorSecundaria === 'todas' ? 'Todas las bodegas' : valorPrincipal !== 'todas' && valorSecundaria === 'todas' ? `Bodega Principal: ${textoPrincipal}` : valorPrincipal === 'todas' && valorSecundaria !== 'todas' ? `Bodega Secundaria: ${textoSecundaria}` : `Bodega Principal: ${textoPrincipal} • Secundaria: ${textoSecundaria}`} | Fecha: ${fecha}</p>
       </div>
 
       ${contenido}
@@ -896,11 +1070,11 @@
     // Generar PDF nativo via Electron (preserva texto y carga imágenes relativas)
     try {
       const filename = `Inventario_${
-        (valorPrincipal === 'todas' && valorSecundaria === 'todas')
+        valorPrincipal === 'todas' && valorSecundaria === 'todas'
           ? 'General'
-          : (valorPrincipal !== 'todas' && valorSecundaria === 'todas')
+          : valorPrincipal !== 'todas' && valorSecundaria === 'todas'
             ? textoPrincipal.replace(/ /g,'_')
-            : (valorPrincipal === 'todas' && valorSecundaria !== 'todas')
+            : valorPrincipal === 'todas' && valorSecundaria !== 'todas'
               ? textoSecundaria.replace(/ /g,'_')
               : (textoPrincipal + '_' + textoSecundaria).replace(/ /g,'_')
       }.pdf`;

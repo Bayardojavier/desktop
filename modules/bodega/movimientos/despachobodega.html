@@ -102,13 +102,22 @@
     function determinarTipoMaterial(material) {
         if (!material) return 'consumible'; // Por defecto
 
-        const tipoMaterial = (material.tipoMaterial || '').toString().toLowerCase();
-        const tipoUso = (material.tipoUso || '').toString().toLowerCase();
-        const nombre = (material.nom || '').toString().toLowerCase();
+        const tipoMaterial = (material.tipo_material || material.tipoMaterial || '').toString().toLowerCase();
+        const tipoUso = (material.tipoUso || material.tipo_uso || '').toString().toLowerCase();
+        const nombre = (material.nom || material.nombre || '').toString().toLowerCase();
 
-        // Si tiene tipo_material o tipo_uso que indique herramienta/rentable
-        if (tipoMaterial.includes('herramienta') || tipoMaterial.includes('rentable') ||
-            tipoUso.includes('herramienta') || tipoUso.includes('rentable')) {
+        // Si tiene tipo_material que indique rentable
+        if (tipoMaterial.includes('rentable')) {
+            return 'rentable';
+        }
+
+        // Si tiene tipo_material que indique consumible
+        if (tipoMaterial.includes('consumible')) {
+            return 'consumible';
+        }
+
+        // Si tiene tipo_uso que indique herramienta/rentable
+        if (tipoUso.includes('herramienta') || tipoUso.includes('rentable')) {
             return 'rentable';
         }
 
@@ -1977,7 +1986,7 @@
                         codigo_material: item.codigo_material,
                         nombre_material: item.nombre_material,
                         cantidad_despachada: item.cantidad_solicitada,
-                        cantidad_devuelta: tipoMaterial === 'rentable' ? item.cantidad_solicitada : 0, // Rentables deben devolverse completos, consumibles pueden tener sobrantes
+                        cantidad_devuelta: tipoMaterial === 'rentable' ? 0 : item.cantidad_solicitada, // Rentables deben devolverse, consumibles se consideran consumidos
                         estado: 'despachado',
                         observacion: item.observacion,
                         medidas: item.medidas,
