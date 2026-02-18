@@ -128,6 +128,9 @@
     autoRefreshInterval: null,
     connectionErrorCount: 0
   };
+  // Paginación en cliente para la vista de inventario
+  estado.paginaActual = 1;
+  estado.paginaTam = 100; // filas por página
 
   // Mostrar color: si viene como hex (#rrggbb) mostrar swatch y nombre aproximado
   function renderColorLabel(raw) {
@@ -166,17 +169,70 @@
     const cont = document.getElementById('tabla-inventario-bodega');
     cont.innerHTML = '<p style="color:#cbd5e1; text-align:center; margin-top: 40px;">Cargando inventario…</p>';
 
-    const [{ data: stockAudioData, error: stockAudioError }, { data: stockHierroData, error: stockHierroError }, { data: stockConsumibleData, error: stockConsumibleError }] = await Promise.all([
-      supa
-        .from('stock_audiovisual')
-        .select('material_codigo, material_nombre, bodega_principal, bodega_secundaria, ubicacion_nombre, stock_actual, existencia, fuera, tipo_material, color'),
-      supa
-        .from('stock_hierros')
-        .select('material_codigo, material_nombre, bodega_principal, bodega_secundaria, ubicacion_nombre, stock_actual, existencia, fuera, tipo_material, color'),
-      supa
-        .from('stock_consumibles')
-        .select('material_codigo, material_nombre, bodega_principal, bodega_secundaria, ubicacion_nombre, stock_actual, existencia, fuera, tipo_material, color'),
+    // Helper: fetch all rows from a view/table in pages of 100
+    // Importante: en VISTAS sin PK, paginar con range SIN order puede omitir filas.
+    async function fetchAllFrom(tableName) {
+      const pageSize = 100;
+      let offset = 0;
+      let all = [];
+      while (true) {
+        const from = offset;
+        const to = offset + pageSize - 1;
+        let query = supa
+          .from(tableName)
+          .select('material_codigo, material_nombre, bodega_principal, bodega_secundaria, ubicacion_codigo, ubicacion_nombre, stock_actual, existencia, fuera, tipo_material, color')
+          .order('material_codigo', { ascending: true })
+          .order('bodega_principal', { ascending: true })
+          .order('bodega_secundaria', { ascending: true })
+          .order('ubicacion_codigo', { ascending: true })
+          .range(from, to);
+        const { data, error } = await query;
+        if (error) {
+          // devolver lo acumulado para diagnosticar y no “falsear” conteos como null
+          return { data: all, error };
+        }
+        if (!data || data.length === 0) break;
+        all = all.concat(data);
+        // If fewer than pageSize, we've reached the end
+        if (data.length < pageSize) break;
+        offset += pageSize;
+      }
+      return { data: all, error: null };
+    }
+
+    // Mostrar progreso mínimo en el contenedor
+    if (cont) cont.innerHTML = '<p style="color:#cbd5e1; text-align:center; margin-top: 20px;">Cargando inventario (por lotes de 100)…</p>';
+
+    // Traer las tres fuentes por separado en modo paginado
+    const [audioRes, hierroRes, consumibleRes] = await Promise.all([
+      fetchAllFrom('stock_audiovisual'),
+      fetchAllFrom('stock_hierros'),
+      fetchAllFrom('stock_consumibles')
     ]);
+
+    const stockAudioData = audioRes.data;
+    const stockAudioError = audioRes.error;
+    const stockHierroData = hierroRes.data;
+    const stockHierroError = hierroRes.error;
+    const stockConsumibleData = consumibleRes.data;
+    const stockConsumibleError = consumibleRes.error;
+
+    if (stockAudioError) console.warn('⚠️ Error/partial fetch stock_audiovisual:', stockAudioError);
+    if (stockHierroError) console.warn('⚠️ Error/partial fetch stock_hierros:', stockHierroError);
+    if (stockConsumibleError) console.warn('⚠️ Error/partial fetch stock_consumibles:', stockConsumibleError);
+
+    // Debug: registrar cuántas filas se trajeron por fuente y códigos únicos
+    try {
+      console.log('fetchAllFrom results:', {
+        stockAudioCount: Array.isArray(stockAudioData) ? stockAudioData.length : null,
+        stockHierroCount: Array.isArray(stockHierroData) ? stockHierroData.length : null,
+        stockConsumibleCount: Array.isArray(stockConsumibleData) ? stockConsumibleData.length : null
+      });
+      // Muestra de filas para diagnosticar datos que trae la vista (primeras 10)
+      console.log('sample stock_audiovisual rows (first 10):', (stockAudioData||[]).slice(0,10));
+      const uniqueAudio = new Set((stockAudioData||[]).map(r => (r.material_codigo||'').toString().trim())).size;
+      console.log('unique material_codigos in audiovisual data:', uniqueAudio);
+    } catch(e) { console.warn('Debug logging failed', e); }
 
     // Verificar errores en stock
     if (stockAudioError && stockHierroError && stockConsumibleError) {
@@ -215,9 +271,95 @@
     addStockToMap(stockHierroData, 'hierros');
     addStockToMap(stockConsumibleData, 'consumibles');
 
+    // Fuente del inventario:
+    // - TRUE  => SOLO 3 vistas: stock_audiovisual, stock_hierros, stock_consumibles
+    // - FALSE => además intenta “backfill” desde movimientos (no recomendado si tus vistas ya están completas)
+    const USAR_SOLO_VISTAS_STOCK = true;
+    
+    // Incluir materiales que sólo aparecen en movimientos (aunque no estén en las vistas)
+    async function fetchAllSelect(tableName, selectCols, orderCol = null) {
+      const pageSize = 100;
+      let offset = 0;
+      let all = [];
+      while (true) {
+        const from = offset;
+        const to = offset + pageSize - 1;
+        let query = supa
+          .from(tableName)
+          .select(selectCols);
+        if (orderCol) query = query.order(orderCol, { ascending: true });
+        query = query.range(from, to);
+        const { data, error } = await query;
+        if (error) return { data: null, error };
+        if (!data || data.length === 0) break;
+        all = all.concat(data);
+        if (data.length < pageSize) break;
+        offset += pageSize;
+      }
+      return { data: all, error: null };
+    }
+
+    if (!USAR_SOLO_VISTAS_STOCK) try {
+      const movRes = await fetchAllSelect('movimientos_bodega_audiovisual', 'id, material_codigo, material_nombre, bodega_principal, bodega_secundaria, ubicacion_codigo, ubicacion_nombre, tipo_movimiento, cantidad, signo, created_at', 'id');
+      const movRows = movRes.data || [];
+      const movMap = new Map();
+      movRows.forEach(m => {
+        const codigo = (m.material_codigo || '').toString().trim();
+        if (!codigo) return;
+        const key = `${codigo}||${m.bodega_principal || 'Principal'}||${m.bodega_secundaria || 'General'}||${m.ubicacion_codigo || 'Sin Contenedor'}`;
+        if (!movMap.has(key)) movMap.set(key, { material_codigo: codigo, material_nombre: m.material_nombre || codigo, bodega_principal: m.bodega_principal || 'Principal', bodega_secundaria: m.bodega_secundaria || 'General', ubicacion_codigo: m.ubicacion_codigo || 'Sin Contenedor', ubicacion_nombre: m.ubicacion_nombre || 'Sin Contenedor', stock_calc: 0, existencia_calc: 0, fuera_calc: 0 });
+        const rec = movMap.get(key);
+        const tipo = (m.tipo_movimiento || '').toString().toLowerCase();
+        const cantidad = Number(m.cantidad) || 0;
+        if (tipo === 'ingreso') { rec.stock_calc += cantidad; rec.existencia_calc += cantidad; }
+        else if (tipo === 'despacho' || tipo === 'salida' || tipo === 'egreso') { rec.stock_calc -= cantidad; rec.fuera_calc += cantidad; }
+        else if (tipo === 'devolucion') { rec.stock_calc += cantidad; rec.existencia_calc += cantidad; }
+        else { const signo = Number(m.signo) || 1; rec.stock_calc += signo * cantidad; }
+      });
+
+      const missingCatalogCodes = new Set();
+      for (const [key, val] of movMap.entries()) {
+        if (!inventarioMap.has(key)) {
+          missingCatalogCodes.add(val.material_codigo);
+          inventarioMap.set(key, { material_codigo: val.material_codigo, material_nombre: val.material_nombre, bodega_principal: val.bodega_principal, bodega_secundaria: val.bodega_secundaria, ubicacion_codigo: val.ubicacion_codigo, ubicacion_nombre: val.ubicacion_nombre, stock_actual: Number(val.stock_calc) || 0, existencia: Number(val.existencia_calc) || 0, fuera: Number(val.fuera_calc) || 0, tipo_material: '–', color: '–', tabla_origen: 'audiovisual_mov' });
+        }
+      }
+
+      if (missingCatalogCodes.size > 0) {
+        const codesArray = Array.from(missingCatalogCodes).slice(0, 1000);
+        const { data: catRows } = await supa.from('catalogo_audiovisual').select('codigo, nombre, tipo_material, color').in('codigo', codesArray);
+        (catRows || []).forEach(c => {
+          for (const [k, v] of inventarioMap.entries()) {
+            if ((v.material_codigo || '').toString().trim() === (c.codigo || '').toString().trim()) {
+              v.material_nombre = v.material_nombre || c.nombre || v.material_codigo;
+              v.tipo_material = c.tipo_material || v.tipo_material;
+              v.color = c.color || v.color;
+              inventarioMap.set(k, v);
+            }
+          }
+        });
+      }
+    } catch (e) {
+      console.warn('No se pudieron recuperar/mergear movimientos adicionales:', e);
+    }
+
     const inventario = Array.from(inventarioMap.values());
 
     estado.inventario = inventario;
+    // Debug: estadísticas del inventario cargado
+    try {
+      const total = inventario.length;
+      const uniqueCodes = new Set(inventario.map(i => (i.material_codigo||'').toString().trim())).size;
+      const nullCodes = inventario.filter(i => !(i.material_codigo||'').toString().trim()).length;
+      const byOrigin = {};
+      inventario.forEach(i => { byOrigin[i.tabla_origen] = (byOrigin[i.tabla_origen]||0) + 1; });
+      console.log('inventario stats', { total, uniqueCodes, nullCodes, byOrigin });
+      // Mostrar algunos códigos duplicados o ausentes para inspección
+      const codeCounts = {};
+      inventario.forEach(i => { const c = (i.material_codigo||'').toString().trim(); codeCounts[c] = (codeCounts[c]||0)+1; });
+      const duplicates = Object.entries(codeCounts).filter(([c,n]) => n>1).slice(0,10);
+      console.log('sample duplicate codes (code,count):', duplicates);
+    } catch(e){ console.warn('Debug inventario stats failed', e); }
     estado.bodegasPrincipales = Array.from(new Set(inventario.map(i => i.bodega_principal).filter(Boolean))).sort();
     estado.bodegasSecundarias = Array.from(new Set(inventario.map(i => i.bodega_secundaria).filter(Boolean))).sort();
 
@@ -830,7 +972,9 @@
   }
 
   function renderizarTabla(bodegaPrincipalFiltro, bodegaSecundariaFiltro) {
-    let itemsFiltrados = [...(estado.inventario || [])];
+    try {
+      console.log('renderizarTabla start', {totalInventario: (estado.inventario || []).length, paginaActual: estado.paginaActual, paginaTam: estado.paginaTam});
+      let itemsFiltrados = [...(estado.inventario || [])];
 
     if ((bodegaPrincipalFiltro || 'todas') !== 'todas') {
       itemsFiltrados = itemsFiltrados.filter(item => item.bodega_principal === bodegaPrincipalFiltro);
@@ -839,55 +983,89 @@
       itemsFiltrados = itemsFiltrados.filter(item => item.bodega_secundaria === bodegaSecundariaFiltro);
     }
 
-    // Agregar per material
-    const materialMap = new Map();
+    // KPIs por material (sin duplicar existencia por contenedor/bodega)
+    const materialAgg = new Map();
     itemsFiltrados.forEach(item => {
-      const codigo = item.material_codigo;
-      if (!materialMap.has(codigo)) {
-        materialMap.set(codigo, {
-          codigo,
-          nombre: item.material_nombre,
-          tipo: item.tipo_material,
-          color: item.color,
-          existencia: item.existencia,
-          contenedor: item.ubicacion_nombre || 'Sin Contenedor',
-          en_bodega: 0,
-          fuera: 0,
-          tabla_origen: item.tabla_origen
-        });
+      const codigo = (item.material_codigo || '').toString().trim();
+      if (!codigo) return;
+      const existencia = Number(item.existencia) || 0;
+      if (!materialAgg.has(codigo)) {
+        materialAgg.set(codigo, { existencia: existencia });
+      } else {
+        // existencia viene como total por material en la vista; usar el máximo para no sobrecontar
+        const rec = materialAgg.get(codigo);
+        rec.existencia = Math.max(rec.existencia, existencia);
       }
-      materialMap.get(codigo).en_bodega += item.stock_actual;
-      materialMap.get(codigo).fuera += item.fuera;
     });
 
-    const materiales = Array.from(materialMap.values()).sort((a, b) => a.codigo.localeCompare(b.codigo));
+    let totalUnidades = 0;
+    let agotados = 0;
+    for (const rec of materialAgg.values()) {
+      totalUnidades += Number(rec.existencia) || 0;
+      if ((Number(rec.existencia) || 0) <= 0) agotados++;
+    }
 
-    let totalUnidades = 0, agotados = 0;
+    document.getElementById('kpi-unicos').textContent = materialAgg.size;
+    document.getElementById('kpi-unidades').textContent = totalUnidades;
+    document.getElementById('kpi-agotados').textContent = agotados;
+
+    // Ordenar y PAGINAR registros (por bodega/contenedor)
+    const registros = itemsFiltrados
+      .map(r => ({
+        ...r,
+        _codigo: (r.material_codigo || '').toString().trim(),
+        _principal: (r.bodega_principal || '').toString().trim(),
+        _secundaria: (r.bodega_secundaria || '').toString().trim(),
+        _contenedor: (r.ubicacion_nombre || '').toString().trim()
+      }))
+      .sort((a, b) =>
+        a._codigo.localeCompare(b._codigo) ||
+        a._principal.localeCompare(b._principal) ||
+        a._secundaria.localeCompare(b._secundaria) ||
+        a._contenedor.localeCompare(b._contenedor)
+      );
+
+    const pageSize = estado.paginaTam || 100;
+    const totalPages = Math.max(1, Math.ceil(registros.length / pageSize));
+    const currentPage = Math.max(1, Math.min(Number(estado.paginaActual) || 1, totalPages));
+    estado.paginaActual = currentPage;
+    const start = (currentPage - 1) * pageSize;
+    const end = start + pageSize;
+    const registrosPagina = registros.slice(start, end);
+
     let filas = '';
-
-    materiales.forEach(item => {
-      const totalExistencia = Number(item.existencia) || 0;
-      totalUnidades += totalExistencia;
-      if (totalExistencia <= 0) agotados++;
+    registrosPagina.forEach(item => {
       filas += `
         <tr>
-          <td>${item.codigo}</td>
-          <td>${item.nombre}</td>
-          <td>${item.tipo}</td>
+          <td>${item.material_codigo || ''}</td>
+          <td>${item.material_nombre || ''}</td>
+          <td>${item.tipo_material || ''}</td>
           <td>${renderColorLabel(item.color)}</td>
-          <td>${item.contenedor}</td>
-          <td>${totalExistencia}</td>
-          <td>${item.en_bodega}</td>
-          <td>${item.fuera}</td>
+          <td>${item.bodega_principal || ''}</td>
+          <td>${item.bodega_secundaria || ''}</td>
+          <td>${item.ubicacion_nombre || 'Sin Contenedor'}</td>
+          <td>${Number(item.existencia) || 0}</td>
+          <td>${Number(item.stock_actual) || 0}</td>
+          <td>${Number(item.fuera) || 0}</td>
         </tr>
       `;
     });
 
-    document.getElementById('kpi-unicos').textContent = materiales.length;
-    document.getElementById('kpi-unidades').textContent = totalUnidades;
-    document.getElementById('kpi-agotados').textContent = agotados;
+    // Controles de paginación
+    const paginationHtml = `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;color:#cbd5e1;font-size:13px;">
+        <div>Mostrando ${registros.length ? (start + 1) : 0}–${Math.min(end, registros.length)} de ${registros.length} registros</div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <button id="btn-prev-pagina" ${currentPage<=1? 'disabled': ''}>◀ Prev</button>
+          <select id="select-pagina">
+            ${Array.from({length: totalPages}).map((_,i)=>`<option value="${i+1}" ${i+1===currentPage? 'selected': ''}>${i+1}/${totalPages}</option>`).join('')}
+          </select>
+          <button id="btn-next-pagina" ${currentPage>=totalPages? 'disabled': ''}>Next ▶</button>
+        </div>
+      </div>
+    `;
 
-    document.getElementById('tabla-inventario-bodega').innerHTML = `
+    document.getElementById('tabla-inventario-bodega').innerHTML = paginationHtml + `
       <table class="bodega-table">
         <thead>
           <tr>
@@ -895,6 +1073,8 @@
             <th>Nombre</th>
             <th>Tipo</th>
             <th>Color</th>
+            <th>Bodega Principal</th>
+            <th>Bodega Secundaria</th>
             <th>Contenedor</th>
             <th>Existencia Total</th>
             <th>En Bodega</th>
@@ -902,10 +1082,22 @@
           </tr>
         </thead>
         <tbody>
-          ${filas || '<tr><td colspan="8" style="text-align:center;color:#aaa;">No hay materiales</td></tr>'}
+          ${filas || '<tr><td colspan="10" style="text-align:center;color:#aaa;">No hay registros</td></tr>'}
         </tbody>
       </table>
     `;
+
+    // Añadir manejadores de evento para paginación
+    document.getElementById('btn-prev-pagina')?.addEventListener('click', () => { setPagina(currentPage - 1); });
+    document.getElementById('btn-next-pagina')?.addEventListener('click', () => { setPagina(currentPage + 1); });
+    document.getElementById('select-pagina')?.addEventListener('change', (e) => { setPagina(Number(e.target.value)); });
+    }
+    catch(err) {
+      console.error('Error en renderizarTabla:', err);
+      const cont = document.getElementById('tabla-inventario-bodega');
+      if (cont) cont.innerHTML = `<div style="color:#ef4444;padding:12px;">Error al renderizar la tabla: ${err.message || err}</div>`;
+      throw err;
+    }
   }
 
   // === INICIALIZAR ===
@@ -925,6 +1117,18 @@
     // Iniciar actualización automática de movimientos
     iniciarAutoRefresh();
   })();
+
+  // Funciones de paginación accesibles globalmente dentro del módulo
+  function setPagina(n) {
+    estado.paginaActual = Number(n) || 1;
+    renderizarTabla(
+      document.getElementById('filtro-bodega-principal')?.value || 'todas',
+      document.getElementById('filtro-bodega-secundaria')?.value || 'todas'
+    );
+  }
+
+  function nextPage() { setPagina((estado.paginaActual || 1) + 1); }
+  function prevPage() { setPagina((estado.paginaActual || 1) - 1); }
 
   // === EVENTOS ===
   document.getElementById('filtro-bodega-principal').addEventListener('change', (e) => {

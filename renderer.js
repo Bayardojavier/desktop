@@ -4,11 +4,27 @@
 // UTILIDADES DE SESIÓN
 // =============================
 
+function parseRoles(rawRol) {
+  return String(rawRol || '')
+    .split(/[,|;]+/)
+    .map(r => r.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function userHasRole(user, role) {
+  const roles = user?.roles || parseRoles(user?.rol);
+  const normalizedRole = String(role || '').trim().toLowerCase();
+  return roles.includes('admin') || (normalizedRole ? roles.includes(normalizedRole) : false);
+}
+
 function getCurrentUser() {
+  const rolRaw = localStorage.getItem('usuario_rol');
+  const roles = parseRoles(rolRaw);
   return {
     id: localStorage.getItem('usuario_id'),
     nombre: localStorage.getItem('usuario_nombre'),
-    rol: localStorage.getItem('usuario_rol'),
+    rol: rolRaw,
+    roles,
     puede_crear_usuarios: localStorage.getItem('usuario_puede_crear') === 'true'
   };
 }
@@ -17,7 +33,7 @@ function getCurrentUser() {
 window.currentUser = getCurrentUser();
 
 function isLoggedIn() {
-  return !!getCurrentUser().rol;
+  return (getCurrentUser().roles || []).length > 0;
 }
 
 // Función auxiliar para crear sesión de auth para usuarios existentes (simplificada)
@@ -124,7 +140,7 @@ async function loadLogin() {
 
 function loadCreateUser() {
   const user = getCurrentUser();
-  if (user.rol !== 'admin' && !user.puede_crear_usuarios) {
+  if (!userHasRole(user, 'admin') && !user.puede_crear_usuarios) {
     alert('No tienes permisos para crear usuarios');
     return;
   }
@@ -364,19 +380,19 @@ function loadDashboard() {
   }
 
   const modules = [];
-  if (['bodega', 'admin'].includes(user.rol)) {
+  if (userHasRole(user, 'bodega')) {
     modules.push('<button class="dashboard-btn" data-module="bodega">📦 Bodega</button>');
   }
-  if (['logistica', 'admin'].includes(user.rol)) {
+  if (userHasRole(user, 'logistica')) {
     modules.push('<button class="dashboard-btn" data-module="logistica">🚚 Logística</button>');
   }
-  if (['contabilidad', 'admin'].includes(user.rol)) {
+  if (userHasRole(user, 'contabilidad')) {
     modules.push('<button class="dashboard-btn" data-module="contabilidad">📊 Contabilidad</button>');
   }
-  if (['rrhh', 'admin'].includes(user.rol)) {
+  if (userHasRole(user, 'rrhh')) {
     modules.push('<button class="dashboard-btn" data-module="rrhh">👥 RRHH</button>');
   }
-  if (['ventas', 'admin'].includes(user.rol)) {
+  if (userHasRole(user, 'ventas')) {
     modules.push('<button class="dashboard-btn" data-module="ventas">💰 Ventas</button>');
   }
 
