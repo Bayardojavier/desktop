@@ -4,3 +4,8 @@ out/
 releases/
 temp_build/
 build_output/
+release/
+final_output/
+installer_output/
+installer_build/
+out_archive/

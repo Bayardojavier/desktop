@@ -161,7 +161,7 @@
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
         <div>
           <h3 style="margin: 0; color: #e2e8f0; font-size: 16px;">Solicitudes</h3>
-          <p style="margin: 2px 0 0 0; color: #cbd5e1; font-size: 12px;">Editar o eliminar mientras estén pendientes</p>
+          <p style="margin: 2px 0 0 0; color: #cbd5e1; font-size: 12px;">Solo para reimprimir factura de mantenimiento</p>
         </div>
         <button id="fab-refresh-list" class="mnt-boton mnt-boton-secundario" style="padding: 6px 10px; font-size: 12px;">↻</button>
       </div>
@@ -591,9 +591,9 @@
 
           const html = data.map(s => {
             const estadoRaw = (s.estado || 'pendiente').toLowerCase();
-            const bloqueado = estadoRaw === 'completado';
-            const estadoText = bloqueado ? 'Completado' : 'Pendiente';
-            const estadoColor = bloqueado ? '#22c55e' : '#ca8a04';
+            const completado = estadoRaw === 'completado';
+            const estadoText = completado ? 'Completado' : 'Pendiente';
+            const estadoColor = completado ? '#22c55e' : '#ca8a04';
 
             return `
               <div style="border:1px solid #0f172a; border-radius:10px; padding:10px; display:flex; justify-content:space-between; align-items:center; gap:8px; background: rgba(15,23,42,0.14); color:#e2e8f0;">
@@ -605,8 +605,8 @@
                 <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-end;">
                   <span style="background:${estadoColor}22; color:${estadoColor}; padding:3px 8px; border-radius:12px; font-size:11px; font-weight:700;">${estadoText}</span>
                   <div style="display:flex; gap:6px;">
-                    ${bloqueado ? '' : `<button class="fab-list-btn" data-id="${s.id}" data-numero="${s.numero_solicitud}" data-estado="${s.estado || ''}" data-action="edit" style="padding:5px 8px; font-size:11px; background:#1d4ed8; color:white; border:none; border-radius:6px; cursor:pointer;">Editar</button>`}
-                    ${bloqueado ? '' : `<button class="fab-list-btn" data-id="${s.id}" data-numero="${s.numero_solicitud}" data-action="delete" style="padding:5px 8px; font-size:11px; background:#dc2626; color:white; border:none; border-radius:6px; cursor:pointer;">Eliminar</button>`}
+                    ${completado ? '' : `<button class="fab-list-btn" data-id="${s.id}" data-numero="${s.numero_solicitud}" data-action="edit" style="padding:5px 8px; font-size:11px; background:#1d4ed8; color:white; border:none; border-radius:6px; cursor:pointer;">Editar</button>`}
+                    <button class="fab-list-btn" data-id="${s.id}" data-numero="${s.numero_solicitud}" data-action="print" style="padding:5px 8px; font-size:11px; background:#0f766e; color:white; border:none; border-radius:6px; cursor:pointer;">Reimprimir</button>
                   </div>
                 </div>
               </div>
@@ -620,11 +620,10 @@
               const id = e.currentTarget.dataset.id;
               const numero = e.currentTarget.dataset.numero;
               const action = e.currentTarget.dataset.action;
-              const est = e.currentTarget.dataset.estado || '';
               if (action === 'edit') {
-                await cargarSolicitudParaEdicion(id, numero, est);
-              } else if (action === 'delete') {
-                await eliminarSolicitud(id, numero, est);
+                await abrirModalFinalizarPendiente(id, numero);
+              } else if (action === 'print') {
+                await reimprimirFacturaMantenimiento(id, numero);
               }
             });
           });
@@ -632,6 +631,233 @@
         } catch (err) {
           console.error('Error al cargar solicitudes:', err);
           container.innerHTML = '<div style="color:#ef4444; font-size:13px;">Error al cargar la lista.</div>';
+        }
+      }
+
+      async function abrirModalFinalizarPendiente(solicitudId, numeroSolicitud) {
+        try {
+          const { data: consumidos, error: errCons } = await window.supabaseClient
+            .from('materiales_consumidos_mantenimiento')
+            .select('*')
+            .eq('solicitud_id', solicitudId);
+          if (errCons) throw errCons;
+
+          const { data: mantenimientos, error: errMant } = await window.supabaseClient
+            .from('materiales_mantenimiento')
+            .select('*')
+            .eq('solicitud_id', solicitudId);
+          if (errMant) throw errMant;
+
+          editingSolicitudId = solicitudId;
+          editingNumeroSolicitud = numeroSolicitud;
+          editingSolicitudEstado = 'pendiente';
+
+          mostrarModalProcesamiento(consumidos || [], mantenimientos || [], numeroSolicitud, true);
+        } catch (err) {
+          console.error('Error al abrir solicitud pendiente:', err);
+          alert('No se pudo abrir la solicitud pendiente: ' + (err.message || err));
+        }
+      }
+
+      async function reimprimirFacturaMantenimiento(solicitudId, numeroSolicitud) {
+        try {
+          const { data: solicitud, error: errSol } = await window.supabaseClient
+            .from('solicitudes_mantenimiento')
+            .select('numero_solicitud, responsable, fecha, estado')
+            .eq('id', solicitudId)
+            .maybeSingle();
+          if (errSol) throw errSol;
+
+          const { data: consumidos, error: errCons } = await window.supabaseClient
+            .from('materiales_consumidos_mantenimiento')
+            .select('*')
+            .eq('solicitud_id', solicitudId);
+          if (errCons) throw errCons;
+
+          const { data: mantenimientos, error: errMant } = await window.supabaseClient
+            .from('materiales_mantenimiento')
+            .select('*')
+            .eq('solicitud_id', solicitudId);
+          if (errMant) throw errMant;
+
+          const safeNumero = solicitud?.numero_solicitud || numeroSolicitud || 'Factura';
+          const safeResponsable = solicitud?.responsable || 'Sin responsable';
+          const safeFecha = solicitud?.fecha || '';
+          const estadoText = ((solicitud?.estado || '').toLowerCase() === 'completado') ? 'Procesado' : 'Pendiente';
+
+          let subtotalConsumidos = 0;
+          (consumidos || []).forEach(it => {
+            const pu = Number(it.precio || it.precio_promedio) || 0;
+            const cantidad = Number(it.cantidad) || 0;
+            subtotalConsumidos += (pu * cantidad);
+          });
+
+          let subtotalMantenimientoBase = 0;
+          let totalManoObra = 0;
+          let totalCantidadMantenimiento = 0;
+          (mantenimientos || []).forEach(it => {
+            const pu = Number(it.precio || it.precio_promedio) || 0;
+            const cantidad = Number(it.cantidad) || 0;
+            subtotalMantenimientoBase += (pu * cantidad);
+            totalManoObra += Number(it.mano_obra) || 0;
+            totalCantidadMantenimiento += cantidad;
+          });
+
+          const totalGeneral = subtotalConsumidos + subtotalMantenimientoBase + totalManoObra;
+          const precioUnitarioFinal = totalCantidadMantenimiento > 0 ? (totalGeneral / totalCantidadMantenimiento) : 0;
+
+          const contenido = `
+            <div style="width: 180mm; font-family: Arial, sans-serif; color: #333; font-size: 10pt;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10pt; border-bottom: 2px solid #c2410c; padding-bottom: 6pt;">
+                <img src="assets/logo.png" alt="Logo" style="height: 20mm; margin-right: 8mm;">
+                <div style="text-align: center; flex: 1;">
+                  <h1 style="color: #c2410c; margin: 0; font-size: 16pt;">FACTURA DE MANTENIMIENTO</h1>
+                  <p style="margin: 3pt 0 0 0; color: #555; font-size: 9pt;">Solicitud de Mantenimiento</p>
+                </div>
+                <div style="text-align: right;">
+                  <div style="font-size: 24pt; font-weight: bold; color: #c2410c; letter-spacing: 1px;">${safeNumero}</div>
+                  <div style="font-size: 9pt; color: #777;">Fecha: ${safeFecha}</div>
+                </div>
+              </div>
+
+              <div style="background: #fff3cd; padding: 8pt; border-radius: 4pt; margin-bottom: 12pt; font-size: 9pt; border: 1px solid #fde047;">
+                <p><strong>Responsable:</strong> ${safeResponsable}</p>
+                <p><strong>Estado:</strong> ${estadoText}</p>
+              </div>
+
+              ${(consumidos || []).length > 0 ? `
+              <h3 style="color: #dc2626; margin: 12pt 0 6pt 0; font-size: 12pt; border-bottom: 1px solid #ccc; padding-bottom: 3pt;">Materiales Consumidos (Baja)</h3>
+              <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
+                <thead>
+                  <tr style="background: #dc2626; color: black;">
+                    <th style="padding: 6pt; border: 1px solid #ddd; text-align: left;">Código</th>
+                    <th style="padding: 6pt; border: 1px solid #ddd; text-align: left;">Nombre</th>
+                    <th style="padding: 6pt; border: 1px solid #ddd; text-align: center;">Cantidad</th>
+                    <th style="padding: 6pt; border: 1px solid #ddd; text-align: right;">P.U.</th>
+                    <th style="padding: 6pt; border: 1px solid #ddd; text-align: right;">Subtotal</th>
+                    <th style="padding: 6pt; border: 1px solid #ddd; text-align: left;">Observación</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${(consumidos || []).map(item => {
+                    const precio = Number(item.precio_base || item.precio || item.precio_promedio) || 0;
+                    const cantidad = Number(item.cantidad) || 0;
+                    const subtotal = precio * cantidad;
+                    return `
+                    <tr style="font-size: 9pt;">
+                      <td style="padding: 6pt; border: 1px solid #ddd;">${item.material_codigo || ''}</td>
+                      <td style="padding: 6pt; border: 1px solid #ddd;">${item.material_nombre || ''}</td>
+                      <td style="padding: 6pt; border: 1px solid #ddd; text-align: center;">${cantidad}</td>
+                      <td style="padding: 6pt; border: 1px solid #ddd; text-align: right;">$${precio.toFixed(2)}</td>
+                      <td style="padding: 6pt; border: 1px solid #ddd; text-align: right;">$${subtotal.toFixed(2)}</td>
+                      <td style="padding: 6pt; border: 1px solid #ddd;">${item.observaciones || item.observacion || ''}</td>
+                    </tr>
+                    `;
+                  }).join('')}
+                  <tr style="background: #fee2e2;">
+                    <td colspan="4" style="padding: 6pt; border: 1px solid #ddd; text-align: right; font-weight: bold;">SUBTOTAL CONSUMIDOS</td>
+                    <td style="padding: 6pt; border: 1px solid #ddd; text-align: right; font-weight: bold; color: #dc2626;">$${subtotalConsumidos.toFixed(2)}</td>
+                    <td style="padding: 6pt; border: 1px solid #ddd;"></td>
+                  </tr>
+                </tbody>
+              </table>
+              ` : ''}
+
+              ${(mantenimientos || []).length > 0 ? `
+              <h3 style="color: #059669; margin: 12pt 0 6pt 0; font-size: 12pt; border-bottom: 1px solid #ccc; padding-bottom: 3pt; margin-top: 20pt;">Materiales en Mantenimiento</h3>
+              <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
+                <thead>
+                  <tr style="background: #059669; color: black;">
+                    <th style="padding: 6pt; border: 1px solid #ddd; text-align: left;">Código</th>
+                    <th style="padding: 6pt; border: 1px solid #ddd; text-align: left;">Nombre</th>
+                    <th style="padding: 6pt; border: 1px solid #ddd; text-align: center;">Cantidad</th>
+                    <th style="padding: 6pt; border: 1px solid #ddd; text-align: right;">P.U. Base</th>
+                    <th style="padding: 6pt; border: 1px solid #ddd; text-align: right;">Mano Obra</th>
+                    <th style="padding: 6pt; border: 1px solid #ddd; text-align: left;">Observación</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${(mantenimientos || []).map(item => {
+                    const precio = Number(item.precio_base || item.precio || item.precio_promedio) || 0;
+                    const cantidad = Number(item.cantidad) || 0;
+                    const mano = Number(item.mano_obra) || 0;
+                    return `
+                    <tr style="font-size: 9pt;">
+                      <td style="padding: 6pt; border: 1px solid #ddd;">${item.material_codigo || ''}</td>
+                      <td style="padding: 6pt; border: 1px solid #ddd;">${item.material_nombre || ''}</td>
+                      <td style="padding: 6pt; border: 1px solid #ddd; text-align: center;">${cantidad}</td>
+                      <td style="padding: 6pt; border: 1px solid #ddd; text-align: right;">$${precio.toFixed(2)}</td>
+                      <td style="padding: 6pt; border: 1px solid #ddd; text-align: right;">$${mano.toFixed(2)}</td>
+                      <td style="padding: 6pt; border: 1px solid #ddd;">${item.observaciones || item.observacion || ''}</td>
+                    </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+              ` : ''}
+
+              <div style="margin-top: 20pt; background: #f8fafc; padding: 12pt; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8pt;">
+                  <span style="font-weight: bold; color: #64748b;">Subtotal Consumidos:</span>
+                  <span style="font-weight: bold; color: #dc2626;">$${subtotalConsumidos.toFixed(2)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8pt;">
+                  <span style="font-weight: bold; color: #64748b;">Subtotal Mantenimiento (base):</span>
+                  <span style="font-weight: bold; color: #059669;">$${subtotalMantenimientoBase.toFixed(2)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8pt;">
+                  <span style="font-weight: bold; color: #64748b;">Mano de Obra:</span>
+                  <span style="font-weight: bold; color: #c2410c;">$${totalManoObra.toFixed(2)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 12pt; padding-top: 12pt; border-top: 2px solid #c2410c;">
+                  <span style="font-size: 14pt; font-weight: 800; color: #c2410c;">TOTAL FACTURA:</span>
+                  <span style="font-size: 16pt; font-weight: 800; color: #c2410c;">$${totalGeneral.toFixed(2)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 8pt;">
+                  <span style="font-weight: 700; color: #64748b;">Precio Unitario Final Referencial:</span>
+                  <span style="font-weight: 800; color: #0f766e;">$${precioUnitarioFinal.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+          `;
+
+          const fullHtml = `
+            <html>
+            <head>
+              <title>Factura ${safeNumero}</title>
+              <style>
+                body { font-family: Arial, sans-serif; padding: 20px; color: #111827; }
+                table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+                th, td { border: 1px solid #d1d5db; padding: 8px; text-align: left; font-size: 12px; }
+                th { background: #f3f4f6; }
+                p { margin: 4px 0; }
+              </style>
+            </head>
+            <body>
+              ${contenido}
+            </body>
+            </html>
+          `;
+
+          const useElectron = window.electronAPI && typeof window.electronAPI.renderHtmlToPdf === 'function';
+          if (!useElectron) {
+            alert('No está disponible la API nativa de PDF de Electron en este entorno.');
+            return;
+          }
+
+          const filename = `Factura_Mantenimiento_${safeNumero}.pdf`;
+          const result = await window.electronAPI.renderHtmlToPdf({
+            filename,
+            html: fullHtml,
+            baseUrl: document.baseURI
+          });
+
+          if (!result || result.canceled) {
+            return;
+          }
+        } catch (err) {
+          console.error('Error al reimprimir factura:', err);
+          alert('No se pudo reimprimir la factura: ' + (err.message || err));
         }
       }
 
@@ -778,15 +1004,15 @@
             </div>
             <div class="mov-table-col" style="flex: 0.8; text-align: center;">
               <label class="mnt-etiqueta" style="margin-bottom: 4px;">Cantidad</label>
-              <input type="number" class="mnt-entrada" value="${item.cantidad}" min="1" data-index="${index}" data-tipo="mantenimiento" />
+              <input type="number" class="mnt-entrada" value="${item.cantidad}" min="1" data-index="${index}" data-tipo="mantenimiento" data-field="cantidad" />
             </div>
             <div class="mov-table-col" style="flex: 1;">
               <label class="mnt-etiqueta" style="margin-bottom: 4px;">Mano de obra</label>
-              <input type="number" class="mnt-entrada" value="${item.mano_obra}" min="0" step="0.01" data-index="${index}" data-tipo="mantenimiento" />
+              <input type="number" class="mnt-entrada" value="${item.mano_obra}" min="0" step="0.01" data-index="${index}" data-tipo="mantenimiento" data-field="mano_obra" />
             </div>
             <div class="mov-table-col" style="flex: 1.5;">
               <label class="mnt-etiqueta" style="margin-bottom: 4px;">Observación</label>
-              <input type="text" class="mnt-entrada" value="${item.observacion}" data-index="${index}" data-tipo="mantenimiento" />
+              <input type="text" class="mnt-entrada" value="${item.observacion}" data-index="${index}" data-tipo="mantenimiento" data-field="observacion" />
             </div>
             <div class="mov-table-col" style="flex: 0.2; text-align: center;">
               <label class="mnt-etiqueta" style="margin-bottom: 4px;">&nbsp;</label>
@@ -797,11 +1023,12 @@
           row.querySelectorAll('input[data-tipo="mantenimiento"]').forEach(input => {
             input.addEventListener('input', (e) => {
               const idx = parseInt(e.target.dataset.index);
-              if (e.target.type === 'number' && e.target.previousElementSibling.textContent.includes('Mano')) {
+              const field = e.target.dataset.field;
+              if (field === 'mano_obra') {
                 estado.itemsMantenimiento[idx].mano_obra = parseFloat(e.target.value) || 0;
-              } else if (e.target.type === 'number') {
+              } else if (field === 'cantidad') {
                 estado.itemsMantenimiento[idx].cantidad = parseInt(e.target.value) || 0;
-              } else {
+              } else if (field === 'observacion') {
                 estado.itemsMantenimiento[idx].observacion = e.target.value;
               }
             });
@@ -1151,7 +1378,7 @@
                 material_nombre: info.nombre || item.nombre,
                 bodega_principal: info.bodega_principal || 'Principal',
                 bodega_secundaria: info.bodega_secundaria || 'General',
-                tipo_movimiento: 'salida',
+                tipo_movimiento: 'baja',
                 cantidad: item.cantidad,
                 signo: -1,
                 referencia_documento: numeroSolicitud,
@@ -1160,7 +1387,7 @@
                 fecha_movimiento: fecha,
                 observaciones: item.observacion || '',
                 estado: 'completado',
-                precio: item.precio_promedio,
+                precio_base: item.precio_promedio,
                 created_at: new Date().toISOString()
               };
             });
@@ -1191,7 +1418,7 @@
                 fecha_movimiento: fecha,
                 observaciones: item.observacion || '',
                 estado: 'pendiente', // Pendiente hasta completar el mantenimiento
-                precio: item.precio_promedio,
+                precio_base: item.precio_promedio,
                 mano_obra: item.mano_obra,
                 created_at: new Date().toISOString()
               };
@@ -1243,44 +1470,148 @@
       // =============================================================================
       // 🔹 PROCESAR MANTENIMIENTO (genera movimientos espejo en tablas de movimientos)
       // =============================================================================
-      async function detectMovimientoTable(material_codigo) {
+      async function detectMovimientoTable(material) {
+        // material puede ser un código (string) o un objeto con metadatos
         try {
-          let q = await window.supabaseClient.from('stock_audiovisual').select('material_codigo').eq('material_codigo', material_codigo).limit(1);
-          if (q.data && q.data.length) return 'movimientos_bodega_audiovisual';
-          q = await window.supabaseClient.from('stock_hierros').select('material_codigo').eq('material_codigo', material_codigo).limit(1);
-          if (q.data && q.data.length) return 'movimientos_bodega_hierros';
-          q = await window.supabaseClient.from('stock_consumibles').select('material_codigo').eq('material_codigo', material_codigo).limit(1);
-          if (q.data && q.data.length) return 'movimientos_bodega_consumibles';
+          // Si recibimos objeto, preferir datos explícitos
+          if (material && typeof material === 'object') {
+            // Preferir tabla_origen
+            if (material.tabla_origen) {
+              if (material.tabla_origen.includes('audiovisual')) return { table: 'movimientos_bodega_audiovisual', reason: 'tabla_origen' };
+              if (material.tabla_origen.includes('hierros')) return { table: 'movimientos_bodega_hierros', reason: 'tabla_origen' };
+              if (material.tabla_origen.includes('consumibles')) return { table: 'movimientos_bodega_consumibles', reason: 'tabla_origen' };
+            }
+            // Preferir bodega_principal
+            const bp = (material.bodega_principal || '').toString().toLowerCase();
+            if (bp.includes('audiovisual')) return { table: 'movimientos_bodega_audiovisual', reason: 'bodega_principal' };
+            if (bp.includes('hierros')) return { table: 'movimientos_bodega_hierros', reason: 'bodega_principal' };
+            if (bp.includes('consumibles')) return { table: 'movimientos_bodega_consumibles', reason: 'bodega_principal' };
+            // If the material row already has an explicit movimientos table name
+            if (material.tabla_movimientos) return { table: material.tabla_movimientos, reason: 'tabla_movimientos' };
+          }
+
+          // Si no hay metadatos, intentar inferir por prefijo del código
+          const codigo = (typeof material === 'string') ? material : (material && (material.material_codigo || material.codigo)) || '';
+          const pref = (codigo.split('-')[1] || '').toUpperCase();
+          if (['HIE', 'HIER', 'HIERRO', 'HIERROS'].includes(pref) || codigo.toUpperCase().includes('HIER')) {
+            return { table: 'movimientos_bodega_hierros', reason: 'codigo-prefijo' };
+          }
+          if (['AUD', 'AUDIO', 'AUDIOVISUAL'].includes(pref) || codigo.toUpperCase().includes('AUD')) {
+            return { table: 'movimientos_bodega_audiovisual', reason: 'codigo-prefijo' };
+          }
+
+          // Respaldo: buscar en las vistas de stock (último recurso)
+          let q = await window.supabaseClient.from('stock_audiovisual').select('material_codigo').eq('material_codigo', codigo).limit(1);
+          if (q.data && q.data.length) return { table: 'movimientos_bodega_audiovisual', reason: 'vista-stock' };
+          q = await window.supabaseClient.from('stock_hierros').select('material_codigo').eq('material_codigo', codigo).limit(1);
+          if (q.data && q.data.length) return { table: 'movimientos_bodega_hierros', reason: 'vista-stock' };
+          q = await window.supabaseClient.from('stock_consumibles').select('material_codigo').eq('material_codigo', codigo).limit(1);
+          if (q.data && q.data.length) return { table: 'movimientos_bodega_consumibles', reason: 'vista-stock' };
         } catch (e) {
           console.warn('No se pudo detectar tabla de movimiento, usando consumibles por defecto', e);
         }
-        return 'movimientos_bodega_consumibles';
+        return { table: 'movimientos_bodega_consumibles', reason: 'fallback' };
       }
 
-      function renderFacturaHtml(itemsConsumidos, itemsMantenimiento, numeroSolicitud) {
+      function renderFacturaHtml(itemsConsumidos, itemsMantenimiento, numeroSolicitud, editableMano = false) {
+        // Debug: ensure mano_obra is visible
+        console.debug('renderFacturaHtml inputs', { itemsConsumidos, itemsMantenimiento });
         let html = `<div style="color:#e6eef0;"><h3>Factura - ${numeroSolicitud}</h3>`;
-        html += '<table style="width:100%;border-collapse:collapse;color:#e6eef0;margin-top:8px;">';
-        html += '<thead><tr style="border-bottom:1px solid rgba(255,255,255,0.06)"><th>Código</th><th>Nombre</th><th>Cantidad</th><th>Precio Unit.</th><th>Mano Obra</th><th>Subtotal</th></tr></thead><tbody>';
+        html += '<table class="factura-table">';
+        html += '<thead><tr><th>Código</th><th>Nombre</th><th>Cantidad</th><th>Precio Unit.</th><th>Mano Obra</th><th>Subtotal</th></tr></thead><tbody>';
         let subtotalConsumidos = 0; let subtotalMantenimiento = 0; let totalManoObra = 0;
         (itemsConsumidos||[]).forEach(it => {
-          const pu = Number(it.precio) || Number(it.precio_promedio) || 0;
-          const sub = (Number(it.cantidad)||0) * pu;
+          const pu = Number(it.precio ?? it.precio_promedio) || 0;
+          const cantidad = Number(it.cantidad) || 0;
+          const sub = cantidad * pu;
           subtotalConsumidos += sub;
-          html += `<tr><td>${it.material_codigo || it.codigo}</td><td>${it.material_nombre || it.nombre}</td><td>${it.cantidad}</td><td>$${pu.toFixed(2)}</td><td>$0.00</td><td>$${sub.toFixed(2)}</td></tr>`;
+          html += `<tr><td>${it.material_codigo || it.codigo || ''}</td><td>${it.material_nombre || it.nombre || ''}</td><td>${cantidad}</td><td>$${pu.toFixed(2)}</td><td>$0.00</td><td>$${sub.toFixed(2)}</td></tr>`;
         });
-        (itemsMantenimiento||[]).forEach(it => {
-          const pu = Number(it.precio) || Number(it.precio_promedio) || 0;
-          const mano = Number(it.mano_obra) || 0;
-          const sub = (Number(it.cantidad)||0) * pu + mano;
-          subtotalMantenimiento += (Number(it.cantidad)||0) * pu;
+        (itemsMantenimiento||[]).forEach((it, idx) => {
+          const pu = Number(it.precio ?? it.precio_promedio) || 0;
+          const cantidad = Number(it.cantidad) || 0;
+          const mano = Number(it.mano_obra ?? it.manoobra ?? it.mano) || 0;
+          const sub = cantidad * pu + mano;
+          subtotalMantenimiento += (cantidad * pu);
           totalManoObra += mano;
-          html += `<tr><td>${it.material_codigo || it.codigo}</td><td>${it.material_nombre || it.nombre}</td><td>${it.cantidad}</td><td>$${pu.toFixed(2)}</td><td>$${mano.toFixed(2)}</td><td>$${sub.toFixed(2)}</td></tr>`;
+          if (editableMano) {
+            const inputId = `factura-mano-${idx}`;
+            html += `<tr><td>${it.material_codigo || it.codigo || ''}</td><td>${it.material_nombre || it.nombre || ''}</td><td>${cantidad}</td><td>$${pu.toFixed(2)}</td><td><input id="${inputId}" class="mnt-entrada factura-mano" data-material="${it.material_codigo || it.codigo || ''}" data-id="${it.id || ''}" type="number" step="0.01" min="0" value="${mano.toFixed(2)}" style="width:100px;" /></td><td>$${sub.toFixed(2)}</td></tr>`;
+          } else {
+            html += `<tr><td>${it.material_codigo || it.codigo || ''}</td><td>${it.material_nombre || it.nombre || ''}</td><td>${cantidad}</td><td>$${pu.toFixed(2)}</td><td>$${mano.toFixed(2)}</td><td>$${sub.toFixed(2)}</td></tr>`;
+          }
         });
         html += `</tbody></table>`;
         const total = subtotalConsumidos + subtotalMantenimiento + totalManoObra;
-        html += `<div style="margin-top:12px;color:#cfe9eb;"><div>Subtotal consumidos: $${subtotalConsumidos.toFixed(2)}</div><div>Subtotal mantenimiento (sin mano de obra): $${subtotalMantenimiento.toFixed(2)}</div><div>Mano de obra: $${totalManoObra.toFixed(2)}</div><h3 style="margin-top:8px">Total: $${total.toFixed(2)}</h3></div>`;
+        html += `<div class="factura-total">Subtotal consumidos: $${subtotalConsumidos.toFixed(2)} — Subtotal mantenimiento (sin mano de obra): $${subtotalMantenimiento.toFixed(2)} — Mano de obra: $${totalManoObra.toFixed(2)} — Total: $${total.toFixed(2)}</div>`;
         html += '</div>';
         return { html, subtotalConsumidos, subtotalMantenimiento, totalManoObra, total };
+      }
+
+      function mostrarModalProcesamiento(consumidos, mantenimientos, numero, soloFinalizar = false) {
+        const factura = renderFacturaHtml(consumidos || [], mantenimientos || [], numero, true);
+        const solicitudIdActual = editingSolicitudId || null;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'mantenimiento-theme';
+        const modal = document.createElement('div');
+        modal.className = 'mnt-modal-overlay';
+        modal.innerHTML = `
+          <div class="mnt-modal-contenido">
+            <h2 class="mnt-modal-titulo">Procesar Mantenimiento - ${numero}</h2>
+            <div class="mnt-modal-texto">Revise la factura antes de continuar. El proceso realizará 3 pasos: (1) registrar la solicitud y bajas consumidos, (2) crear movimientos de mantenimiento, (3) marcar como reparado y devolver al stock.</div>
+            <div id="factura-contenido">${factura.html}</div>
+            <div id="procesos-mantenimiento" style="margin-top:12px; padding:10px; background: rgba(0,0,0,0.06); border-radius:8px;">
+              <div style="font-weight:800; margin-bottom:6px; color:#e6eef0;">Progreso</div>
+              <ol style="margin:0 0 8px 18px; color:#cfe9eb;">
+                <li id="step-1" style="margin-bottom:6px;">1. Registrar solicitud y aplicar bajas consumidos <span id="step-1-status" style="font-weight:700; margin-left:8px; color:${soloFinalizar ? '#10b981' : '#94a3b8'};">${soloFinalizar ? '(completado)' : '(pendiente)'}</span></li>
+                <li id="step-2" style="margin-bottom:6px;">2. Crear movimientos de mantenimiento <span id="step-2-status" style="font-weight:700; margin-left:8px; color:${soloFinalizar ? '#10b981' : '#94a3b8'};">${soloFinalizar ? '(completado)' : '(pendiente)'}</span></li>
+                <li id="step-3" style="margin-bottom:6px;">3. Marcar como reparado (movimiento +1) <span id="step-3-status" style="font-weight:700; margin-left:8px; color:#94a3b8;">(pendiente)</span></li>
+              </ol>
+              <div id="procesos-error" style="color:#fca5a5; display:none; font-weight:700;"></div>
+              <div id="procesos-log" style="margin-top:8px; max-height:140px; overflow:auto; color:#cfe9eb; font-size:12px;"></div>
+            </div>
+            <div class="mnt-modal-botones">
+              <button id="btn-cancelar-procesar" class="mnt-boton mnt-boton-secundario">Cancelar</button>
+              <button id="btn-registrar-y-procesar" class="mnt-boton" style="background:#10b981;border-color:#059669;color:white; font-weight:900;">Registrar y Procesar</button>
+            </div>
+          </div>`;
+        wrapper.appendChild(modal);
+        document.body.appendChild(wrapper);
+
+        document.getElementById('btn-cancelar-procesar').addEventListener('click', () => { wrapper.remove(); });
+
+        const btnRegistrar = document.getElementById('btn-registrar-y-procesar');
+        if (btnRegistrar) {
+          btnRegistrar.addEventListener('click', async () => {
+            try {
+              btnRegistrar.disabled = true;
+              if (!solicitudIdActual) throw new Error('No existe solicitud para finalizar el proceso.');
+
+              const manoInputs = wrapper.querySelectorAll('.factura-mano');
+              for (const inp of manoInputs) {
+                const val = parseFloat(inp.value) || 0;
+                const mat = inp.dataset.material;
+                const id = inp.dataset.id;
+                if (id) {
+                  await window.supabaseClient.from('materiales_mantenimiento').update({ mano_obra: val }).eq('id', id);
+                } else {
+                  await window.supabaseClient.from('materiales_mantenimiento').update({ mano_obra: val }).match({ solicitud_id: solicitudIdActual, material_codigo: mat });
+                }
+              }
+
+              await registrarYProcesar(solicitudIdActual, numero);
+              alert('Procesamiento completo');
+              wrapper.remove();
+              await cargarSolicitudesList();
+            } catch (e) {
+              console.error('Error registrar y procesar:', e);
+              const errDiv = wrapper.querySelector('#procesos-error');
+              if (errDiv) { errDiv.style.display = 'block'; errDiv.textContent = e.message || String(e); }
+              btnRegistrar.disabled = false;
+            }
+          });
+        }
       }
 
       async function procesarMantenimiento() {
@@ -1299,56 +1630,54 @@
           const solicitud = await window.supabaseClient.from('solicitudes_mantenimiento').select('numero_solicitud').eq('id', editingSolicitudId).maybeSingle();
           numero = solicitud.data?.numero_solicitud || numero;
         } else {
-          // usar el estado en memoria para previsualizar factura
-          consumidos = (estado.itemsConsumidos || []).map(it => ({ material_codigo: it.codigo, material_nombre: it.nombre, cantidad: it.cantidad, precio: it.precio_promedio, observaciones: it.observacion }));
-          mantenimientos = (estado.itemsMantenimiento || []).map(it => ({ material_codigo: it.codigo, material_nombre: it.nombre, cantidad: it.cantidad, precio: it.precio_promedio, mano_obra: it.mano_obra, observaciones: it.observacion }));
-          if (!numero) numero = await generarNumeroSolicitud();
+          // Si aún no está guardada, guardamos primero para poder crear movimientos -1 correctamente
+          await guardarFabricacion();
+          // tras guardar, tomar los datos desde DB
+          const sid = editingSolicitudId;
+          if (!sid) throw new Error('No se pudo obtener id de la solicitud tras guardar.');
+          const { data: c, error: errCons } = await window.supabaseClient.from('materiales_consumidos_mantenimiento').select('*').eq('solicitud_id', sid);
+          if (errCons) throw errCons;
+          consumidos = c || [];
+          const { data: m, error: errMant } = await window.supabaseClient.from('materiales_mantenimiento').select('*').eq('solicitud_id', sid);
+          if (errMant) throw errMant;
+          mantenimientos = m || [];
+          numero = editingNumeroSolicitud || numero;
         }
 
-        const factura = renderFacturaHtml(consumidos || [], mantenimientos || [], numero);
-        // Crear wrapper con la clase mantenimiento-theme para que los estilos definidos en el archivo apliquen
-        const wrapper = document.createElement('div');
-        wrapper.className = 'mantenimiento-theme';
-        const modal = document.createElement('div');
-        modal.className = 'mnt-modal-overlay';
-        modal.innerHTML = `
-          <div class="mnt-modal-contenido">
-            <h2 class="mnt-modal-titulo">Procesar Mantenimiento - ${numero}</h2>
-            <div class="mnt-modal-texto">Revise la factura antes de continuar. El proceso realizará 3 pasos: (1) registrar la solicitud y bajas consumidos, (2) crear movimientos de mantenimiento, (3) marcar como reparado y devolver al stock.</div>
-            <div id="factura-contenido">${factura.html}</div>
-            <div id="procesos-mantenimiento" style="margin-top:12px; padding:10px; background: rgba(0,0,0,0.06); border-radius:8px;">
-              <div style="font-weight:800; margin-bottom:6px; color:#e6eef0;">Progreso</div>
-              <ol style="margin:0 0 8px 18px; color:#cfe9eb;">
-                <li id="step-1" style="margin-bottom:6px;">1. Registrar solicitud y aplicar bajas consumidos <span id="step-1-status" style="font-weight:700; margin-left:8px; color:#94a3b8;">(pendiente)</span></li>
-                <li id="step-2" style="margin-bottom:6px;">2. Crear movimientos de mantenimiento <span id="step-2-status" style="font-weight:700; margin-left:8px; color:#94a3b8;">(pendiente)</span></li>
-                <li id="step-3" style="margin-bottom:6px;">3. Marcar como reparado (movimiento +1) <span id="step-3-status" style="font-weight:700; margin-left:8px; color:#94a3b8;">(pendiente)</span></li>
-              </ol>
-              <div id="procesos-error" style="color:#fca5a5; display:none; font-weight:700;"></div>
-            </div>
-            <div class="mnt-modal-botones">
-              <button id="btn-cancelar-procesar" class="mnt-boton mnt-boton-secundario">Cancelar</button>
-              <button id="btn-registrar-y-procesar" class="mnt-boton" style="background:#10b981;border-color:#059669;color:white; font-weight:900;">Registrar y Procesar</button>
-            </div>
-          </div>`;
-        wrapper.appendChild(modal);
-        document.body.appendChild(wrapper);
-        document.getElementById('btn-cancelar-procesar').addEventListener('click', () => { wrapper.remove(); });
-        // Solo botón registrar y procesar (flujo completo)
+        // EJECUTAR PASO 2 AHORA: crear movimientos -1 y marcar consumidos como 'baja'
+        try {
+          await confirmarProcesarMantenimiento(editingSolicitudId || null, numero, consumidos || [], mantenimientos || []);
+        } catch (e) {
+          console.error('Error al ejecutar paso 2 (movimientos -1):', e);
+          throw e;
+        }
+
+        // Abrir modal para paso 3
+        mostrarModalProcesamiento(consumidos || [], mantenimientos || [], numero, true);
       }
 
       async function confirmarProcesarMantenimiento(solicitudId, numeroSolicitud, consumidos, mantenimientos) {
         for (const it of (consumidos || [])) {
           const code = it.material_codigo;
-          const tabla = await detectMovimientoTable(code);
-          const exist = await window.supabaseClient.from(tabla).select('id').eq('referencia_documento', numeroSolicitud).eq('material_codigo', code).eq('tipo_movimiento', 'salida').limit(1).maybeSingle();
-          if (!exist.data) {
+          const { table: tabla, reason } = await detectMovimientoTable(it);
+          const logDiv = document.getElementById('procesos-log');
+          if (logDiv) logDiv.insertAdjacentHTML('beforeend', `<div>Consumido ${code} → ${tabla} (${reason})</div>`);
+          const exist = await window.supabaseClient
+            .from(tabla)
+            .select('id')
+            .eq('referencia_documento', numeroSolicitud)
+            .eq('material_codigo', code)
+            .in('tipo_movimiento', ['baja', 'salida'])
+            .limit(1);
+          if (exist.error) throw exist.error;
+          if (!exist.data || exist.data.length === 0) {
             const movimiento = {
               material_codigo: it.material_codigo,
               material_nombre: it.material_nombre,
               bodega_principal: it.bodega_principal || 'Principal',
               bodega_secundaria: it.bodega_secundaria || 'General',
               ubicacion_nombre: it.ubicacion_nombre || it.ubicacion_codigo || 'Sin Contenedor',
-              tipo_movimiento: 'salida',
+              tipo_movimiento: 'baja',
               cantidad: it.cantidad,
               signo: -1,
               referencia_documento: numeroSolicitud,
@@ -1360,8 +1689,20 @@
               precio: it.precio || it.precio_promedio || 0,
               created_at: new Date().toISOString()
             };
-            const { error: errIns } = await window.supabaseClient.from(tabla).insert([movimiento]);
-            if (errIns) console.warn('No se pudo insertar movimiento en', tabla, errIns);
+            let { error: errIns } = await window.supabaseClient.from(tabla).insert([movimiento]);
+            if (errIns) {
+              // Fallback por compatibilidad de esquemas que no aceptan 'baja' en tipo_movimiento
+              const movimientoFallback = { ...movimiento, tipo_movimiento: 'salida', estado: 'baja' };
+              const retry = await window.supabaseClient.from(tabla).insert([movimientoFallback]);
+              errIns = retry.error;
+              if (!errIns && logDiv) {
+                logDiv.insertAdjacentHTML('beforeend', `<div style="color:#fde68a;">Consumido ${code}: se registró como salida (fallback de compatibilidad).</div>`);
+              }
+            }
+            if (errIns) {
+              if (logDiv) logDiv.insertAdjacentHTML('beforeend', `<div style="color:#fca5a5;">Error consumido ${code}: ${errIns.message || errIns}</div>`);
+              throw errIns;
+            }
           }
           try {
             await window.supabaseClient.from('materiales_consumidos_mantenimiento').update({ estado: 'baja' }).eq('id', it.id);
@@ -1370,10 +1711,12 @@
 
         for (const it of (mantenimientos || [])) {
           const code = it.material_codigo;
-          const tabla = await detectMovimientoTable(code);
+          const { table: tabla, reason } = await detectMovimientoTable(it);
+          const logDiv = document.getElementById('procesos-log');
+          if (logDiv) logDiv.insertAdjacentHTML('beforeend', `<div>Mantenimiento ${code} → ${tabla} (${reason})</div>`);
           const exist = await window.supabaseClient.from(tabla).select('id').eq('referencia_documento', numeroSolicitud).eq('material_codigo', code).eq('tipo_movimiento', 'mantenimiento').limit(1).maybeSingle();
           if (!exist.data) {
-            const movimiento = {
+              const movimiento = {
               material_codigo: it.material_codigo,
               material_nombre: it.material_nombre,
               bodega_principal: it.bodega_principal || 'Principal',
@@ -1389,7 +1732,6 @@
               observaciones: it.observaciones || it.observacion || '',
               estado: 'pendiente',
               precio: it.precio || it.precio_promedio || 0,
-              mano_obra: it.mano_obra || 0,
               created_at: new Date().toISOString()
             };
             const { error: errIns } = await window.supabaseClient.from(tabla).insert([movimiento]);
@@ -1412,34 +1754,49 @@
         };
 
         try {
-          // Paso 1: registrar la solicitud y aplicar bajas consumidos
-          setStatus(1, '(en progreso)...', '#f59e0b');
+          // Paso 1 y 2 ya deben haberse ejecutado antes de abrir el modal (al pulsar "Procesar Mantenimiento").
           if (!solicitudId) {
-            // guardarFabricacion actualizará editingSolicitudId/Numero
-            await guardarFabricacion();
-            solicitudId = editingSolicitudId;
-            numeroSolicitud = editingNumeroSolicitud || numeroSolicitud;
+            throw new Error('Solicitud inválida para finalizar mantenimiento.');
           }
-          if (!solicitudId) throw new Error('No se pudo guardar la solicitud.');
           setStatus(1, '(completado)', '#10b981');
+          setStatus(2, '(completado)', '#10b981');
 
-          // Paso 2: crear movimientos de mantenimiento (-1)
-          setStatus(2, '(en progreso)...', '#f59e0b');
+          // Paso 3: crear movimientos 'reparado' (+1) y actualizar estados a reparado, calculando nuevo precio
+          setStatus(3, '(en progreso)...', '#f59e0b');
+
+          // Leer consumidos y mantenimientos actualizados (para obtener mano_obra guardada)
           const { data: consumidosDb, error: errC } = await window.supabaseClient.from('materiales_consumidos_mantenimiento').select('*').eq('solicitud_id', solicitudId);
           if (errC) throw errC;
           const { data: mantenimientosDb, error: errM } = await window.supabaseClient.from('materiales_mantenimiento').select('*').eq('solicitud_id', solicitudId);
           if (errM) throw errM;
-          await confirmarProcesarMantenimiento(solicitudId, numeroSolicitud, consumidosDb || [], mantenimientosDb || []);
-          setStatus(2, '(completado)', '#10b981');
 
-          // Paso 3: crear movimientos 'reparado' (+1) y actualizar estados a reparado
-          setStatus(3, '(en progreso)...', '#f59e0b');
+          // Calcular costo total de consumibles asociados a la solicitud
+          let totalConsumidosCost = 0;
+          (consumidosDb || []).forEach(c => {
+            const pu = Number(c.precio || c.precio_promedio) || 0;
+            const cantidad = Number(c.cantidad) || 0;
+            totalConsumidosCost += pu * cantidad;
+          });
+
+          const totalMantQty = Math.max(1, (mantenimientosDb || []).reduce((acc, m) => acc + (Number(m.cantidad) || 0), 0));
           for (const it of (mantenimientosDb || [])) {
             const code = it.material_codigo;
-            const tabla = await detectMovimientoTable(code);
-            // evitar duplicados: buscar un movimiento 'reparado' con misma referencia
+            const { table: tabla, reason } = await detectMovimientoTable(code);
+            const logDiv = document.getElementById('procesos-log');
+            if (logDiv) logDiv.insertAdjacentHTML('beforeend', `<div>Reparado ${code} → ${tabla} (${reason})</div>`);
+
+            // evitar duplicados
             const existing = await window.supabaseClient.from(tabla).select('id').eq('referencia_documento', numeroSolicitud).eq('material_codigo', code).eq('tipo_movimiento', 'reparado').limit(1).maybeSingle();
             if (!existing.data) {
+              // Fórmula: ((precio_unitario*cantidad) + parte_consumibles + mano_obra) / cantidad
+              const cantidadMant = Math.max(1, Number(it.cantidad) || 0);
+              const shareConsumibles = totalConsumidosCost * (cantidadMant / totalMantQty);
+              const basePrice = Number(it.precio || it.precio_promedio) || 0;
+              const baseTotal = basePrice * cantidadMant;
+              const mano = Number(it.mano_obra) || 0;
+              const totalFinal = baseTotal + shareConsumibles + mano;
+              const nuevoPrecio = parseFloat((totalFinal / cantidadMant).toFixed(2));
+
               const movimiento = {
                 material_codigo: it.material_codigo,
                 material_nombre: it.material_nombre,
@@ -1455,19 +1812,28 @@
                 fecha_movimiento: new Date().toISOString(),
                 observaciones: it.observaciones || it.observacion || 'Reparado',
                 estado: 'reparado',
-                precio: it.precio || it.precio_promedio || 0,
-                mano_obra: it.mano_obra || 0,
+                precio: nuevoPrecio,
                 created_at: new Date().toISOString()
               };
               const { error: errIns } = await window.supabaseClient.from(tabla).insert([movimiento]);
               if (errIns) console.warn('No se pudo insertar movimiento reparado en', tabla, errIns);
+
+              // actualizar estado y precio en materiales_mantenimiento
+              try {
+                await window.supabaseClient.from('materiales_mantenimiento').update({ estado: 'reparado', precio_base: it.precio, precio_final: nuevoPrecio }).eq('id', it.id);
+              } catch (e) { console.warn('No se pudo actualizar estado/precio mantenimiento', e); }
             }
-            // actualizar estado en materiales_mantenimiento
-            try {
-              await window.supabaseClient.from('materiales_mantenimiento').update({ estado: 'reparado' }).eq('id', it.id);
-            } catch (e) { console.warn('No se pudo actualizar estado mantenimiento', e); }
           }
+
           setStatus(3, '(completado)', '#10b981');
+
+          // Marcar solicitud principal como completada/procesada al crear el ingreso +1
+          const { error: errSolUpd } = await window.supabaseClient
+            .from('solicitudes_mantenimiento')
+            .update({ estado: 'completado' })
+            .eq('id', solicitudId);
+          if (errSolUpd) throw errSolUpd;
+          editingSolicitudEstado = 'completado';
 
           return true;
         } catch (err) {

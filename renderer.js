@@ -575,7 +575,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-crear-usuario')?.addEventListener('click', (e) => {
     e.preventDefault();
     const user = getCurrentUser();
-    if (user.rol !== 'admin' && !user.puede_crear_usuarios) {
+    if (!userHasRole(user, 'admin') && !user.puede_crear_usuarios) {
       alert('No tienes permisos para crear usuarios');
       return;
     }
@@ -595,7 +595,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Ocultar/mostrar botones de inicio según sesión
     document.getElementById('btn-login').style.display = 'none';
     document.getElementById('btn-cerrar-sesion').style.display = 'flex';
-    if (user.rol !== 'admin' && !user.puede_crear_usuarios) {
+    if (!userHasRole(user, 'admin') && !user.puede_crear_usuarios) {
       document.getElementById('btn-crear-usuario').style.display = 'none';
     }
 
@@ -609,9 +609,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     Object.entries(rolePermissions).forEach(([btnId, allowedRoles]) => {
-      if (!allowedRoles.includes(user.rol)) {
-        document.getElementById(btnId).style.display = 'none';
-      }
+      const el = document.getElementById(btnId);
+      if (!el) return;
+      const allowed = allowedRoles.some(r => user.roles.includes(r));
+      if (!allowed) el.style.display = 'none';
     });
 
     // Activar listeners de menú SOLO tras login
@@ -626,7 +627,8 @@ document.addEventListener('DOMContentLoaded', () => {
     Object.entries(menuMap).forEach(([btnId, config]) => {
       document.getElementById(btnId)?.addEventListener('click', (e) => {
         e.preventDefault();
-        if (config.roles.includes(user.rol)) {
+        const allowed = config.roles.some(r => user.roles.includes(r));
+        if (allowed) {
           loadModule(config.module);
         } else {
           alert('No tienes permisos para acceder a este módulo');
