@@ -142,6 +142,9 @@ try {
       if (vista === 'dashboard-xevento') ruta = './modules/bodega/dashboard/xevento.html';
       if (vista === 'dashboard-xproveedor') ruta = './modules/bodega/dashboard/xproveedor.html';
 
+      // NUEVO: dashboard agrupado por nombre
+      if (vista === 'dashboard-xnombre') ruta = './modules/bodega/dashboard/xnombre.html';
+
       if (!ruta) {
         contenedor.innerHTML = `<p style="color: red;">Vista no reconocida: ${vista}</p>`;
         return;

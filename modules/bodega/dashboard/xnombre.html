@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard agrupado por nombre de material</title>
+  <style>
+    body { background: #0f172a; color: #f1f5f9; font-family: Arial, sans-serif; margin: 0; padding: 0; }
+    .container { max-width: 900px; margin: 32px auto; background: #1e293b; border-radius: 12px; box-shadow: 0 2px 12px #0003; padding: 32px; }
+    h1 { color: #38bdf8; margin-bottom: 18px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 18px; }
+    th, td { padding: 8px 10px; border-bottom: 1px solid #334155; }
+    th { background: #2563eb; color: #fff; }
+    tr:nth-child(even) { background: #1e293b; }
+    tr:nth-child(odd) { background: #172033; }
+    .codigo { color: #fbbf24; font-size: 13px; }
+    .cantidad { color: #22d3ee; font-weight: bold; }
+      </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Materiales agrupados por nombre</h1>
+    <div style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:24px;">
+      <div style="display:flex;flex-direction:column;">
+        <label for="filtro-bodega-principal">Bodega Principal</label>
+        <select id="filtro-bodega-principal" style="min-width:120px;"><option value="todas">Todas</option></select>
+      </div>
+      <div style="display:flex;flex-direction:column;">
+        <label for="filtro-bodega-secundaria">Bodega Secundaria</label>
+        <select id="filtro-bodega-secundaria" style="min-width:120px;"><option value="todas">Todas</option></select>
+      </div>
+    </div>
+    <!-- KPIs -->
+    <div id="kpi-row" class="bodega-kpis" style="margin-bottom:24px;">
+      <div class="bodega-kpi-card">
+        <div class="bodega-kpi-label">Materiales únicos</div>
+        <div class="bodega-kpi-value" id="kpi-unicos">–</div>
+      </div>
+      <div class="bodega-kpi-card">
+        <div class="bodega-kpi-label">Unidades totales</div>
+        <div class="bodega-kpi-value" id="kpi-unidades">–</div>
+      </div>
+      <div class="bodega-kpi-card">
+        <div class="bodega-kpi-label">Materiales agotados</div>
+        <div class="bodega-kpi-value" id="kpi-agotados">–</div>
+      </div>
+    </div>
+    <div style="margin-top:12px;">
+      <button id="btn-exportar-xnombre" class="bodega-export-pdf-btn">📄 Exportar por Nombre</button>
+    </div>
+    <div id="agrupacion-por-nombre">Cargando datos...</div>
+  </div>
+  <script>
+    // Simulación de datos de inventario (reemplaza por fetch real)
+
+      // --- Cargar datos reales desde Supabase (3 vistas de stock) ---
+      async function cargarInventarioSupabase() {
+        if (!window.supabaseClient) {
+          document.getElementById('agrupacion-por-nombre').innerHTML = '<span style="color:#f87171">Supabase no está inicializado.</span>';
+          return [];
+        }
+        const tablas = [
+          'stock_audiovisual',
+          'stock_hierros',
+          'stock_consumibles'
+        ];
+        let inventario = [];
+        for (const tabla of tablas) {
+          const { data, error } = await window.supabaseClient.from(tabla).select('material_codigo, material_nombre, existencia, tipo_material, color, bodega_principal, bodega_secundaria');
+          if (error) {
+            console.warn('Error al cargar', tabla, error);
+            continue;
+          }
+          inventario = inventario.concat(data || []);
+        }
+        return inventario;
+      }
+
+// estado simple similar a xbodega
+    const estado = { inventario: [], bodegasPrincipales: [], bodegasSecundarias: [], secundariasPorPrincipal: new Map() };
+
+    async function main() {
+      document.getElementById('agrupacion-por-nombre').innerHTML = 'Cargando datos desde Supabase...';
+      const inventario = await cargarInventarioSupabase();
+      estado.inventario = inventario;
+      // calcular bodegas
+      const ps = new Set();
+      const ss = new Set();
+      inventario.forEach(i => {
+        if (i.bodega_principal) ps.add(i.bodega_principal);
+        if (i.bodega_secundaria) ss.add(i.bodega_secundaria);
+      });
+      estado.bodegasPrincipales = Array.from(ps).sort();
+      estado.bodegasSecundarias = Array.from(ss).sort();
+      // map secundarias por principal si hay ambos campos
+      inventario.forEach(i => {
+        const p = i.bodega_principal || 'todas';
+        const s = i.bodega_secundaria || 'todas';
+        if (!estado.secundariasPorPrincipal.has(p)) estado.secundariasPorPrincipal.set(p, new Set());
+        estado.secundariasPorPrincipal.get(p).add(s);
+      });
+      poblarSelectBodegaPrincipal(estado.bodegasPrincipales);
+      poblarSelectBodegaSecundaria('todas');
+      renderizarConFiltros();
+      }
+
+      main();
+
+    function agruparPorNombre(materiales) {
+      // si materiales undefined, devolver []
+      if (!Array.isArray(materiales)) return [];
+      const agrupados = new Map();
+      materiales.forEach(item => {
+        const nombre = (item.material_nombre || '').trim();
+        if (!nombre) return;
+        if (!agrupados.has(nombre)) {
+          agrupados.set(nombre, {
+            nombre,
+            codigos: new Set(),
+            cantidad: 0,
+            tipo_material: item.tipo_material,
+            color: item.color
+          });
+        }
+        const grupo = agrupados.get(nombre);
+        grupo.codigos.add(item.material_codigo);
+        grupo.cantidad += Number(item.existencia) || 0;
+      });
+      return Array.from(agrupados.values()).map(g => ({
+        ...g,
+        codigos: Array.from(g.codigos)
+      }));
+    }
+
+    function renderColorLabel(raw) {
+      const c = (raw || '').toString().trim();
+      if (!c) return '';
+      const isHex = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(c);
+      const safeColor = isHex ? c : '#fff';
+      return `<span style="display:inline-flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;background:${safeColor};border:1px solid #fff3;display:inline-block;border-radius:2px;"></span><span>${c}</span></span>`;
+    }
+
+    function renderizarConFiltros() {
+      mostrarAgrupacion(estado.inventario);
+    }
+
+    function aplicarFiltros(inventario) {
+      let items = Array.isArray(inventario) ? inventario.slice() : [];
+      const pb = document.getElementById('filtro-bodega-principal').value;
+      const sb = document.getElementById('filtro-bodega-secundaria').value;
+      if (pb && pb !== 'todas') items = items.filter(x => x.bodega_principal === pb);
+      if (sb && sb !== 'todas') items = items.filter(x => x.bodega_secundaria === sb);
+      return items;
+    }
+
+    function mostrarAgrupacion(inventario) {
+      const datos = aplicarFiltros(inventario);
+      const agrupados = agruparPorNombre(datos);
+      // KPIs
+      const kpiUnicos = agrupados.length;
+      const kpiUnidades = agrupados.reduce((acc, g) => acc + g.cantidad, 0);
+      const kpiAgotados = agrupados.filter(g => g.cantidad <= 0).length;
+      // actualizar KPIs si existen (pueden no estar si se carga desde otro contexto)
+      const ku = document.getElementById('kpi-unicos'); if (ku) ku.textContent = kpiUnicos;
+      const kd = document.getElementById('kpi-unidades'); if (kd) kd.textContent = kpiUnidades;
+      const ka = document.getElementById('kpi-agotados'); if (ka) ka.textContent = kpiAgotados;
+      // Tabla
+      let html = `<table><thead><tr><th>Nombre</th><th>Códigos</th><th>Tipo</th><th>Color</th><th>Cantidad total</th></tr></thead><tbody>`;
+      agrupados.forEach(grupo => {
+        html += `<tr>
+          <td>${grupo.nombre}</td>
+          <td class="codigo">${grupo.codigos.join(', ')}</td>
+          <td>${grupo.tipo_material}</td>
+          <td>${renderColorLabel(grupo.color)}</td>
+          <td class="cantidad">${grupo.cantidad}</td>
+        </tr>`;
+      });
+      html += `</tbody></table>`;
+      document.getElementById('agrupacion-por-nombre').innerHTML = html;
+    }
+
+    // Funciones de filtro (copiadas de xbodega)
+    function poblarSelectBodegaPrincipal(principales = []) {
+      const select = document.getElementById('filtro-bodega-principal');
+      if (!select) return;
+      const actual = select.value || 'todas';
+
+      const opciones = ['<option value="todas">Todas</option>'];
+      principales.forEach(b => {
+        const safe = String(b).replace(/"/g, '&quot;');
+        opciones.push(`<option value="${safe}">${safe}</option>`);
+      });
+
+      select.innerHTML = opciones.join('');
+      const disponibles = new Set(['todas', ...principales]);
+      select.value = disponibles.has(actual) ? actual : 'todas';
+    }
+
+    function poblarSelectBodegaSecundaria(principalSeleccionada) {
+      const select = document.getElementById('filtro-bodega-secundaria');
+      if (!select) return;
+      const actual = select.value || 'todas';
+
+      let secundarias = [];
+      if ((principalSeleccionada || 'todas') === 'todas') {
+        secundarias = estado.bodegasSecundarias || [];
+      } else {
+        const set = estado.secundariasPorPrincipal.get(principalSeleccionada) || new Set();
+        secundarias = Array.from(set).sort();
+      }
+
+      const opciones = ['<option value="todas">Todas</option>'];
+      secundarias.forEach(b => {
+        const safe = String(b).replace(/"/g, '&quot;');
+        opciones.push(`<option value="${safe}">${safe}</option>`);
+      });
+
+      select.innerHTML = opciones.join('');
+      const disponibles = new Set(['todas', ...secundarias]);
+      select.value = disponibles.has(actual) ? actual : 'todas';
+    }
+
+    // escuchar cambios en filtros
+    document.getElementById('filtro-bodega-principal').addEventListener('change', (e) => {
+      poblarSelectBodegaSecundaria(e.target.value);
+      renderizarConFiltros();
+    });
+    document.getElementById('filtro-bodega-secundaria').addEventListener('change', () => {
+      renderizarConFiltros();
+    });
+
+    // llamada manual no necesaria: se ejecuta desde main()
+
+    document.getElementById('btn-exportar-xnombre').addEventListener('click', async () => {
+      // exporta la vista actual con los mismos filtros
+      let inventario = estado.inventario || [];
+      if (!inventario.length) return alert('No hay datos para exportar');
+      inventario = aplicarFiltros(inventario);
+
+      const agrupados = agruparPorNombre(inventario);
+      // construir html similar al de xbodega pero listando agrupados
+      let contenido = `<table>
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Códigos</th>
+            <th>Tipo</th>
+            <th>Color</th>
+            <th>Cantidad</th>
+          </tr>
+        </thead>
+        <tbody>`;
+      agrupados.forEach(g => {
+        contenido += `<tr>
+            <td>${g.nombre}</td>
+            <td>${g.codigos.join(', ')}</td>
+            <td>${g.tipo_material}</td>
+            <td>${g.color}</td>
+            <td>${g.cantidad}</td>
+          </tr>`;
+      });
+      contenido += `</tbody></table>`;
+
+      const fecha = new Date().toLocaleDateString('es-NI');
+      const html = `
+      <style>
+        body { font-family: Arial, sans-serif; color:#1f2937; margin-bottom:70px; }
+        .header { text-align:center; border-bottom:2px solid #2563eb; padding-bottom:8px; margin-bottom:18px; }
+        .header h1 { margin:0; font-size:18px; color:#1e3a8a; }
+        .header p { margin:4px 0 0; font-size:11px; color:#555; }
+        table { width:100%; border-collapse:collapse; font-size:10.5px; margin-bottom:18px; }
+        thead th { background:#2563eb; color:#fff; padding:6px; text-align:left; }
+        tbody td { padding:5px 6px; border-bottom:1px solid #e5e7eb; }
+        tbody tr:nth-child(even) { background:#f8fafc; }
+        .footer { position: fixed; bottom: 0; left: 0; right: 0; font-size:10px; color:#555; text-align:center; border-top:1px solid #e5e7eb; padding:6px 0; background:#fff; }
+      </style>
+      <div>
+        <div class="header">
+          <img src="assets/logo.png" style="height:48px;margin-bottom:4px;">
+          <h1>Inventario agrupado por Nombre</h1>
+          <p>Filtros: ${document.getElementById('filtro-bodega-principal').value || 'Todas'} / ${document.getElementById('filtro-bodega-secundaria').value || 'Todas'} | Fecha: ${fecha}</p>
+        </div>
+        ${contenido}
+        <div class="footer">Absolute de Nicaragua · Inventario generado automáticamente</div>
+      </div>`;
+
+      try {
+        const filename = `Inventario_por_Nombre_${fecha.replace(/\//g, '_')}.pdf`;
+        const fullHtml = `<!doctype html><html><head><meta charset="utf-8"></head><body>${html}</body></html>`;
+        const result = await window.electronAPI.renderHtmlToPdf({ filename, html: fullHtml, baseUrl: document.baseURI });
+        if (result && result.canceled === false) {
+          alert('PDF guardado en: ' + result.filePath);
+        }
+      } catch (err) {
+        console.error('Error generando PDF:', err);
+        alert('Error al generar PDF. Revisa consola.');
+      }
+    });
+
+  </script>
+</body>
+</html>

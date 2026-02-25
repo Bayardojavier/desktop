@@ -100,41 +100,8 @@
 
     // Nueva función: determinar si un material es rentable (herramienta) o consumible
     function determinarTipoMaterial(material) {
-        if (!material) return 'consumible'; // Por defecto
-
-        const tipoMaterial = (material.tipo_material || material.tipoMaterial || '').toString().toLowerCase();
-        const tipoUso = (material.tipoUso || material.tipo_uso || '').toString().toLowerCase();
-        const nombre = (material.nom || material.nombre || '').toString().toLowerCase();
-
-        // Si tiene tipo_material que indique rentable
-        if (tipoMaterial.includes('rentable')) {
-            return 'rentable';
-        }
-
-        // Si tiene tipo_material que indique consumible
-        if (tipoMaterial.includes('consumible')) {
-            return 'consumible';
-        }
-
-        // Si tiene tipo_uso que indique herramienta/rentable
-        if (tipoUso.includes('herramienta') || tipoUso.includes('rentable')) {
-            return 'rentable';
-        }
-
-        // Si el nombre contiene palabras clave de herramientas
-        if (nombre.includes('martillo') || nombre.includes('destornillador') || nombre.includes('taladro') ||
-            nombre.includes('sierra') || nombre.includes('llave') || nombre.includes('pinza') ||
-            nombre.includes('alicate') || nombre.includes('cinta') || nombre.includes('nivel') ||
-            nombre.includes('escuadra') || nombre.includes('juego de') || nombre.includes('kit')) {
-            return 'rentable';
-        }
-
-        // Por defecto, si viene del catálogo de consumibles, es consumible
-        if (material.__catalogo === 'catalogo_consumibles') {
-            return 'consumible';
-        }
-
-        return 'consumible'; // Default
+        // Solo considera consumible si el campo tipo_material es exactamente 'consumible'
+        return (material && material.tipo_material && material.tipo_material.toLowerCase() === 'consumible') ? 'consumible' : 'rentable';
     }
 
     // Nueva función: simplificar observaciones en el PDF
@@ -1986,14 +1953,14 @@
                         codigo_material: item.codigo_material,
                         nombre_material: item.nombre_material,
                         cantidad_despachada: item.cantidad_solicitada,
-                        cantidad_devuelta: tipoMaterial === 'rentable' ? 0 : item.cantidad_solicitada, // Rentables deben devolverse, consumibles se consideran consumidos
+                        cantidad_devuelta: tipoMaterial === 'consumible' ? item.cantidad_solicitada : 0,
                         estado: 'despachado',
                         observacion: item.observacion,
                         medidas: item.medidas,
                         color: item.color,
                         usuario_id: window.currentUser?.id,
-                        bodega_principal: null, // Se determinará después al crear movimientos
-                        bodega_secundaria: null  // Se determinará después al crear movimientos
+                        bodega_principal: null,
+                        bodega_secundaria: null
                     };
                 });
 
