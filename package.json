@@ -157,13 +157,5 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/Bayardojavier/desktop.git"
-<<<<<<< HEAD
-=======
-  },
-  "publish": {
-    "provider": "github",
-    "owner": "Bayardojavier",
-    "repo": "desktop"
->>>>>>> e41f155 (chore: bump version to 1.4.7)
   }
 }
