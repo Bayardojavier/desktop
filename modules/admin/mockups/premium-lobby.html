@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lobby Ejecutivo</title>
+  <style>
+    :root {
+      --bg: #f6f4ee;
+      --panel: rgba(255,255,255,0.7);
+      --stroke: rgba(62, 73, 94, 0.12);
+      --text: #18202b;
+      --muted: #667285;
+      --blue: #1748b8;
+      --deep: #0e1734;
+      --gold: #b67d35;
+      --mint: #d9f6ef;
+      --sand: #f6e5cd;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", "Gill Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(23,72,184,0.1), transparent 24%),
+        radial-gradient(circle at bottom right, rgba(182,125,53,0.13), transparent 18%),
+        linear-gradient(180deg, #fbfaf7 0%, var(--bg) 100%);
+      overflow-x: hidden;
+    }
+
+    .shell {
+      width: min(1280px, calc(100vw - 32px));
+      margin: 18px auto;
+      padding: 18px 0 40px;
+    }
+
+    .hero {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 22px;
+      margin-bottom: 22px;
+      align-items: stretch;
+    }
+
+    .hero-copy,
+    .hero-side,
+    .section,
+    .metric,
+    .story {
+      border-radius: 30px;
+      border: 1px solid var(--stroke);
+      background: var(--panel);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 26px 56px rgba(22, 30, 44, 0.08);
+    }
+
+    .hero-copy {
+      padding: 34px;
+      overflow: hidden;
+      position: relative;
+      animation: slideUp 0.8s ease;
+    }
+
+    .hero-copy::before {
+      content: "";
+      position: absolute;
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      top: -90px;
+      right: -80px;
+      background: radial-gradient(circle, rgba(23,72,184,0.16), transparent 70%);
+      animation: glow 8s ease-in-out infinite alternate;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-weight: 800;
+      color: var(--blue);
+    }
+
+    h1 {
+      margin: 16px 0 14px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(42px, 7vw, 76px);
+      line-height: 0.92;
+      letter-spacing: -0.06em;
+      max-width: 10ch;
+    }
+
+    .hero-copy p,
+    .hero-side p,
+    .story p {
+      margin: 0;
+      font-size: 17px;
+      line-height: 1.8;
+      color: var(--muted);
+      max-width: 58ch;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, var(--deep), var(--blue));
+      color: #fff;
+      box-shadow: 0 14px 28px rgba(23,72,184,0.22);
+    }
+
+    .btn.ghost {
+      background: rgba(255,255,255,0.7);
+      color: var(--deep);
+      border: 1px solid rgba(62,73,94,0.14);
+    }
+
+    .hero-side {
+      padding: 24px;
+      display: grid;
+      gap: 14px;
+      animation: fadeIn 1s ease;
+    }
+
+    .hero-side img {
+      width: 180px;
+      justify-self: end;
+      filter: drop-shadow(0 16px 22px rgba(23,72,184,0.12));
+    }
+
+    .panel-stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .mini-panel {
+      padding: 16px 18px;
+      border-radius: 22px;
+      background: rgba(246, 248, 252, 0.84);
+      border: 1px solid rgba(62,73,94,0.1);
+    }
+
+    .mini-panel strong { display: block; font-size: 14px; margin-bottom: 6px; }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .metric {
+      padding: 22px;
+      animation: slideUp 0.8s ease both;
+    }
+
+    .metric:nth-child(2) { animation-delay: 0.08s; }
+    .metric:nth-child(3) { animation-delay: 0.16s; }
+    .metric:nth-child(4) { animation-delay: 0.24s; }
+
+    .metric .label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-weight: 800;
+      color: #6a7283;
+    }
+
+    .metric .value {
+      margin-top: 18px;
+      font-size: 44px;
+      line-height: 1;
+      font-weight: 800;
+      letter-spacing: -0.06em;
+    }
+
+    .metric .hint {
+      margin-top: 10px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .main {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 18px;
+    }
+
+    .section {
+      padding: 22px;
+      animation: fadeIn 1s ease;
+    }
+
+    .section h2 {
+      margin: 8px 0 14px;
+      font-size: 30px;
+      letter-spacing: -0.05em;
+    }
+
+    .stories {
+      display: grid;
+      gap: 12px;
+    }
+
+    .story {
+      padding: 16px 18px;
+      transition: transform 0.24s ease, box-shadow 0.24s ease;
+    }
+
+    .story:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 18px 30px rgba(22,30,44,0.1);
+    }
+
+    .story strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 17px;
+    }
+
+    .story .meta {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .story .meta span {
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      background: rgba(23,72,184,0.08);
+      color: var(--blue);
+      font-weight: 700;
+    }
+
+    .accent-mint { background: linear-gradient(180deg, rgba(217,246,239,0.72), rgba(255,255,255,0.7)); }
+    .accent-sand { background: linear-gradient(180deg, rgba(246,229,205,0.74), rgba(255,255,255,0.7)); }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes glow {
+      from { transform: scale(0.94); }
+      to { transform: scale(1.1); }
+    }
+
+    @media (max-width: 1080px) {
+      .hero, .metrics, .main { grid-template-columns: 1fr; }
+      h1 { max-width: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <article class="hero-copy">
+        <div class="eyebrow">Administrador General · Lobby ejecutivo</div>
+        <h1>Una entrada premium al estado completo de la operación.</h1>
+        <p>Esta propuesta convierte el módulo en una web app corporativa de alta gama. Todo respira más, los bloques flotan, las decisiones importantes ganan presencia y las transiciones se sienten más cercanas a una escena que a un sistema rígido.</p>
+        <div class="actions">
+          <button class="btn primary">Abrir panorama diario</button>
+          <button class="btn ghost">Ver riesgos de operación</button>
+        </div>
+      </article>
+
+      <aside class="hero-side">
+        <img src="../../../assets/logo.png" alt="logo">
+        <div class="panel-stack">
+          <div class="mini-panel accent-mint"><strong>Estado general</strong><p>Estable, con presión creciente sobre faltantes y agenda comercial.</p></div>
+          <div class="mini-panel accent-sand"><strong>Lectura rápida</strong><p>7 eventos próximos, 18 faltantes abiertos, 11 materiales críticos.</p></div>
+          <div class="mini-panel"><strong>Siguiente enfoque</strong><p>Conciliar retornos, validar daños y confirmar cobertura para montajes.</p></div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="metrics">
+      <article class="metric"><div class="label">Eventos próximos</div><div class="value">07</div><div class="hint">Agenda intensa para la próxima ventana de montaje.</div></article>
+      <article class="metric"><div class="label">Faltantes abiertos</div><div class="value">18</div><div class="hint">Seguimiento concentrado en bodega y retornos pendientes.</div></article>
+      <article class="metric"><div class="label">Stock crítico</div><div class="value">11</div><div class="hint">Referencias sensibles que ya afectan planeación.</div></article>
+      <article class="metric"><div class="label">Bajas pendientes</div><div class="value">04</div><div class="hint">Validaciones contables y operativas aún abiertas.</div></article>
+    </section>
+
+    <section class="main">
+      <article class="section">
+        <div class="eyebrow">Historias prioritarias</div>
+        <h2>Lo que el administrador debería mirar primero</h2>
+        <div class="stories">
+          <div class="story"><strong>Faltantes de alta exposición</strong><p>Algunos materiales faltantes ya dejaron de ser un dato operativo y se convierten en tema de reputación por cercanía con eventos visibles.</p><div class="meta"><span>Bodega</span><span>urgente</span></div></div>
+          <div class="story"><strong>Semana comercial con fricción</strong><p>La agenda de eventos empuja simultáneamente inventario, transporte y disponibilidad de personal, pidiendo una lectura cruzada real.</p><div class="meta"><span>Ventas</span><span>logística</span></div></div>
+          <div class="story"><strong>Daños y bajas como costo silencioso</strong><p>El módulo puede hacer visible la pérdida acumulada y no solo el registro del incidente aislado.</p><div class="meta"><span>Contabilidad</span><span>seguimiento</span></div></div>
+        </div>
+      </article>
+
+      <article class="section">
+        <div class="eyebrow">Experiencia visual</div>
+        <h2>Cómo se siente esta dirección</h2>
+        <div class="stories">
+          <div class="story accent-mint"><strong>Más aire, más jerarquía</strong><p>No parece un módulo más dentro del ERP. Parece una entrada ejecutiva pensada para dirección.</p><div class="meta"><span>premium</span></div></div>
+          <div class="story accent-sand"><strong>Animaciones suaves</strong><p>Stagger de carga, bloques flotantes y un ritmo de lectura más elegante que técnico.</p><div class="meta"><span>cinemático</span></div></div>
+          <div class="story"><strong>Escala adaptable</strong><p>Puede convivir con el contenido real del sistema sin cambiar tu lógica, solo reordenando cómo se cuenta.</p><div class="meta"><span>implantable</span></div></div>
+        </div>
+      </article>
+    </section>
+  </div>
+</body>
+</html>

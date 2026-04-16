@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sala de Crisis</title>
+  <style>
+    :root {
+      --bg: #07101c;
+      --panel: #0c1829;
+      --panel-2: #101f35;
+      --line: rgba(107, 173, 255, 0.18);
+      --text: #dbebff;
+      --muted: #86a4d1;
+      --cyan: #5de7ff;
+      --red: #ff6a6a;
+      --amber: #ffc466;
+      --green: #59f0b1;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Consolas, "Segoe UI", monospace;
+      color: var(--text);
+      background:
+        linear-gradient(rgba(93,231,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(93,231,255,0.025) 1px, transparent 1px),
+        radial-gradient(circle at top center, rgba(93,231,255,0.13), transparent 24%),
+        linear-gradient(180deg, #06101b 0%, #091423 100%);
+      background-size: 26px 26px, 26px 26px, auto, auto;
+      overflow: hidden;
+    }
+
+    .scanline {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(180deg, transparent, rgba(93,231,255,0.06), transparent);
+      animation: scan 7s linear infinite;
+      mix-blend-mode: screen;
+    }
+
+    .shell {
+      height: 100vh;
+      padding: 18px;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 14px;
+    }
+
+    .topbar,
+    .ticker,
+    .footer-strip,
+    .card {
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(12,24,41,0.94), rgba(7,17,30,0.94));
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02), 0 16px 36px rgba(0,0,0,0.26);
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: auto 1fr auto auto;
+      gap: 14px;
+      align-items: center;
+      padding: 14px 16px;
+      border-radius: 18px;
+    }
+
+    .brand {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      min-width: 240px;
+    }
+
+    .brand img { width: 40px; height: 40px; object-fit: contain; }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .clock,
+    .status-box {
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .status-box strong,
+    .clock strong { color: var(--cyan); }
+
+    .ticker {
+      border-radius: 16px;
+      overflow: hidden;
+      padding: 10px 0;
+      position: relative;
+    }
+
+    .ticker-track {
+      display: flex;
+      gap: 40px;
+      white-space: nowrap;
+      width: max-content;
+      padding-left: 18px;
+      animation: ticker 26s linear infinite;
+      color: #d7e5ff;
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .main {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 14px;
+      min-height: 0;
+    }
+
+    .left,
+    .right {
+      display: grid;
+      gap: 14px;
+      min-height: 0;
+    }
+
+    .left {
+      grid-template-rows: auto 1fr auto;
+    }
+
+    .right {
+      grid-template-rows: 1fr 1fr;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .card {
+      border-radius: 18px;
+      padding: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .metric {
+      min-height: 120px;
+    }
+
+    .metric::after {
+      content: "";
+      position: absolute;
+      inset: auto -20px -36px auto;
+      width: 92px;
+      height: 92px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(93,231,255,0.18), transparent 70%);
+    }
+
+    .label {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .value {
+      margin-top: 18px;
+      font-size: 42px;
+      font-weight: 800;
+      letter-spacing: -0.06em;
+    }
+
+    .hint { margin-top: 10px; color: #9fb8db; font-size: 13px; }
+
+    .critical { color: var(--red); }
+    .warning { color: var(--amber); }
+    .good { color: var(--green); }
+    .cyan { color: var(--cyan); }
+
+    .board {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 12px;
+      min-height: 0;
+    }
+
+    .list {
+      display: grid;
+      gap: 10px;
+      max-height: 100%;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .item {
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(255,255,255,0.03);
+    }
+
+    .item strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+      color: #f2f7ff;
+    }
+
+    .item span {
+      color: #8ea8ce;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .badge-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .badge {
+      padding: 5px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: rgba(255,255,255,0.05);
+    }
+
+    .badge.red { color: var(--red); }
+    .badge.amber { color: var(--amber); }
+    .badge.green { color: var(--green); }
+    .badge.cyan { color: var(--cyan); }
+
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+    }
+
+    .tick {
+      min-height: 96px;
+      border-radius: 14px;
+      padding: 10px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .pulse {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 8px;
+      background: currentColor;
+      box-shadow: 0 0 0 0 currentColor;
+      animation: pulse 1.8s infinite;
+    }
+
+    .footer-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      border-radius: 16px;
+      padding: 10px 14px;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    @keyframes scan {
+      from { transform: translateY(-100%); }
+      to { transform: translateY(100%); }
+    }
+
+    @keyframes ticker {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+
+    @keyframes pulse {
+      70% { box-shadow: 0 0 0 12px transparent; }
+      100% { box-shadow: 0 0 0 0 transparent; }
+    }
+
+    @media (max-width: 1100px) {
+      body { overflow: auto; }
+      .shell { height: auto; }
+      .main, .board, .metrics, .timeline, .footer-strip, .topbar { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="scanline"></div>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <img src="../../../assets/icon.png" alt="icono">
+        <div>
+          <h1>Sala de Crisis</h1>
+          <div class="label">Administrador General · Monitoreo Transversal</div>
+        </div>
+      </div>
+      <div class="status-box"><strong>Modo</strong><br>Operación intensiva</div>
+      <div class="status-box"><strong>Prioridad</strong><br>5 incidencias activas</div>
+      <div class="clock"><strong>Hora</strong><br><span id="clock">--:--:--</span></div>
+    </header>
+
+    <section class="ticker">
+      <div class="ticker-track">
+        <span><span class="pulse critical"></span>faltantes abiertos en bodega secundaria</span>
+        <span><span class="pulse warning"></span>tres eventos entran en ventana de montaje</span>
+        <span><span class="pulse cyan"></span>rotación de stock crítico en audiovisual</span>
+        <span><span class="pulse good"></span>rrhh actualizó directorio de personal</span>
+        <span><span class="pulse critical"></span>baja logística pendiente de autorización</span>
+        <span><span class="pulse warning"></span>consumibles por debajo de umbral</span>
+        <span><span class="pulse critical"></span>faltantes abiertos en bodega secundaria</span>
+        <span><span class="pulse warning"></span>tres eventos entran en ventana de montaje</span>
+      </div>
+    </section>
+
+    <main class="main">
+      <section class="left">
+        <div class="metrics">
+          <article class="card metric"><div class="label">Faltantes abiertos</div><div class="value critical">18</div><div class="hint">6 requieren decisión hoy</div></article>
+          <article class="card metric"><div class="label">Eventos próximos</div><div class="value cyan">07</div><div class="hint">ventana de 72 horas</div></article>
+          <article class="card metric"><div class="label">Stock crítico</div><div class="value warning">11</div><div class="hint">compra sugerida inmediata</div></article>
+          <article class="card metric"><div class="label">Bajas pendientes</div><div class="value good">04</div><div class="hint">2 listas para aprobación</div></article>
+        </div>
+
+        <div class="board">
+          <article class="card">
+            <div class="label">Radar de incidencias</div>
+            <div class="list">
+              <div class="item"><strong>Faltante de truss T290</strong><span>Evento Gala Norte · despacho 1842 · sigue sin aclaración operativa.</span><div class="badge-row"><span class="badge red">crítico</span><span class="badge amber">bodega</span></div></div>
+              <div class="item"><strong>Consola DMX sin devolución</strong><span>Evento Expo Plaza · retorno vencido por 2 días con nota incompleta.</span><div class="badge-row"><span class="badge red">seguimiento</span><span class="badge cyan">logística</span></div></div>
+              <div class="item"><strong>Kit de audio en revisión</strong><span>Estado de daño reportado, pendiente validación contable para baja o reparación.</span><div class="badge-row"><span class="badge amber">contabilidad</span><span class="badge green">en análisis</span></div></div>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="label">Panel táctico por área</div>
+            <div class="list">
+              <div class="item"><strong>Ventas</strong><span>3 montajes entran en fase crítica esta semana.</span><div class="badge-row"><span class="badge cyan">agenda activa</span></div></div>
+              <div class="item"><strong>Bodega</strong><span>11 materiales por debajo del nivel seguro.</span><div class="badge-row"><span class="badge amber">stock bajo</span></div></div>
+              <div class="item"><strong>RRHH</strong><span>4 contrataciones pendientes de documentación completa.</span><div class="badge-row"><span class="badge green">proceso</span></div></div>
+              <div class="item"><strong>Logística</strong><span>2 rutas con despacho cerrado sin devolución conciliada.</span><div class="badge-row"><span class="badge red">bloqueo</span></div></div>
+            </div>
+          </article>
+        </div>
+
+        <article class="card">
+          <div class="label">Línea de tiempo de decisiones</div>
+          <div class="timeline">
+            <div class="tick"><strong>08:00</strong><br><span>Revisión de faltantes abiertos</span></div>
+            <div class="tick"><strong>09:30</strong><br><span>Aprobación de bajas logísticas</span></div>
+            <div class="tick"><strong>11:00</strong><br><span>Control de eventos próximos</span></div>
+            <div class="tick"><strong>14:00</strong><br><span>Validación contable de daños</span></div>
+            <div class="tick"><strong>16:30</strong><br><span>Cierre de prioridades del día</span></div>
+          </div>
+        </article>
+      </section>
+
+      <section class="right">
+        <article class="card">
+          <div class="label">Próximos eventos</div>
+          <div class="list">
+            <div class="item"><strong>Gala Norte</strong><span>Montaje mañana · cliente corporativo · requiere audio, tarima y luces.</span><div class="badge-row"><span class="badge cyan">mañana</span><span class="badge amber">alta carga</span></div></div>
+            <div class="item"><strong>Expo Plaza</strong><span>Montaje en 2 días · faltante abierto en iluminación.</span><div class="badge-row"><span class="badge red">riesgo</span></div></div>
+            <div class="item"><strong>Foro Capital</strong><span>Montaje en 3 días · inventario listo y personal confirmado.</span><div class="badge-row"><span class="badge green">estable</span></div></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="label">Watchlist ejecutiva</div>
+          <div class="list">
+            <div class="item"><strong>Top faltantes</strong><span>Truss T290, consola DMX, pantalla led 2x1.</span></div>
+            <div class="item"><strong>Top dañados</strong><span>2 movers wash, 1 rack de distribución, 1 case reforzado.</span></div>
+            <div class="item"><strong>RRHH</strong><span>Asistencia normal, 1 ausencia crítica en montaje.</span></div>
+            <div class="item"><strong>Compras</strong><span>Solicitud rápida para consumibles de cableado y fijación.</span></div>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <footer class="footer-strip">
+      <div>Ventas · Coordinación comercial activa</div>
+      <div>Bodega · Riesgo medio alto</div>
+      <div>Logística · 2 rutas en seguimiento</div>
+      <div>Contabilidad · Validaciones pendientes</div>
+    </footer>
+  </div>
+  <script>
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('clock').textContent = now.toLocaleTimeString('es-NI');
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+  </script>
+</body>
+</html>

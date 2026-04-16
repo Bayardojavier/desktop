@@ -5,6 +5,53 @@
   <title>Registro de Venta de Activos</title>
   <!-- ❌ ELIMINADO: app.css -->
   <link rel="stylesheet" href="../ventas.css">
+  <style>
+    /* Estilos para el buscador de materiales */
+    .ventas-pestanas-bodega {
+      padding: 8px;
+      background: #f1f5f9;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .ventas-buscador-input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 14px;
+      background: white;
+      color: #1e293b;
+      transition: all 0.2s ease;
+      box-sizing: border-box;
+    }
+
+    .ventas-buscador-input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
+    .ventas-buscador-input::placeholder {
+      color: #94a3b8;
+    }
+
+    .ventas-buscador-input:hover {
+      border-color: #94a3b8;
+    }
+
+    /* Estilos para botón de agregar deshabilitado */
+    .ventas-boton-agregar:disabled {
+      background: #cbd5e1;
+      color: #64748b;
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    .ventas-boton-agregar:disabled:hover {
+      background: #cbd5e1;
+      transform: none;
+    }
+  </style>
 </head>
 <body>
   <div class="ventas-layout-tres-columnas">
@@ -61,8 +108,7 @@
         <div class="ventas-panel-bodega">
           <div class="ventas-encabezado-bodega">📦 BODEGA</div>
           <div class="ventas-pestanas-bodega">
-            <button id="ventas-btn-items" class="ventas-pestaña-activa">Items</button>
-            <button id="ventas-btn-recetas">Recetas</button>
+            <input type="text" id="ventas-buscador-materiales" class="ventas-buscador-input" placeholder="🔍 Buscar por nombre o código...">
           </div>
           <div id="ventas-lista-bodega" class="ventas-contenido-bodega"></div>
         </div>
@@ -85,8 +131,8 @@
     // =============================================================================
     // 🔹 CARGAR DATOS REALES DE SUPABASE
     // =============================================================================
-    let materialesBodega = [];
-    let recetasVentas = [];
+    // Usar var en lugar de let para evitar errores de redeclaración al recargar la vista
+    var materialesBodega = [];
 
     // =============================================================================
     // 🔹 FUNCIONES DE CARGA DE DATOS
@@ -119,40 +165,13 @@
       }
     }
 
-    async function cargarRecetas() {
-      try {
-        const { data: recetas, error } = await window.supabaseClient
-          .from('recetas')
-          .select('id, nombre')
-          .order('nombre', { ascending: true });
-
-        if (error) {
-          console.error('Error al cargar recetas:', error);
-          return;
-        }
-
-        for (const receta of recetas) {
-          const { data: materiales, error: errMat } = await window.supabaseClient
-            .from('recetas_materiales')
-            .select('material_codigo, cantidad')
-            .eq('receta_id', receta.id);
-
-          if (!errMat && materiales) {
-            receta.items = materiales;
-            recetasVentas.push(receta);
-          }
-        }
-      } catch (err) {
-        console.error('Error al cargar recetas:', err);
-      }
-    }
-
     // =============================================================================
     // 🔹 ESTADO
     // =============================================================================
-    let carrito = [];
-    let pestanaActiva = 'items';
-    let ultimaVenta = null;
+    // Usar var para evitar errores de redeclaración al recargar la vista
+    var carrito = [];
+    var ultimaVenta = null;
+    var filtroMateriales = ''; // Filtro para el buscador
 
     // =============================================================================
     // 🔹 UTILIDADES DE PRECIO Y EXISTENCIA
@@ -340,8 +359,17 @@
       return Math.max(ultimoDb, ultimoLocal) + 1;
     }
 
-    function agregarAlCarrito(codigo, nombre, precio) {
+    function agregarAlCarrito(codigo, nombre, precio, existenciaMaxima = 1) {
+      // Verificar cantidad actual en el carrito
       const existe = carrito.find(item => item.codigo === codigo);
+      const cantidadActual = existe ? existe.cantidad : 0;
+      
+      // Validar que no exceda el stock disponible
+      if (cantidadActual + 1 > existenciaMaxima) {
+        alert(`⚠️ No se puede agregar más unidades. Stock disponible: ${existenciaMaxima}`);
+        return;
+      }
+      
       if (existe) {
         existe.cantidad++;
       } else {
@@ -349,10 +377,12 @@
           codigo: codigo,
           nombre: nombre,
           precio: precio,
-          cantidad: 1
+          cantidad: 1,
+          existenciaMaxima: existenciaMaxima
         });
       }
       renderCarrito();
+      renderBodega(); // Actualizar estado de botones en bodega
     }
 
     // =============================================================================
@@ -363,55 +393,66 @@
       if (!contenedor) return;
       contenedor.innerHTML = "";
 
-      if (pestanaActiva === 'items') {
-        // Agrupar materiales por categoría (usando bodega_principal como categoría)
-        const categorias = {};
-        materialesBodega.forEach(material => {
-          const categoria = material.bodega_principal || 'Sin categoría';
-          if (!categorias[categoria]) {
-            categorias[categoria] = [];
-          }
-          categorias[categoria].push(material);
-        });
+      // Filtrar materiales por búsqueda
+      const materialesFiltrados = materialesBodega.filter(material => {
+        if (!filtroMateriales) return true;
+        const filtro = filtroMateriales.toLowerCase();
+        return material.nombre.toLowerCase().includes(filtro) || 
+               material.codigo.toLowerCase().includes(filtro);
+      });
 
-        Object.keys(categorias).sort().forEach(categoria => {
-          const divCategoria = document.createElement('div');
-          divCategoria.className = 'ventas-categoria-item';
-          divCategoria.textContent = categoria;
-          contenedor.appendChild(divCategoria);
-
-          categorias[categoria].forEach(material => {
-            const precio = getPrecioMaterial(material);
-            const existencia = getExistencia(material);
-            const divProducto = document.createElement('div');
-            divProducto.className = 'ventas-producto-item';
-            divProducto.innerHTML = `
-              <div class="ventas-info-producto">
-                <strong>${material.nombre}</strong>
-                <small>${material.codigo}</small>
-                <div class="ventas-precio-item">$${precio.toFixed(2)}${existencia > 0 ? ` · Stock: ${existencia}` : ' · Sin stock'}</div>
-              </div>
-              <button class="ventas-boton-agregar" data-codigo="${material.codigo}" data-nombre="${material.nombre}" data-precio="${precio}" data-existencia="${existencia}">+</button>
-            `;
-            contenedor.appendChild(divProducto);
-          });
-        });
-      } else {
-        // Renderizar recetas
-        if (recetasVentas.length === 0) {
-          contenedor.innerHTML = '<p class="ventas-mensaje-vacio">No hay recetas disponibles</p>';
-        } else {
-          recetasVentas.forEach(receta => {
-            const divCombo = document.createElement('div');
-            divCombo.className = 'ventas-tarjeta-combo';
-            divCombo.innerHTML = `
-              <div class="ventas-titulo-combo">${receta.nombre}</div>
-              <button class="ventas-boton-combo" data-receta="${receta.id}">Cargar Combo</button>
-            `;
-            contenedor.appendChild(divCombo);
-          });
-        }
+      if (materialesFiltrados.length === 0) {
+        contenedor.innerHTML = '<p class="ventas-mensaje-vacio">No se encontraron materiales</p>';
+        return;
       }
+
+      // Agrupar materiales por categoría (usando bodega_principal como categoría)
+      const categorias = {};
+      materialesFiltrados.forEach(material => {
+        const categoria = material.bodega_principal || 'Sin categoría';
+        if (!categorias[categoria]) {
+          categorias[categoria] = [];
+        }
+        categorias[categoria].push(material);
+      });
+
+      Object.keys(categorias).sort().forEach(categoria => {
+        const divCategoria = document.createElement('div');
+        divCategoria.className = 'ventas-categoria-item';
+        divCategoria.textContent = categoria;
+        contenedor.appendChild(divCategoria);
+
+        categorias[categoria].forEach(material => {
+          const precio = getPrecioMaterial(material);
+          const existencia = getExistencia(material);
+          
+          // Verificar cuántos hay ya en el carrito
+          const enCarrito = carrito.find(item => item.codigo === material.codigo);
+          const cantidadEnCarrito = enCarrito ? enCarrito.cantidad : 0;
+          
+          // Determinar si el botón debe estar deshabilitado
+          const sinStock = existencia <= 0;
+          const stockLleno = cantidadEnCarrito >= existencia;
+          const deshabilitado = sinStock || stockLleno;
+          
+          const divProducto = document.createElement('div');
+          divProducto.className = 'ventas-producto-item';
+          divProducto.innerHTML = `
+            <div class="ventas-info-producto">
+              <strong>${material.nombre}</strong>
+              <small>${material.codigo}</small>
+              <div class="ventas-precio-item">$${precio.toFixed(2)}${existencia > 0 ? ` · Stock: ${existencia}` : ' · Sin stock'}</div>
+            </div>
+            <button class="ventas-boton-agregar" 
+                    data-codigo="${material.codigo}" 
+                    data-nombre="${material.nombre}" 
+                    data-precio="${precio}" 
+                    data-existencia="${existencia}"
+                    ${deshabilitado ? 'disabled' : ''}>+</button>
+          `;
+          contenedor.appendChild(divProducto);
+        });
+      });
 
       // Eventos para los botones
       document.querySelectorAll('.ventas-boton-agregar').forEach(btn => {
@@ -419,25 +460,8 @@
           const codigo = e.currentTarget.dataset.codigo;
           const nombre = e.currentTarget.dataset.nombre;
           const precio = parseFloat(e.currentTarget.dataset.precio);
-          agregarAlCarrito(codigo, nombre, precio);
-        });
-      });
-
-      document.querySelectorAll('.ventas-boton-combo').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const recetaId = e.currentTarget.dataset.receta;
-          const receta = recetasVentas.find(r => r.id === recetaId);
-          if (receta) {
-            receta.items.forEach(item => {
-              const material = materialesBodega.find(m => m.codigo === item.codigo);
-              if (material) {
-                const precio = getPrecioMaterial(material);
-                for (let i = 0; i < (item.cantidad || 1); i++) {
-                  agregarAlCarrito(material.codigo, material.nombre, precio);
-                }
-              }
-            });
-          }
+          const existencia = parseInt(e.currentTarget.dataset.existencia) || 0;
+          agregarAlCarrito(codigo, nombre, precio, existencia);
         });
       });
     }
@@ -449,6 +473,7 @@
       if (carrito.length === 0) {
         contenedor.innerHTML = '<p class="ventas-carrito-vacio">Carrito vacío</p>';
         document.getElementById('ventas-monto').textContent = '$ 0.00';
+        renderBodega(); // Actualizar estado de botones en bodega
         return;
       }
 
@@ -458,6 +483,10 @@
       carrito.forEach((item, index) => {
         const subtotal = item.precio * item.cantidad;
         total += subtotal;
+        
+        // Obtener existencia máxima del material
+        const material = materialesBodega.find(m => m.codigo === item.codigo);
+        const existenciaMaxima = material ? getExistencia(material) : item.existenciaMaxima || 9999;
 
         const itemDiv = document.createElement('div');
         itemDiv.className = 'ventas-item-carrito';
@@ -465,11 +494,12 @@
           <div class="ventas-info-item">
             <strong>${item.nombre}</strong>
             <small>${item.codigo}</small>
+            <small style="color: #64748b;">(Stock: ${existenciaMaxima})</small>
           </div>
           <div class="ventas-controles-item">
               <label class="ventas-precio-label">Precio</label>
             <input type="number" class="ventas-precio-edit" value="${item.precio.toFixed(2)}" min="0" step="0.01" data-indice="${index}">
-            <input type="number" class="ventas-cantidad-item" value="${item.cantidad}" min="1" data-indice="${index}">
+            <input type="number" class="ventas-cantidad-item" value="${item.cantidad}" min="1" max="${existenciaMaxima}" data-indice="${index}">
             <span class="ventas-subtotal-item">$${subtotal.toFixed(2)}</span>
             <button class="ventas-boton-eliminar-item" data-indice="${index}" title="Eliminar item">🗑️</button>
           </div>
@@ -484,13 +514,23 @@
         input.addEventListener('change', (e) => {
           const indice = parseInt(e.currentTarget.dataset.indice);
           const nuevaCantidad = parseInt(e.currentTarget.value) || 1;
-          
-          if (nuevaCantidad <= 0) {
+          const item = carrito[indice];
+
+          // Obtener existencia máxima
+          const material = materialesBodega.find(m => m.codigo === item.codigo);
+          const existenciaMaxima = material ? getExistencia(material) : item.existenciaMaxima || 9999;
+
+          // Validar que no exceda el stock
+          if (nuevaCantidad > existenciaMaxima) {
+            alert(`⚠️ La cantidad no puede exceder el stock disponible (${existenciaMaxima})`);
+            carrito[indice].cantidad = existenciaMaxima;
+          } else if (nuevaCantidad <= 0) {
             carrito.splice(indice, 1);
           } else {
             carrito[indice].cantidad = nuevaCantidad;
           }
           renderCarrito();
+          renderBodega(); // Actualizar estado de botones
         });
       });
 
@@ -500,6 +540,7 @@
           const nuevoPrecio = parseFloat(e.currentTarget.value);
           carrito[indice].precio = Number.isFinite(nuevoPrecio) && nuevoPrecio >= 0 ? nuevoPrecio : 0;
           renderCarrito();
+          renderBodega(); // Actualizar estado de botones
         });
       });
 
@@ -509,6 +550,7 @@
           const indice = parseInt(e.currentTarget.dataset.indice);
           carrito.splice(indice, 1);
           renderCarrito();
+          renderBodega(); // Actualizar estado de botones
         });
       });
     }
@@ -751,24 +793,14 @@
       try {
         // Cargar datos de Supabase
         await cargarMaterialesBodega();
-        await cargarRecetas();
 
         // Fecha actual
         const hoy = new Date().toISOString().split('T')[0];
         document.getElementById('ventas-fecha').value = hoy;
 
-        // Eventos de pestañas
-        document.getElementById('ventas-btn-items').addEventListener('click', () => {
-          pestanaActiva = 'items';
-          document.getElementById('ventas-btn-items').classList.add('ventas-pestaña-activa');
-          document.getElementById('ventas-btn-recetas').classList.remove('ventas-pestaña-activa');
-          renderBodega();
-        });
-
-        document.getElementById('ventas-btn-recetas').addEventListener('click', () => {
-          pestanaActiva = 'recetas';
-          document.getElementById('ventas-btn-recetas').classList.add('ventas-pestaña-activa');
-          document.getElementById('ventas-btn-items').classList.remove('ventas-pestaña-activa');
+        // Evento del buscador
+        document.getElementById('ventas-buscador-materiales').addEventListener('input', (e) => {
+          filtroMateriales = e.target.value;
           renderBodega();
         });
 

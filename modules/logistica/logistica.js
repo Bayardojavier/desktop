@@ -28,6 +28,7 @@ async function manejarClicVistaLogistica(evento) {
 
         // --- RUTAS DE LOGÍSTICA ---
         if (vista === 'log-solicitud') ruta = './modules/logistica/bodega/solicitudmateriales.html';
+        if (vista === 'log-solicitud-kits') ruta = './modules/logistica/bodega/solicitudkits.html';
         if (vista === 'log-seguimiento') ruta = './modules/logistica/bodega/missolicitudescontent.html';
         if (vista === 'log-recetas') ruta = './modules/logistica/recetas.html';
         if (vista === 'log-despacho-audiovisual') ruta = './modules/logistica/bodega/despacho_audiovisual.html';
@@ -134,48 +135,118 @@ async function exportarLogisticaAExcel() {
 
 // Helper para que otros módulos (p.ej. audiovisual) creen una solicitud + items
 // Uso: await window.createSolicitudFromExternal(solicitudData, itemsArray)
+async function notifyDesktopDispatchRequestCreated(numeroSolicitud, area, tipo) {
+    try {
+        await window.supabaseClient.functions.invoke('send-push-notification', {
+            body: {
+                title: tipo === 'despacho_audiovisual' ? 'Nuevo despacho audiovisual' : 'Nueva solicitud de despacho',
+                body: `${window.currentUser?.nombre || window.currentUser?.usuario || 'Usuario'} creó ${tipo === 'despacho_audiovisual' ? 'el despacho audiovisual' : 'la solicitud'} ${numeroSolicitud} para ${area}`,
+                data: {
+                    type: tipo,
+                    numeroSolicitud,
+                    area,
+                    usuario: window.currentUser?.nombre || window.currentUser?.usuario || 'Usuario',
+                    timestamp: new Date().toISOString()
+                }
+            }
+        });
+    } catch (error) {
+        console.warn('No se pudo enviar notificación push de logística:', error);
+    }
+}
+
+async function generarIdSolicitudLogistica() {
+    try {
+        const { data: existingData, error: existingError } = await window.supabaseClient
+            .from('solicitudes_logistica')
+            .select('id')
+            .like('id', 'SOL-%')
+            .order('id', { ascending: false })
+            .limit(1);
+
+        let startNumber = 1;
+        if (!existingError && existingData && existingData.length > 0) {
+            const lastId = existingData[0].id;
+            const match = /^SOL-(\d+)$/.exec(lastId);
+            if (match) {
+                startNumber = parseInt(match[1], 10) + 1;
+            }
+        }
+
+        for (let attempt = 0; attempt < 100; attempt++) {
+            const candidateId = `SOL-${String(startNumber + attempt).padStart(5, '0')}`;
+            const { data: checkData, error: checkError } = await window.supabaseClient
+                .from('solicitudes_logistica')
+                .select('id')
+                .eq('id', candidateId)
+                .limit(1);
+
+            if (checkError) continue;
+            if (!checkData || checkData.length === 0) {
+                return candidateId;
+            }
+        }
+
+        return `SOL-${Date.now().toString().slice(-5)}`;
+    } catch (error) {
+        console.error('Error generando ID de solicitud logística:', error);
+        return `SOL-${Date.now().toString().slice(-5)}`;
+    }
+}
+
+window.generarIdSolicitudLogistica = generarIdSolicitudLogistica;
+
 window.createSolicitudFromExternal = async function(solicitudData = {}, items = []) {
     try {
         if (!window.supabaseClient) throw new Error('supabaseClient no disponible');
 
-        // Determinar id de solicitud: usar el provisto o generar uno único
-        let id = solicitudData.id || (`SOL-${Date.now()}`);
-        const payload = {
-            id,
-            tipo: solicitudData.tipo || 'despacho',
-            estado: solicitudData.estado || 'pendiente_bodega',
-            evento: solicitudData.evento || null,
-            encargado_evento: solicitudData.encargado_evento || null,
-            prioridad: solicitudData.prioridad || 'Normal',
-            modo_ingreso: solicitudData.modo_ingreso || null,
-            observaciones: solicitudData.observaciones || solicitudData.observacion || null,
-            fecha_solicitud: solicitudData.fecha_solicitud || new Date().toISOString(),
-            usuario_id: window.currentUser?.id || null
-        };
+        const idProvisto = Boolean(solicitudData.id);
+        let id = solicitudData.id || null;
+        let inserted = false;
+        let lastError = null;
 
-        // Intentar insertar la solicitud (si ya existe, usarla)
-        const { data: solInsert, error: solErr } = await window.supabaseClient
-            .from('solicitudes_logistica')
-            .insert(payload)
-            .select('id')
-            .single();
-
-        if (solErr) {
-            console.warn('createSolicitudFromExternal: no se pudo insertar solicitud, intentando usar existencia:', solErr);
-            // Comprobar existencia
-            const { data: exists, error: existsErr } = await window.supabaseClient
-                .from('solicitudes_logistica')
-                .select('id')
-                .eq('id', id)
-                .limit(1);
-            if (existsErr) throw existsErr;
-            if (exists && exists.length > 0) {
-                id = exists[0].id;
-            } else {
-                throw solErr;
+        for (let attempt = 0; attempt < 5; attempt++) {
+            if (!id) {
+                id = await generarIdSolicitudLogistica();
             }
-        } else if (solInsert && solInsert.id) {
-            id = solInsert.id;
+
+            const payload = {
+                id,
+                tipo: solicitudData.tipo || 'despacho',
+                estado: solicitudData.estado || 'pendiente_bodega',
+                evento: solicitudData.evento || null,
+                encargado_evento: solicitudData.encargado_evento || null,
+                prioridad: solicitudData.prioridad || 'Normal',
+                modo_ingreso: solicitudData.modo_ingreso || null,
+                observaciones: solicitudData.observaciones || solicitudData.observacion || null,
+                fecha_solicitud: solicitudData.fecha_solicitud || new Date().toISOString(),
+                usuario_id: window.currentUser?.id || null
+            };
+
+            const { data: solInsert, error: solErr } = await window.supabaseClient
+                .from('solicitudes_logistica')
+                .insert(payload)
+                .select('id')
+                .single();
+
+            if (!solErr) {
+                id = solInsert?.id || id;
+                inserted = true;
+                break;
+            }
+
+            lastError = solErr;
+            const duplicateKey = solErr.code === '23505' && /duplicate key value/i.test(solErr.message || '');
+            if (duplicateKey && !idProvisto) {
+                id = null;
+                continue;
+            }
+
+            throw solErr;
+        }
+
+        if (!inserted) {
+            throw lastError || new Error('No se pudo crear la solicitud logística.');
         }
 
         // Preparar items para insertar en items_solicitud_logistica
@@ -210,6 +281,12 @@ window.createSolicitudFromExternal = async function(solicitudData = {}, items = 
                 }
             } catch (_) {}
         }
+
+        await notifyDesktopDispatchRequestCreated(
+            id,
+            solicitudData.area || solicitudData.evento || 'Logistica',
+            solicitudData.modo_ingreso === 'despacho_audiovisual' ? 'despacho_audiovisual' : 'solicitud_despacho'
+        );
 
         return { success: true, solicitudId: id };
     } catch (err) {

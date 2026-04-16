@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapa de Misión</title>
+  <style>
+    :root {
+      --bg: #07131a;
+      --panel: rgba(10, 21, 28, 0.78);
+      --line: rgba(94, 255, 217, 0.18);
+      --text: #dffef9;
+      --muted: #80b7b3;
+      --cyan: #72fff0;
+      --lime: #b2ff66;
+      --amber: #ffcc6f;
+      --pink: #ff8db2;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at center, rgba(114,255,240,0.08), transparent 24%),
+        linear-gradient(rgba(114,255,240,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(114,255,240,0.025) 1px, transparent 1px),
+        linear-gradient(180deg, #051118 0%, #081920 100%);
+      background-size: auto, 36px 36px, 36px 36px, auto;
+      overflow: hidden;
+    }
+
+    .shell {
+      height: 100vh;
+      padding: 20px;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 16px;
+    }
+
+    .top {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .titlebox,
+    .legend,
+    .map-panel,
+    .floating {
+      border-radius: 24px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 24px 56px rgba(0,0,0,0.28);
+      backdrop-filter: blur(18px);
+    }
+
+    .titlebox {
+      padding: 22px 26px;
+    }
+
+    .eyebrow {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-weight: 800;
+      color: var(--cyan);
+    }
+
+    h1 {
+      margin: 12px 0 10px;
+      font-size: clamp(34px, 5vw, 58px);
+      line-height: 0.95;
+      letter-spacing: -0.06em;
+    }
+
+    .titlebox p,
+    .floating p { margin: 0; color: var(--muted); line-height: 1.7; }
+
+    .legend {
+      padding: 18px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-content: center;
+      min-width: 320px;
+    }
+
+    .legend span {
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      background: rgba(255,255,255,0.04);
+    }
+
+    .stage {
+      position: relative;
+      min-height: 0;
+    }
+
+    .map-panel {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .node {
+      position: absolute;
+      width: 170px;
+      padding: 16px;
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(8, 22, 29, 0.92);
+      box-shadow: 0 20px 36px rgba(0,0,0,0.26);
+      animation: drift 7s ease-in-out infinite alternate;
+    }
+
+    .node strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 18px;
+    }
+
+    .node small {
+      display: block;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 13px;
+    }
+
+    .ring {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      margin-bottom: 10px;
+      background: currentColor;
+      box-shadow: 0 0 0 0 currentColor;
+      animation: halo 2.3s infinite;
+    }
+
+    .ventas { top: 18%; left: 12%; color: var(--pink); }
+    .bodega { top: 52%; left: 18%; color: var(--amber); animation-delay: 0.8s; }
+    .admin { top: 34%; left: 40%; width: 220px; color: var(--cyan); animation-delay: 0.3s; }
+    .logistica { top: 18%; right: 14%; color: var(--lime); animation-delay: 1.2s; }
+    .contabilidad { top: 56%; right: 18%; color: #8ec5ff; animation-delay: 0.5s; }
+    .rrhh { bottom: 10%; left: 42%; color: #ff9e66; animation-delay: 1.6s; }
+
+    .floating {
+      position: absolute;
+      width: 280px;
+      padding: 16px 18px;
+      animation: floatCard 6s ease-in-out infinite alternate;
+    }
+
+    .f1 { top: 10%; right: 32%; }
+    .f2 { bottom: 12%; left: 8%; animation-delay: 1.2s; }
+    .f3 { bottom: 8%; right: 10%; animation-delay: 2s; }
+
+    .floating h3 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      letter-spacing: -0.04em;
+    }
+
+    .floating .meta {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .floating .meta span {
+      padding: 6px 9px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.05);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    @keyframes halo {
+      70% { box-shadow: 0 0 0 18px transparent; }
+      100% { box-shadow: 0 0 0 0 transparent; }
+    }
+
+    @keyframes drift {
+      from { transform: translateY(-4px); }
+      to { transform: translateY(10px); }
+    }
+
+    @keyframes floatCard {
+      from { transform: translateY(-4px) rotate(-0.6deg); }
+      to { transform: translateY(8px) rotate(0.8deg); }
+    }
+
+    @media (max-width: 1120px) {
+      body { overflow: auto; }
+      .shell { height: auto; }
+      .top { grid-template-columns: 1fr; }
+      .stage { min-height: 980px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="top">
+      <div class="titlebox">
+        <div class="eyebrow">Administrador General · Mapa de misión</div>
+        <h1>El negocio como un sistema de nodos, enlaces y focos activos.</h1>
+        <p>Aquí la lectura deja de ser una lista de tarjetas. Cada área se convierte en un nodo vivo, conectado al administrador general como centro táctico. La interfaz se siente más cercana a una mesa de misión que a un dashboard ERP convencional.</p>
+      </div>
+      <aside class="legend">
+        <span>Ventas · rosa</span>
+        <span>Bodega · ámbar</span>
+        <span>Logística · lima</span>
+        <span>Contabilidad · azul</span>
+        <span>RRHH · naranja</span>
+        <span>Admin · cian</span>
+      </aside>
+    </header>
+
+    <section class="stage">
+      <div class="map-panel">
+        <svg viewBox="0 0 1400 860" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="flowA" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="rgba(255,255,255,0)"/>
+              <stop offset="50%" stop-color="rgba(114,255,240,0.8)"/>
+              <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+            </linearGradient>
+          </defs>
+          <path d="M280,220 C420,240 500,290 640,330" stroke="rgba(255,141,178,0.32)" stroke-width="3" fill="none" />
+          <path d="M320,520 C460,480 520,430 640,380" stroke="rgba(255,204,111,0.32)" stroke-width="3" fill="none" />
+          <path d="M860,250 C780,280 730,310 660,340" stroke="rgba(178,255,102,0.32)" stroke-width="3" fill="none" />
+          <path d="M900,570 C800,500 720,430 660,390" stroke="rgba(142,197,255,0.32)" stroke-width="3" fill="none" />
+          <path d="M720,650 C700,560 680,480 650,410" stroke="rgba(255,158,102,0.32)" stroke-width="3" fill="none" />
+          <circle cx="650" cy="370" r="120" fill="rgba(114,255,240,0.05)">
+            <animate attributeName="r" values="104;126;104" dur="5s" repeatCount="indefinite" />
+          </circle>
+          <circle cx="650" cy="370" r="180" fill="none" stroke="rgba(114,255,240,0.06)" stroke-width="1" />
+          <circle cx="650" cy="370" r="260" fill="none" stroke="rgba(114,255,240,0.05)" stroke-width="1" />
+        </svg>
+      </div>
+
+      <article class="node ventas"><div class="ring"></div><strong>Ventas</strong><small>7 eventos cercanos, agenda con presión comercial alta y foco en montajes cruzados.</small></article>
+      <article class="node bodega"><div class="ring"></div><strong>Bodega</strong><small>18 faltantes abiertos y 11 materiales críticos con necesidad de redistribución.</small></article>
+      <article class="node admin"><div class="ring"></div><strong>Admin General</strong><small>Centro de mando con lectura transversal de riesgos, prioridades y accesos directos.</small></article>
+      <article class="node logistica"><div class="ring"></div><strong>Logística</strong><small>2 rutas con devolución no conciliada y salidas múltiples en la misma ventana.</small></article>
+      <article class="node contabilidad"><div class="ring"></div><strong>Contabilidad</strong><small>4 bajas pendientes, validación de daños y seguimiento a costos de reposición.</small></article>
+      <article class="node rrhh"><div class="ring"></div><strong>RRHH</strong><small>Cobertura estable con puntos sensibles de asistencia en equipos de montaje.</small></article>
+
+      <aside class="floating f1">
+        <div class="eyebrow">Foco activo</div>
+        <h3>Incidencia en devolución de equipo de iluminación</h3>
+        <p>El evento Expo Plaza concentra una conexión crítica entre ventas, logística y bodega. La tarjeta flota como foco satélite del mapa.</p>
+        <div class="meta"><span>Riesgo alto</span><span>Despacho 1842</span></div>
+      </aside>
+
+      <aside class="floating f2">
+        <div class="eyebrow">Ruta sugerida</div>
+        <h3>Secuencia de decisión del día</h3>
+        <p>Aclarar faltantes, validar daños, aprobar bajas y confirmar personal para montajes próximos.</p>
+        <div class="meta"><span>4 pasos</span><span>prioridad diaria</span></div>
+      </aside>
+
+      <aside class="floating f3">
+        <div class="eyebrow">Lectura rápida</div>
+        <h3>Estado general del sistema</h3>
+        <p>La operación sigue estable, pero con presión creciente en inventario y conciliación de retornos.</p>
+        <div class="meta"><span>estable</span><span>riesgo medio</span></div>
+      </aside>
+    </section>
+  </div>
+</body>
+</html>

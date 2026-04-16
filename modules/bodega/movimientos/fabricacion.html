@@ -314,14 +314,14 @@
                 // Para producidos: usar las 3 tablas de catálogo separadas
                 let materialesCatalogo = [];
                 const tablasCatalogo = ['catalogo_hierros', 'catalogo_audiovisual', 'catalogo_consumibles'];
-                
+
                 for (const tabla of tablasCatalogo) {
                   try {
                     const { data, error } = await window.supabaseClient
                       .from(tabla)
-                      .select('codigo, nombre, bodega_principal, bodega_secundaria')
+                      .select('codigo, nombre, bodega_principal, bodega_secundaria, contenedor, contenedor_tipo')
                       .eq('es_contenedor', false);
-                    
+
                     if (!error && data) {
                       // Agregar propiedad tabla_origen para saber de dónde viene
                       const materialesConOrigen = data.map(m => ({
@@ -335,12 +335,14 @@
                     continue;
                   }
                 }
-                
+
                 materiales = materialesCatalogo.map(m => ({
                   material_codigo: m.codigo,
                   material_nombre: m.nombre,
                   bodega_principal: m.bodega_principal,
                   bodega: m.bodega_secundaria,
+                  contenedor: m.contenedor || null,
+                  contenedor_tipo: m.contenedor_tipo || null,
                   existencia: 0,
                   precio_promedio: 0,
                   tabla_origen: m.tabla_origen
@@ -392,6 +394,8 @@
                   nombre,
                   bodega: material.bodega,
                   bodega_principal: material.bodega_principal,
+                  contenedor: material.contenedor,
+                  contenedor_tipo: material.contenedor_tipo,
                   existencia: material.existencia,
                   precio_promedio: material.precio_promedio
                 })}'>
@@ -503,6 +507,8 @@
           existencia: material.existencia || 0,
           precio_promedio: material.precio_promedio || 0,
           cantidad: 1,
+          contenedor: material.contenedor || null,
+          contenedor_tipo: material.contenedor_tipo || null,
           observacion: ''
         });
         renderTablaConsumidos();
@@ -513,10 +519,10 @@
           alert('⚠️ Este material ya está en la lista de producidos.');
           return;
         }
-        
+
         // Usar la bodega del material o determinarla por tabla de origen
         let bodegaFinal = material.bodega || material.bodega_principal || determinarBodegas(material).principal;
-        
+
         // Si tenemos tabla_origen, podemos determinar la bodega más precisamente
         if (material.tabla_origen) {
           if (material.tabla_origen === 'catalogo_hierros') {
@@ -527,12 +533,14 @@
             bodegaFinal = 'Consumibles';
           }
         }
-        
+
         estado.itemsProducidos.push({
           codigo: material.codigo,
           nombre: material.nombre,
           bodega: bodegaFinal,
           bodega_principal: material.bodega_principal || bodegaFinal,
+          contenedor: material.contenedor || null,
+          contenedor_tipo: material.contenedor_tipo || null,
           cantidad: 1,
           observacion: '',
           tabla_origen: material.tabla_origen // Guardar referencia a la tabla de origen
@@ -957,6 +965,8 @@
               solicitud_id: solicitudId,
               material_codigo: item.codigo,
               cantidad: item.cantidad,
+              contenedor: item.contenedor || null,
+              contenedor_tipo: item.contenedor_tipo || null,
               observacion: item.observacion
             }));
 
@@ -975,6 +985,8 @@
               nombre: item.nombre,
               bodega_secundaria: item.bodega,
               bodega_principal: item.bodega_principal,
+              contenedor: item.contenedor || null,
+              contenedor_tipo: item.contenedor_tipo || null,
               cantidad: item.cantidad,
               observacion: item.observacion
             }));

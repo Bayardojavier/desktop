@@ -198,74 +198,111 @@
     return (m.referencia_tipo || m.observaciones || '–').toString();
   }
 
+  async function fetchAllRows(tableName, selectCols, buildQuery) {
+    const pageSize = 1000;
+    let offset = 0;
+    let rows = [];
+
+    while (true) {
+      let query = supa.from(tableName).select(selectCols);
+      if (typeof buildQuery === 'function') {
+        query = buildQuery(query);
+      }
+
+      const { data, error } = await query.range(offset, offset + pageSize - 1);
+      if (error) throw error;
+
+      if (!data || !data.length) break;
+      rows = rows.concat(data);
+
+      if (data.length < pageSize) break;
+      offset += pageSize;
+    }
+
+    return rows;
+  }
+
   async function cargarCatalogoParaSelect() {
     if (!supa) return;
 
-    const tablas = [
+    const tablasMovimientos = [
       'movimientos_bodega_audiovisual',
       'movimientos_bodega_hierros',
       'movimientos_bodega_consumibles'
     ];
 
-    // Consultar todas las tablas de movimientos para obtener códigos y nombres únicos
-    const results = await Promise.all(tablas.map(async (t) => {
-      const { data, error } = await supa
-        .from(t)
-        .select('material_codigo, material_nombre')
-        .order('material_codigo', { ascending: true });
-      if (error) {
-        console.error(`Error cargando ${t}:`, error);
+    const tablasStock = [
+      'stock_audiovisual',
+      'stock_hierros',
+      'stock_consumibles'
+    ];
+
+    const map = new Map();
+
+    const anexarRegistros = (rows) => {
+      (rows || []).forEach(r => {
+        const codigo = String(r.material_codigo || '').trim();
+        if (!codigo) return;
+
+        const nombre = (r.material_nombre || '').toString().trim();
+        const principal = (r.bodega_principal || '').toString().trim();
+        const secundaria = (r.bodega_secundaria || '').toString().trim();
+        const bodega = secundaria || principal;
+
+        if (!map.has(codigo)) {
+          map.set(codigo, {
+            codigo,
+            nombre: nombre || codigo,
+            bodegas: new Set()
+          });
+        }
+
+        const item = map.get(codigo);
+        if (!item.nombre && nombre) item.nombre = nombre;
+        if (bodega) item.bodegas.add(bodega);
+      });
+    };
+
+    const stockResults = await Promise.all(tablasStock.map(async (tabla) => {
+      try {
+        return await fetchAllRows(
+          tabla,
+          'material_codigo, material_nombre, bodega_principal, bodega_secundaria',
+          (query) => query
+            .order('material_codigo', { ascending: true })
+            .order('bodega_principal', { ascending: true })
+            .order('bodega_secundaria', { ascending: true })
+        );
+      } catch (error) {
+        console.error(`Error cargando ${tabla}:`, error);
         return [];
       }
-      return (data || []).map(r => ({
-        codigo: String(r.material_codigo || '').trim(),
-        nombre: (r.material_nombre || '').toString().trim()
-      }));
     }));
 
-    const allData = results.flat();
+    stockResults.forEach(anexarRegistros);
 
-    // Unificar por codigo
-    const map = new Map();
-    allData.forEach(r => {
-      const codigo = r.codigo;
-      if (!codigo) return;
-      if (!map.has(codigo)) {
-        map.set(codigo, {
-          codigo,
-          nombre: r.nombre || codigo,
-          bodegas: new Set()
-        });
-      } else {
-        const prev = map.get(codigo);
-        if (!prev.nombre && r.nombre) prev.nombre = r.nombre;
+    const movimientoResults = await Promise.all(tablasMovimientos.map(async (tabla) => {
+      try {
+        return await fetchAllRows(
+          tabla,
+          'material_codigo, material_nombre, bodega_principal, bodega_secundaria',
+          (query) => query.order('material_codigo', { ascending: true })
+        );
+      } catch (error) {
+        console.error(`Error cargando ${tabla}:`, error);
+        return [];
       }
-    });
+    }));
 
-    // Opcional: agregar info de bodega desde stock_actual_con_precio si existe
-    try {
-      const { data: stockData } = await supa
-        .from('stock_actual_con_precio')
-        .select('material_codigo, bodega_principal, bodega_secundaria');
-      (stockData || []).forEach(r => {
-        const codigo = String(r.material_codigo || '').trim();
-        if (map.has(codigo)) {
-          const principal = (r.bodega_principal || '').toString().trim();
-          const secundaria = (r.bodega_secundaria || '').toString().trim();
-          const bodega = secundaria || principal;
-          if (bodega) map.get(codigo).bodegas.add(bodega);
-        }
-      });
-    } catch (e) {
-      console.warn('No se pudo cargar info de bodega:', e);
-    }
+    movimientoResults.forEach(anexarRegistros);
 
     estado.catalogo = Array.from(map.values())
       .map(it => ({
         codigo: it.codigo,
         nombre: it.nombre,
         bodega: (it.bodegas.size > 1) ? Array.from(it.bodegas).join(' / ') : (Array.from(it.bodegas)[0] || '–')
-      }));
+      }))
+      .sort((a, b) => a.codigo.localeCompare(b.codigo));
   }
 
   function mostrarModalBusqueda() {
@@ -290,10 +327,14 @@
       it.codigo.toLowerCase().includes(q) || it.nombre.toLowerCase().includes(q)
     ).sort((a, b) => a.codigo.localeCompare(b.codigo));
     results.innerHTML = '';
+    if (!filtrados.length) {
+      results.innerHTML = '<div class="modal-result-item" style="cursor:default; color:#94a3b8;">No se encontraron coincidencias.</div>';
+      return;
+    }
     filtrados.forEach(it => {
       const div = document.createElement('div');
       div.className = 'modal-result-item';
-      div.textContent = `${it.codigo} — ${it.nombre}`;
+      div.textContent = `${it.codigo} — ${it.nombre} — ${it.bodega}`;
       div.onclick = () => {
         ocultarModalBusqueda();
         renderizarHistorial(it.codigo);
@@ -329,15 +370,19 @@
     const selectCols = 'created_at, fecha_movimiento, tipo_movimiento, referencia_documento, referencia_tipo, responsable, cantidad, signo, observaciones, bodega_principal, bodega_secundaria, estado';
 
     const results = await Promise.all(tablas.map(async (t) => {
-      const { data, error } = await supa
-        .from(t)
-        .select(selectCols)
-        .eq('material_codigo', codigo);
-      if (error) {
+      try {
+        const data = await fetchAllRows(
+          t,
+          selectCols,
+          (query) => query
+            .eq('material_codigo', codigo)
+            .order('created_at', { ascending: false })
+        );
+        return (data || []).map(r => ({ ...r, __tabla: t }));
+      } catch (error) {
         console.error(`Error cargando ${t}:`, error);
         return [];
       }
-      return (data || []).map(r => ({ ...r, __tabla: t }));
     }));
 
     const merged = results.flat();

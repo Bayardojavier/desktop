@@ -110,6 +110,26 @@
 </div>
 
 <script>
+  async function enviarNotificacionEventoCreado(nombreEvento, cliente) {
+    try {
+      await window.supabaseClient.functions.invoke('send-push-notification', {
+        body: {
+          title: 'Nuevo evento creado',
+          body: `${window.currentUser?.nombre || window.currentUser?.usuario || 'Usuario'} creó el evento ${nombreEvento} para ${cliente}`,
+          data: {
+            type: 'evento_creado',
+            evento: nombreEvento,
+            cliente,
+            usuario: window.currentUser?.nombre || window.currentUser?.usuario || 'Usuario',
+            timestamp: new Date().toISOString()
+          }
+        }
+      });
+    } catch (error) {
+      console.warn('No se pudo enviar notificación push de evento:', error);
+    }
+  }
+
   // =============================================================================
   // 🔹 CARGAR COTIZACIONES ACTIVAS DESDE SUPABASE
   // =============================================================================
@@ -359,6 +379,8 @@
         console.error('Error al actualizar cotización:', updateError);
         // No es crítico, continuar
       }
+
+      await enviarNotificacionEventoCreado(eventoData.nombre, cot.clientes?.nombre || 'Cliente');
 
       alert(`✅ Evento "${eventoData.nombre}" creado exitosamente.`);
       // Mostrar notificación del sistema

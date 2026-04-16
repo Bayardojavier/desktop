@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Periódico Ejecutivo</title>
+  <style>
+    :root {
+      --paper: #f4efe6;
+      --ink: #141312;
+      --muted: #675f56;
+      --line: rgba(20, 19, 18, 0.14);
+      --red: #8d2d1f;
+      --blue: #223b63;
+      --gold: #9a6a1b;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", serif;
+      background:
+        radial-gradient(circle at top right, rgba(154,106,27,0.1), transparent 22%),
+        linear-gradient(180deg, #ece5d8 0%, var(--paper) 100%);
+    }
+
+    .page {
+      width: min(1240px, calc(100vw - 32px));
+      margin: 18px auto;
+      padding: 24px 28px 34px;
+      background: rgba(255,255,255,0.44);
+      border: 1px solid rgba(20,19,18,0.08);
+      box-shadow: 0 26px 60px rgba(65, 49, 28, 0.18);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .page::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(transparent 97%, rgba(20,19,18,0.03) 100%);
+      background-size: 100% 28px;
+      opacity: 0.65;
+      pointer-events: none;
+    }
+
+    .masthead {
+      border-top: 5px solid var(--ink);
+      border-bottom: 2px solid var(--ink);
+      padding: 14px 0 18px;
+      text-align: center;
+      margin-bottom: 24px;
+      animation: reveal 1s ease;
+    }
+
+    .strap {
+      font-family: "Segoe UI", sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.22em;
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .brandline {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      margin: 14px 0;
+    }
+
+    .brandline img { width: 48px; height: 48px; object-fit: contain; }
+
+    .brandline h1 {
+      margin: 0;
+      font-size: clamp(40px, 7vw, 84px);
+      letter-spacing: -0.05em;
+      line-height: 0.9;
+      text-transform: uppercase;
+    }
+
+    .datebar {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      font-family: "Segoe UI", sans-serif;
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .headline-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    .headline h2 {
+      margin: 0 0 14px;
+      font-size: clamp(38px, 6vw, 74px);
+      line-height: 0.92;
+      letter-spacing: -0.06em;
+      animation: rise 0.9s ease;
+    }
+
+    .headline p,
+    .column p,
+    .summary-card p {
+      margin: 0;
+      color: #322e28;
+      font-size: 18px;
+      line-height: 1.75;
+    }
+
+    .headline-meta {
+      margin-top: 16px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-family: "Segoe UI", sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .summary-card {
+      border-left: 1px solid var(--line);
+      padding-left: 22px;
+      display: grid;
+      align-content: start;
+      gap: 18px;
+      animation: fade 1.1s ease;
+    }
+
+    .summary-card blockquote {
+      margin: 0;
+      padding: 16px 18px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.36);
+      font-size: 22px;
+      line-height: 1.45;
+      color: var(--blue);
+    }
+
+    .columns {
+      display: grid;
+      grid-template-columns: 0.85fr 1.05fr 0.9fr;
+      gap: 22px;
+    }
+
+    .column {
+      border-top: 1px solid var(--ink);
+      padding-top: 16px;
+      animation: fade 1.15s ease;
+    }
+
+    .eyebrow {
+      margin-bottom: 12px;
+      font-family: "Segoe UI", sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      font-weight: 800;
+    }
+
+    .eyebrow.red { color: var(--red); }
+    .eyebrow.blue { color: var(--blue); }
+    .eyebrow.gold { color: var(--gold); }
+
+    .column h3 {
+      margin: 0 0 12px;
+      font-size: 34px;
+      line-height: 0.98;
+      letter-spacing: -0.05em;
+    }
+
+    .stat-band {
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      display: grid;
+      gap: 14px;
+    }
+
+    .stat {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 14px;
+      align-items: baseline;
+    }
+
+    .stat strong {
+      font-size: 34px;
+      letter-spacing: -0.05em;
+    }
+
+    .note-list {
+      display: grid;
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .note {
+      padding: 14px 0;
+      border-top: 1px solid var(--line);
+      font-size: 16px;
+      line-height: 1.65;
+      color: #302c27;
+    }
+
+    .ticker {
+      margin-top: 24px;
+      border-top: 2px solid var(--ink);
+      border-bottom: 2px solid var(--ink);
+      padding: 12px 0;
+      overflow: hidden;
+      font-family: "Segoe UI", sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: 11px;
+    }
+
+    .ticker-track {
+      display: flex;
+      gap: 40px;
+      width: max-content;
+      animation: ticker 22s linear infinite;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(28px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fade {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes reveal {
+      from { clip-path: inset(0 100% 0 0); }
+      to { clip-path: inset(0 0 0 0); }
+    }
+    @keyframes ticker {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+
+    @media (max-width: 980px) {
+      .headline-grid, .columns { grid-template-columns: 1fr; }
+      .summary-card { border-left: none; padding-left: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="masthead">
+      <div class="strap">Edición del administrador general · síntesis operativa del día</div>
+      <div class="brandline">
+        <img src="../../../assets/icon.png" alt="icono">
+        <h1>La Mesa Ejecutiva</h1>
+      </div>
+      <div class="datebar">
+        <span>Absolute de Nicaragua</span>
+        <span>15 de abril de 2026</span>
+        <span>Edición interna</span>
+      </div>
+    </header>
+
+    <section class="headline-grid">
+      <article class="headline">
+        <div class="eyebrow red">Portada principal</div>
+        <h2>La operación se acelera: suben eventos, bajan existencias y crece la presión sobre bodega.</h2>
+        <p>El tablero del administrador se convierte aquí en una edición editorial. La lectura prioriza contexto, narrativa y focos de decisión antes que una cuadrícula técnica. Lo importante no solo se muestra: se cuenta con jerarquía y tono directivo.</p>
+        <div class="headline-meta">
+          <span>Faltantes abiertos: 18</span>
+          <span>Eventos próximos: 7</span>
+          <span>Riesgo logístico: Medio alto</span>
+        </div>
+      </article>
+
+      <aside class="summary-card">
+        <div class="eyebrow blue">Cita del día</div>
+        <blockquote>“La dirección no necesita más tablas: necesita ver qué merece decisión inmediata y qué puede esperar.”</blockquote>
+        <p>Este enfoque convierte el módulo en una portada premium para junta interna. Menos sistema, más síntesis ejecutiva.</p>
+      </aside>
+    </section>
+
+    <section class="columns">
+      <article class="column">
+        <div class="eyebrow gold">Operación</div>
+        <h3>Radar de faltantes y daños</h3>
+        <p>Los materiales faltantes mantienen el foco principal, con concentración en retornos incompletos y aclaraciones demoradas. Los daños siguen una curva controlada, pero todavía condicionan decisiones de reparación y baja.</p>
+        <div class="note-list">
+          <div class="note">Truss T290, consola DMX y pantalla led encabezan el seguimiento más urgente.</div>
+          <div class="note">Dos eventos arrastran devolución tardía y requieren coordinación cruzada entre logística y bodega.</div>
+        </div>
+      </article>
+
+      <article class="column">
+        <div class="eyebrow red">Portafolio vivo</div>
+        <h3>La agenda comercial entra en una semana de alta fricción.</h3>
+        <p>Gala Norte, Expo Plaza y Foro Capital empujan la carga operativa sobre inventario, transporte y personal. La lectura visual aquí no habla en tarjetas pequeñas, sino en bloques periodísticos que priorizan tensión, volumen y dirección.</p>
+        <div class="stat-band">
+          <div class="stat"><strong>07</strong><span>eventos se encuentran en ventana cercana de montaje</span></div>
+          <div class="stat"><strong>11</strong><span>materiales críticos piden reposición o redistribución</span></div>
+          <div class="stat"><strong>04</strong><span>bajas siguen pendientes de validación final</span></div>
+        </div>
+      </article>
+
+      <article class="column">
+        <div class="eyebrow blue">Talento y soporte</div>
+        <h3>Personal estable, pero con puntos sensibles en montaje.</h3>
+        <p>La plantilla general mantiene estabilidad. Sin embargo, una parte de la presión recae en equipos específicos con alta demanda de salida. Aquí caben reportes de clima, dotación, asistencias clave y ritmo de contratación.</p>
+        <div class="note-list">
+          <div class="note">RRHH confirma cobertura amplia, aunque persisten vacíos tácticos para salidas simultáneas.</div>
+          <div class="note">La historia puede cerrar con una nota de dirección, recomendaciones o un resumen de decisiones del día.</div>
+        </div>
+      </article>
+    </section>
+
+    <section class="ticker">
+      <div class="ticker-track">
+        <span>editorial de operación</span>
+        <span>síntesis de faltantes</span>
+        <span>agenda comercial</span>
+        <span>lectura por áreas</span>
+        <span>talento y soporte</span>
+        <span>movimientos recientes</span>
+        <span>editorial de operación</span>
+        <span>síntesis de faltantes</span>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

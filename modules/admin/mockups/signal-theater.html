@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teatro de Senales</title>
+  <style>
+    :root {
+      --bg: #090b14;
+      --panel: rgba(19, 22, 38, 0.86);
+      --line: rgba(255, 255, 255, 0.08);
+      --text: #f6f7fb;
+      --muted: #9ea7c0;
+      --pink: #ff4fa3;
+      --orange: #ff9b4d;
+      --blue: #59a7ff;
+      --lime: #c4ff65;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(255, 79, 163, 0.18), transparent 26%),
+        radial-gradient(circle at bottom right, rgba(255, 155, 77, 0.16), transparent 24%),
+        linear-gradient(180deg, #070912 0%, #0a0f1d 100%);
+      overflow: hidden;
+    }
+
+    .shell {
+      height: 100vh;
+      padding: 16px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 14px;
+    }
+
+    .topbar,
+    .stage,
+    .footerbar,
+    .screen,
+    .sidebar-card,
+    .strip,
+    .tile {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: var(--panel);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 16px;
+      align-items: center;
+      padding: 14px 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand img { width: 42px; height: 42px; object-fit: contain; }
+    .brand h1 { margin: 0; font-size: 24px; letter-spacing: -0.04em; }
+    .eyebrow {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-weight: 800;
+      color: var(--pink);
+    }
+
+    .headline {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+      max-width: 70ch;
+    }
+
+    .top-right {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .chip {
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      background: rgba(255,255,255,0.05);
+    }
+
+    .stage {
+      overflow: hidden;
+      padding: 12px;
+      display: grid;
+      grid-template-columns: 118px 1fr 320px;
+      gap: 12px;
+      min-height: 0;
+    }
+
+    .strip {
+      padding: 12px;
+      display: grid;
+      grid-auto-rows: minmax(94px, auto);
+      gap: 10px;
+      overflow: auto;
+    }
+
+    .strip-block {
+      border-radius: 18px;
+      padding: 12px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+      border: 1px solid rgba(255,255,255,0.04);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .strip-block::after {
+      content: "LIVE";
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 10px;
+      font-weight: 900;
+      color: var(--orange);
+      letter-spacing: 0.16em;
+    }
+
+    .strip-block strong { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; }
+    .strip-block span { display: block; margin-top: 10px; font-size: 18px; font-weight: 800; }
+
+    .center {
+      display: grid;
+      grid-template-rows: 1.1fr 0.9fr;
+      gap: 12px;
+      min-height: 0;
+    }
+
+    .screen {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .main-screen {
+      padding: 22px;
+      display: grid;
+      grid-template-columns: 1.08fr 0.92fr;
+      gap: 16px;
+    }
+
+    .main-screen::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, rgba(89,167,255,0.09), transparent 42%, rgba(255,79,163,0.09));
+      pointer-events: none;
+    }
+
+    .anchor h2 {
+      margin: 12px 0 14px;
+      font-size: clamp(34px, 5vw, 62px);
+      line-height: 0.94;
+      letter-spacing: -0.06em;
+    }
+
+    .anchor p,
+    .screen-card p,
+    .sidebar-card p,
+    .footerbar { color: var(--muted); }
+
+    .screen-card {
+      border-radius: 22px;
+      padding: 16px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.05);
+      display: grid;
+      gap: 12px;
+    }
+
+    .screen-card strong { font-size: 16px; }
+
+    .lower-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      padding: 12px;
+    }
+
+    .tile {
+      padding: 16px;
+      animation: pop 0.75s ease both;
+    }
+
+    .tile:nth-child(2) { animation-delay: 0.08s; }
+    .tile:nth-child(3) { animation-delay: 0.16s; }
+
+    .tile .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; color: var(--muted); }
+    .tile .value { margin-top: 12px; font-size: 38px; font-weight: 900; letter-spacing: -0.05em; }
+
+    .sidebar {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 12px;
+      min-height: 0;
+    }
+
+    .sidebar-card { padding: 16px; }
+
+    .scroll-list {
+      display: grid;
+      gap: 10px;
+      overflow: auto;
+      max-height: 100%;
+      padding-right: 4px;
+    }
+
+    .story {
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .story strong { display: block; margin-bottom: 6px; }
+
+    .footerbar {
+      padding: 10px 14px;
+      overflow: hidden;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      white-space: nowrap;
+    }
+
+    .crawl {
+      display: inline-flex;
+      gap: 40px;
+      width: max-content;
+      animation: crawl 22s linear infinite;
+    }
+
+    @keyframes crawl {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+
+    @keyframes pop {
+      from { opacity: 0; transform: translateY(18px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @media (max-width: 1180px) {
+      body { overflow: auto; }
+      .shell { height: auto; }
+      .stage, .main-screen, .lower-grid, .topbar { grid-template-columns: 1fr; }
+      .stage { grid-template-rows: auto auto auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <img src="../../../assets/icon.png" alt="icono">
+        <div>
+          <div class="eyebrow">Administrador General · Escena en vivo</div>
+          <h1>Teatro de Senales</h1>
+        </div>
+      </div>
+      <div class="headline">La interfaz funciona como una cabina de transmision: una pantalla principal manda la narrativa, las franjas laterales aportan lecturas rapidas y la actividad cruza como si fuera un broadcast ejecutivo.</div>
+      <div class="top-right">
+        <span class="chip">en vivo</span>
+        <span class="chip">7 eventos</span>
+        <span class="chip">18 faltantes</span>
+      </div>
+    </header>
+
+    <main class="stage">
+      <aside class="strip">
+        <div class="strip-block"><strong>agenda</strong><span>07</span></div>
+        <div class="strip-block"><strong>riesgos</strong><span>05</span></div>
+        <div class="strip-block"><strong>bajas</strong><span>04</span></div>
+        <div class="strip-block"><strong>stock</strong><span>11</span></div>
+      </aside>
+
+      <section class="center">
+        <article class="screen main-screen">
+          <div class="anchor">
+            <div class="eyebrow">Pantalla principal</div>
+            <h2>La operacion entra en ventana de alta exposicion y el administrador necesita foco visual inmediato.</h2>
+            <p>A diferencia de Sala de Crisis, aqui el tono es menos militar y mas mediatico. Todo parece una redaccion de senales: titulares, recuadros, pantallas y ritmo televisivo.</p>
+          </div>
+          <div class="screen-card">
+            <strong>Bloque destacado</strong>
+            <p>Expo Plaza y Gala Norte empujan devoluciones, inventario y coordinacion intermodular.</p>
+            <strong>Lectura de escena</strong>
+            <p>La presencia visual viene de overlays, bloques de vivo y un footer tipo lower-third continuo.</p>
+          </div>
+        </article>
+        <section class="screen lower-grid">
+          <article class="tile"><div class="label">faltantes abiertos</div><div class="value" style="color:var(--pink)">18</div></article>
+          <article class="tile"><div class="label">eventos proximos</div><div class="value" style="color:var(--blue)">07</div></article>
+          <article class="tile"><div class="label">material critico</div><div class="value" style="color:var(--lime)">11</div></article>
+        </section>
+      </section>
+
+      <aside class="sidebar">
+        <article class="sidebar-card">
+          <div class="eyebrow">Bloque editorial</div>
+          <p>El administrador entra y ve una emision continua del negocio, no una malla de widgets sin jerarquia.</p>
+        </article>
+        <article class="sidebar-card scroll-list">
+          <div class="story"><strong>Retorno sin aclaracion</strong><p>Consola DMX sigue abierta y amarra bodega con logistica.</p></div>
+          <div class="story"><strong>Montajes en cola</strong><p>Tres eventos caen sobre la misma ventana operativa.</p></div>
+          <div class="story"><strong>Ruta contable</strong><p>Materiales danados piden definicion entre reparacion y baja.</p></div>
+          <div class="story"><strong>RRHH</strong><p>Personal cubierto, pero con puntos finos en equipos de salida.</p></div>
+        </article>
+      </aside>
+    </main>
+
+    <footer class="footerbar">
+      <div class="crawl">
+        <span>senal ejecutiva · faltantes abiertos en bodega secundaria</span>
+        <span>agenda comercial cargada para las proximas 72 horas</span>
+        <span>bajas pendientes de aprobacion contable</span>
+        <span>materiales criticos en audiovisual y estructuras</span>
+        <span>senal ejecutiva · faltantes abiertos en bodega secundaria</span>
+        <span>agenda comercial cargada para las proximas 72 horas</span>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

@@ -1,0 +1,1178 @@
+<div style="display:flex; gap:20px; height:100%;">
+
+  <div style="flex:1; display:flex; flex-direction:column; gap:20px; min-width:0;">
+
+    <div style="display:flex; gap:20px; flex-wrap:wrap;">
+      <div class="bodega-resumen-card">
+        <div>Registros</div>
+        <div class="valor" id="kpi-faltantes-registros">–</div>
+      </div>
+      <div class="bodega-resumen-card">
+        <div>Unidades Faltantes</div>
+        <div class="valor" id="kpi-faltantes-unidades">–</div>
+      </div>
+      <div class="bodega-resumen-card">
+        <div>Eventos</div>
+        <div class="valor" id="kpi-faltantes-eventos">–</div>
+      </div>
+      <div class="bodega-resumen-card">
+        <div>Bodegas</div>
+        <div class="valor" id="kpi-faltantes-bodegas">–</div>
+      </div>
+    </div>
+
+    <div class="bodega-filtros" style="display:flex; align-items:flex-end; gap:16px; flex-wrap:wrap;">
+      <div class="bodega-filtro-grupo" style="min-width:260px; flex:1;">
+        <label for="filtro-faltantes-busqueda">Buscar</label>
+        <input
+          id="filtro-faltantes-busqueda"
+          class="dashboard-select"
+          type="search"
+          placeholder="Codigo, nombre, evento, despacho o detalle"
+          style="width:100%;"
+        />
+      </div>
+
+      <div class="bodega-filtro-grupo">
+        <label for="filtro-faltantes-bodega-principal">Bodega Principal</label>
+        <select id="filtro-faltantes-bodega-principal" class="dashboard-select">
+          <option value="todas">Todas</option>
+        </select>
+      </div>
+
+      <div class="bodega-filtro-grupo">
+        <label for="filtro-faltantes-bodega-secundaria">Bodega Secundaria</label>
+        <select id="filtro-faltantes-bodega-secundaria" class="dashboard-select">
+          <option value="todas">Todas</option>
+        </select>
+      </div>
+
+      <div class="bodega-filtro-grupo">
+        <label for="filtro-faltantes-evento">Evento</label>
+        <select id="filtro-faltantes-evento" class="dashboard-select">
+          <option value="todos">Todos</option>
+        </select>
+      </div>
+
+      <div class="bodega-filtro-grupo">
+        <label for="filtro-faltantes-estado">Estado</label>
+        <select id="filtro-faltantes-estado" class="dashboard-select">
+          <option value="todos">Todos</option>
+        </select>
+      </div>
+
+      <div class="bodega-filtro-grupo">
+        <label for="filtro-faltantes-tipo-fecha">Periodo por</label>
+        <select id="filtro-faltantes-tipo-fecha" class="dashboard-select">
+          <option value="fecha_devolucion">Fecha devolución</option>
+          <option value="fecha_despacho">Fecha despacho</option>
+          <option value="created_at">Fecha registro</option>
+        </select>
+      </div>
+
+      <div class="bodega-filtro-grupo">
+        <label for="filtro-faltantes-desde">Desde</label>
+        <input id="filtro-faltantes-desde" class="dashboard-select" type="date" />
+      </div>
+
+      <div class="bodega-filtro-grupo">
+        <label for="filtro-faltantes-hasta">Hasta</label>
+        <input id="filtro-faltantes-hasta" class="dashboard-select" type="date" />
+      </div>
+
+      <button id="btn-limpiar-filtros-faltantes" class="bodega-export-pdf-btn">Limpiar</button>
+      <button id="btn-exportar-xfaltantes" class="bodega-export-pdf-btn">📄 Exportar PDF</button>
+      <button id="btn-exportar-xfaltantes-xlsx" class="bodega-export-pdf-btn" style="margin-left:8px">📊 Exportar Excel</button>
+    </div>
+
+    <div id="resumen-filtros-faltantes" style="display:none; background:rgba(20,30,60,.6); border:1px solid rgba(99,102,241,.2); border-radius:12px; padding:12px 16px; color:#cbd5e1; font-size:13px;"></div>
+
+    <div id="tabla-materiales-faltantes" style="flex:1; overflow:auto; border:1px solid rgba(99,102,241,.2); border-radius:8px; background:rgba(20,30,60,.3); padding:10px;">
+      <p style="color:#cbd5e1; text-align:center; margin-top:40px;">Cargando materiales faltantes...</p>
+    </div>
+
+    <div id="modal-estado-faltante" class="modal-overlay" style="display:none;">
+      <div class="modal-content faltantes-modal-content">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:14px;">
+          <div>
+            <h3 style="margin:0; color:#cbd5e1;">Actualizar estado del faltante</h3>
+            <div id="modal-estado-faltante-resumen" style="margin-top:6px; color:#94a3b8; font-size:12px;"></div>
+          </div>
+          <button id="btn-cerrar-modal-estado-faltante" class="bodega-export-pdf-btn" type="button">Cerrar</button>
+        </div>
+
+        <div class="faltantes-estado-editor">
+          <div>
+            <span id="modal-estado-chip-actual" class="bodega-chip"></span>
+            <span id="modal-estado-meta" class="faltantes-estado-meta"></span>
+          </div>
+
+          <div>
+            <label for="modal-estado-select" style="display:block; margin-bottom:6px; color:#cbd5e1; font-size:12px;">Nuevo estado</label>
+            <select id="modal-estado-select" class="faltantes-estado-select"></select>
+          </div>
+
+          <div>
+            <label for="modal-estado-nota" style="display:block; margin-bottom:6px; color:#cbd5e1; font-size:12px;">Nota del proceso</label>
+            <textarea id="modal-estado-nota" class="faltantes-estado-nota" placeholder="Agregar aclaración o resolución"></textarea>
+          </div>
+
+          <div class="faltantes-estado-actions">
+            <button id="btn-guardar-modal-estado-faltante" class="faltantes-estado-save" type="button">Guardar estado</button>
+            <span id="modal-estado-feedback" class="faltantes-estado-feedback"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<style>
+.bodega-resumen-card {
+  background: rgba(20, 30, 60, 0.6);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 8px;
+  padding: 12px;
+  min-width: 160px;
+  text-align: center;
+  color: #cbd5e1;
+}
+
+.bodega-resumen-card .valor {
+  font-size: 24px;
+  font-weight: bold;
+  color: #64b5f6;
+}
+
+.bodega-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  color: #bfdbfe;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.bodega-chip.estado-resuelto {
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.25);
+  color: #bbf7d0;
+}
+
+.bodega-chip.estado-pendiente {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.25);
+  color: #fde68a;
+}
+
+.bodega-chip.estado-investigacion {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: #fecaca;
+}
+
+.bodega-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #e0e0ff;
+}
+
+.bodega-table th,
+.bodega-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+  vertical-align: top;
+}
+
+.bodega-table th {
+  color: #93c5fd;
+  font-weight: 600;
+  background: rgba(20, 30, 60, 0.4);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.bodega-table tr:hover {
+  background: rgba(40, 50, 90, 0.4);
+}
+
+.faltantes-numero {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.faltantes-estado-cell {
+  min-width: 180px;
+}
+
+.faltantes-estado-meta {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+.faltantes-estado-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 220px;
+}
+
+.faltantes-estado-select,
+.faltantes-estado-nota {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.65);
+  color: #e0e0ff;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+.faltantes-estado-nota {
+  min-height: 58px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.faltantes-estado-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.faltantes-estado-open {
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  border-radius: 8px;
+  background: rgba(59, 130, 246, 0.12);
+  color: #dbeafe;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+.faltantes-estado-save {
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  border-radius: 8px;
+  background: rgba(59, 130, 246, 0.15);
+  color: #dbeafe;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.faltantes-estado-save:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.faltantes-estado-feedback {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.faltantes-estado-feedback.ok {
+  color: #86efac;
+}
+
+.faltantes-estado-feedback.error {
+  color: #fca5a5;
+}
+
+.faltantes-modal-content {
+  max-width: 560px;
+  width: min(560px, 92vw);
+  max-height: 80vh;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(30, 58, 138, 0.92));
+  border: 1px solid rgba(96, 165, 250, 0.35);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.45), 0 0 0 1px rgba(59, 130, 246, 0.12) inset;
+}
+</style>
+
+<script>
+(function() {
+  const supa = window.supabaseClient;
+  if (!supa) {
+    console.error('❌ Supabase no está inicializado (window.supabaseClient).');
+  }
+
+  const estado = {
+    registros: [],
+    bodegasPrincipales: [],
+    bodegasSecundarias: [],
+    secundariasPorPrincipal: new Map(),
+    eventos: [],
+    estadosProceso: [],
+    actualizandoIds: new Set(),
+    modalRegistroId: null
+  };
+
+  const ESTADOS_FALTANTE = [
+    'pendiente_investigacion',
+    'en_revision',
+    'aclarado',
+    'resuelto',
+    'cerrado'
+  ];
+
+  function normalizarTexto(valor) {
+    return (valor || '')
+      .toString()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase();
+  }
+
+  function escapeHtml(valor) {
+    return (valor || '')
+      .toString()
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function parseLocalDate(value) {
+    const raw = (value || '').toString().trim();
+    if (!raw) return null;
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+      const parts = raw.split('-').map(Number);
+      return new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+
+    const date = new Date(raw);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  function toDateInputValue(value) {
+    const date = parseLocalDate(value);
+    if (!date) return '';
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  function formatDateOnly(value) {
+    const raw = (value || '').toString().trim();
+    if (!raw) return '–';
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+      const parts = raw.split('-');
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+
+    const date = new Date(raw);
+    if (Number.isNaN(date.getTime())) return raw;
+    return date.toLocaleDateString('es-NI');
+  }
+
+  function formatDateTime(value) {
+    if (!value) return '–';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return formatDateOnly(value);
+    return date.toLocaleString('es-NI');
+  }
+
+  function formatNumber(value) {
+    return Number(value || 0).toLocaleString('es-NI');
+  }
+
+  function formatEstadoTexto(value) {
+    const raw = (value || '').toString().trim();
+    if (!raw) return 'Sin estado';
+    return raw
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (match) => match.toUpperCase());
+  }
+
+  function estadoProcesoLabel(value) {
+    const raw = (value || '').toString().trim();
+    if (!raw) return { text: 'Sin estado', className: '' };
+
+    const normalizado = normalizarTexto(raw);
+    if (normalizado.includes('resuelto') || normalizado.includes('cerrado')) {
+      return { text: formatEstadoTexto(raw), className: 'estado-resuelto' };
+    }
+    if (normalizado.includes('pendiente')) {
+      return { text: formatEstadoTexto(raw), className: 'estado-pendiente' };
+    }
+    return { text: formatEstadoTexto(raw), className: 'estado-investigacion' };
+  }
+
+  function hoyLocalIso() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  function requiereNotaDeCierre(estadoProceso) {
+    const valor = (estadoProceso || '').toString().trim();
+    return ['aclarado', 'resuelto', 'cerrado'].includes(valor);
+  }
+
+  function obtenerRegistroPorId(id) {
+    return (estado.registros || []).find((registro) => String(registro.id) === String(id)) || null;
+  }
+
+  function actualizarRegistroLocal(id, cambios) {
+    estado.registros = (estado.registros || []).map((registro) => {
+      if (String(registro.id) !== String(id)) return registro;
+      return { ...registro, ...cambios };
+    });
+  }
+
+  function construirOpcionesEstado(actual) {
+    return ESTADOS_FALTANTE.map((value) => {
+      const selected = value === actual ? 'selected' : '';
+      return `<option value="${escapeHtml(value)}" ${selected}>${escapeHtml(formatEstadoTexto(value))}</option>`;
+    }).join('');
+  }
+
+  function construirEditorEstado(registro) {
+    const actualizando = estado.actualizandoIds.has(String(registro.id));
+    const labelEstado = estadoProcesoLabel(registro.estado_proceso);
+    const fechaProceso = registro.fecha_proceso ? formatDateOnly(registro.fecha_proceso) : '–';
+    const nota = registro.notas_proceso || '';
+
+    return `
+      <div class="faltantes-estado-editor">
+        <div>
+          <span class="bodega-chip ${labelEstado.className}">${escapeHtml(labelEstado.text)}</span>
+          <span class="faltantes-estado-meta">Fecha proceso: ${escapeHtml(fechaProceso)}</span>
+          <span class="faltantes-estado-meta">Nota actual: ${escapeHtml(nota || 'Sin notas')}</span>
+        </div>
+        <button class="faltantes-estado-open" data-role="estado-open" data-id="${escapeHtml(registro.id)}" ${actualizando ? 'disabled' : ''}>${actualizando ? 'Guardando...' : 'Gestionar estado'}</button>
+        <span class="faltantes-estado-feedback${registro.__estadoFeedbackType ? ` ${registro.__estadoFeedbackType}` : ''}">${escapeHtml(registro.__estadoFeedback || '')}</span>
+      </div>`;
+  }
+
+  function abrirModalEstado(id) {
+    const registro = obtenerRegistroPorId(id);
+    const modal = document.getElementById('modal-estado-faltante');
+    if (!registro || !modal) return;
+
+    estado.modalRegistroId = String(id);
+
+    const labelEstado = estadoProcesoLabel(registro.estado_proceso);
+    const resumen = `${registro.material_codigo || '–'} • ${registro.material_nombre || '–'} • ${registro.evento || 'Sin evento'}`;
+    const fechaProceso = registro.fecha_proceso ? formatDateOnly(registro.fecha_proceso) : '–';
+    const notaActual = registro.notas_proceso || 'Sin notas';
+
+    document.getElementById('modal-estado-faltante-resumen').textContent = resumen;
+    const chip = document.getElementById('modal-estado-chip-actual');
+    chip.className = `bodega-chip ${labelEstado.className}`;
+    chip.textContent = labelEstado.text;
+    document.getElementById('modal-estado-meta').textContent = `Fecha proceso: ${fechaProceso} • Nota actual: ${notaActual}`;
+    document.getElementById('modal-estado-select').innerHTML = construirOpcionesEstado(registro.estado_proceso || 'pendiente_investigacion');
+    document.getElementById('modal-estado-nota').value = registro.notas_proceso || '';
+    document.getElementById('modal-estado-feedback').textContent = registro.__estadoFeedback || '';
+    document.getElementById('modal-estado-feedback').className = `faltantes-estado-feedback${registro.__estadoFeedbackType ? ` ${registro.__estadoFeedbackType}` : ''}`;
+    document.getElementById('btn-guardar-modal-estado-faltante').disabled = estado.actualizandoIds.has(String(id));
+    modal.style.display = 'flex';
+  }
+
+  function cerrarModalEstado() {
+    estado.modalRegistroId = null;
+    const modal = document.getElementById('modal-estado-faltante');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function poblarSelect(selectId, values, emptyValue, emptyLabel) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+    const actual = select.value || emptyValue;
+    const opciones = [`<option value="${escapeHtml(emptyValue)}">${escapeHtml(emptyLabel)}</option>`];
+    (values || []).forEach(value => {
+      const safeValue = escapeHtml(value);
+      opciones.push(`<option value="${safeValue}">${safeValue}</option>`);
+    });
+    select.innerHTML = opciones.join('');
+    const disponibles = new Set([emptyValue, ...(values || [])]);
+    select.value = disponibles.has(actual) ? actual : emptyValue;
+  }
+
+  function poblarSelectSecundaria(principalSeleccionada) {
+    const principal = principalSeleccionada || 'todas';
+    let secundarias = [];
+    if (principal === 'todas') {
+      secundarias = estado.bodegasSecundarias || [];
+    } else {
+      const set = estado.secundariasPorPrincipal.get(principal) || new Set();
+      secundarias = Array.from(set).sort((a, b) => a.localeCompare(b));
+    }
+    poblarSelect('filtro-faltantes-bodega-secundaria', secundarias, 'todas', 'Todas');
+  }
+
+  function obtenerCampoFechaRegistro(registro, campoFecha) {
+    if (campoFecha === 'fecha_despacho') return registro.fecha_despacho || null;
+    if (campoFecha === 'created_at') return registro.created_at || null;
+    return registro.fecha_devolucion || registro.fecha_despacho || registro.created_at || null;
+  }
+
+  function obtenerRegistrosFiltrados() {
+    const busqueda = document.getElementById('filtro-faltantes-busqueda')?.value || '';
+    const bodegaPrincipal = document.getElementById('filtro-faltantes-bodega-principal')?.value || 'todas';
+    const bodegaSecundaria = document.getElementById('filtro-faltantes-bodega-secundaria')?.value || 'todas';
+    const evento = document.getElementById('filtro-faltantes-evento')?.value || 'todos';
+    const estadoProceso = document.getElementById('filtro-faltantes-estado')?.value || 'todos';
+    const tipoFecha = document.getElementById('filtro-faltantes-tipo-fecha')?.value || 'fecha_devolucion';
+    const desde = document.getElementById('filtro-faltantes-desde')?.value || '';
+    const hasta = document.getElementById('filtro-faltantes-hasta')?.value || '';
+
+    const termino = normalizarTexto(busqueda);
+    const fechaDesde = parseLocalDate(desde);
+    const fechaHasta = parseLocalDate(hasta);
+    if (fechaHasta) fechaHasta.setHours(23, 59, 59, 999);
+
+    return (estado.registros || []).filter(registro => {
+      if (bodegaPrincipal !== 'todas' && (registro.bodega_principal || '') !== bodegaPrincipal) {
+        return false;
+      }
+      if (bodegaSecundaria !== 'todas' && (registro.bodega_secundaria || '') !== bodegaSecundaria) {
+        return false;
+      }
+      if (evento !== 'todos' && (registro.evento || '') !== evento) {
+        return false;
+      }
+      if (estadoProceso !== 'todos' && (registro.estado_proceso || 'pendiente_investigacion') !== estadoProceso) {
+        return false;
+      }
+
+      if (termino) {
+        const campos = [
+          registro.material_codigo,
+          registro.material_nombre,
+          registro.evento,
+          registro.numero_despacho,
+          registro.encargado_evento,
+          registro.bodega_principal,
+          registro.bodega_secundaria,
+          registro.ubicacion_nombre,
+          registro.observacion,
+          registro.observacion_detalle,
+          registro.estado_proceso
+        ];
+        const coincide = campos.some(campo => normalizarTexto(campo).includes(termino));
+        if (!coincide) return false;
+      }
+
+      if (fechaDesde || fechaHasta) {
+        const valorFecha = obtenerCampoFechaRegistro(registro, tipoFecha);
+        const fechaRegistro = parseLocalDate(valorFecha);
+        if (!fechaRegistro) return false;
+        if (fechaDesde && fechaRegistro < fechaDesde) return false;
+        if (fechaHasta && fechaRegistro > fechaHasta) return false;
+      }
+
+      return true;
+    }).sort((a, b) => {
+      const fechaA = parseLocalDate(obtenerCampoFechaRegistro(a, tipoFecha));
+      const fechaB = parseLocalDate(obtenerCampoFechaRegistro(b, tipoFecha));
+      const timeA = fechaA ? fechaA.getTime() : 0;
+      const timeB = fechaB ? fechaB.getTime() : 0;
+      return timeB - timeA;
+    });
+  }
+
+  function actualizarResumenFiltros(registros) {
+    const resumen = document.getElementById('resumen-filtros-faltantes');
+    if (!resumen) return;
+
+    const partes = [];
+    const bodegaPrincipal = document.getElementById('filtro-faltantes-bodega-principal')?.value || 'todas';
+    const bodegaSecundaria = document.getElementById('filtro-faltantes-bodega-secundaria')?.value || 'todas';
+    const evento = document.getElementById('filtro-faltantes-evento')?.value || 'todos';
+    const estadoProceso = document.getElementById('filtro-faltantes-estado')?.value || 'todos';
+    const tipoFecha = document.getElementById('filtro-faltantes-tipo-fecha')?.selectedOptions?.[0]?.textContent || 'Fecha devolución';
+    const desde = document.getElementById('filtro-faltantes-desde')?.value || '';
+    const hasta = document.getElementById('filtro-faltantes-hasta')?.value || '';
+    const busqueda = document.getElementById('filtro-faltantes-busqueda')?.value || '';
+
+    if (busqueda) partes.push(`<strong>Búsqueda:</strong> ${escapeHtml(busqueda)}`);
+    if (bodegaPrincipal !== 'todas') partes.push(`<strong>Bodega principal:</strong> ${escapeHtml(bodegaPrincipal)}`);
+    if (bodegaSecundaria !== 'todas') partes.push(`<strong>Bodega secundaria:</strong> ${escapeHtml(bodegaSecundaria)}`);
+    if (evento !== 'todos') partes.push(`<strong>Evento:</strong> ${escapeHtml(evento)}`);
+    if (estadoProceso !== 'todos') partes.push(`<strong>Estado:</strong> ${escapeHtml(formatEstadoTexto(estadoProceso))}`);
+    if (desde || hasta) {
+      partes.push(`<strong>${escapeHtml(tipoFecha)}:</strong> ${escapeHtml(formatDateOnly(desde))} a ${escapeHtml(formatDateOnly(hasta))}`);
+    }
+
+    partes.push(`<strong>Resultados:</strong> ${formatNumber(registros.length)} registros`);
+    resumen.innerHTML = partes.join(' &nbsp;•&nbsp; ');
+    resumen.style.display = 'block';
+  }
+
+  function actualizarKpis(registros) {
+    const eventos = new Set();
+    const bodegas = new Set();
+    const totalUnidades = registros.reduce((acc, registro) => acc + Number(registro.cantidad_faltante || 0), 0);
+
+    registros.forEach(registro => {
+      if (registro.evento) eventos.add(registro.evento);
+      const combo = [registro.bodega_principal || '', registro.bodega_secundaria || ''].filter(Boolean).join(' / ');
+      if (combo) bodegas.add(combo);
+    });
+
+    document.getElementById('kpi-faltantes-registros').textContent = formatNumber(registros.length);
+    document.getElementById('kpi-faltantes-unidades').textContent = formatNumber(totalUnidades);
+    document.getElementById('kpi-faltantes-eventos').textContent = formatNumber(eventos.size);
+    document.getElementById('kpi-faltantes-bodegas').textContent = formatNumber(bodegas.size);
+  }
+
+  function construirFilasTabla(registros) {
+    return registros.map(registro => {
+      return `
+        <tr>
+          <td>${escapeHtml(formatDateOnly(registro.fecha_devolucion || registro.fecha_despacho || registro.created_at))}</td>
+          <td>${escapeHtml(registro.material_codigo || '–')}</td>
+          <td>${escapeHtml(registro.material_nombre || '–')}</td>
+          <td class="faltantes-numero">${escapeHtml(formatNumber(registro.cantidad_faltante || 0))}</td>
+          <td>${escapeHtml(registro.bodega_principal || '–')}</td>
+          <td>${escapeHtml(registro.bodega_secundaria || '–')}</td>
+          <td>${escapeHtml(registro.evento || '–')}</td>
+          <td>${escapeHtml(registro.numero_despacho || '–')}</td>
+          <td>${escapeHtml(registro.encargado_evento || registro.responsable_devolucion || '–')}</td>
+          <td class="faltantes-estado-cell">${construirEditorEstado(registro)}</td>
+          <td>${escapeHtml(registro.observacion_detalle || registro.observacion || '–')}</td>
+        </tr>`;
+    }).join('');
+  }
+
+  function renderizarTabla(registros) {
+    const cont = document.getElementById('tabla-materiales-faltantes');
+    if (!cont) return;
+
+    actualizarResumenFiltros(registros);
+    actualizarKpis(registros);
+
+    if (!registros.length) {
+      cont.innerHTML = '<p style="text-align:center;color:#cbd5e1;margin-top:40px;">No hay materiales faltantes para los filtros seleccionados.</p>';
+      return;
+    }
+
+    cont.innerHTML = `
+      <table class="bodega-table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th style="text-align:right;">Faltante</th>
+            <th>Bodega Principal</th>
+            <th>Bodega Secundaria</th>
+            <th>Evento</th>
+            <th>Despacho</th>
+            <th>Responsable</th>
+            <th>Estado</th>
+            <th>Detalle</th>
+          </tr>
+        </thead>
+        <tbody>${construirFilasTabla(registros)}</tbody>
+      </table>`;
+  }
+
+  function renderizar() {
+    renderizarTabla(obtenerRegistrosFiltrados());
+  }
+
+  async function actualizarEstadoRegistro(id, nuevoEstado, notaProceso) {
+    const registro = obtenerRegistroPorId(id);
+    if (!registro) {
+      alert('No se encontró el registro a actualizar.');
+      return;
+    }
+
+    const estadoFinal = (nuevoEstado || 'pendiente_investigacion').toString().trim();
+    const notaFinal = (notaProceso || '').toString().trim();
+    const fechaProceso = estadoFinal === 'pendiente_investigacion' ? null : hoyLocalIso();
+
+    if (requiereNotaDeCierre(estadoFinal) && !notaFinal) {
+      actualizarRegistroLocal(id, {
+        __estadoFeedback: 'Debe agregar una nota para dejar constancia del cierre o aclaración.',
+        __estadoFeedbackType: 'error'
+      });
+      renderizar();
+
+      const feedbackEl = document.getElementById('modal-estado-feedback');
+      if (feedbackEl) {
+        feedbackEl.textContent = 'Debe agregar una nota para dejar constancia del cierre o aclaración.';
+        feedbackEl.className = 'faltantes-estado-feedback error';
+      }
+      return;
+    }
+
+    estado.actualizandoIds.add(String(id));
+    actualizarRegistroLocal(id, {
+      __estadoFeedback: 'Guardando cambios...',
+      __estadoFeedbackType: ''
+    });
+    renderizar();
+
+    const saveBtn = document.getElementById('btn-guardar-modal-estado-faltante');
+    const feedbackEl = document.getElementById('modal-estado-feedback');
+    if (estado.modalRegistroId === String(id) && saveBtn && feedbackEl) {
+      saveBtn.disabled = true;
+      feedbackEl.textContent = 'Guardando cambios...';
+      feedbackEl.className = 'faltantes-estado-feedback';
+    }
+
+    try {
+      let payload = {
+        estado_proceso: estadoFinal,
+        fecha_proceso: fechaProceso,
+        notas_proceso: notaFinal || null,
+        updated_at: new Date().toISOString()
+      };
+
+      let respuesta = await supa
+        .from('materiales_faltantes')
+        .update(payload)
+        .eq('id', id)
+        .select('id, estado_proceso, fecha_proceso, notas_proceso, updated_at')
+        .single();
+
+      if (respuesta.error && (respuesta.error.code === '42703' || /fecha_proceso|notas_proceso|updated_at/i.test(respuesta.error.message || ''))) {
+        payload = {
+          estado_proceso: estadoFinal
+        };
+
+        respuesta = await supa
+          .from('materiales_faltantes')
+          .update(payload)
+          .eq('id', id)
+          .select('id, estado_proceso')
+          .single();
+      }
+
+      if (respuesta.error) throw respuesta.error;
+
+      actualizarRegistroLocal(id, {
+        estado_proceso: respuesta.data?.estado_proceso || estadoFinal,
+        fecha_proceso: respuesta.data?.fecha_proceso ?? fechaProceso,
+        notas_proceso: respuesta.data?.notas_proceso ?? notaFinal,
+        __estadoFeedback: 'Estado actualizado.',
+        __estadoFeedbackType: 'ok'
+      });
+
+      if (estado.modalRegistroId === String(id) && feedbackEl) {
+        feedbackEl.textContent = 'Estado actualizado.';
+        feedbackEl.className = 'faltantes-estado-feedback ok';
+      }
+
+      cerrarModalEstado();
+    } catch (error) {
+      console.error('Error actualizando estado de material faltante:', error);
+      actualizarRegistroLocal(id, {
+        __estadoFeedback: `Error: ${error.message || 'No se pudo actualizar.'}`,
+        __estadoFeedbackType: 'error'
+      });
+
+      if (estado.modalRegistroId === String(id) && feedbackEl) {
+        feedbackEl.textContent = `Error: ${error.message || 'No se pudo actualizar.'}`;
+        feedbackEl.className = 'faltantes-estado-feedback error';
+      }
+    } finally {
+      estado.actualizandoIds.delete(String(id));
+      if (estado.modalRegistroId === String(id) && saveBtn) {
+        saveBtn.disabled = false;
+      }
+      renderizar();
+
+      if (estado.modalRegistroId === String(id)) {
+        abrirModalEstado(id);
+      }
+    }
+  }
+
+  async function cargarMaterialesFaltantes() {
+    if (!supa) return;
+
+    const cont = document.getElementById('tabla-materiales-faltantes');
+    if (cont) {
+      cont.innerHTML = '<p style="color:#cbd5e1; text-align:center; margin-top:40px;">Cargando materiales faltantes…</p>';
+    }
+
+    let registros = null;
+    let errorConsulta = null;
+
+    try {
+      const respuesta = await supa
+        .from('materiales_faltantes')
+        .select('id, material_codigo, material_nombre, cantidad_faltante, cantidad_despachada, bodega_principal, bodega_secundaria, ubicacion_codigo, ubicacion_nombre, numero_despacho, evento, encargado_evento, fecha_despacho, fecha_devolucion, responsable_devolucion, observacion, observacion_detalle, estado_proceso, fecha_proceso, notas_proceso, created_at')
+        .order('created_at', { ascending: false })
+        .limit(5000);
+
+      registros = respuesta.data;
+      errorConsulta = respuesta.error;
+    } catch (error) {
+      errorConsulta = error;
+    }
+
+    if (errorConsulta && (errorConsulta.code === '42703' || /fecha_devolucion/i.test(errorConsulta.message || ''))) {
+      const respuestaFallback = await supa
+        .from('materiales_faltantes')
+        .select('id, material_codigo, material_nombre, cantidad_faltante, cantidad_despachada, bodega_principal, bodega_secundaria, ubicacion_codigo, ubicacion_nombre, numero_despacho, evento, encargado_evento, fecha_despacho, responsable_devolucion, observacion, observacion_detalle, estado_proceso, fecha_proceso, notas_proceso, created_at')
+        .order('created_at', { ascending: false })
+        .limit(5000);
+
+      registros = (respuestaFallback.data || []).map(item => ({
+        ...item,
+        fecha_devolucion: null
+      }));
+      errorConsulta = respuestaFallback.error;
+    }
+
+    if (errorConsulta) {
+      console.error('Error cargando materiales_faltantes:', errorConsulta);
+      if (cont) {
+        cont.innerHTML = `<p style="color:#ef4444; text-align:center; margin-top:40px;">Error cargando materiales faltantes: ${escapeHtml(errorConsulta.message || 'Desconocido')}</p>`;
+      }
+      return;
+    }
+
+    estado.registros = (registros || []).map(item => ({
+      ...item,
+      material_codigo: (item.material_codigo || '').toString().trim(),
+      material_nombre: (item.material_nombre || '').toString().trim(),
+      bodega_principal: (item.bodega_principal || '').toString().trim(),
+      bodega_secundaria: (item.bodega_secundaria || '').toString().trim(),
+      evento: (item.evento || '').toString().trim(),
+      numero_despacho: (item.numero_despacho || '').toString().trim(),
+      encargado_evento: (item.encargado_evento || '').toString().trim(),
+      responsable_devolucion: (item.responsable_devolucion || '').toString().trim(),
+      observacion: (item.observacion || '').toString().trim(),
+      observacion_detalle: (item.observacion_detalle || '').toString().trim(),
+      estado_proceso: (item.estado_proceso || 'pendiente_investigacion').toString().trim(),
+      fecha_proceso: item.fecha_proceso || null,
+      notas_proceso: (item.notas_proceso || '').toString().trim(),
+      __estadoFeedback: '',
+      __estadoFeedbackType: ''
+    }));
+
+    const principales = new Set();
+    const secundarias = new Set();
+    const eventos = new Set();
+    const estadosProceso = new Set();
+    const secundariasPorPrincipal = new Map();
+
+    estado.registros.forEach(registro => {
+      if (registro.bodega_principal) principales.add(registro.bodega_principal);
+      if (registro.bodega_secundaria) secundarias.add(registro.bodega_secundaria);
+      if (registro.evento) eventos.add(registro.evento);
+      if (registro.estado_proceso) estadosProceso.add(registro.estado_proceso);
+      if (registro.bodega_principal && registro.bodega_secundaria) {
+        if (!secundariasPorPrincipal.has(registro.bodega_principal)) {
+          secundariasPorPrincipal.set(registro.bodega_principal, new Set());
+        }
+        secundariasPorPrincipal.get(registro.bodega_principal).add(registro.bodega_secundaria);
+      }
+    });
+
+    estado.bodegasPrincipales = Array.from(principales).sort((a, b) => a.localeCompare(b));
+    estado.bodegasSecundarias = Array.from(secundarias).sort((a, b) => a.localeCompare(b));
+    estado.eventos = Array.from(eventos).sort((a, b) => a.localeCompare(b));
+    estado.estadosProceso = Array.from(estadosProceso).sort((a, b) => a.localeCompare(b));
+    estado.secundariasPorPrincipal = secundariasPorPrincipal;
+
+    poblarSelect('filtro-faltantes-bodega-principal', estado.bodegasPrincipales, 'todas', 'Todas');
+    poblarSelectSecundaria('todas');
+    poblarSelect('filtro-faltantes-evento', estado.eventos, 'todos', 'Todos');
+    poblarSelect('filtro-faltantes-estado', estado.estadosProceso, 'todos', 'Todos');
+
+    const fechas = estado.registros
+      .map(registro => registro.fecha_devolucion || registro.fecha_despacho || registro.created_at)
+      .map(parseLocalDate)
+      .filter(Boolean)
+      .sort((a, b) => a - b);
+
+    if (fechas.length) {
+      document.getElementById('filtro-faltantes-desde').value = toDateInputValue(fechas[0]);
+      document.getElementById('filtro-faltantes-hasta').value = toDateInputValue(fechas[fechas.length - 1]);
+    }
+
+    renderizar();
+  }
+
+  function loadXlsxLib() {
+    return new Promise((resolve, reject) => {
+      if (window.XLSX) return resolve(window.XLSX);
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js';
+      script.onload = () => resolve(window.XLSX);
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  }
+
+  function construirRowsExcel(registros) {
+    return registros.map(registro => ({
+      FechaSeleccionada: formatDateOnly(obtenerCampoFechaRegistro(registro, document.getElementById('filtro-faltantes-tipo-fecha')?.value || 'fecha_devolucion')),
+      FechaDespacho: formatDateOnly(registro.fecha_despacho),
+      FechaDevolucion: formatDateOnly(registro.fecha_devolucion),
+      FechaRegistro: formatDateTime(registro.created_at),
+      Codigo: registro.material_codigo || '',
+      Nombre: registro.material_nombre || '',
+      CantidadFaltante: Number(registro.cantidad_faltante || 0),
+      CantidadDespachada: Number(registro.cantidad_despachada || 0),
+      BodegaPrincipal: registro.bodega_principal || '',
+      BodegaSecundaria: registro.bodega_secundaria || '',
+      Evento: registro.evento || '',
+      NumeroDespacho: registro.numero_despacho || '',
+      EncargadoEvento: registro.encargado_evento || '',
+      ResponsableDevolucion: registro.responsable_devolucion || '',
+      EstadoProceso: registro.estado_proceso || '',
+      FechaProceso: formatDateOnly(registro.fecha_proceso),
+      NotasProceso: registro.notas_proceso || '',
+      Observacion: registro.observacion || '',
+      Detalle: registro.observacion_detalle || ''
+    }));
+  }
+
+  async function exportarExcel() {
+    try {
+      const registros = obtenerRegistrosFiltrados();
+      if (!registros.length) {
+        alert('No hay materiales faltantes para exportar.');
+        return;
+      }
+
+      await loadXlsxLib();
+
+      const wb = XLSX.utils.book_new();
+      const resumenRows = [
+        { Indicador: 'Registros', Valor: registros.length },
+        { Indicador: 'Unidades faltantes', Valor: registros.reduce((acc, item) => acc + Number(item.cantidad_faltante || 0), 0) },
+        { Indicador: 'Eventos', Valor: new Set(registros.map(item => item.evento).filter(Boolean)).size },
+        { Indicador: 'Bodegas', Valor: new Set(registros.map(item => `${item.bodega_principal || ''}/${item.bodega_secundaria || ''}`).filter(Boolean)).size }
+      ];
+
+      const wsResumen = XLSX.utils.json_to_sheet(resumenRows);
+      XLSX.utils.book_append_sheet(wb, wsResumen, 'Resumen');
+
+      const wsDetalle = XLSX.utils.json_to_sheet(construirRowsExcel(registros));
+      XLSX.utils.book_append_sheet(wb, wsDetalle, 'Faltantes');
+
+      const filename = `Materiales_Faltantes_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      XLSX.writeFile(wb, filename);
+    } catch (error) {
+      console.error('Error exportando XLSX faltantes:', error);
+      alert('Error exportando Excel. Revisa la consola.');
+    }
+  }
+
+  function construirResumenPdf(registros) {
+    const unidades = registros.reduce((acc, item) => acc + Number(item.cantidad_faltante || 0), 0);
+    const eventos = new Set(registros.map(item => item.evento).filter(Boolean)).size;
+    const bodegas = new Set(registros.map(item => `${item.bodega_principal || ''}/${item.bodega_secundaria || ''}`).filter(Boolean)).size;
+
+    return `
+      <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin:14px 0 18px 0;">
+        <div style="border:1px solid #dbeafe; background:#eff6ff; border-radius:8px; padding:10px;">
+          <div style="font-size:11px; color:#1d4ed8; text-transform:uppercase; font-weight:700;">Registros</div>
+          <div style="font-size:22px; font-weight:800; color:#1e3a8a; margin-top:4px;">${formatNumber(registros.length)}</div>
+        </div>
+        <div style="border:1px solid #dbeafe; background:#eff6ff; border-radius:8px; padding:10px;">
+          <div style="font-size:11px; color:#1d4ed8; text-transform:uppercase; font-weight:700;">Unidades faltantes</div>
+          <div style="font-size:22px; font-weight:800; color:#1e3a8a; margin-top:4px;">${formatNumber(unidades)}</div>
+        </div>
+        <div style="border:1px solid #dbeafe; background:#eff6ff; border-radius:8px; padding:10px;">
+          <div style="font-size:11px; color:#1d4ed8; text-transform:uppercase; font-weight:700;">Eventos</div>
+          <div style="font-size:22px; font-weight:800; color:#1e3a8a; margin-top:4px;">${formatNumber(eventos)}</div>
+        </div>
+        <div style="border:1px solid #dbeafe; background:#eff6ff; border-radius:8px; padding:10px;">
+          <div style="font-size:11px; color:#1d4ed8; text-transform:uppercase; font-weight:700;">Bodegas</div>
+          <div style="font-size:22px; font-weight:800; color:#1e3a8a; margin-top:4px;">${formatNumber(bodegas)}</div>
+        </div>
+      </div>`;
+  }
+
+  function construirHtmlPdf(registros) {
+    const tipoFecha = document.getElementById('filtro-faltantes-tipo-fecha')?.selectedOptions?.[0]?.textContent || 'Fecha devolución';
+    const filtros = [
+      document.getElementById('filtro-faltantes-busqueda')?.value ? `<strong>Búsqueda:</strong> ${escapeHtml(document.getElementById('filtro-faltantes-busqueda').value)}` : '',
+      (document.getElementById('filtro-faltantes-bodega-principal')?.value || 'todas') !== 'todas' ? `<strong>Bodega principal:</strong> ${escapeHtml(document.getElementById('filtro-faltantes-bodega-principal').value)}` : '',
+      (document.getElementById('filtro-faltantes-bodega-secundaria')?.value || 'todas') !== 'todas' ? `<strong>Bodega secundaria:</strong> ${escapeHtml(document.getElementById('filtro-faltantes-bodega-secundaria').value)}` : '',
+      (document.getElementById('filtro-faltantes-evento')?.value || 'todos') !== 'todos' ? `<strong>Evento:</strong> ${escapeHtml(document.getElementById('filtro-faltantes-evento').value)}` : '',
+      (document.getElementById('filtro-faltantes-desde')?.value || document.getElementById('filtro-faltantes-hasta')?.value) ? `<strong>${escapeHtml(tipoFecha)}:</strong> ${escapeHtml(formatDateOnly(document.getElementById('filtro-faltantes-desde').value))} a ${escapeHtml(formatDateOnly(document.getElementById('filtro-faltantes-hasta').value))}` : ''
+    ].filter(Boolean).join(' &nbsp;•&nbsp; ');
+
+    const filas = registros.map(registro => {
+      const estadoProceso = estadoProcesoLabel(registro.estado_proceso);
+      return `
+        <tr>
+          <td>${escapeHtml(formatDateOnly(obtenerCampoFechaRegistro(registro, document.getElementById('filtro-faltantes-tipo-fecha')?.value || 'fecha_devolucion')))}</td>
+          <td>${escapeHtml(registro.material_codigo || '')}</td>
+          <td>${escapeHtml(registro.material_nombre || '')}</td>
+          <td style="text-align:right;">${escapeHtml(formatNumber(registro.cantidad_faltante || 0))}</td>
+          <td>${escapeHtml(registro.bodega_principal || '')}</td>
+          <td>${escapeHtml(registro.bodega_secundaria || '')}</td>
+          <td>${escapeHtml(registro.evento || '')}</td>
+          <td>${escapeHtml(registro.numero_despacho || '')}</td>
+          <td>${escapeHtml(registro.encargado_evento || registro.responsable_devolucion || '')}</td>
+          <td>${escapeHtml(estadoProceso.text)}</td>
+          <td>${escapeHtml(registro.observacion_detalle || registro.observacion || '')}</td>
+        </tr>`;
+    }).join('');
+
+    return `<!doctype html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <style>
+            @page { margin: 16mm 10mm 16mm 10mm; }
+            body { font-family: Arial, sans-serif; color: #111827; }
+            table { width: 100%; border-collapse: collapse; font-size: 10px; page-break-inside: auto; }
+            thead { display: table-header-group; }
+            thead th { background: #eff6ff; color: #1d4ed8; padding: 8px; border-right: 1px solid #dbeafe; text-align: left; }
+            tbody tr { page-break-inside: avoid; }
+            tbody td { padding: 6px 8px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+            .header { text-align: center; margin-bottom: 10px; }
+            .filters { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px; margin-bottom: 12px; font-size: 10px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <img src="assets/logo.png" style="height: 50px; margin-bottom: 8px;" />
+            <h2 style="margin: 0; color: #1e40af;">Reporte de Materiales Faltantes</h2>
+            <p style="margin: 6px 0 0 0;">Generado: ${escapeHtml(new Date().toLocaleDateString('es-NI'))}</p>
+          </div>
+          <div class="filters">${filtros || '<strong>Filtros:</strong> Todos los registros cargados'}</div>
+          ${construirResumenPdf(registros)}
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th style="text-align:right;">Faltante</th>
+                <th>Bod. Principal</th>
+                <th>Bod. Secundaria</th>
+                <th>Evento</th>
+                <th>Despacho</th>
+                <th>Responsable</th>
+                <th>Estado</th>
+                <th>Detalle</th>
+              </tr>
+            </thead>
+            <tbody>${filas}</tbody>
+          </table>
+        </body>
+      </html>`;
+  }
+
+  async function exportarPdf() {
+    try {
+      const registros = obtenerRegistrosFiltrados();
+      if (!registros.length) {
+        alert('No hay materiales faltantes para exportar.');
+        return;
+      }
+
+      if (window.electronAPI && typeof window.electronAPI.renderHtmlToPdf === 'function') {
+        const resultado = await window.electronAPI.renderHtmlToPdf({
+          filename: `Materiales_Faltantes_${new Date().toISOString().slice(0, 10)}.pdf`,
+          html: construirHtmlPdf(registros),
+          baseUrl: document.baseURI
+        });
+        if (resultado && resultado.canceled === false) {
+          alert('PDF guardado en: ' + resultado.filePath);
+        }
+        return;
+      }
+
+      if (typeof html2pdf === 'undefined') {
+        alert('No se encontró un motor de exportación PDF disponible.');
+        return;
+      }
+
+      const contenedor = document.createElement('div');
+      contenedor.innerHTML = construirHtmlPdf(registros);
+      await html2pdf().from(contenedor).set({
+        margin: 10,
+        filename: `Materiales_Faltantes_${new Date().toISOString().slice(0, 10)}.pdf`,
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+      }).save();
+    } catch (error) {
+      console.error('Error exportando PDF faltantes:', error);
+      alert('Error exportando PDF. Revisa la consola.');
+    }
+  }
+
+  document.getElementById('filtro-faltantes-bodega-principal')?.addEventListener('change', (event) => {
+    poblarSelectSecundaria(event.target.value || 'todas');
+    renderizar();
+  });
+  document.getElementById('filtro-faltantes-bodega-secundaria')?.addEventListener('change', renderizar);
+  document.getElementById('filtro-faltantes-evento')?.addEventListener('change', renderizar);
+  document.getElementById('filtro-faltantes-estado')?.addEventListener('change', renderizar);
+  document.getElementById('filtro-faltantes-tipo-fecha')?.addEventListener('change', renderizar);
+  document.getElementById('filtro-faltantes-desde')?.addEventListener('change', renderizar);
+  document.getElementById('filtro-faltantes-hasta')?.addEventListener('change', renderizar);
+  document.getElementById('filtro-faltantes-busqueda')?.addEventListener('input', renderizar);
+  document.getElementById('btn-limpiar-filtros-faltantes')?.addEventListener('click', () => {
+    document.getElementById('filtro-faltantes-busqueda').value = '';
+    document.getElementById('filtro-faltantes-bodega-principal').value = 'todas';
+    poblarSelectSecundaria('todas');
+    document.getElementById('filtro-faltantes-bodega-secundaria').value = 'todas';
+    document.getElementById('filtro-faltantes-evento').value = 'todos';
+    document.getElementById('filtro-faltantes-estado').value = 'todos';
+    document.getElementById('filtro-faltantes-tipo-fecha').value = 'fecha_devolucion';
+
+    const fechas = (estado.registros || [])
+      .map(registro => registro.fecha_devolucion || registro.fecha_despacho || registro.created_at)
+      .map(parseLocalDate)
+      .filter(Boolean)
+      .sort((a, b) => a - b);
+    document.getElementById('filtro-faltantes-desde').value = fechas.length ? toDateInputValue(fechas[0]) : '';
+    document.getElementById('filtro-faltantes-hasta').value = fechas.length ? toDateInputValue(fechas[fechas.length - 1]) : '';
+    renderizar();
+  });
+  document.getElementById('btn-exportar-xfaltantes')?.addEventListener('click', exportarPdf);
+  document.getElementById('btn-exportar-xfaltantes-xlsx')?.addEventListener('click', exportarExcel);
+  document.getElementById('tabla-materiales-faltantes')?.addEventListener('click', async (event) => {
+    const button = event.target.closest('[data-role="estado-open"]');
+    if (!button) return;
+
+    abrirModalEstado(button.dataset.id);
+  });
+
+  document.getElementById('btn-cerrar-modal-estado-faltante')?.addEventListener('click', cerrarModalEstado);
+  document.getElementById('modal-estado-faltante')?.addEventListener('click', (event) => {
+    if (event.target.id === 'modal-estado-faltante') {
+      cerrarModalEstado();
+    }
+  });
+  document.getElementById('btn-guardar-modal-estado-faltante')?.addEventListener('click', async () => {
+    if (!estado.modalRegistroId) return;
+
+    await actualizarEstadoRegistro(
+      estado.modalRegistroId,
+      document.getElementById('modal-estado-select')?.value || 'pendiente_investigacion',
+      document.getElementById('modal-estado-nota')?.value || ''
+    );
+  });
+
+  cargarMaterialesFaltantes();
+})();
+</script>

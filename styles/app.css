@@ -85,6 +85,14 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
+.tab-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-right: 12px;
+}
+
 .tab {
   padding: 10px 20px;
   background: var(--tab-bg);

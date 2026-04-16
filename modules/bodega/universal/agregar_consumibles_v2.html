@@ -301,6 +301,14 @@
     tipoHerramienta: null // para electrica: 'taladro', etc.
   };
 
+  function getTipoCatalogoValue() {
+    return state.tipoMaterial === 'herramienta' ? 'RENTABLE' : 'CONSUMIBLE';
+  }
+
+  function isHerramientaElectrica() {
+    return state.tipoMaterial === 'herramienta' && state.subtipoHerramienta === 'electrica';
+  }
+
   const palette = [
     '#f97316','#0ea5e9','#8b5cf6','#22c55e','#eab308','#ef4444','#94a3b8','#0f172a',
     '#06b6d4','#ec4899','#92400e','#000000','#ffffff','#65a30d','#6366f1','#14b8a6','#f59e0b','#64748b'
@@ -342,13 +350,24 @@
     const cerrarEl = document.getElementById('ua-cerrar-contenedor');
     if (cerrarEl) cerrarEl.addEventListener('change', () => { state.cerrarContenedor = !!cerrarEl.checked; });
 
-    ['cont-tipo','cont-nombre-base','cont-numero','nombre-producto','nombre-abrev','tipo-uso','tipo-material','marca','modelo','cantidad-unidad','precio','notas','tipo-herramienta']
+    ['cont-tipo','cont-nombre-base','cont-numero','nombre-producto','nombre-abrev','tipo-uso','tipo-material','marca','modelo','cantidad-unidad','precio','notas']
       .forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
         el.addEventListener('input', () => { updateResumen(); updateCodigoPreview(); });
         el.addEventListener('change', () => { updateResumen(); updateCodigoPreview(); });
       });
+
+    const tipoHerramientaEl = document.getElementById('tipo-herramienta');
+    if (tipoHerramientaEl) {
+      state.tipoHerramienta = (tipoHerramientaEl.value || '').trim() || null;
+      tipoHerramientaEl.addEventListener('change', () => {
+        const value = (tipoHerramientaEl.value || '').trim();
+        state.tipoHerramienta = value || null;
+        updateResumen();
+        updateCodigoPreview();
+      });
+    }
 
     document.querySelectorAll('input[name="unidad"]').forEach(r => r.addEventListener('change', () => updateCodigoPreview()));
 
@@ -427,7 +446,6 @@
     state.tipoMaterial = principal;
 
     if (principal === 'herramienta') {
-      state.tipoMaterial = 'RENTABLE';
       const sub = (document.querySelector('input[name="subtipo-herramienta"]:checked')?.value || '').trim();
       if (!sub) {
         alert('Selecciona el subtipo de herramienta (Eléctrica o Manual).');
@@ -437,9 +455,10 @@
       // Llenar automáticamente el campo tipo-material
       document.getElementById('tipo-material').value = 'Herramienta ' + (sub === 'electrica' ? 'Eléctrica' : 'Manual');
     } else {
-      state.tipoMaterial = 'CONSUMIBLE';  // consumible o insumo
       state.subtipoHerramienta = null;
       state.tipoHerramienta = null;
+      const tipoHerramientaEl = document.getElementById('tipo-herramienta');
+      if (tipoHerramientaEl) tipoHerramientaEl.value = '';
       // Llenar automáticamente
       document.getElementById('tipo-material').value = principal === 'consumible' ? 'Material Consumible' : 'Insumo';
     }
@@ -684,6 +703,30 @@
     return String(n).padStart(5, '0');
   }
 
+  function formatConsecutivoNumero(n) {
+    return String(n).padStart(5, '0');
+  }
+
+  function buildMaterialCodeSuffix() {
+    const apellidoContenedor = getCodigoSinConsecutivo(state.contenedorCodigo).split('-').slice(0).join('-');
+    const selected = (state.codigoOrdenMaterial || []).slice(0, 2);
+    const extras = [];
+    for (const k of selected) {
+      if (k === 'tipo_uso') extras.push(ref4(document.getElementById('tipo-uso')?.value || ''));
+      else if (k === 'tipo_material') extras.push(ref4(document.getElementById('tipo-material')?.value || ''));
+      else if (k === 'marca') extras.push(abrev(document.getElementById('marca')?.value || ''));
+      else if (k === 'modelo') extras.push(abrev(document.getElementById('modelo')?.value || ''));
+      else if (k === 'unidad_medida') extras.push(ref4((document.querySelector('input[name="unidad"]:checked') || {}).value || ''));
+      else if (k === 'ua-cantidad') extras.push(String(state.cantidad));
+      else if (k === 'nombre_abrev') {
+        const abrevInput = document.getElementById('nombre-abrev');
+        const abre = (abrevInput && abrevInput.value.trim()) || abrev((document.getElementById('nombre-producto')?.value || ''), 8);
+        extras.push(abre);
+      }
+    }
+    return [apellidoContenedor, ...extras.filter(Boolean)].join('-');
+  }
+
   async function updateCodigoPreview() {
     const input = document.getElementById('codigo-material');
     const tipo = state.contenedorCodigo ? 'MATERIAL' : 'CONTENEDOR';
@@ -699,46 +742,16 @@
         return null;
       }
 
-      // Si es herramienta
-      if (state.tipoMaterial === 'herramienta' && state.tipoHerramienta) {
-        let code = '';
-        if (state.subtipoHerramienta === 'electrica') {
-          // Código independiente como audiovisual: consecutivo + tipo
-          const next = await obtenerSiguienteConsecutivo();
-          const base = `${next}-${state.tipoHerramienta.toUpperCase()}`;
-          if (state.cantidad > 1) {
-            code = `${base}-01 a ${base}-${String(state.cantidad).padStart(2,'0')}`;
-          } else {
-            code = base;
-          }
-        } else if (state.subtipoHerramienta === 'manual') {
-          // Código global fijo, siempre el mismo
-          code = `MAN-${state.tipoHerramienta.toUpperCase()}`;
-        }
-        if (input) input.value = code;
-        return code;
+      const suffix = buildMaterialCodeSuffix();
+      const nextNumero = await obtenerSiguienteConsecutivoNumero();
+      let code = `${formatConsecutivoNumero(nextNumero)}-${suffix}`;
+
+      if (isHerramientaElectrica() && state.cantidad > 1) {
+        const firstCode = `${formatConsecutivoNumero(nextNumero)}-${suffix}-01`;
+        const lastCode = `${formatConsecutivoNumero(nextNumero + state.cantidad - 1)}-${suffix}-${String(state.cantidad).padStart(2,'0')}`;
+        code = `${firstCode} a ${lastCode}`;
       }
 
-      // Material normal
-      const apellidoContenedor = getCodigoSinConsecutivo(state.contenedorCodigo).split('-').slice(0).join('-');
-      const selected = (state.codigoOrdenMaterial || []).slice(0, 2);
-      const extras = [];
-      for (const k of selected) {
-        if (k === 'tipo_uso') extras.push(ref4(document.getElementById('tipo-uso')?.value || ''));
-        else if (k === 'tipo_material') extras.push(ref4(document.getElementById('tipo-material')?.value || ''));
-        else if (k === 'marca') extras.push(abrev(document.getElementById('marca')?.value || ''));
-        else if (k === 'modelo') extras.push(abrev(document.getElementById('modelo')?.value || ''));
-        else if (k === 'unidad_medida') extras.push(ref4((document.querySelector('input[name="unidad"]:checked') || {}).value || ''));
-        else if (k === 'ua-cantidad') extras.push(String(state.cantidad));
-        else if (k === 'nombre_abrev') {
-          const abrevInput = document.getElementById('nombre-abrev');
-          const abre = (abrevInput && abrevInput.value.trim()) || abrev((document.getElementById('nombre-producto')?.value || ''), 8);
-          extras.push(abre);
-        }
-      }
-      const suffix = [apellidoContenedor, ...extras.filter(Boolean)].join('-');
-      const next = await obtenerSiguienteConsecutivo();
-      const code = `${next}-${suffix}`;
       if (input) input.value = code;
       return code;
     }
@@ -949,7 +962,7 @@
       observaciones: 'Alta automática (activo)',
       estado: 'completado',
       usuario_id: window.currentUser?.id,
-      requiere_devolucion: (state.tipoMaterial === 'RENTABLE')  // TRUE para rentables, FALSE para consumibles
+      requiere_devolucion: (getTipoCatalogoValue() === 'RENTABLE')
     };
     return await insertConFallback(TABLE_MOVIMIENTOS, movimiento);
   }
@@ -1410,7 +1423,7 @@
       bodega_principal: state.principalNombre || 'Consumibles',
       bodega_secundaria: state.secundariaNombre || null,
       tipo_uso: (document.getElementById('tipo-uso')?.value || '').trim() || null,
-      tipo_material: state.tipoMaterial,  // 'RENTABLE' o 'CONSUMIBLE'
+      tipo_material: getTipoCatalogoValue(),
       color: state.color || null,
       unidad_medida: (tipo === 'CONTENEDOR') ? null : unidadMedida,
       es_hechizo: !!document.getElementById('producto-hechizo')?.checked,
@@ -1433,10 +1446,12 @@
     });
 
     // Manejo especial para herramientas eléctricas con cantidad >1
-    if (state.tipoMaterial === 'herramienta' && state.subtipoHerramienta === 'electrica' && cantidad > 1) {
-      const base = codigo.split(' a ')[0].split('-').slice(0, -1).join('-');
+    if (isHerramientaElectrica() && cantidad > 1) {
+      const suffix = buildMaterialCodeSuffix();
+      const consecutivoInicial = await obtenerSiguienteConsecutivoNumero();
       for (let i = 0; i < cantidad; i++) {
-        const codigoUnico = `${base}-${String(i+1).padStart(2,'0')}`;
+        const consecutivo = formatConsecutivoNumero(consecutivoInicial + i);
+        const codigoUnico = `${consecutivo}-${suffix}-${String(i+1).padStart(2,'0')}`;
         const payloadUnico = { ...payload, codigo: codigoUnico };
         const res = await insertConFallback(TABLE_CATALOGO, payloadUnico);
         if (!res.ok) { alert('Error al guardar: ' + res.error); return; }
@@ -1461,7 +1476,7 @@
       if (!res.ok) { alert('Error al guardar: ' + res.error); return; }
     }
 
-    if (state.esActivo && !(state.tipoMaterial === 'herramienta' && state.subtipoHerramienta === 'electrica' && cantidad > 1)) {
+    if (state.esActivo && !(isHerramientaElectrica() && cantidad > 1)) {
       const refTipo = (tipo === 'CONTENEDOR') ? 'alta_contenedor_activo' : 'alta_material_activo';
       const mov = await crearMovimientoIngreso({
         codigo,
@@ -1505,9 +1520,8 @@
 
     // Mensaje de éxito
     let mensajeExito = '';
-    if (state.tipoMaterial === 'herramienta' && state.subtipoHerramienta === 'electrica' && cantidad > 1) {
-      const base = codigo.split(' a ')[0].split('-').slice(0, -1).join('-');
-      mensajeExito = `Guardados en catálogo: ${base}-01 a ${base}-${String(cantidad).padStart(2,'0')}`;
+    if (isHerramientaElectrica() && cantidad > 1) {
+      mensajeExito = `Guardados en catálogo: ${codigo}`;
     } else {
       mensajeExito = `Guardado en catálogo: ${codigo}`;
     }

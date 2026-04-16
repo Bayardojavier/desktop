@@ -355,6 +355,14 @@
   </svg>
   <span>Contabilidad</span>
 </button>
+      <button id="btn-admin" class="ribbon-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12h18"></path>
+          <path d="M12 3v18"></path>
+          <circle cx="12" cy="12" r="9"></circle>
+        </svg>
+        <span>Admin General</span>
+      </button>
       <button class="ribbon-btn">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clapperboard-icon lucide-clapperboard"><path d="M20.2 6l-17.55.88L3.88.88c-.3-.9.9-1.66.9-1.66l-.9-.9c-.3-.9.9-1.66.9-1.66l-.9-.9c-.3-.9.9-1.66.9-1.66l-.9-.9c-.3-.9.9-1.66.9-1.66l-.9-.9c-.3-.9.9-1.66.9-1.66l-.9-.9c-.3-.9.9-1.66.9-1.66l-.88,7L7,7l7,7z"/><path d="m7,7 l5,5"/><path d="m7,7 l5,5"/><path d="M3,7 h5"/><path d="M3,7 h5"/></svg>
         <span>Eventos</span>
@@ -695,14 +703,7 @@
   <script src="./libs/jspdf.plugin.autotable.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-  <!-- 1. Supabase SDK (desde CDN) -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<!-- 2. Tu cliente de Supabase -->
-<script src="src/config/supabaseClient.js"></script>
-
-<!-- 3. Renderer (tu lógica de app) -->
-<script src="desktop/renderer.js"></script>
+  <!-- Removed duplicate/incorrect script tags to avoid loading HTML as JS -->
 
 </body>
 </html>

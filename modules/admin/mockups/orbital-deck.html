@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orbital Deck</title>
+  <style>
+    :root {
+      --bg: #050814;
+      --panel: rgba(11, 18, 40, 0.8);
+      --line: rgba(133, 170, 255, 0.16);
+      --text: #eef3ff;
+      --muted: #9ba7c7;
+      --cyan: #7adfff;
+      --violet: #9b83ff;
+      --gold: #f5c26a;
+      --mint: #8df6d1;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at center, rgba(122,223,255,0.08), transparent 20%),
+        radial-gradient(circle at top right, rgba(155,131,255,0.12), transparent 24%),
+        linear-gradient(180deg, #050712 0%, #070d1f 100%);
+      overflow: hidden;
+    }
+
+    .shell {
+      height: 100vh;
+      padding: 18px;
+      display: grid;
+      grid-template-columns: 360px 1fr 320px;
+      gap: 14px;
+    }
+
+    .column,
+    .center,
+    .panel,
+    .orbit-frame,
+    .card {
+      border-radius: 28px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 24px 60px rgba(0,0,0,0.28);
+    }
+
+    .column,
+    .center {
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+      min-height: 0;
+    }
+
+    .eyebrow {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-weight: 800;
+      color: var(--cyan);
+    }
+
+    .panel { padding: 18px; }
+
+    .title h1 {
+      margin: 12px 0 10px;
+      font-size: clamp(36px, 4.4vw, 58px);
+      line-height: 0.92;
+      letter-spacing: -0.06em;
+    }
+
+    .title p,
+    .card p,
+    .panel p { margin: 0; color: var(--muted); line-height: 1.7; }
+
+    .orbit-frame {
+      position: relative;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    .rings {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+    }
+
+    .ring,
+    .core,
+    .satellite {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.09);
+    }
+
+    .ring.one { width: 280px; height: 280px; }
+    .ring.two { width: 430px; height: 430px; }
+    .ring.three { width: 620px; height: 620px; }
+
+    .ring.one, .ring.three { animation: rotate 22s linear infinite; }
+    .ring.two { animation: rotateReverse 28s linear infinite; }
+
+    .core {
+      width: 210px;
+      height: 210px;
+      background: radial-gradient(circle, rgba(122,223,255,0.18), rgba(11,18,40,0.86));
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 24px;
+      box-shadow: 0 0 80px rgba(122,223,255,0.12);
+    }
+
+    .core strong {
+      display: block;
+      font-size: 20px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .core span { color: var(--muted); line-height: 1.6; font-size: 14px; }
+
+    .satellite {
+      width: 132px;
+      height: 132px;
+      padding: 16px;
+      background: rgba(12, 19, 44, 0.94);
+      display: grid;
+      align-content: center;
+      text-align: center;
+    }
+
+    .satellite strong { display: block; font-size: 14px; margin-bottom: 6px; }
+    .satellite span { font-size: 12px; color: var(--muted); line-height: 1.45; }
+
+    .s1 { top: 18%; left: 18%; color: var(--gold); }
+    .s2 { top: 16%; right: 18%; color: var(--cyan); }
+    .s3 { bottom: 18%; left: 20%; color: var(--mint); }
+    .s4 { bottom: 16%; right: 18%; color: var(--violet); }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .card {
+      padding: 16px;
+      background: rgba(255,255,255,0.03);
+    }
+
+    .card .value {
+      margin-top: 10px;
+      font-size: 38px;
+      font-weight: 900;
+      letter-spacing: -0.06em;
+    }
+
+    .list {
+      display: grid;
+      gap: 10px;
+      overflow: auto;
+      max-height: 100%;
+      padding-right: 4px;
+    }
+
+    .note {
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .note strong { display: block; margin-bottom: 6px; }
+
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes rotateReverse {
+      from { transform: rotate(360deg); }
+      to { transform: rotate(0deg); }
+    }
+
+    @media (max-width: 1220px) {
+      body { overflow: auto; }
+      .shell { height: auto; grid-template-columns: 1fr; }
+      .orbit-frame { min-height: 760px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="column">
+      <section class="panel title">
+        <div class="eyebrow">Administrador General · Puente radial</div>
+        <h1>Orbital Deck</h1>
+        <p>En vez de parecer una pagina o una consola, esta propuesta se siente como un puente orbital. Todo orbita alrededor del estado del negocio, con lectura radial, capas concentricas y paneles satelitales.</p>
+      </section>
+      <section class="metric-grid">
+        <article class="card"><div class="eyebrow">Eventos</div><div class="value" style="color:var(--cyan)">07</div></article>
+        <article class="card"><div class="eyebrow">Faltantes</div><div class="value" style="color:var(--gold)">18</div></article>
+        <article class="card"><div class="eyebrow">Criticos</div><div class="value" style="color:var(--mint)">11</div></article>
+        <article class="card"><div class="eyebrow">Bajas</div><div class="value" style="color:var(--violet)">04</div></article>
+      </section>
+      <section class="panel">
+        <div class="eyebrow">Lectura de estilo</div>
+        <p>La diferencia aqui esta en la composicion. Menos columnas rectas, mas atraccion visual hacia un centro de mando. El admin no entra a leer cajas; entra a ver un pulso central.</p>
+      </section>
+    </aside>
+
+    <main class="center orbit-frame">
+      <div class="rings">
+        <div class="ring one"></div>
+        <div class="ring two"></div>
+        <div class="ring three"></div>
+        <div class="core"><div><strong>Nucleo operativo</strong><span>Operacion estable con tension creciente en faltantes, agenda y conciliacion de devoluciones.</span></div></div>
+        <div class="satellite s1"><div><strong>Bodega</strong><span>faltantes y stock bajo</span></div></div>
+        <div class="satellite s2"><div><strong>Ventas</strong><span>agenda de montajes</span></div></div>
+        <div class="satellite s3"><div><strong>Logistica</strong><span>rutas y retornos</span></div></div>
+        <div class="satellite s4"><div><strong>Contabilidad</strong><span>bajas y danos</span></div></div>
+      </div>
+    </main>
+
+    <aside class="column">
+      <section class="panel">
+        <div class="eyebrow">Bitacora lateral</div>
+        <div class="list">
+          <div class="note"><strong>Expo Plaza</strong><p>Retorno incompleto mantiene enlace critico entre bodega y logistica.</p></div>
+          <div class="note"><strong>Gala Norte</strong><p>Evento entra en ventana de montaje con inventario sensible.</p></div>
+          <div class="note"><strong>Compras</strong><p>Reposicion sugerida para consumibles y estructuras clave.</p></div>
+          <div class="note"><strong>RRHH</strong><p>Cobertura aceptable con foco en equipos de salida simultanea.</p></div>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="eyebrow">Por que es distinta</div>
+        <p>No compite con Sala de Crisis por densidad. Compite por escenografia: convierte la entrada del admin en un centro radial de gravedad visual.</p>
+      </section>
+    </aside>
+  </div>
+</body>
+</html>

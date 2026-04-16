@@ -31,7 +31,7 @@
       </div>
       <div>
         <label class="log-label" style="font-size: 12px; margin-bottom: 4px;">Encargado de Operaciones:</label>
-        <input type="text" id="sol-responsable" class="log-input" value="Carlos Méndez" style="font-size: 13px;">
+        <input type="text" id="sol-responsable" class="log-input" value="Erick Genet" style="font-size: 13px;">
       </div>
 
       <div style="padding-top: 10px; border-top: 1px solid #e2e8f0;">
@@ -1445,6 +1445,45 @@
     let plantillas = [];
     let recetas = [];
 
+    function construirFechaLocal(fecha, hora = '00:00') {
+      if (!fecha) return null;
+
+      const fechaTexto = String(fecha).trim();
+      const match = fechaTexto.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (!match) {
+        const parsed = new Date(`${fechaTexto}${hora ? `T${hora}` : ''}`);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+      }
+
+      const [, year, month, day] = match;
+      const [hours = '0', minutes = '0'] = String(hora || '00:00').split(':');
+      return new Date(
+        Number(year),
+        Number(month) - 1,
+        Number(day),
+        Number(hours) || 0,
+        Number(minutes) || 0,
+        0,
+        0
+      );
+    }
+
+    function eventoSigueVigente(evento) {
+      const ahora = new Date();
+
+      if (!evento?.fecha_desmontaje) {
+        return true;
+      }
+
+      const fechaLimite = construirFechaLocal(evento.fecha_desmontaje, evento.hora_desmontaje || '23:59');
+      if (!fechaLimite) {
+        return true;
+      }
+
+      fechaLimite.setDate(fechaLimite.getDate() + 1);
+      return fechaLimite >= ahora;
+    }
+
     async function cargarEventos() {
       try {
         const { data, error } = await window.supabaseClient
@@ -1459,7 +1498,7 @@
           return;
         }
 
-        eventos = data || [];
+        eventos = (data || []).filter(eventoSigueVigente);
       } catch (err) {
         console.error('Error:', err);
         eventos = [];
@@ -1468,6 +1507,37 @@
 
     async function cargarMaterialesCatalogo() {
       try {
+        async function obtenerFilasStockCompatibles(viewName) {
+          const columnasCompletas = 'material_codigo, material_nombre, precio, stock_actual, bodega_principal, bodega_secundaria, contenedor, ubicacion_nombre, fecha_compra';
+          const columnasBasicas = 'material_codigo, material_nombre, stock_actual, bodega_principal, bodega_secundaria';
+
+          const { data, error } = await window.supabaseClient
+            .from(viewName)
+            .select(columnasCompletas);
+
+          if (!error) {
+            return data || [];
+          }
+
+          console.warn(`Consulta completa falló para ${viewName}, probando versión compatible:`, error);
+
+          const { data: dataBasica, error: errorBasico } = await window.supabaseClient
+            .from(viewName)
+            .select(columnasBasicas);
+
+          if (errorBasico) {
+            throw errorBasico;
+          }
+
+          return (dataBasica || []).map(row => ({
+            ...row,
+            precio: 0,
+            contenedor: '',
+            ubicacion_nombre: row.bodega_secundaria || '',
+            fecha_compra: null
+          }));
+        }
+
         const allRows = [];
         const CATALOGOS = [
           { table: 'catalogo_hierros' },
@@ -1513,22 +1583,22 @@
           { view: 'stock_consumibles' }
         ];
         for (const v of STOCK_VIEWS) {
-          const { data, error } = await window.supabaseClient
-            .from(v.view)
-            .select('material_codigo, material_nombre, precio, stock_actual, bodega_principal, bodega_secundaria, contenedor, ubicacion_nombre, fecha_compra');
-          if (error) {
+          let data = [];
+          try {
+            data = await obtenerFilasStockCompatibles(v.view);
+          } catch (error) {
             console.error(`Error al cargar stock de ${v.view}:`, error);
             continue;
           }
           (data || []).forEach(r => {
             if (materialesMap.has(r.material_codigo)) {
               const mat = materialesMap.get(r.material_codigo);
-              mat.bodegaPrincipal = r.bodega_principal || '';
-              mat.bodegaSecundaria = r.bodega_secundaria || '';
-              mat.contenedor = r.contenedor || '';
-              mat.ubicacionNombre = r.ubicacion_nombre || '';
-              mat.stockActual = r.stock_actual || 0;
-              mat.fechaCompra = r.fecha_compra || null;
+              mat.bodegaPrincipal = mat.bodegaPrincipal || r.bodega_principal || '';
+              mat.bodegaSecundaria = mat.bodegaSecundaria || r.bodega_secundaria || '';
+              mat.contenedor = mat.contenedor || r.contenedor || '';
+              mat.ubicacionNombre = mat.ubicacionNombre || r.ubicacion_nombre || r.bodega_secundaria || '';
+              mat.stockActual = (Number(mat.stockActual) || 0) + (Number(r.stock_actual) || 0);
+              mat.fechaCompra = mat.fechaCompra || r.fecha_compra || null;
             } else {
               // Si no está en catálogo, agregarlo (aunque no debería pasar)
               materialesMap.set(r.material_codigo, {
@@ -1539,8 +1609,8 @@
                 bodegaPrincipal: r.bodega_principal || '',
                 bodegaSecundaria: r.bodega_secundaria || '',
                 contenedor: r.contenedor || '',
-                ubicacionNombre: r.ubicacion_nombre || '',
-                stockActual: r.stock_actual || 0,
+                ubicacionNombre: r.ubicacion_nombre || r.bodega_secundaria || '',
+                stockActual: Number(r.stock_actual) || 0,
                 fechaCompra: r.fecha_compra || null,
                 __catalogo: v.view
               });
@@ -2487,7 +2557,7 @@
         }
 
         document.querySelector('.logistica-container #sol-evento').value = solicitud.evento;
-        document.querySelector('.logistica-container #sol-responsable').value = solicitud.encargado_evento || "Carlos Méndez";
+        document.querySelector('.logistica-container #sol-responsable').value = solicitud.encargado_evento || "Erick Genet";
         await actualizarPanelEvento(solicitud.evento);
 
         estado = {

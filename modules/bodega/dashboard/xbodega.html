@@ -17,6 +17,17 @@
       </select>
     </div>
 
+    <div class="bodega-filtro-grupo" style="min-width: 280px; flex: 1;">
+      <label for="filtro-busqueda-material">Buscar material</label>
+      <input
+        id="filtro-busqueda-material"
+        class="dashboard-select"
+        type="search"
+        placeholder="Codigo, nombre, tipo o color"
+        style="width: 100%;"
+      />
+    </div>
+
     <!-- KPIs EN FILA -->
     <div style="display: flex; gap: 12px;">
       <div class="bodega-resumen-card">
@@ -126,7 +137,8 @@
     bodegasSecundarias: [],
     secundariasPorPrincipal: new Map(),
     autoRefreshInterval: null,
-    connectionErrorCount: 0
+    connectionErrorCount: 0,
+    filtroBusqueda: ''
   };
   // Paginación en cliente para la vista de inventario
   estado.paginaActual = 1;
@@ -161,6 +173,49 @@
 
   function normalizarBodega(b) {
     return (b || '').toString().trim();
+  }
+
+  function normalizarTexto(valor) {
+    return (valor || '')
+      .toString()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase();
+  }
+
+  function obtenerInventarioFiltrado({
+    principal = document.getElementById('filtro-bodega-principal')?.value || 'todas',
+    secundaria = document.getElementById('filtro-bodega-secundaria')?.value || 'todas',
+    busqueda = document.getElementById('filtro-busqueda-material')?.value || estado.filtroBusqueda || ''
+  } = {}) {
+    let itemsFiltrados = [...(estado.inventario || [])];
+
+    if ((principal || 'todas') !== 'todas') {
+      itemsFiltrados = itemsFiltrados.filter(item => item.bodega_principal === principal);
+    }
+
+    if ((secundaria || 'todas') !== 'todas') {
+      itemsFiltrados = itemsFiltrados.filter(item => item.bodega_secundaria === secundaria);
+    }
+
+    const termino = normalizarTexto(busqueda);
+    if (termino) {
+      itemsFiltrados = itemsFiltrados.filter(item => {
+        const campos = [
+          item.material_codigo,
+          item.material_nombre,
+          item.tipo_material,
+          item.color,
+          item.bodega_principal,
+          item.bodega_secundaria,
+          item.ubicacion_nombre
+        ];
+        return campos.some(campo => normalizarTexto(campo).includes(termino));
+      });
+    }
+
+    return itemsFiltrados;
   }
 
   async function cargarInventarioDesdeSupabase() {
@@ -526,18 +581,8 @@
   async function exportXbodegaExcel(){
     try{
       await loadXlsxLib();
-      let inventario = estado.inventario || [];
+      let inventario = obtenerInventarioFiltrado();
       if(!inventario.length) return alert('No hay datos de inventario para exportar');
-
-      // Aplicar filtros actuales
-      const filtroPrincipal = document.getElementById('filtro-bodega-principal')?.value || 'todas';
-      const filtroSecundaria = document.getElementById('filtro-bodega-secundaria')?.value || 'todas';
-      if (filtroPrincipal !== 'todas') {
-        inventario = inventario.filter(item => item.bodega_principal === filtroPrincipal);
-      }
-      if (filtroSecundaria !== 'todas') {
-        inventario = inventario.filter(item => item.bodega_secundaria === filtroSecundaria);
-      }
 
       // Agrupar por bodega_principal, bodega_secundaria, ubicacion_nombre
       const grouped = {};
@@ -662,18 +707,15 @@
         console.warn('No se pudo cargar el logo:', e);
       }
 
-      let inventario = estado.inventario || [];
-      if(!inventario.length) return alert('No hay datos de inventario para exportar');
-
-      // Aplicar filtros actuales
       const filtroPrincipal = document.getElementById('filtro-bodega-principal')?.value || 'todas';
       const filtroSecundaria = document.getElementById('filtro-bodega-secundaria')?.value || 'todas';
-      if (filtroPrincipal !== 'todas') {
-        inventario = inventario.filter(item => item.bodega_principal === filtroPrincipal);
-      }
-      if (filtroSecundaria !== 'todas') {
-        inventario = inventario.filter(item => item.bodega_secundaria === filtroSecundaria);
-      }
+      const filtroBusqueda = document.getElementById('filtro-busqueda-material')?.value || '';
+      let inventario = obtenerInventarioFiltrado({
+        principal: filtroPrincipal,
+        secundaria: filtroSecundaria,
+        busqueda: filtroBusqueda
+      });
+      if(!inventario.length) return alert('No hay datos de inventario para exportar');
 
       // Header del documento
       doc.setFontSize(18);
@@ -974,14 +1016,12 @@
   function renderizarTabla(bodegaPrincipalFiltro, bodegaSecundariaFiltro) {
     try {
       console.log('renderizarTabla start', {totalInventario: (estado.inventario || []).length, paginaActual: estado.paginaActual, paginaTam: estado.paginaTam});
-      let itemsFiltrados = [...(estado.inventario || [])];
-
-    if ((bodegaPrincipalFiltro || 'todas') !== 'todas') {
-      itemsFiltrados = itemsFiltrados.filter(item => item.bodega_principal === bodegaPrincipalFiltro);
-    }
-    if ((bodegaSecundariaFiltro || 'todas') !== 'todas') {
-      itemsFiltrados = itemsFiltrados.filter(item => item.bodega_secundaria === bodegaSecundariaFiltro);
-    }
+      const busqueda = document.getElementById('filtro-busqueda-material')?.value || estado.filtroBusqueda || '';
+      let itemsFiltrados = obtenerInventarioFiltrado({
+        principal: bodegaPrincipalFiltro,
+        secundaria: bodegaSecundariaFiltro,
+        busqueda
+      });
 
     // KPIs por material (sin duplicar existencia por contenedor/bodega)
     const materialAgg = new Map();
@@ -1133,14 +1173,25 @@
   // === EVENTOS ===
   document.getElementById('filtro-bodega-principal').addEventListener('change', (e) => {
     const principal = e.target.value;
+    estado.paginaActual = 1;
     poblarSelectBodegaSecundaria(principal);
     renderizarTabla(principal, document.getElementById('filtro-bodega-secundaria')?.value || 'todas');
   });
 
   document.getElementById('filtro-bodega-secundaria').addEventListener('change', (e) => {
+    estado.paginaActual = 1;
     renderizarTabla(
       document.getElementById('filtro-bodega-principal')?.value || 'todas',
       e.target.value
+    );
+  });
+
+  document.getElementById('filtro-busqueda-material')?.addEventListener('input', (e) => {
+    estado.filtroBusqueda = e.target.value || '';
+    estado.paginaActual = 1;
+    renderizarTabla(
+      document.getElementById('filtro-bodega-principal')?.value || 'todas',
+      document.getElementById('filtro-bodega-secundaria')?.value || 'todas'
     );
   });
 
@@ -1184,16 +1235,12 @@
     const textoSecundaria = selectSecundaria?.selectedOptions?.[0]?.text || 'Todas';
     const fecha = new Date().toLocaleDateString('es-NI');
 
-    let inventario = estado.inventario || [];
+    let inventario = obtenerInventarioFiltrado({
+      principal: valorPrincipal,
+      secundaria: valorSecundaria,
+      busqueda: document.getElementById('filtro-busqueda-material')?.value || ''
+    });
     if(!inventario.length) return alert('No hay datos de inventario para exportar');
-
-    // Aplicar filtros
-    if (valorPrincipal !== 'todas') {
-      inventario = inventario.filter(item => item.bodega_principal === valorPrincipal);
-    }
-    if (valorSecundaria !== 'todas') {
-      inventario = inventario.filter(item => item.bodega_secundaria === valorSecundaria);
-    }
 
     // Agrupar por bodega_secundaria, luego por ubicacion_codigo
     const grouped = {};
@@ -1300,6 +1347,8 @@
 
 
   // === NAVEGACIÓN RÁPIDA ===
+  document.getElementById('btn-exportar-xbodega-xlsx')?.addEventListener('click', exportXbodegaExcel);
+
   document.querySelectorAll('.bodega-nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const eventoFake = { target: { dataset: { vista: btn.dataset.vista } } };

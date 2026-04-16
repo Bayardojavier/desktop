@@ -1009,7 +1009,14 @@
     async function actualizarInventario(itemsDevolucion, referenciaDocumento, responsable, fechaMovimiento, observacionesBase) {
       // Intentar devolver a las mismas bodegas (y ubicación) de donde se despachó.
       // Esto mantiene el stock consistente en el modelo por bodega.
-      let despachosPorCodigo = new Map();
+      const cacheMovimientosDespacho = new Map();
+      function sanitizarUsuarioId(value) {
+        const raw = String(value || '').trim();
+        return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(raw)
+          ? raw
+          : null;
+      }
+      const usuarioIdValido = sanitizarUsuarioId(window.currentUser?.id);
       
       // Consultar información del catálogo para completar datos de movimientos
       const codigosUnicos = Array.from(new Set(itemsDevolucion.map(i => i.codigo).filter(Boolean)));
@@ -1042,12 +1049,13 @@
         }
       }
       
-      try {
-        // Obtener el número de despacho para buscar movimientos originales
-        const numeroDespacho = estado.despachoSeleccionado?.numero_despacho || 
-                              (referenciaDocumento.includes(' ') ? referenciaDocumento.split(' ')[1] : referenciaDocumento);
-        
-        // Consultar movimientos de despacho en las 3 tablas separadas
+      async function obtenerMovimientosDespacho(numeroDespacho) {
+        const key = String(numeroDespacho || '').trim();
+        if (!key) return [];
+        if (cacheMovimientosDespacho.has(key)) {
+          return cacheMovimientosDespacho.get(key);
+        }
+
         const tablasMovimientos = ['movimientos_bodega_audiovisual', 'movimientos_bodega_hierros', 'movimientos_bodega_consumibles'];
         let movsDesp = [];
 
@@ -1055,7 +1063,7 @@
           const { data: movData, error: errMov } = await supabase
             .from(tabla)
             .select('material_codigo, bodega_principal, bodega_secundaria, cantidad, signo, ubicacion_codigo, ubicacion_nombre, estado, material_nombre_base, material_nombre_numero, precio, fecha_compra, usuario_id')
-            .eq('referencia_documento', numeroDespacho)  // Usar número de despacho real
+            .eq('referencia_documento', key)
             .eq('tipo_movimiento', 'despacho');
 
           if (errMov) {
@@ -1066,41 +1074,243 @@
           movsDesp = movsDesp.concat(movData || []);
         }
 
-        movsDesp.forEach(m => {
-          const c = (m?.material_codigo || '').toString().trim();
-          if (!c) return;
-          const arr = despachosPorCodigo.get(c) || [];
+        cacheMovimientosDespacho.set(key, movsDesp);
+        return movsDesp;
+      }
 
-          // Si el movimiento de despacho no tiene ubicación, intentar obtenerla de movimientos anteriores
-          let ubicacion_codigo = m.ubicacion_codigo;
-          let ubicacion_nombre = m.ubicacion_nombre;
+      async function obtenerMetaDespacho(item) {
+        if (!item?.despacho_id) return null;
+        try {
+          const { data, error } = await supabase
+            .from('despachos_logistica')
+            .select('id, numero_despacho, evento, encargado_evento, fecha_despacho')
+            .eq('id', item.despacho_id)
+            .single();
 
-          if (!ubicacion_codigo || !ubicacion_nombre) {
-            // Buscar ubicación en movimientos anteriores del mismo material
-            // Nota: Esta es una búsqueda síncrona simplificada, en producción podría optimizarse
-            console.warn(`Movimiento de despacho ${m.id} no tiene ubicación, intentando buscar en movimientos anteriores`);
+          if (error) {
+            console.warn('No se pudo cargar metadata del despacho:', error);
+            return null;
           }
 
-          arr.push({
-            bodega_principal: m.bodega_principal || getBodegasPorDefecto(c).principal,
-            bodega_secundaria: m.bodega_secundaria || catalogoData.get(c)?.bodega_secundaria || 'General',
-            ubicacion_codigo: ubicacion_codigo || catalogoData.get(c)?.contenedor,
-            ubicacion_nombre: ubicacion_nombre || catalogoData.get(c)?.contenedor,
-            // cantidad despachada en esa bodega (normalmente signo=-1)
+          return data || null;
+        } catch (error) {
+          console.warn('No se pudo resolver metadata del despacho:', error);
+          return null;
+        }
+      }
+
+      async function obtenerUltimaUbicacionMaterial(codigo) {
+        try {
+          const tablaUbicacion = getTablaMovimientos(codigo);
+          const { data: ultimosMovs, error: errUbic } = await supabase
+            .from(tablaUbicacion)
+            .select('ubicacion_codigo, ubicacion_nombre')
+            .eq('material_codigo', codigo)
+            .neq('ubicacion_codigo', null)
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+          if (!errUbic && ultimosMovs && ultimosMovs.length > 0) {
+            return {
+              codigo: ultimosMovs[0].ubicacion_codigo,
+              nombre: ultimosMovs[0].ubicacion_nombre
+            };
+          }
+        } catch (error) {
+          console.warn('No se pudo obtener ubicación del material:', error);
+        }
+
+        return { codigo: null, nombre: null };
+      }
+
+      async function insertarMovimientosPorTabla(movimientos) {
+        if (!movimientos.length) return [];
+
+        const movimientosPorTabla = {
+          movimientos_bodega_audiovisual: [],
+          movimientos_bodega_hierros: [],
+          movimientos_bodega_consumibles: []
+        };
+
+        movimientos.forEach(mov => {
+          const tabla = getTablaMovimientos(mov.material_codigo);
+          movimientosPorTabla[tabla].push(mov);
+        });
+
+        let movimientosInsertados = [];
+        for (const [tabla, movs] of Object.entries(movimientosPorTabla)) {
+          if (!movs.length) continue;
+          const { data: insertados, error: errorTabla } = await supabase
+            .from(tabla)
+            .insert(movs)
+            .select();
+
+          if (errorTabla) {
+            throw new Error(`Error al registrar movimientos en ${tabla}: ${errorTabla.message || 'Error desconocido'}`);
+          }
+
+          movimientosInsertados = movimientosInsertados.concat(insertados || []);
+        }
+
+        return movimientosInsertados;
+      }
+
+      async function insertarFaltantesConFallback(registros) {
+        if (!registros.length) return;
+
+        let errorFaltante = null;
+        const { error: error1 } = await supabase
+          .from('materiales_faltantes')
+          .insert(registros);
+        errorFaltante = error1;
+
+        if (errorFaltante && (errorFaltante.code === '42703' || /fecha_devolucion/i.test(errorFaltante.message || ''))) {
+          const sinFecha = registros.map(({ fecha_devolucion, ...rest }) => rest);
+          const { error: error2 } = await supabase
+            .from('materiales_faltantes')
+            .insert(sinFecha);
+          errorFaltante = error2;
+        }
+
+        if (errorFaltante) {
+          throw new Error(`Error al registrar material faltante: ${errorFaltante.message || 'Error desconocido'}`);
+        }
+      }
+
+      async function resolverContextoItem(item) {
+        const codigo = String(item.codigo || '').trim();
+        const nombre = item.nombre || item.material_nombre || codigo;
+        const despachoMeta = await obtenerMetaDespacho(item);
+        const numeroDespachoOrigen = String(despachoMeta?.numero_despacho || item.numero_despacho || estado.despachoSeleccionado?.numero_despacho || '').trim();
+        const movimientosDespacho = await obtenerMovimientosDespacho(numeroDespachoOrigen);
+        const datosCatalogo = catalogoData.get(codigo) || {};
+
+        let itemDespachoActual = null;
+        if (item.id) {
+          try {
+            const { data, error } = await supabase
+              .from('items_despacho_logistica')
+              .select('cantidad_despachada, cantidad_devuelta')
+              .eq('id', item.id)
+              .single();
+
+            if (!error) {
+              itemDespachoActual = data || null;
+            }
+          } catch (error) {
+            console.warn(`No se pudo leer estado del item ${codigo}:`, error);
+          }
+        }
+
+        const cantidadDespachadaOriginal = Number(itemDespachoActual?.cantidad_despachada ?? item.cantidadDespachada ?? item.cantidadPendiente ?? item.cantidadRecibida ?? 0) || 0;
+        const cantidadDevueltaPrevia = Number(itemDespachoActual?.cantidad_devuelta) || 0;
+
+        const origenesBase = movimientosDespacho
+          .filter(m => String(m?.material_codigo || '').trim() === codigo)
+          .map(m => ({
+            bodega_principal: m.bodega_principal || getBodegasPorDefecto(codigo).principal,
+            bodega_secundaria: m.bodega_secundaria || datosCatalogo.bodega_secundaria || 'General',
+            ubicacion_codigo: m.ubicacion_codigo || datosCatalogo.contenedor,
+            ubicacion_nombre: m.ubicacion_nombre || datosCatalogo.contenedor,
             cantidad_abs: Math.abs(Number(m.cantidad) || 0),
-            // Campos adicionales del movimiento original, con fallback al catálogo
             estado: m.estado,
             material_nombre_base: m.material_nombre_base,
             material_nombre_numero: m.material_nombre_numero,
             precio: m.precio,
             fecha_compra: m.fecha_compra,
             usuario_id: m.usuario_id
+          }))
+          .filter(o => (Number(o.cantidad_abs) || 0) > 0);
+
+        let devueltoPendienteDeAplicar = Math.max(0, cantidadDevueltaPrevia);
+        const origenesDisponibles = origenesBase.map(origen => {
+          const disponibleOrigen = Math.max(0, (Number(origen.cantidad_abs) || 0) - Math.min(Number(origen.cantidad_abs) || 0, devueltoPendienteDeAplicar));
+          devueltoPendienteDeAplicar = Math.max(0, devueltoPendienteDeAplicar - (Number(origen.cantidad_abs) || 0));
+          return {
+            ...origen,
+            cantidad_disponible_retorno: disponibleOrigen
+          };
+        }).filter(o => (Number(o.cantidad_disponible_retorno) || 0) > 0);
+
+        return {
+          codigo,
+          nombre,
+          numeroDespachoOrigen,
+          evento: despachoMeta?.evento || estado.despachoSeleccionado?.evento || estado.eventoSeleccionado?.nombre || 'N/A',
+          encargadoEvento: despachoMeta?.encargado_evento || estado.despachoSeleccionado?.encargado_evento || 'N/A',
+          fechaDespachoOrigen: despachoMeta?.fecha_despacho || item.origenFecha || estado.despachoSeleccionado?.fecha_despacho || null,
+          cantidadDespachadaOriginal,
+          datosCatalogo,
+          origenesDisponibles
+        };
+      }
+
+      async function construirMovimientosDesdeContexto(contexto, cantidad, opciones) {
+        const movimientos = [];
+        let restante = Number(cantidad) || 0;
+
+        for (const origen of (contexto.origenesDisponibles || [])) {
+          if (restante <= 0) break;
+          const disponible = Number(origen.cantidad_disponible_retorno) || 0;
+          if (disponible <= 0) continue;
+
+          const usar = Math.min(restante, disponible);
+          movimientos.push({
+            material_codigo: contexto.codigo,
+            material_nombre: contexto.nombre,
+            bodega_principal: origen.bodega_principal,
+            bodega_secundaria: origen.bodega_secundaria,
+            tipo_movimiento: opciones.tipo_movimiento,
+            cantidad: usar,
+            signo: opciones.signo,
+            referencia_documento: referenciaDocumento,
+            referencia_tipo: opciones.referencia_tipo,
+            responsable: responsable || 'No especificado',
+            fecha_movimiento: fechaMovimiento,
+            observaciones: opciones.observaciones,
+            ubicacion_codigo: origen.ubicacion_codigo,
+            ubicacion_nombre: origen.ubicacion_nombre,
+            estado: origen.estado || 'completado',
+            material_nombre_base: origen.material_nombre_base || contexto.datosCatalogo.material_nombre_base,
+            material_nombre_numero: origen.material_nombre_numero || contexto.datosCatalogo.material_nombre_numero,
+            precio: origen.precio || contexto.datosCatalogo.precio || 0,
+            fecha_compra: origen.fecha_compra || contexto.datosCatalogo.fecha_compra,
+            usuario_id: sanitizarUsuarioId(origen.usuario_id) || usuarioIdValido
           });
-          despachosPorCodigo.set(c, arr);
-        });
-      } catch (e) {
-        console.warn('No se pudieron cargar movimientos de despacho para mapear bodegas:', e);
-        despachosPorCodigo = new Map();
+          restante -= usar;
+        }
+
+        if (restante > 0 || movimientos.length === 0) {
+          const bodegasDefecto = getBodegasPorDefecto(contexto.codigo);
+          const ubicacionEncontrada = await obtenerUltimaUbicacionMaterial(contexto.codigo);
+          const ubicacionCodigo = ubicacionEncontrada.codigo || contexto.datosCatalogo.contenedor || null;
+          const ubicacionNombre = ubicacionEncontrada.nombre || contexto.datosCatalogo.contenedor || null;
+
+          movimientos.push({
+            material_codigo: contexto.codigo,
+            material_nombre: contexto.nombre,
+            bodega_principal: bodegasDefecto.principal,
+            bodega_secundaria: contexto.datosCatalogo.bodega_secundaria || bodegasDefecto.secundaria,
+            tipo_movimiento: opciones.tipo_movimiento,
+            cantidad: restante > 0 ? restante : Number(cantidad) || 0,
+            signo: opciones.signo,
+            referencia_documento: referenciaDocumento,
+            referencia_tipo: opciones.referencia_tipo,
+            responsable: responsable || 'No especificado',
+            fecha_movimiento: fechaMovimiento,
+            observaciones: opciones.observaciones,
+            ubicacion_codigo: ubicacionCodigo,
+            ubicacion_nombre: ubicacionNombre,
+            estado: 'completado',
+            material_nombre_base: contexto.datosCatalogo.material_nombre_base,
+            material_nombre_numero: contexto.datosCatalogo.material_nombre_numero,
+            precio: contexto.datosCatalogo.precio || 0,
+            fecha_compra: contexto.datosCatalogo.fecha_compra,
+            usuario_id: usuarioIdValido
+          });
+        }
+
+        return movimientos.filter(mov => (Number(mov.cantidad) || 0) > 0);
       }
 
       for (const item of itemsDevolucion) {
@@ -1109,28 +1319,41 @@
 
         // Determinar el tipo de devolución basado en la observación
         const tipoObservacion = item.observacion || '';
+        const contextoItem = await resolverContextoItem(item);
 
         if (tipoObservacion === 'Dañado') {
-          // Insertar en tabla de materiales dañados
           try {
-            const datosDanado = {
-              material_codigo: String(item.codigo || '').trim(),
-              material_nombre: item.nombre || item.material_nombre || item.codigo,
-              cantidad: cantidad,
-              numero_despacho: referenciaDocumento.split(' ')[1] || referenciaDocumento, // Extraer número del despacho
-              evento: estado.despachoSeleccionado?.evento || estado.eventoSeleccionado?.nombre || 'N/A',
-              encargado_evento: estado.despachoSeleccionado?.encargado_evento || 'N/A',
-              fecha_despacho: estado.despachoSeleccionado?.fecha_despacho || null,
+            const observacionMovimiento = `Devolución dañada ${referenciaDocumento}.${item.observacionDetalle ? ` ${item.observacionDetalle}` : ''}`;
+            const movimientosDanado = await construirMovimientosDesdeContexto(contextoItem, cantidad, {
+              tipo_movimiento: 'devolucion',
+              signo: 1,
+              referencia_tipo: 'devolucion',
+              observaciones: observacionMovimiento
+            });
+
+            await insertarMovimientosPorTabla(movimientosDanado);
+
+            const registrosDanado = movimientosDanado.map(mov => ({
+              material_codigo: mov.material_codigo,
+              material_nombre: mov.material_nombre,
+              cantidad: mov.cantidad,
+              bodega_principal: mov.bodega_principal,
+              bodega_secundaria: mov.bodega_secundaria,
+              ubicacion_codigo: mov.ubicacion_codigo,
+              ubicacion_nombre: mov.ubicacion_nombre,
+              numero_despacho: contextoItem.numeroDespachoOrigen || null,
+              evento: contextoItem.evento,
+              encargado_evento: contextoItem.encargadoEvento,
+              fecha_despacho: contextoItem.fechaDespachoOrigen,
               fecha_devolucion: fechaMovimiento,
-              responsable_devolucion: responsable,
+              responsable_devolucion: responsable || 'No especificado',
               observacion: 'Dañado',
-              observacion_detalle: item.observacionDetalle || '',
-              usuario_id: null
-            };
+              observacion_detalle: item.observacionDetalle || ''
+            }));
 
             const { error: errorDanado } = await supabase
               .from('materiales_danados')
-              .insert(datosDanado);
+              .insert(registrosDanado);
 
             if (errorDanado) {
               console.error('Error insertando material dañado:', errorDanado);
@@ -1146,42 +1369,37 @@
         }
 
         if (tipoObservacion === 'Faltante') {
-          // Insertar en tabla de materiales faltantes
           try {
-            const datosFaltanteBase = {
-              material_codigo: String(item.codigo || '').trim(),
-              material_nombre: item.nombre || item.material_nombre || item.codigo,
-              cantidad_faltante: cantidad,
-              cantidad_despachada: item.cantidadDespachada || cantidad, // Cantidad que se despachó originalmente
-              numero_despacho: referenciaDocumento.split(' ')[1] || referenciaDocumento,
-              evento: estado.despachoSeleccionado?.evento || estado.eventoSeleccionado?.nombre || 'N/A',
-              encargado_evento: estado.despachoSeleccionado?.encargado_evento || 'N/A',
-              fecha_despacho: estado.despachoSeleccionado?.fecha_despacho || null,
-              responsable_devolucion: responsable,
+            const observacionMovimiento = `Faltante registrado en devolución ${referenciaDocumento}.${item.observacionDetalle ? ` ${item.observacionDetalle}` : ''}`;
+            const movimientosFaltante = await construirMovimientosDesdeContexto(contextoItem, cantidad, {
+              tipo_movimiento: 'baja',
+              signo: -1,
+              referencia_tipo: 'devolucion_faltante',
+              observaciones: observacionMovimiento
+            });
+
+            await insertarMovimientosPorTabla(movimientosFaltante);
+
+            const registrosFaltante = movimientosFaltante.map(mov => ({
+              material_codigo: mov.material_codigo,
+              material_nombre: mov.material_nombre,
+              cantidad_faltante: mov.cantidad,
+              cantidad_despachada: mov.cantidad,
+              bodega_principal: mov.bodega_principal,
+              bodega_secundaria: mov.bodega_secundaria,
+              ubicacion_codigo: mov.ubicacion_codigo,
+              ubicacion_nombre: mov.ubicacion_nombre,
+              numero_despacho: contextoItem.numeroDespachoOrigen || null,
+              evento: contextoItem.evento,
+              encargado_evento: contextoItem.encargadoEvento,
+              fecha_despacho: contextoItem.fechaDespachoOrigen,
+              fecha_devolucion: fechaMovimiento,
+              responsable_devolucion: responsable || 'No especificado',
               observacion: 'Faltante',
-              observacion_detalle: item.observacionDetalle || '',
-              usuario_id: null
-            };
+              observacion_detalle: item.observacionDetalle || ''
+            }));
 
-            let errorFaltante = null;
-            // 1) Intentar con fecha_devolucion si existe
-            const { error: error1 } = await supabase
-              .from('materiales_faltantes')
-              .insert({ ...datosFaltanteBase, fecha_devolucion: fechaMovimiento });
-            errorFaltante = error1;
-
-            // 2) Si la columna no existe, reintentar sin ella
-            if (errorFaltante && (errorFaltante.code === '42703' || /fecha_devolucion/i.test(errorFaltante.message || ''))) {
-              const { error: error2 } = await supabase
-                .from('materiales_faltantes')
-                .insert(datosFaltanteBase);
-              errorFaltante = error2;
-            }
-
-            if (errorFaltante) {
-              console.error('Error insertando material faltante:', errorFaltante);
-              throw new Error(`Error al registrar material faltante ${item.nombre}`);
-            }
+            await insertarFaltantesConFallback(registrosFaltante);
 
             console.log(`✅ Material faltante registrado: ${item.nombre}`);
           } catch (error) {
@@ -1193,140 +1411,14 @@
 
         // Procesamiento normal para materiales en buen estado
         try {
-          const codigo = String(item.codigo || '').trim();
-          const nombre = item.nombre || item.material_nombre || codigo;
-          let restante = Number(cantidad) || 0;
-
-          const origenes = (despachosPorCodigo.get(codigo) || [])
-            .filter(o => (Number(o.cantidad_abs) || 0) > 0);
-
-          // Devolver a las mismas bodegas en el orden en que aparecen.
-          const movimientos = [];
-          for (const o of origenes) {
-            if (restante <= 0) break;
-            const disp = Number(o.cantidad_abs) || 0;
-            if (disp <= 0) continue;
-            const usar = Math.min(restante, disp);
-            // Obtener datos del catálogo para este material
-            const datosCatalogo = catalogoData.get(codigo) || {};
-            
-            movimientos.push({
-              material_codigo: codigo,
-              material_nombre: nombre,
-              bodega_principal: o.bodega_principal,
-              bodega_secundaria: o.bodega_secundaria,
-              tipo_movimiento: 'devolucion',
-              cantidad: usar,
-              signo: 1,
-              referencia_documento: referenciaDocumento,
-              referencia_tipo: 'devolucion',
-              responsable: responsable || 'No especificado',
-              fecha_movimiento: fechaMovimiento,
-              observaciones: item.observacion || item.observacionDetalle || observacionesBase || 'Devolución',
-              ubicacion_codigo: o.ubicacion_codigo,
-              ubicacion_nombre: o.ubicacion_nombre,
-              // Campos adicionales copiados del movimiento original, con fallback al catálogo
-              estado: o.estado || 'completado',
-              material_nombre_base: o.material_nombre_base || datosCatalogo.material_nombre_base,
-              material_nombre_numero: o.material_nombre_numero || datosCatalogo.material_nombre_numero,
-              precio: o.precio || datosCatalogo.precio || 0,
-              fecha_compra: o.fecha_compra || datosCatalogo.fecha_compra,
-              usuario_id: o.usuario_id
-            });
-            restante -= usar;
-          }
-
-          // Fallback si no se encontró origen por bodega
-          if (movimientos.length === 0) {
-            const bodegasDefecto = getBodegasPorDefecto(codigo);
-
-            // Intentar obtener ubicación desde movimientos recientes del mismo material
-            let ubicacionEncontrada = { codigo: null, nombre: null };
-            try {
-              const tablaUbicacion = getTablaMovimientos(codigo);
-              const { data: ultimosMovs, error: errUbic } = await supabase
-                .from(tablaUbicacion)
-                .select('ubicacion_codigo, ubicacion_nombre')
-                .eq('material_codigo', codigo)
-                .neq('ubicacion_codigo', null)
-                .order('created_at', { ascending: false })
-                .limit(1);
-
-              if (!errUbic && ultimosMovs && ultimosMovs.length > 0) {
-                ubicacionEncontrada = {
-                  codigo: ultimosMovs[0].ubicacion_codigo,
-                  nombre: ultimosMovs[0].ubicacion_nombre
-                };
-              }
-            } catch (e) {
-              console.warn('No se pudo obtener ubicación del material:', e);
-            }
-
-            // Obtener datos del catálogo para este material
-            const datosCatalogo = catalogoData.get(codigo) || {};
-
-            // Si no se encontró ubicación en movimientos, usar el contenedor del catálogo
-            if (!ubicacionEncontrada.nombre && datosCatalogo.contenedor) {
-              ubicacionEncontrada.nombre = datosCatalogo.contenedor;
-              ubicacionEncontrada.codigo = datosCatalogo.contenedor; // Usar contenedor como código también
-            }
-
-            movimientos.push({
-              material_codigo: codigo,
-              material_nombre: nombre,
-              bodega_principal: bodegasDefecto.principal,
-              bodega_secundaria: datosCatalogo.bodega_secundaria || bodegasDefecto.secundaria,
-              tipo_movimiento: 'devolucion',
-              cantidad: restante,
-              signo: 1,
-              referencia_documento: referenciaDocumento,
-              referencia_tipo: 'devolucion',
-              responsable: responsable || 'No especificado',
-              fecha_movimiento: fechaMovimiento,
-              observaciones: item.observacion || item.observacionDetalle || observacionesBase || 'Devolución',
-              ubicacion_codigo: ubicacionEncontrada.codigo,
-              ubicacion_nombre: ubicacionEncontrada.nombre,
-              // Campos adicionales con valores por defecto
-              estado: 'completado',
-              material_nombre_base: datosCatalogo.material_nombre_base,
-              material_nombre_numero: datosCatalogo.material_nombre_numero,
-              precio: datosCatalogo.precio || 0,
-              fecha_compra: datosCatalogo.fecha_compra,
-              usuario_id: null
-            });
-            restante = 0;
-          }
-
-          // 3. Insertar movimientos en las tablas separadas según el tipo de material
-          const movimientosPorTabla = {
-            movimientos_bodega_audiovisual: [],
-            movimientos_bodega_hierros: [],
-            movimientos_bodega_consumibles: []
-          };
-
-          // Agrupar movimientos por tabla
-          movimientos.forEach(mov => {
-            const tabla = getTablaMovimientos(mov.material_codigo);
-            movimientosPorTabla[tabla].push(mov);
+          const movimientos = await construirMovimientosDesdeContexto(contextoItem, cantidad, {
+            tipo_movimiento: 'devolucion',
+            signo: 1,
+            referencia_tipo: 'devolucion',
+            observaciones: item.observacion || item.observacionDetalle || observacionesBase || 'Devolución'
           });
 
-          // Insertar en cada tabla
-          let movimientosInsertados = [];
-          for (const [tabla, movs] of Object.entries(movimientosPorTabla)) {
-            if (movs.length > 0) {
-              const { data: insertados, error: errorTabla } = await supabase
-                .from(tabla)
-                .insert(movs)
-                .select();
-
-              if (errorTabla) {
-                console.error(`Error al registrar movimientos en ${tabla}:`, errorTabla);
-              } else {
-                console.log(`✅ Movimientos registrados en ${tabla}:`, insertados);
-                movimientosInsertados = movimientosInsertados.concat(insertados || []);
-              }
-            }
-          }
+          const movimientosInsertados = await insertarMovimientosPorTabla(movimientos);
 
           if (movimientosInsertados.length === 0) {
             console.warn('No se registraron movimientos en ninguna tabla');
@@ -1544,6 +1636,13 @@
     // 🔹 LÓGICA PRINCIPAL
     // =============================================================================
     async function inicializarEventos() {
+      function resetearBotonGuardar(habilitado = false) {
+        const boton = document.getElementById("btnGuardar");
+        if (!boton) return;
+        boton.disabled = !habilitado;
+        boton.textContent = "Guardar Devolución";
+      }
+
       // Eventos de pestañas del panel lateral
       document.getElementById("tabLateralDespachos").addEventListener("click", () => cambiarPestanaLateral('despachos'));
       document.getElementById("tabLateralEventos").addEventListener("click", () => cambiarPestanaLateral('eventos'));
@@ -1754,8 +1853,7 @@
           console.error('Error guardando devolución:', error);
 
           // Reactivar botón en caso de error
-          btnGuardar.disabled = false;
-          btnGuardar.textContent = "Guardar Devolución";
+          resetearBotonGuardar(true);
 
           // Ocultar modal de espera
           document.getElementById("modalEspera").style.display = "none";
@@ -1803,7 +1901,7 @@
           estado.itemsDevolucion = [];
           document.getElementById("referenciaSeleccionada").value = "";
           document.getElementById("tablaDevolucion").innerHTML = "";
-          document.getElementById("btnGuardar").disabled = true;
+          resetearBotonGuardar(false);
         }
       });
 
@@ -1818,7 +1916,7 @@
         estado.itemsDevolucion = [];
         document.getElementById("referenciaSeleccionada").value = "";
         document.getElementById("tablaDevolucion").innerHTML = "";
-        document.getElementById("btnGuardar").disabled = true;
+        resetearBotonGuardar(false);
       });
 
       document.getElementById("btnLimpiar").addEventListener("click", () => {

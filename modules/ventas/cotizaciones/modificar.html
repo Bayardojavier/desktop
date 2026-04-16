@@ -413,7 +413,16 @@
             return [];
           }
 
-          return data || [];
+          // Transformar los campos precio_a, precio_b, precio_c en objeto precios
+          return (data || []).map(s => ({
+            id: s.id,
+            nombre: s.nombre,
+            precios: {
+              A: s.precio_a ?? 0,
+              B: s.precio_b ?? 0,
+              C: s.precio_c ?? 0
+            }
+          }));
         } catch (err) {
           console.error('Error:', err);
           return [];
@@ -570,7 +579,7 @@
                   // Al cambiar servicio, resetear nivel a A y actualizar precio
                   serviciosEditables[idx].nivel = 'A';
                   const servicio = cargarServiciosDisponibles().find(s => s.id === selectedServiceId);
-                  if (servicio) serviciosEditables[idx].precioUnitario = servicio.precios.A;
+                  if (servicio) serviciosEditables[idx].precioUnitario = servicio?.precios?.A ?? 0;
                 }
                 else if (e.currentTarget.classList.contains('campo-nivel')) {
                   // Al cambiar nivel, obtener el servicio según el select actual y actualizar precio
@@ -825,6 +834,30 @@
 
         cotizacionOriginal = { ...cotizacionOriginal, ...cotizacionActualizada };
 
+        // =======================================================================
+        // 🔹 SINCRONIZAR CON EVENTO VINCULADO (si existe)
+        // =======================================================================
+        if (cotizacionOriginal.eventoid) {
+          try {
+            // Actualizar la descripción del evento con los nuevos servicios
+            const serviciosDescripcion = serviciosActualizados.map(s => 
+              `${s.nombre} (Cantidad: ${s.cantidad})`
+            );
+
+            await window.supabaseClient
+              .from('eventos')
+              .update({
+                descripcion: serviciosDescripcion
+              })
+              .eq('id', cotizacionOriginal.eventoid);
+
+            console.log('✅ Evento sincronizado con la cotización actualizada');
+          } catch (eventoErr) {
+            console.warn('⚠️ No se pudo sincronizar el evento:', eventoErr);
+            // No es crítico, continuar
+          }
+        }
+
         modoEdicion = false;
         document.getElementById('btn-editar-cotizacion').style.display = 'inline-block';
         document.getElementById('btn-guardar-cotizacion').style.display = 'none';
@@ -907,13 +940,16 @@
       const serviciosDisponibles = cargarServiciosDisponibles();
       if (!serviciosDisponibles.length) return mostrarMensaje('⚠️ No hay servicios disponibles.', false);
 
+      const primerServicio = serviciosDisponibles[0];
+      const precioA = primerServicio?.precios?.A ?? 0;
+
       serviciosEditables.push({
-        servicioId: serviciosDisponibles[0].id,
+        servicioId: primerServicio.id,
         nivel: 'A',
         cantidad: 1,
         descuentoTipo: 'monto',
         descuentoValor: 0,
-        precioUnitario: serviciosDisponibles[0].precios.A || 0
+        precioUnitario: precioA
       });
       renderServicios();
     });

@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Solicitud de Propuesta - Sistema de Gestión de Inventario</title>
+  <style>
+    :root {
+      --primary: #1e40af;
+      --secondary: #3b82f6;
+      --success: #16a34a;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: white;
+      min-height: 100vh;
+      padding: 10px;
+      color: var(--text);
+      font-size: 11px;
+    }
+
+    .container {
+      max-width: 100%;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 40px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+
+    .header h1 {
+      color: var(--primary);
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+
+    .header .subtitle {
+      color: var(--text-muted);
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+
+    .header .info-box {
+      background: #eff6ff;
+      border-left: 4px solid var(--secondary);
+      padding: 16px 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+
+    .header .info-box p {
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .company-section {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 30px;
+      margin-bottom: 25px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+
+    .company-section h2 {
+      color: var(--primary);
+      font-size: 22px;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .company-section p {
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 10px;
+    }
+
+    .module-section {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 30px;
+      margin-bottom: 25px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+
+    .module-header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .module-icon {
+      font-size: 32px;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border-radius: 10px;
+      color: white;
+    }
+
+    .module-title h2 {
+      color: var(--primary);
+      font-size: 22px;
+      margin-bottom: 5px;
+    }
+
+    .module-title p {
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .requirements-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .requirements-list li {
+      padding: 12px 16px;
+      margin-bottom: 10px;
+      background: #f8fafc;
+      border-left: 4px solid var(--secondary);
+      border-radius: 0 8px 8px 0;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .requirements-list li strong {
+      color: var(--primary);
+    }
+
+    .requirements-list li.critical {
+      border-left-color: var(--danger);
+      background: #fef2f2;
+    }
+
+    .requirements-list li.critical::before {
+      content: "⚠️ ";
+    }
+
+    .requirements-list li.important {
+      border-left-color: var(--warning);
+      background: #fffbeb;
+    }
+
+    .requirements-list li.important::before {
+      content: "📌 ";
+    }
+
+    .requirements-list li.normal::before {
+      content: "✅ ";
+    }
+
+    .tech-requirements {
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+
+    .tech-requirements h3 {
+      color: var(--primary);
+      font-size: 18px;
+      margin-bottom: 15px;
+    }
+
+    .tech-requirements ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .tech-requirements li {
+      padding: 8px 0;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .tech-requirements li::before {
+      content: "▸ ";
+      color: var(--secondary);
+      font-weight: bold;
+    }
+
+    .timeline-section {
+      background: white;
+      border: 2px solid var(--primary);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+
+    .timeline-section h3 {
+      color: var(--primary);
+      margin-bottom: 15px;
+    }
+    
+    .timeline-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+    }
+    
+    .timeline-card {
+      background: white;
+      border: 2px solid var(--secondary);
+      border-radius: 8px;
+      padding: 15px;
+    }
+    
+    .timeline-card .number {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 5px;
+    }
+    
+    .timeline-card .label {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .contact-section {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 30px;
+      margin-top: 25px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+
+    .contact-section h3 {
+      color: var(--primary);
+      font-size: 20px;
+      margin-bottom: 15px;
+    }
+
+    .contact-section p {
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 15px;
+    }
+
+    .btn-print {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: var(--success);
+      color: white;
+      border: none;
+      padding: 16px 24px;
+      border-radius: 50px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(22, 163, 74, 0.4);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-print:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 30px rgba(22, 163, 74, 0.5);
+    }
+
+    @page {
+      size: auto;
+      margin: 10mm;
+    }
+    
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+        font-size: 10px;
+      }
+      .btn-print {
+        display: none;
+      }
+      .module-section, .header, .timeline-section, .contact-section, .company-section {
+        box-shadow: none;
+        break-inside: avoid;
+        page-break-inside: avoid;
+        margin-bottom: 10px;
+        padding: 15px;
+      }
+      .container {
+        max-width: 100%;
+        width: 100%;
+      }
+      .requirements-list li, .tech-requirements, .timeline-card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+      .header, .module-section, .company-section {
+        padding: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>📋 Solicitud de Propuesta Técnica y Económica</h1>
+      <p class="subtitle">Sistema de Gestión de Inventario y Bodega</p>
+      
+      <div class="info-box">
+        <p>
+          <strong>Objeto:</strong> Adquisición de software para gestión de inventario/bodega con integración contable.
+          <br/><br/>
+          <strong>Empresa:</strong> Absolute de Nicaragua
+          <br/>
+          <strong>Fecha:</strong> <script>document.write(new Date().toLocaleDateString('es-NI', { year: 'numeric', month: 'long', day: 'numeric' }))</script>
+          <br/><br/>
+          Esta documento describe los requerimientos funcionales y técnicos que debe cumplir el software a proponer.
+          Se solicita enviar propuesta técnica y económica detallada.
+        </p>
+      </div>
+    </div>
+
+    <!-- Sobre la Empresa -->
+    <div class="company-section">
+      <h2>🏢 Sobre Nuestra Empresa</h2>
+      <p>
+        Somos una empresa de Montajes de eventos especiales,
+        
+       </p>
+      <p>
+        Montamos tarimas luces sonidos pantallas led para eventos sociales y corporativos.
+      </p>
+      
+      <h4 style="color: var(--primary); margin: 20px 0 12px 0; font-size: 16px;">📦 Tipos de Materiales que Manejamos</h4>
+      <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 15px;">
+        Nuestro inventario es diverso y requiere clasificación específica:
+      </p>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; margin-bottom: 20px;">
+        <div style="background: #f0f9ff; border-radius: 8px; padding: 12px; font-size: 13px;">
+          <strong style="color: var(--primary);">🎬 Audiovisuales:</strong> Luces, parlantes, mezcladoras, micrófonos, proyectores, pantallas, cables, soportes.
+        </div>
+        <div style="background: #f0fdf4; border-radius: 8px; padding: 12px; font-size: 13px;">
+          <strong style="color: var(--primary);">🏗️ Estructuras:</strong> Trusses, Estructuras metálicas, tubos, andamios, conexiones, pernos, niveladores, etc.
+        </div>
+        <div style="background: #fffbeb; border-radius: 8px; padding: 12px; font-size: 13px;">
+          <strong style="color: var(--primary);">🪑 Mobiliario:</strong> Sillas, mesas, tarimas, toldos, alfombras, mobiliarios lounge.
+        </div>
+        <div style="background: #fef3c7; border-radius: 8px; padding: 12px; font-size: 13px;">
+          <strong style="color: var(--primary);">🔌 Consumibles:</strong> Cintas, adhesivos, bridas, baterías, materiales de montaje, alambre de amarre, etc.
+        </div>
+        <div style="background: #fce7f3; border-radius: 8px; padding: 12px; font-size: 13px;">
+          <strong style="color: var(--primary);">🚛 Vehículos y Equipos:</strong> Camiones, montacargas, generadores, herramientas.
+        </div>
+        <div style="background: #e0e7ff; border-radius: 8px; padding: 12px; font-size: 13px;">
+          <strong style="color: var(--primary);">📦 Contenedores:</strong> Burras, canastas, barriles, cajas, toneles.
+        </div>
+      </div>
+
+      <h4 style="color: var(--primary); margin: 20px 0 12px 0; font-size: 16px;">🎯 Necesidad de Control Integral</h4>
+      <p>
+        Necesitamos controlar toda la operación desde cualquier punto: bodega central, bodegas secundarias, 
+        locaciones de eventos, y vehículos en tránsito. Cada evento genera múltiples movimientos que deben 
+        rastrearse en tiempo real.
+      </p>
+
+      <p style="margin-top: 15px;">
+        Actualmente nos encontramos en proceso de búsqueda de una solución software integral 
+        para la gestión de nuestro inventario y operaciones, que pueda integrarse con nuestro 
+        sistema contable y proporcionarnos visibilidad completa de costos y rentabilidad.
+      </p>
+    </div>
+
+    <!-- Flujo Operativo -->
+    <div class="company-section">
+      <h2>🔄 Flujo Operativo de la Empresa</h2>
+      <p style="margin-bottom: 20px;">
+        <strong>Importante:</strong> El software propuesto debe adaptarse a nuestro flujo operativo real, 
+        no requerir que modifiquemos nuestra forma de trabajar. La solución debe facilitar las operaciones 
+        de logística, no convertirse en un obstáculo.
+      </p>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-top: 20px;">
+        <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 12px; padding: 20px;">
+          <div style="font-size: 24px; margin-bottom: 10px;">1️⃣</div>
+          <h4 style="color: var(--primary); margin-bottom: 8px;">Adquisición</h4>
+          <p style="font-size: 13px; color: var(--text-muted); margin: 0;">
+            Órdenes de compra a proveedores → Recepción → Ingreso a bodega con verificación de cantidades y estado.
+          </p>
+        </div>
+
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 20px;">
+          <div style="font-size: 24px; margin-bottom: 10px;">2️⃣</div>
+          <h4 style="color: var(--primary); margin-bottom: 8px;">Almacenamiento</h4>
+          <p style="font-size: 13px; color: var(--text-muted); margin: 0;">
+            Materiales clasificados por tipo (electrónicos, hierros, consumibles) y ubicados en bodegas/contenedores específicos.
+          </p>
+        </div>
+
+        <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; padding: 20px;">
+          <div style="font-size: 24px; margin-bottom: 10px;">3️⃣</div>
+          <h4 style="color: var(--primary); margin-bottom: 8px;">Despacho a Eventos</h4>
+          <p style="font-size: 13px; color: var(--text-muted); margin: 0;">
+            Solicitud de materiales según receta/plantilla del evento → Preparación → Salida verificada → Acta de despacho.
+          </p>
+        </div>
+
+        <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 12px; padding: 20px;">
+          <div style="font-size: 24px; margin-bottom: 10px;">4️⃣</div>
+          <h4 style="color: var(--primary); margin-bottom: 8px;">Retorno Post-Evento</h4>
+          <p style="font-size: 13px; color: var(--text-muted); margin: 0;">
+            Devolución de materiales → Clasificación (bueno/dañado/faltante) → Reingreso a bodega o baja si corresponde.
+          </p>
+        </div>
+
+        <div style="background: #fce7f3; border: 1px solid #fbcfe8; border-radius: 12px; padding: 20px;">
+          <div style="font-size: 24px; margin-bottom: 10px;">5️⃣</div>
+          <h4 style="color: var(--primary); margin-bottom: 8px;">Control y Mantenimiento</h4>
+          <p style="font-size: 13px; color: var(--text-muted); margin: 0;">
+            Ajustes de inventario, mantenimientos programados, fabricación de nuevos materiales, bajas autorizadas.
+          </p>
+        </div>
+      </div>
+
+      <div style="background: #fef2f2; border: 2px solid #fecaca; border-radius: 12px; padding: 16px; margin-top: 20px;">
+        <p style="font-size: 14px; color: var(--danger); margin: 0;">
+          <strong>⚠️ Requisito crítico:</strong> El sistema debe soportar el ciclo completo de salida-retorno de materiales. 
+          No es un inventario tradicional donde solo se vende y no regresa. Los materiales salen temporalmente a eventos y 
+          deben ser rastreados hasta su devolución.
+        </p>
+      </div>
+
+      <div style="background: #f0f9ff; border: 2px solid #7dd3fc; border-radius: 12px; padding: 16px; margin-top: 20px;">
+        <p style="font-size: 14px; color: #0369a1; margin: 0;">
+          <strong>📌 Caso especial - Traslados entre eventos:</strong> En operaciones reales, frecuentemente se requiere 
+          trasladar materiales directamente de un evento a otro <strong>sin que regresen a bodega intermedialmente</strong>. 
+          El sistema debe permitir registrar estos traslados directos, manteniendo la trazabilidad del material y actualizando 
+          las asignaciones de eventos sin generar ingresos/egresos innecesarios a bodega central.
+        </p>
+      </div>
+    </div>
+
+    <!-- Módulo Principal: Bodega/Inventario -->
+    <div class="module-section">
+      <div class="module-header">
+        <div class="module-icon">📦</div>
+        <div class="module-title">
+          <h2>1. Módulo de Bodega e Inventario (PRINCIPAL)</h2>
+          <p>Funcionalidades esenciales para gestión de materiales</p>
+        </div>
+      </div>
+
+      <ul class="requirements-list">
+        <li class="critical">
+          <strong>Catálogo de materiales multi-tipo:</strong> Capacidad de registrar diferentes categorías de materiales 
+          (electrónicos, estructuras metálicas, consumibles, herramientas) con campos específicos por categoría 
+          (voltaje, dimensiones, peso, etc.).
+        </li>
+        <li class="critical">
+          <strong>Gestión de contenedores y ubicaciones:</strong> Los materiales pueden almacenarse dentro de 
+          contenedores (burras, canastas, barriles) y ubicarse en múltiples bodegas o ubicaciones físicas. 
+          Debe permitir trazabilidad material → contenedor → ubicación.
+        </li>
+        <li class="critical">
+          <strong>Registro de ingresos desde órdenes de compra:</strong> Módulo para registrar entrada de materiales 
+          vinculados a órdenes de compra, con soporte para múltiples monedas (USD y C$), tipo de cambio configurable, 
+          número de factura y datos del proveedor.
+        </li>
+        <li class="critical">
+          <strong>Control de salidas (despachos) con solicitudes:</strong> Gestión de salidas de materiales mediante 
+          solicitudes con correlativo secuencial. Debe manejar estados (pendiente, en proceso, completada, rechazada) 
+          y generar documentos de salida imprimibles.
+        </li>
+        <li class="critical">
+          <strong>Devoluciones y reingresos:</strong> Registro de materiales devueltos desde eventos o proyectos, 
+          con vinculación al despacho original. Debe permitir clasificar el estado del material devuelto 
+          (bueno, dañado, faltante).
+        </li>
+        <li class="critical">
+          <strong>Traslados entre eventos/proyectos:</strong> Capacidad de trasladar materiales directamente 
+          de un evento a otro sin pasar por bodega central. El sistema debe actualizar la asignación del 
+          material, mantener el historial de trazabilidad, y no generar movimientos contables innecesarios.
+        </li>
+        <li class="critical">
+          <strong>Stock en tiempo real:</strong> Cálculo automático de existencias basado en movimientos 
+          (ingresos - salidas + devoluciones). Debe proporcionar vistas de stock por bodega, por ítem, 
+          por proyecto/evento, y por proveedor.
+        </li>
+        <li class="important">
+          <strong>Fabricación / Transformación de materiales:</strong> Proceso donde se consumen materiales del 
+          inventario para producir nuevos materiales. Debe generar solicitud con responsable, fecha, y requerir 
+          aprobación antes de ejecutar el movimiento.
+        </li>
+        <li class="important">
+          <strong>Mantenimiento de materiales:</strong> Registro de mantenimientos preventivos y correctivos 
+          a materiales, con historial por material, costos asociados y fecha de próxima mantención.
+        </li>
+        <li class="important">
+          <strong>Bajas de materiales:</strong> Proceso para dar de baja materiales por daño, obsolescencia o 
+          pérdida, con justificación y aprobación requerida.
+        </li>
+        <li class="normal">
+          <strong>Generación de etiquetas y fichas:</strong> Impresión de etiquetas con código QR o código de 
+          barras para materiales, y fichas técnicas individuales o masivas.
+        </li>
+        <li class="critical">
+          <strong>Auditoría y trazabilidad:</strong> Registro de todas las operaciones con usuario, fecha, 
+          hora, y detalle de cambios realizados. Debe permitir rastrear quién hizo qué movimiento y cuándo.
+        </li>
+      </ul>
+
+      <div class="tech-requirements">
+        <h3>Requerimientos Técnicos del Módulo</h3>
+        <ul>
+          <li>Base de datos PostgreSQL o similar</li>
+          <li>Soporte para múltiples usuarios concurrentes</li>
+          <li>Control de acceso por roles y permisos</li>
+          <li>Exportación de datos a Excel (.xlsx)</li>
+          <li>Generación de reportes en PDF</li>
+          <li>Búsquedas avanzadas por código, nombre, categoría, ubicación</li>
+          <li>Alertas de stock mínimo configurable</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Módulo de Logística / Recetas -->
+    <div class="module-section">
+      <div class="module-header">
+        <div class="module-icon">🚛</div>
+        <div class="module-title">
+          <h2>2. Módulo de Logística y Planificación</h2>
+          <p>Para coordinación de materiales por evento/proyecto</p>
+        </div>
+      </div>
+
+      <ul class="requirements-list">
+        <li class="critical">
+          <strong>Recetas / Plantillas de materiales:</strong> Creación de plantillas predefinidas de materiales 
+          por tipo de evento o servicio. Cada plantilla debe listar materiales con cantidades estándar.
+        </li>
+        <li class="critical">
+          <strong>Cálculo automático desde plantilla:</strong> Al seleccionar una receta, el sistema debe 
+          calcular automáticamente las cantidades totales de materiales necesarios basado en parámetros del 
+          evento (número de personas, días, etc.).
+        </li>
+        <li class="critical">
+          <strong>Solicitudes de materiales por evento:</strong> Generación de solicitudes formales de materiales 
+          para eventos específicos, con estados de aprobación y seguimiento.
+        </li>
+        <li class="important">
+          <strong>Dashboard de seguimiento:</strong> Vista general de todas las solicitudes con su estado 
+          (pendiente, en proceso, completada, rechazada), con filtros por fecha, evento y responsable.
+        </li>
+      </ul>
+    </div>
+
+    <!-- Módulo de Ventas / Proyectos -->
+    <div class="module-section">
+      <div class="module-header">
+        <div class="module-icon">💼</div>
+        <div class="module-title">
+          <h2>3. Módulo de Ventas y Proyectos</h2>
+          <p>Gestión de clientes, facturación y cartera</p>
+        </div>
+      </div>
+
+      <ul class="requirements-list">
+        <li class="critical">
+          <strong>Gestión de clientes:</strong> Registro y administración de clientes con datos completos
+          (nombre, contacto, RUC, dirección, teléfono, email).
+        </li>
+        <li class="critical">
+          <strong>Cotizaciones / Prefactura / Factura:</strong> El mismo documento debe servir como cotización,
+          prefactura y factura final. Debe permitir convertir cotización en factura directamente. Generación de PDF.
+        </li>
+        <li class="critical">
+          <strong>Tarifarios múltiples (A, B, C):</strong> Sistema de tarifarios de servicios diferenciados.
+          Cada cliente o cotización debe asociarse a un tarifario específico. Precios según tipo de cliente o volumen.
+        </li>
+        <li class="important">
+          <strong>Servicios:</strong> Catálogo de servicios con precios, descripciones y códigos. Asociación con tarifarios.
+        </li>
+        <li class="critical">
+          <strong>Registro de eventos/proyectos:</strong> Creación de eventos con código único, cliente,
+          fechas, ubicación, tipo de evento. Debe vincularse con despachos de materiales y cotizaciones.
+        </li>
+        <li class="critical">
+          <strong>Registro de ventas y facturación:</strong> Registro de ventas activas con vinculación a despachos.
+          Generación de documentos fiscales. Historial de ventas por cliente, evento o período.
+        </li>
+        <li class="critical">
+          <strong>Control de cartera y cuentas por cobrar:</strong> Gestión de cuentas por cobrar por cliente.
+          Registro de pagos parciales o totales. Control de saldo pendiente, fechas de vencimiento.
+          Reporte de cartera vencida. Aplicación de pagos a facturas específicas.
+        </li>
+        <li class="important">
+          <strong>Reportes de ventas:</strong> Reportes por cliente, evento, período, vendedor.
+          Totales facturados, pendientes de cobro, estado de cartera. Exportación a Excel.
+        </li>
+      </ul>
+    </div>
+
+    <!-- Módulo de Recursos Humanos -->
+    <div class="module-section">
+      <div class="module-header">
+        <div class="module-icon">👨‍💼</div>
+        <div class="module-title">
+          <h2>4. Módulo de Recursos Humanos</h2>
+          <p>Control de personal y responsables</p>
+        </div>
+      </div>
+
+      <ul class="requirements-list">
+        <li class="critical">
+          <strong>Gestión de empleados:</strong> Registro de empleados con datos personales, cargo, departamento, 
+          fecha de ingreso, y código único.
+        </li>
+        <li class="critical">
+          <strong>Control de asistencia:</strong> Registro de entradas y salidas de personal. Debe permitir 
+          verificar asistencia por empleado y período.
+        </li>
+        <li class="important">
+          <strong>Generación de planillas:</strong> Cálculo de nómina por período con salario base, horas extras, 
+          deducciones (INSS, IR).
+        </li>
+        <li class="important">
+          <strong>Gestión de vacaciones:</strong> Control de días de vacaciones disponibles, solicitudes y 
+          registro de vacaciones tomadas.
+        </li>
+      </ul>
+    </div>
+
+    <!-- Módulo de Control de Gastos Operativos -->
+    <div class="module-section">
+      <div class="module-header">
+        <div class="module-icon">⛽</div>
+        <div class="module-title">
+          <h2>5. Control de Combustible, Rutas y Gastos Operativos</h2>
+          <p>Seguimiento de costos de operación por evento</p>
+        </div>
+      </div>
+
+      <ul class="requirements-list">
+        <li class="critical">
+          <strong>Control de combustible por vehículo:</strong> Registro de cargas de combustible con kilometraje, 
+          monto, precio por galón, y vehículo asignado. Debe permitir calcular rendimiento (km/galón).
+        </li>
+        <li class="critical">
+          <strong>Asignación de gastos a eventos:</strong> Capacidad de vincular gastos de combustible, 
+          peajes, alimentación, y otros a eventos específicos para cálculo de costo total.
+        </li>
+        <li class="critical">
+          <strong>Registro de gastos operativos:</strong> Catálogo de conceptos de gastos (combustible, 
+          alimentación, hospedaje, peajes, materiales adicionales, mano de obra extra) con registro de 
+          monto, fecha, responsable y evento asociado.
+        </li>
+        <li class="important">
+          <strong>Rutas y desplazamientos:</strong> Registro de rutas de vehículos (origen, destino, 
+          kilometraje inicial/final) para control de desplazamientos a eventos.
+        </li>
+        <li class="important">
+          <strong>Valor de renta interna:</strong> Capacidad de asignar un valor de renta interno a los 
+          materiales propios utilizados en cada evento, para cálculo de costo real vs. costo de mercado.
+        </li>
+        <li class="critical">
+          <strong>Costo total por evento:</strong> Reporte que consolide todos los costos de un evento: 
+          materiales usados (con valor de renta interna), combustible, gastos operativos, planilla de 
+          personal, y otros. Debe compararse contra la facturación del evento para determinar margen de ganancia.
+        </li>
+        <li class="critical">
+          <strong>Análisis de rentabilidad:</strong> Dashboard que muestre margen de ganancia por evento, 
+          por cliente, por tipo de evento, y por período. Debe permitir identificar eventos rentables vs. 
+          no rentables.
+        </li>
+      </ul>
+
+      <div class="tech-requirements">
+        <h3>Nota sobre este Módulo</h3>
+        <p style="margin-top: 10px; color: var(--text-muted);">
+          Este módulo es crítico para nuestra toma de decisiones. Necesitamos saber no solo qué materiales 
+          salieron, sino <strong>cuánto nos costó realmente cada evento</strong> y si la facturación cubre 
+          los costos operativos completos (materiales, combustible, personal, gastos).
+        </p>
+      </div>
+    </div>
+
+    <!-- Módulo Contable -->
+    <div class="module-section">
+      <div class="module-header">
+        <div class="module-icon">🧮</div>
+        <div class="module-title">
+          <h2>6. Módulo Contable</h2>
+          <p>Gestión financiera y aprobaciones</p>
+        </div>
+      </div>
+
+      <ul class="requirements-list">
+        <li class="critical">
+          <strong>Órdenes de compra:</strong> Generación y gestión de órdenes de compra a proveedores, con 
+          múltiples ítems, cantidades, precios, y soporte para USD y C$.
+        </li>
+        <li class="critical">
+          <strong>Tipo de cambio multi-moneda:</strong> Manejo de dólares y córdobas con tipo de cambio 
+          configurable. Conversiones automáticas en reportes.
+        </li>
+        <li class="critical">
+          <strong>Flujo de aprobaciones:</strong> Sistema de aprobaciones para operaciones críticas 
+          (órdenes de compra, fabricación, bajas, despachos grandes) con notificaciones a aprobadores.
+        </li>
+        <li class="important">
+          <strong>Reportes de inventario valorizado:</strong> Reportes contables de existencias con valores 
+          monetarios, costos por evento/proyecto.
+        </li>
+      </ul>
+
+      <div class="tech-requirements">
+        <h3>Nota sobre Integración Contable</h3>
+        <p style="margin-top: 10px; color: var(--text-muted);">
+          Si el módulo contable no es completo, el sistema debe permitir exportación de datos contables 
+          (movimientos de inventario, órdenes de compra) en formatos compatibles con sistemas contables 
+          externos (Excel, CSV, XML).
+        </p>
+      </div>
+    </div>
+
+    <!-- Características Generales -->
+    <div class="module-section">
+      <div class="module-header">
+        <div class="module-icon">⚙️</div>
+        <div class="module-title">
+          <h2>7. Características Generales del Sistema</h2>
+          <p>Requerimientos transversales a todos los módulos</p>
+        </div>
+      </div>
+
+      <ul class="requirements-list">
+        <li class="critical">
+          <strong>Sistema de usuarios y roles:</strong> Autenticación de usuarios con roles configurables 
+          (Administrador, Bodega, Logística, Ventas, RRHH, Contabilidad) y permisos por rol.
+        </li>
+        <li class="critical">
+          <strong>Interfaz en español:</strong> Toda la interfaz del sistema, reportes y documentación 
+          deben estar en idioma español.
+        </li>
+        <li class="important">
+          <strong>Exportación a Excel:</strong> Capacidad de exportar datos de todos los módulos a 
+          formato Excel (.xlsx) con formato adecuado.
+        </li>
+        <li class="critical">
+          <strong>Generación de documentos PDF:</strong> Impresión de documentos operativos 
+          (ingresos, despachos, devoluciones, planillas, cotizaciones) en formato PDF.
+        </li>
+        <li class="important">
+          <strong>Dashboards e indicadores:</strong> Vistas gráficas con indicadores clave de gestión 
+          por módulo, con filtros de fecha y parámetros configurables.
+        </li>
+        <li class="important">
+          <strong>Búsquedas y filtros avanzados:</strong> Búsqueda en tiempo real por múltiples criterios, 
+          con filtros combinables por fecha, categoría, estado, ubicación, etc.
+        </li>
+        <li class="normal">
+          <strong>Notificaciones del sistema:</strong> Alertas y notificaciones para operaciones pendientes 
+          de aprobación, stock bajo, eventos próximos.
+        </li>
+      </ul>
+
+      <div class="tech-requirements">
+        <h3>Requerimientos Técnicos Generales</h3>
+        <ul>
+          <li>Arquitectura cliente-servidor o cloud</li>
+          <li>Soporte para múltiples usuarios concurrentes (mínimo 10 usuarios simultáneos)</li>
+          <li>Base de datos relacional (PostgreSQL, MySQL, SQL Server, o similar)</li>
+          <li>API para integración con otros sistemas (deseable)</li>
+          <li>Backup automático de base de datos</li>
+          <li>Historial de cambios y auditoría</li>
+          <li>Soporte técnico local o remoto en horario comercial</li>
+          <li>Documentación completa del sistema</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Timeline / Expectativas -->
+    <div class="timeline-section">
+      <h3>📅 Información para la Propuesta</h3>
+      <div class="timeline-grid">
+        <div class="timeline-card">
+          <div class="number">7 Módulos</div>
+          <div class="label">Módulos requeridos</div>
+        </div>
+        <div class="timeline-card">
+          <div class="number">50+ requisitos</div>
+          <div class="label">Funcionalidades listadas</div>
+        </div>
+        <div class="timeline-card">
+          <div class="number">10+ usuarios</div>
+          <div class="label">Usuarios simultáneos</div>
+        </div>
+        <div class="timeline-card">
+          <div class="number">Nicaragua</div>
+          <div class="label">Ubicación de la empresa</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contacto -->
+    <div class="contact-section">
+      <h3>📬 Objetivo de este Documento</h3>
+      <p>
+        Este documento describe nuestras necesidades operativas reales. El propósito es que su equipo 
+        lo analice en detalle antes de nuestra reunión, donde evaluaremos:
+      </p>
+      <ul style="margin-left: 20px; line-height: 1.8; color: var(--text-muted);">
+        <li>Qué funcionalidades de las listadas su software <strong>puede cubrir</strong></li>
+        <li>Qué funcionalidades <strong>no puede cubrir</strong> o requiere personalización</li>
+        <li>Costos asociados (licencias, implementación, mantenimiento)</li>
+        <li>Tiempo estimado de implementación</li>
+      </ul>
+      
+      <p style="margin-top: 20px; font-size: 14px; color: var(--text-muted);">
+        Por favor revisar cada sección y venir preparados para discutir punto por punto.
+      </p>
+    </div>
+  </div>
+
+  <button class="btn-print" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
+
+  <script>
+    // Agregar número automático a los items
+    document.querySelectorAll('.requirements-list').forEach(list => {
+      list.querySelectorAll('li').forEach((item, index) => {
+        // El contenido ya está en el HTML, no necesitamos modificar
+      });
+    });
+  </script>
+</body>
+</html>

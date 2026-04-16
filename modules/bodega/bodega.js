@@ -128,6 +128,7 @@ try {
       if (vista === 'mobiliario-agregar') ruta = './modules/bodega/universal/agregar_consumibles_v2.html';
       if (vista === 'mobiliario-modificar') ruta = './modules/bodega/universal/agregar_consumibles_v2.html';
       if (vista === 'movimientos-ingreso') ruta = './modules/bodega/movimientos/ingreso.html';
+      if (vista === 'movimientos-traslado-kit') ruta = './modules/bodega/movimientos/traslado_kit.html';
       if (vista === 'movimientos-despachobodega') ruta = './modules/bodega/movimientos/despachobodega.html';
       if (vista === 'movimientos-despacho-audiovisual') ruta = './modules/bodega/movimientos/despacho_audiovisual.html';
       if (vista === 'movimientos-devolucion') ruta = './modules/bodega/movimientos/devolucion.html';
@@ -144,6 +145,7 @@ try {
 
       // NUEVO: dashboard agrupado por nombre
       if (vista === 'dashboard-xnombre') ruta = './modules/bodega/dashboard/xnombre.html';
+      if (vista === 'dashboard-xfaltantes') ruta = './modules/bodega/dashboard/xfaltantes.html';
 
       if (!ruta) {
         contenedor.innerHTML = `<p style="color: red;">Vista no reconocida: ${vista}</p>`;

@@ -1,0 +1,208 @@
+<link rel="stylesheet" href="./modules/admin/admin.css">
+
+<div class="admin-shell">
+  <div class="admin-scanline" aria-hidden="true"></div>
+
+  <header class="admin-topbar">
+    <div class="admin-brand-block">
+      <div class="admin-brand-switcher" id="admin-brand-switcher" aria-hidden="true">
+        <img id="admin-brand-image-logo" class="admin-brand-image is-active" src="assets/logo.png" alt="Absolute logo">
+        <img id="admin-brand-image-icon" class="admin-brand-image" src="assets/icon.png" alt="Absolute icono">
+      </div>
+
+      <div class="admin-brand-copy">
+        <span class="admin-kicker">Administrador General · Panel ejecutivo</span>
+        <h1 class="admin-title">Panel Ejecutivo</h1>
+        <p class="admin-subtitle" id="admin-broadcast-headline">Vista consolidada para revisar operación, seguimiento y prioridades del negocio.</p>
+      </div>
+    </div>
+
+    <div class="admin-top-status">
+      <div class="admin-status-card">
+        <span class="admin-hero-panel-label">Hora local</span>
+        <div class="admin-hero-panel-title" id="admin-live-clock">--:--:--</div>
+      </div>
+    </div>
+  </header>
+
+  <section class="admin-newsbar">
+    <div class="admin-newsbar-head">
+      <span class="admin-newsbar-label">Alertas</span>
+      <div class="admin-news-message" id="admin-global-message">Conectando con los módulos estratégicos del sistema.</div>
+    </div>
+    <div class="admin-hero-panel-pills" id="admin-hero-pills"></div>
+    <div class="admin-alert-ticker" aria-label="Alertas recientes del sistema">
+      <div class="admin-alert-ticker-track" id="admin-alert-ticker-track"></div>
+    </div>
+  </section>
+
+  <section class="admin-toolbar-row">
+    <div class="admin-period-switch" id="admin-period-switch">
+      <button class="admin-period-btn active" data-days="7">7 días</button>
+      <button class="admin-period-btn" data-days="30">30 días</button>
+      <button class="admin-period-btn" data-days="90">90 días</button>
+    </div>
+
+    <nav class="admin-nav" id="admin-nav">
+      <button class="admin-nav-btn active" data-section="resumen">Resumen</button>
+      <button class="admin-nav-btn" data-section="operacion">Operación</button>
+      <button class="admin-nav-btn" data-section="reportes">Reportes</button>
+      <button class="admin-nav-btn" data-section="talento">Talento</button>
+    </nav>
+
+    <div class="admin-toolbar-side">
+      <div class="admin-toolbar-context" id="admin-current-section-name">Resumen</div>
+      <button class="admin-refresh-btn" id="admin-refresh-btn">Actualizar datos</button>
+    </div>
+  </section>
+
+  <main class="admin-stage">
+    <aside class="admin-strip">
+      <div class="admin-strip-head">
+        <span class="admin-card-kicker">Métricas rápidas</span>
+        <strong>Resumen rápido</strong>
+      </div>
+      <div class="admin-metrics" id="admin-metrics"></div>
+    </aside>
+
+    <section class="admin-center">
+      <section class="admin-section active" data-section="resumen">
+        <article class="admin-screen admin-screen-anchor">
+          <div class="admin-card-header">
+            <div>
+              <span class="admin-card-kicker">Vista principal</span>
+              <h2>Lectura transversal del negocio en un solo lugar</h2>
+            </div>
+          </div>
+          <p class="admin-screen-copy">Esta vista reúne inventario, incidencias, movimientos y prioridades sin obligarte a saltar entre módulos. El objetivo es ayudarte a identificar con rapidez qué necesita seguimiento y dónde conviene intervenir primero.</p>
+        </article>
+
+        <div class="admin-grid admin-grid-3">
+          <article class="admin-card">
+            <div class="admin-card-header">
+              <div>
+                <span class="admin-card-kicker">Inventario</span>
+                <h2>Materiales críticos</h2>
+              </div>
+            </div>
+            <div id="admin-critical-stock" class="admin-stack-list"></div>
+          </article>
+
+          <article class="admin-card">
+            <div class="admin-card-header">
+              <div>
+                <span class="admin-card-kicker">Incidencias</span>
+                <h2>Faltantes y dañados</h2>
+              </div>
+            </div>
+            <div id="admin-incidents" class="admin-stack-list"></div>
+          </article>
+
+          <article class="admin-card">
+            <div class="admin-card-header">
+              <div>
+                <span class="admin-card-kicker">Compras y bajas</span>
+                <h2>Movimientos recientes</h2>
+              </div>
+            </div>
+            <div id="admin-bajas-feed" class="admin-stack-list"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="admin-section" data-section="operacion">
+        <div class="admin-grid admin-grid-2">
+          <article class="admin-card">
+            <div class="admin-card-header">
+              <div>
+                <span class="admin-card-kicker">Operación bodega</span>
+                <h2>Faltantes abiertos</h2>
+              </div>
+            </div>
+            <div id="admin-open-missing" class="admin-table-list"></div>
+          </article>
+
+          <article class="admin-card">
+            <div class="admin-card-header">
+              <div>
+                <span class="admin-card-kicker">Operación eventos</span>
+                <h2>Eventos por vigilar</h2>
+              </div>
+            </div>
+            <div id="admin-event-watch" class="admin-table-list"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="admin-section" data-section="reportes">
+        <div class="admin-grid admin-grid-2">
+          <article class="admin-card admin-card-emphasis">
+            <div class="admin-card-header">
+              <div>
+                <span class="admin-card-kicker">Ruta rápida</span>
+                <h2>Puertas de entrada</h2>
+              </div>
+            </div>
+            <div class="admin-shortcuts" id="admin-shortcuts"></div>
+          </article>
+
+          <article class="admin-card">
+            <div class="admin-card-header">
+              <div>
+                <span class="admin-card-kicker">Consolidado</span>
+                <h2>Lectura por área</h2>
+              </div>
+            </div>
+            <div id="admin-domain-summary" class="admin-stack-list"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="admin-section" data-section="talento">
+        <div class="admin-grid admin-grid-2">
+          <article class="admin-card">
+            <div class="admin-card-header">
+              <div>
+                <span class="admin-card-kicker">Recursos humanos</span>
+                <h2>Panorama del personal</h2>
+              </div>
+            </div>
+            <div id="admin-people-summary" class="admin-stack-list"></div>
+          </article>
+
+          <article class="admin-card">
+            <div class="admin-card-header">
+              <div>
+                <span class="admin-card-kicker">Actividad transversal</span>
+                <h2>Bitácora reciente</h2>
+              </div>
+            </div>
+            <div id="admin-activity-feed" class="admin-stack-list"></div>
+          </article>
+        </div>
+      </section>
+    </section>
+
+    <aside class="admin-sidebar">
+      <article class="admin-sidebar-card">
+        <div class="admin-card-header">
+          <div>
+            <span class="admin-card-kicker">Prioridades</span>
+            <h2>Seguimiento inmediato</h2>
+          </div>
+        </div>
+        <div id="admin-priority-feed" class="admin-stack-list"></div>
+      </article>
+
+      <article class="admin-sidebar-card">
+        <div class="admin-card-header">
+          <div>
+            <span class="admin-card-kicker">Agenda</span>
+            <h2>Próximos eventos</h2>
+          </div>
+        </div>
+        <div id="admin-upcoming-events" class="admin-stack-list"></div>
+      </article>
+    </aside>
+  </main>
+</div>

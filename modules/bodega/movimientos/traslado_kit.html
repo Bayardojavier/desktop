@@ -1,0 +1,1119 @@
+<div class="movimientos-view">
+  <div id="kit-transfer-layout" style="display:flex; align-items:flex-start; gap:16px; width:100%;">
+    <div class="mov-form-container" style="flex:1; min-width:0;">
+      <div class="mov-form-card">
+        <h1 class="mov-form-title">🔁 Traslado Interno a Kits</h1>
+        <p class="mov-form-subtitle">Mueve stock desde una bodega secundaria hacia una ubicacion de kit para operacion de Logistica.</p>
+
+        <div class="mov-form-section">
+          <div class="mov-form-row">
+            <div class="mov-form-col">
+              <label class="mov-form-label">Responsable</label>
+              <select id="kit-transfer-responsable" class="mov-form-select" required>
+                <option value="">Seleccione un empleado...</option>
+              </select>
+            </div>
+            <div class="mov-form-col">
+              <label class="mov-form-label">Fecha</label>
+              <input id="kit-transfer-fecha" type="date" class="mov-form-input" required />
+            </div>
+            <div class="mov-form-col">
+              <label class="mov-form-label">Codigo de traslado</label>
+              <input id="kit-transfer-codigo" type="text" class="mov-form-input" readonly style="background:#f8fafc;" />
+            </div>
+          </div>
+        </div>
+
+        <div class="mov-form-section">
+          <h2 class="mov-form-section-title">Destino del Kit</h2>
+          <div class="mov-form-row">
+            <div class="mov-form-col" style="flex:2;">
+              <label class="mov-form-label">Nombre de la nueva bodega secundaria / kit</label>
+              <input id="kit-transfer-destino" type="text" class="mov-form-input" placeholder="Ej. KIT LOGISTICA HIERRO" />
+            </div>
+            <div class="mov-form-col" style="flex:1;">
+              <label class="mov-form-label">Vista previa</label>
+              <input id="kit-transfer-preview" type="text" class="mov-form-input" readonly style="background:#f0fdf4;" value="-" />
+            </div>
+          </div>
+          <div class="mov-form-row">
+            <div class="mov-form-col">
+              <label class="mov-form-label">Observaciones</label>
+              <input id="kit-transfer-observaciones" type="text" class="mov-form-input" placeholder="Motivo del traslado o detalle operativo" />
+            </div>
+          </div>
+        </div>
+
+        <div class="mov-form-section">
+          <h2 class="mov-form-section-title">Seleccion de Materiales</h2>
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+            <div style="font-size:12px; color:#64748b; max-width:520px;">
+              Seleccione materiales desde un modal y defina la cantidad exacta a trasladar. El stock no se movera completo salvo que usted lo indique.
+            </div>
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+              <div id="kit-transfer-selection-summary" style="font-size:12px; color:#334155; background:#eff6ff; border:1px solid #bfdbfe; border-radius:999px; padding:6px 12px;">0 materiales agregados</div>
+              <button id="kit-transfer-open-modal" class="mov-btn mov-btn-primary" style="width:auto;">+ Seleccionar materiales</button>
+              <button id="kit-transfer-refresh" class="mov-btn mov-btn-secondary" style="width:auto;">↻ Actualizar stock</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="mov-form-section">
+          <h2 class="mov-form-section-title">Materiales a Trasladar</h2>
+          <div id="kit-transfer-seleccionados"></div>
+        </div>
+
+        <div class="mov-form-actions">
+          <button id="kit-transfer-guardar" class="mov-btn mov-btn-primary">Guardar traslado</button>
+          <button id="kit-transfer-limpiar" class="mov-btn mov-btn-secondary">Limpiar</button>
+        </div>
+      </div>
+    </div>
+
+    <aside id="panel-lateral-kit-transfer" style="position:sticky; top:16px; width:360px; max-height:calc(100vh - 40px); background:white; border:1px solid #dbeafe; border-radius:12px; box-shadow:0 10px 24px rgba(15,23,42,.15); display:flex; flex-direction:column; overflow:hidden; flex-shrink:0;">
+      <div style="padding:12px 14px; border-bottom:1px solid #e2e8f0; background:#f8fafc;">
+        <h2 style="margin:0; font-size:16px; color:#1e3a8a;">Kits activos</h2>
+        <p style="margin:4px 0 0 0; font-size:12px; color:#475569;">Resumen agrupado por bodega secundaria destino</p>
+      </div>
+      <div id="kit-transfer-historial" style="padding:12px; overflow:auto;">
+        <p style="margin:0; color:#64748b; text-align:center;">Cargando traslados recientes...</p>
+      </div>
+    </aside>
+  </div>
+
+  <div id="kit-transfer-saving-overlay" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.28); z-index:1100; align-items:center; justify-content:center;">
+    <div style="background:white; border-radius:12px; padding:18px 22px; box-shadow:0 10px 25px rgba(15,23,42,.25); display:flex; align-items:center; gap:12px; min-width:280px;">
+      <div style="width:18px; height:18px; border:3px solid #dbeafe; border-top-color:#2563eb; border-radius:50%; animation:giroKitTransfer 0.8s linear infinite;"></div>
+      <div id="kit-transfer-saving-text" style="font-weight:600; color:#1d4ed8;">Guardando traslado interno...</div>
+    </div>
+  </div>
+
+  <div id="kit-transfer-modal" class="mov-modal-overlay" style="display:none; z-index:1090; background:rgba(15,23,42,.45);">
+    <div class="mov-modal-content" style="width:min(1100px, 94vw); max-height:88vh; overflow:hidden; padding:0; border-radius:16px;">
+      <div style="padding:18px 22px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; gap:16px; align-items:flex-start;">
+        <div>
+          <h2 class="mov-modal-title" style="margin:0;">Seleccionar materiales</h2>
+          <p class="mov-modal-text" style="margin:6px 0 0 0;">Busque el material, indique la cantidad y agreguelo al traslado.</p>
+        </div>
+        <button id="kit-transfer-close-modal" class="mov-btn mov-btn-secondary" style="width:auto;">Cerrar</button>
+      </div>
+      <div style="padding:18px 22px; overflow:auto; max-height:calc(88vh - 86px);">
+        <div class="mov-form-row">
+          <div class="mov-form-col" style="flex:1.5;">
+            <label class="mov-form-label">Buscar por codigo o nombre</label>
+            <input id="kit-transfer-busqueda" type="text" class="mov-form-input" placeholder="Escriba para filtrar..." />
+          </div>
+          <div class="mov-form-col">
+            <label class="mov-form-label">Bodega principal</label>
+            <select id="kit-transfer-principal" class="mov-form-select">
+              <option value="">Todas</option>
+            </select>
+          </div>
+          <div class="mov-form-col">
+            <label class="mov-form-label">Bodega secundaria origen</label>
+            <select id="kit-transfer-origen" class="mov-form-select">
+              <option value="">Todas</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin:12px 0 14px;">
+          <div style="font-size:12px; color:#64748b;">Se listan materiales con stock disponible por ubicacion. La cantidad se define antes de agregar.</div>
+          <div id="kit-transfer-modal-count" style="font-size:12px; color:#475569;">0 resultados</div>
+        </div>
+        <div id="kit-transfer-resultados"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="kit-transfer-detail-modal" class="mov-modal-overlay" style="display:none; z-index:1095; background:rgba(15,23,42,.45);">
+    <div class="mov-modal-content" style="width:min(1000px, 94vw); max-height:88vh; overflow:hidden; padding:0; border-radius:16px;">
+      <div style="padding:18px 22px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; gap:16px; align-items:flex-start;">
+        <div>
+          <h2 id="kit-transfer-detail-title" class="mov-modal-title" style="margin:0;">Detalle del kit</h2>
+          <p id="kit-transfer-detail-subtitle" class="mov-modal-text" style="margin:6px 0 0 0;">Materiales trasladados a esta bodega secundaria.</p>
+        </div>
+        <button id="kit-transfer-detail-close" class="mov-btn mov-btn-secondary" style="width:auto;">Cerrar</button>
+      </div>
+      <div style="padding:18px 22px; overflow:auto; max-height:calc(88vh - 86px);">
+        <div id="kit-transfer-detail-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    setTimeout(() => {
+      const MOVIMIENTO_TABLES = {
+        catalogo_hierros: 'movimientos_bodega_hierros',
+        catalogo_audiovisual: 'movimientos_bodega_audiovisual',
+        catalogo_consumibles: 'movimientos_bodega_consumibles'
+      };
+      const PRINCIPAL_CANDIDATES_BY_CATALOGO = {
+        catalogo_hierros: ['Hierros', 'Bodega Hierros', 'Estructuras', 'Materiales de Estructuras', 'Hierro'],
+        catalogo_audiovisual: ['Audiovisual', 'Bodega Audiovisual', 'Materiales Electrónicos', 'Materiales Electronicos'],
+        catalogo_consumibles: ['Herramientas y consumibles', 'Bodega de Herramientas y consumibles', 'Consumibles', 'Herramientas', 'Ferreteria', 'Ferretería']
+      };
+      const STOCK_SOURCES = [
+        { view: 'stock_hierros', catalogo: 'catalogo_hierros', principal: 'Hierros' },
+        { view: 'stock_audiovisual', catalogo: 'catalogo_audiovisual', principal: 'Audiovisual' },
+        { view: 'stock_consumibles', catalogo: 'catalogo_consumibles', principal: 'Consumibles' }
+      ];
+
+      const state = {
+        materiales: [],
+        seleccionados: [],
+        historial: []
+      };
+      let modalQuantityDrafts = {};
+
+      const animStyle = document.createElement('style');
+      animStyle.textContent = '@keyframes giroKitTransfer { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
+      document.head.appendChild(animStyle);
+
+      function normalizeText(value) {
+        return (value || '').toString().trim().replace(/\s+/g, ' ');
+      }
+
+      function normalizeUpper(value) {
+        return normalizeText(value).toUpperCase();
+      }
+
+      function stripDiacritics(value) {
+        return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      }
+
+      function normalizeNameKey(value) {
+        return stripDiacritics(normalizeUpper(value))
+          .replace(/[^A-Z0-9 ]+/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
+
+      function buildSecondaryCode(name, existingCodes) {
+        const tokens = normalizeNameKey(name).split(' ').filter(Boolean);
+        const baseRaw = tokens.length
+          ? tokens.slice(0, 4).map((token) => token.slice(0, 3)).join('-')
+          : 'SEC';
+        const base = baseRaw.replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 24) || 'SEC';
+        const used = new Set((existingCodes || []).map((code) => normalizeUpper(code)));
+        let candidate = base;
+        let suffix = 2;
+        while (used.has(normalizeUpper(candidate))) {
+          candidate = `${base.slice(0, Math.max(1, 24 - String(suffix).length - 1))}-${suffix}`;
+          suffix += 1;
+        }
+        return candidate;
+      }
+
+      function similarityScore(a, b) {
+        const aTokens = new Set(normalizeNameKey(a).split(' ').filter(Boolean));
+        const bTokens = new Set(normalizeNameKey(b).split(' ').filter(Boolean));
+        if (!aTokens.size || !bTokens.size) return 0;
+        let common = 0;
+        aTokens.forEach((token) => { if (bTokens.has(token)) common += 1; });
+        const union = new Set([...aTokens, ...bTokens]).size || 1;
+        return common / union;
+      }
+
+      function findSimilarSecondaryName(targetName, secondaries) {
+        const targetKey = normalizeNameKey(targetName);
+        if (!targetKey) return null;
+
+        let bestMatch = null;
+        let bestScore = 0;
+
+        (secondaries || []).forEach((secondary) => {
+          const nameKey = normalizeNameKey(secondary.nombre);
+          if (!nameKey) return;
+          let score = 0;
+          if (nameKey === targetKey) {
+            score = 1;
+          } else if (nameKey.includes(targetKey) || targetKey.includes(nameKey)) {
+            score = 0.93;
+          } else {
+            score = similarityScore(nameKey, targetKey);
+          }
+
+          if (score > bestScore) {
+            bestScore = score;
+            bestMatch = secondary;
+          }
+        });
+
+        return bestScore >= 0.84 ? bestMatch : null;
+      }
+
+      function escapeHtml(value) {
+        return String(value || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function formatNumber(value, decimals) {
+        const numeric = Number(value) || 0;
+        return numeric.toLocaleString('es-NI', {
+          minimumFractionDigits: decimals,
+          maximumFractionDigits: decimals
+        });
+      }
+
+      function getDecimals(value) {
+        return Number.isInteger(Number(value)) ? 0 : 2;
+      }
+
+      function getStepForValue(value) {
+        return Number.isInteger(Number(value)) ? '1' : '0.01';
+      }
+
+      async function resolvePrincipalForSelection() {
+        const firstItem = state.seleccionados[0];
+        if (!firstItem) {
+          throw new Error('No hay materiales seleccionados para determinar la bodega principal.');
+        }
+
+        const candidates = [
+          ...(PRINCIPAL_CANDIDATES_BY_CATALOGO[firstItem.tabla_origen] || []),
+          firstItem.bodega_principal
+        ].map((value) => normalizeText(value)).filter(Boolean);
+
+        for (const name of candidates) {
+          const { data, error } = await window.supabaseClient
+            .from('inv2_bodegas_principales')
+            .select('id, nombre, codigo')
+            .eq('nombre', name)
+            .maybeSingle();
+
+          if (error) {
+            console.warn('No se pudo consultar bodega principal por nombre exacto:', name, error);
+            continue;
+          }
+
+          if (data && data.id) return data;
+        }
+
+        const fallbackPattern = normalizeText(firstItem.bodega_principal || '').replace(/\s+/g, '%');
+        if (fallbackPattern) {
+          const { data, error } = await window.supabaseClient
+            .from('inv2_bodegas_principales')
+            .select('id, nombre, codigo')
+            .ilike('nombre', `%${fallbackPattern}%`)
+            .limit(1);
+
+          if (!error && data && data.length) return data[0];
+        }
+
+        throw new Error(`No se encontro la bodega principal para ${firstItem.bodega_principal || firstItem.tabla_origen}.`);
+      }
+
+      async function ensureSecondaryForTransfer(principalId, destinationName) {
+        const normalizedDestination = normalizeNameKey(destinationName);
+        const { data: secondaries, error } = await window.supabaseClient
+          .from('inv2_bodegas_secundarias')
+          .select('id, nombre, codigo, activa')
+          .eq('principal_id', principalId);
+
+        if (error) {
+          throw new Error(`No se pudo consultar las bodegas secundarias: ${error.message || error}`);
+        }
+
+        const rows = secondaries || [];
+        const exact = rows.find((row) => normalizeNameKey(row.nombre) === normalizedDestination);
+        if (exact) {
+          return { secondary: exact, created: false, allSecondaries: rows };
+        }
+
+        const similar = findSimilarSecondaryName(destinationName, rows);
+        if (similar) {
+          throw new Error(`Ya existe una bodega secundaria parecida: ${similar.nombre}. Use ese nombre exacto para evitar duplicados.`);
+        }
+
+        const code = buildSecondaryCode(destinationName, rows.map((row) => row.codigo));
+        const { data: inserted, error: insertError } = await window.supabaseClient
+          .from('inv2_bodegas_secundarias')
+          .insert([{ principal_id: principalId, nombre: normalizedDestination, codigo: code, activa: true }])
+          .select('id, nombre, codigo, activa')
+          .limit(1);
+
+        if (insertError) {
+          throw new Error(`No se pudo crear la bodega secundaria: ${insertError.message || insertError}`);
+        }
+
+        return {
+          secondary: inserted && inserted[0] ? inserted[0] : { id: null, nombre: normalizedDestination, codigo: code, activa: true },
+          created: true,
+          allSecondaries: rows.concat(inserted || [])
+        };
+      }
+
+      function setSavingState(active, message) {
+        const overlay = document.getElementById('kit-transfer-saving-overlay');
+        const text = document.getElementById('kit-transfer-saving-text');
+        const saveBtn = document.getElementById('kit-transfer-guardar');
+        const clearBtn = document.getElementById('kit-transfer-limpiar');
+        const refreshBtn = document.getElementById('kit-transfer-refresh');
+        if (overlay) overlay.style.display = active ? 'flex' : 'none';
+        if (text) text.textContent = message || 'Guardando traslado interno...';
+        [saveBtn, clearBtn, refreshBtn].forEach((btn) => {
+          if (!btn) return;
+          btn.disabled = active;
+          btn.style.opacity = active ? '0.7' : '1';
+        });
+      }
+
+      function showNotice(message, type) {
+        const node = document.createElement('div');
+        node.style.cssText = [
+          'position:fixed',
+          'top:20px',
+          'right:20px',
+          'padding:12px 16px',
+          'border-radius:8px',
+          'box-shadow:0 4px 12px rgba(0,0,0,0.3)',
+          'z-index:10000',
+          'font-size:14px',
+          'max-width:420px',
+          'color:white',
+          `background:${type === 'error' ? '#dc2626' : type === 'success' ? '#16a34a' : '#2563eb'}`
+        ].join(';');
+        node.textContent = message;
+        document.body.appendChild(node);
+        setTimeout(() => {
+          if (node.parentNode) node.parentNode.removeChild(node);
+        }, 3200);
+      }
+
+      async function obtenerFilasStockCompatibles(viewName) {
+        const columnasCompletas = 'material_codigo, material_nombre, precio, stock_actual, bodega_principal, bodega_secundaria, contenedor, ubicacion_nombre, fecha_compra';
+        const columnasBasicas = 'material_codigo, material_nombre, stock_actual, bodega_principal, bodega_secundaria';
+
+        const { data, error } = await window.supabaseClient
+          .from(viewName)
+          .select(columnasCompletas);
+
+        if (!error) {
+          return data || [];
+        }
+
+        const { data: basicData, error: basicError } = await window.supabaseClient
+          .from(viewName)
+          .select(columnasBasicas);
+
+        if (basicError) throw basicError;
+
+        return (basicData || []).map((row) => ({
+          ...row,
+          precio: 0,
+          contenedor: '',
+          ubicacion_nombre: row.bodega_secundaria || '',
+          fecha_compra: null
+        }));
+      }
+
+      function getRowKey(item) {
+        return [
+          item.tabla_origen,
+          item.codigo,
+          item.bodega_principal,
+          item.bodega_secundaria,
+          item.contenedor || ''
+        ].join('|');
+      }
+
+      async function generateTransferCode() {
+        const parseNumber = (value) => {
+          const match = String(value || '').match(/(\d+)$/);
+          return match ? (parseInt(match[1], 10) || 0) : 0;
+        };
+
+        let maxValue = 0;
+
+        for (const table of Object.values(MOVIMIENTO_TABLES)) {
+          try {
+            const { data, error } = await window.supabaseClient
+              .from(table)
+              .select('referencia_documento')
+              .eq('referencia_tipo', 'traslado_kit')
+              .order('referencia_documento', { ascending: false })
+              .limit(1);
+
+            if (!error && data && data[0]) {
+              maxValue = Math.max(maxValue, parseNumber(data[0].referencia_documento));
+            }
+          } catch (err) {
+            console.warn(`No se pudo leer correlativo desde ${table}:`, err);
+          }
+        }
+
+        const nextValue = maxValue + 1;
+        return `KITM-${String(nextValue).padStart(5, '0')}`;
+      }
+
+      async function loadEmployees() {
+        const select = document.getElementById('kit-transfer-responsable');
+        if (!select) return;
+        try {
+          const { data, error } = await window.supabaseClient
+            .from('empleados')
+            .select('nombres, apellidos')
+            .order('nombres', { ascending: true });
+          if (error) throw error;
+
+          (data || []).forEach((employee) => {
+            const fullName = `${employee.nombres || ''} ${employee.apellidos || ''}`.trim();
+            if (!fullName) return;
+            const option = document.createElement('option');
+            option.value = fullName;
+            option.textContent = fullName;
+            select.appendChild(option);
+          });
+        } catch (err) {
+          console.error('Error cargando empleados:', err);
+          showNotice('No se pudieron cargar los empleados.', 'error');
+        }
+      }
+
+      async function loadMaterials() {
+        const rows = [];
+        for (const source of STOCK_SOURCES) {
+          try {
+            const data = await obtenerFilasStockCompatibles(source.view);
+            (data || []).forEach((row) => {
+              const stock = Number(row.stock_actual) || 0;
+              if (stock <= 0) return;
+              rows.push({
+                codigo: row.material_codigo,
+                nombre: row.material_nombre || row.material_codigo,
+                stock_actual: stock,
+                bodega_principal: row.bodega_principal || source.principal,
+                bodega_secundaria: row.bodega_secundaria || 'General',
+                contenedor: row.contenedor || '',
+                ubicacion_nombre: row.ubicacion_nombre || row.contenedor || row.bodega_secundaria || 'General',
+                precio: Number(row.precio) || 0,
+                fecha_compra: row.fecha_compra || null,
+                tabla_origen: source.catalogo,
+                tabla_movimientos: MOVIMIENTO_TABLES[source.catalogo]
+              });
+            });
+          } catch (err) {
+            console.error(`Error cargando stock desde ${source.view}:`, err);
+          }
+        }
+
+        rows.sort((a, b) => {
+          const byName = a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' });
+          if (byName !== 0) return byName;
+          const byCode = a.codigo.localeCompare(b.codigo, 'es', { sensitivity: 'base' });
+          if (byCode !== 0) return byCode;
+          return a.bodega_secundaria.localeCompare(b.bodega_secundaria, 'es', { sensitivity: 'base' });
+        });
+
+        state.materiales = rows;
+        renderFilterOptions();
+        renderResults();
+      }
+
+      function renderFilterOptions() {
+        const principalSelect = document.getElementById('kit-transfer-principal');
+        const originSelect = document.getElementById('kit-transfer-origen');
+        if (!principalSelect || !originSelect) return;
+
+        const principals = Array.from(new Set(state.materiales.map((item) => normalizeText(item.bodega_principal)).filter(Boolean)));
+        const origins = Array.from(new Set(state.materiales.map((item) => normalizeText(item.bodega_secundaria)).filter(Boolean)));
+
+        principalSelect.innerHTML = '<option value="">Todas</option>' + principals.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join('');
+        originSelect.innerHTML = '<option value="">Todas</option>' + origins.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join('');
+      }
+
+      function renderSelectionSummary() {
+        const node = document.getElementById('kit-transfer-selection-summary');
+        if (!node) return;
+        const totalItems = state.seleccionados.length;
+        const totalQty = state.seleccionados.reduce((sum, item) => sum + (Number(item.cantidad) || 0), 0);
+        node.textContent = `${totalItems} materiales agregados · ${formatNumber(totalQty, totalItems && state.seleccionados.some((item) => !Number.isInteger(Number(item.cantidad))) ? 2 : 0)} unidades`;
+      }
+
+      function getFilteredMaterials() {
+        const search = normalizeText(document.getElementById('kit-transfer-busqueda')?.value).toLowerCase();
+        const principal = normalizeText(document.getElementById('kit-transfer-principal')?.value);
+        const origin = normalizeText(document.getElementById('kit-transfer-origen')?.value);
+
+        return state.materiales.filter((item) => {
+          if (principal && normalizeText(item.bodega_principal) !== principal) return false;
+          if (origin && normalizeText(item.bodega_secundaria) !== origin) return false;
+          if (!search) return true;
+
+          const haystack = [
+            item.codigo,
+            item.nombre,
+            item.bodega_principal,
+            item.bodega_secundaria,
+            item.ubicacion_nombre
+          ].join(' ').toLowerCase();
+          return haystack.includes(search);
+        });
+      }
+
+      function renderResults() {
+        const container = document.getElementById('kit-transfer-resultados');
+        if (!container) return;
+        const filtered = getFilteredMaterials();
+        const countNode = document.getElementById('kit-transfer-modal-count');
+        if (countNode) countNode.textContent = `${filtered.length} resultados`;
+
+        if (filtered.length === 0) {
+          container.innerHTML = '<div class="mov-empty">No hay materiales con stock disponible para ese filtro.</div>';
+          return;
+        }
+
+        const rows = filtered.slice(0, 80).map((item) => {
+          const key = getRowKey(item);
+          const selected = state.seleccionados.some((entry) => entry.key === key);
+          const decimals = getDecimals(item.stock_actual);
+          const draftValue = modalQuantityDrafts[key] ?? (item.stock_actual >= 1 ? (Number.isInteger(Number(item.stock_actual)) ? '1' : '0.01') : String(item.stock_actual));
+          return `
+            <div style="display:grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, .7fr) minmax(0, .8fr) 130px auto; gap:10px; align-items:center; border:1px solid #e2e8f0; border-radius:10px; padding:12px; margin-bottom:10px; background:${selected ? '#eff6ff' : '#fff'};">
+              <div style="min-width:0;">
+                <div style="font-weight:700; color:#0f172a; word-break:break-word;">${escapeHtml(item.nombre)}</div>
+                <div style="font-size:12px; color:#475569; margin-top:2px;">${escapeHtml(item.codigo)}</div>
+              </div>
+              <div>
+                <div style="font-size:11px; color:#64748b; text-transform:uppercase; letter-spacing:.03em;">Origen</div>
+                <div style="font-size:13px; color:#0f172a;">${escapeHtml(item.bodega_secundaria)}</div>
+                <div style="font-size:11px; color:#64748b;">${escapeHtml(item.bodega_principal)}</div>
+              </div>
+              <div>
+                <div style="font-size:11px; color:#64748b; text-transform:uppercase; letter-spacing:.03em;">Stock</div>
+                <div style="font-size:13px; color:#0f172a; font-weight:700;">${formatNumber(item.stock_actual, decimals)}</div>
+                <div style="font-size:11px; color:#64748b;">${escapeHtml(item.ubicacion_nombre || 'Sin ubicacion')}</div>
+              </div>
+              <div>
+                 <label class="mov-form-label" style="margin-bottom:6px; color:#1e3a8a !important;">Cantidad</label>
+                <input class="mov-form-input kit-transfer-modal-qty" data-key="${escapeHtml(key)}" type="number" min="0.01" step="${getStepForValue(item.stock_actual)}" max="${escapeHtml(String(item.stock_actual))}" value="${escapeHtml(String(draftValue))}" ${selected ? 'disabled' : ''} />
+              </div>
+              <div>
+                <button class="mov-btn ${selected ? 'mov-btn-secondary' : 'mov-btn-primary'} kit-transfer-add" data-key="${escapeHtml(key)}" style="width:auto; white-space:nowrap;">${selected ? 'Agregado' : 'Agregar'}</button>
+              </div>
+            </div>`;
+        }).join('');
+
+        const warning = filtered.length > 80
+          ? `<div style="font-size:12px; color:#64748b; margin-bottom:10px;">Mostrando 80 de ${filtered.length} resultados. Refine el filtro para ver menos.</div>`
+          : '';
+
+        container.innerHTML = warning + rows;
+      }
+
+      function renderSelected() {
+        const container = document.getElementById('kit-transfer-seleccionados');
+        if (!container) return;
+
+        if (state.seleccionados.length === 0) {
+          container.innerHTML = '<div class="mov-empty">Todavia no ha agregado materiales al traslado.</div>';
+          renderSelectionSummary();
+          return;
+        }
+
+        const destination = normalizeUpper(document.getElementById('kit-transfer-destino')?.value) || '-';
+        const rows = state.seleccionados.map((item, index) => {
+          const decimals = getDecimals(item.stock_actual);
+          return `
+            <tr>
+              <td style="padding:12px; border-bottom:1px solid #070f87; vertical-align:top;">
+                <div style="font-weight:700; color:#0f172a;">${escapeHtml(item.nombre)}</div>
+                <div style="font-size:12px; color:#475569; margin-top:2px;">${escapeHtml(item.codigo)}</div>
+              </td>
+              <td style="padding:12px; border-bottom:1px solid #070f87; vertical-align:top; font-size:13px; color:#0f172a;">
+                <div>${escapeHtml(item.bodega_principal)}</div>
+                <div style="font-size:12px; color:#64748b; margin-top:2px;">${escapeHtml(item.bodega_secundaria)}</div>
+              </td>
+              <td style="padding:12px; border-bottom:1px solid #070f87; vertical-align:top; font-size:13px; color:#0f172a;">${escapeHtml(destination)}</td>
+              <td style="padding:12px; border-bottom:1px solid #070f87; vertical-align:top;">
+                <input class="mov-form-input kit-transfer-qty" data-index="${index}" type="number" min="0.01" step="${getStepForValue(item.stock_actual)}" max="${escapeHtml(String(item.stock_actual))}" value="${escapeHtml(String(item.cantidad))}" style="min-width:110px;" />
+                <div style="font-size:11px; color:#64748b; margin-top:4px;">Disponible: ${formatNumber(item.stock_actual, decimals)}</div>
+              </td>
+              <td style="padding:12px; border-bottom:1px solid #070f87; vertical-align:top; font-size:13px; color:#0f172a;">
+                <div>${escapeHtml(item.ubicacion_nombre || item.bodega_secundaria || 'General')}</div>
+              </td>
+              <td style="padding:12px; border-bottom:1px solid #070f87; text-align:right; vertical-align:top;">
+                <button class="mov-btn mov-btn-danger kit-transfer-remove" data-index="${index}" style="width:auto;">Quitar</button>
+              </td>
+            </tr>`;
+        }).join('');
+
+        container.innerHTML = `
+          <div style="border:1px solid #070f87; border-radius:12px; overflow:hidden; background:white;">
+            <div style="padding:12px 14px; border-bottom:1px solid #070f87; background:#f8fbff; display:flex; justify-content:space-between; gap:10px; align-items:center; flex-wrap:wrap;">
+              <div style="font-size:13px; color:#0f172a; font-weight:700;">Tabla de materiales agregados</div>
+              <div style="font-size:12px; color:#64748b;">Edite la cantidad aqui antes de guardar el traslado.</div>
+            </div>
+            <div style="overflow:auto;">
+              <table class="mov-table" style="margin:0; min-width:860px;">
+                <thead>
+                  <tr>
+                    <th>Material</th>
+                    <th>Origen</th>
+                    <th>Destino</th>
+                    <th>Cantidad</th>
+                    <th>Ubicacion actual</th>
+                    <th style="text-align:right;">Accion</th>
+                  </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>
+          </div>`;
+        renderSelectionSummary();
+      }
+
+      function openMaterialModal() {
+        const modal = document.getElementById('kit-transfer-modal');
+        if (!modal) return;
+        modal.style.display = 'flex';
+        renderResults();
+        const input = document.getElementById('kit-transfer-busqueda');
+        if (input) input.focus();
+      }
+
+      function closeMaterialModal() {
+        const modal = document.getElementById('kit-transfer-modal');
+        if (!modal) return;
+        modal.style.display = 'none';
+      }
+
+      function openKitDetailModal(destino) {
+        const modal = document.getElementById('kit-transfer-detail-modal');
+        const title = document.getElementById('kit-transfer-detail-title');
+        const subtitle = document.getElementById('kit-transfer-detail-subtitle');
+        const content = document.getElementById('kit-transfer-detail-content');
+        const item = state.historial.find((entry) => entry.destino === destino);
+        if (!modal || !title || !subtitle || !content || !item) return;
+
+        title.textContent = `Kit ${item.destino}`;
+        subtitle.textContent = `Ultimo traslado: ${item.ultimoTraslado || '—'} · Responsable: ${item.responsable || '—'} · Fecha: ${item.fecha || '—'}`;
+
+        const rows = (item.detalles || []).map((detail) => `
+          <tr>
+            <td style="padding:12px; border-bottom:1px solid #e2e8f0; vertical-align:top; color:#0f172a;">${escapeHtml(detail.codigo)}</td>
+            <td style="padding:12px; border-bottom:1px solid #e2e8f0; vertical-align:top; color:#0f172a;">${escapeHtml(detail.nombre)}</td>
+            <td style="padding:12px; border-bottom:1px solid #e2e8f0; vertical-align:top; color:#0f172a;">${escapeHtml(String(detail.movimientos || 0))}</td>
+            <td style="padding:12px; border-bottom:1px solid #e2e8f0; vertical-align:top; color:#0f172a;">${escapeHtml(formatNumber(detail.unidades || 0, Number.isInteger(Number(detail.unidades || 0)) ? 0 : 2))}</td>
+            <td style="padding:12px; border-bottom:1px solid #e2e8f0; vertical-align:top; color:#0f172a;">${escapeHtml(detail.ultimoTraslado || '—')}</td>
+            <td style="padding:12px; border-bottom:1px solid #e2e8f0; vertical-align:top; color:#0f172a;">${escapeHtml(detail.ultimaFecha || '—')}</td>
+          </tr>`).join('');
+
+        content.innerHTML = item.detalles && item.detalles.length
+          ? `
+            <div style="border:1px solid #dbeafe; border-radius:12px; overflow:hidden; background:white;">
+              <div style="padding:12px 14px; border-bottom:1px solid #dbeafe; background:#f8fbff; display:flex; justify-content:space-between; gap:10px; align-items:center; flex-wrap:wrap;">
+                <div style="font-size:13px; color:#0f172a; font-weight:700;">Materiales agregados a ${escapeHtml(item.destino)}</div>
+                <div style="font-size:12px; color:#64748b;">${escapeHtml(String(item.materiales || 0))} materiales · ${escapeHtml(formatNumber(item.unidades || 0, Number.isInteger(Number(item.unidades || 0)) ? 0 : 2))} unidades</div>
+              </div>
+              <div style="overflow:auto;">
+                <table class="mov-table" style="margin:0; min-width:760px; color:#0f172a; background:white;">
+                  <thead>
+                    <tr>
+                      <th style="color:#0f172a; background:#f8fafc;">Codigo</th>
+                      <th style="color:#0f172a; background:#f8fafc;">Nombre</th>
+                      <th style="color:#0f172a; background:#f8fafc;">Movimientos</th>
+                      <th style="color:#0f172a; background:#f8fafc;">Unidades</th>
+                      <th style="color:#0f172a; background:#f8fafc;">Ultimo KITM</th>
+                      <th style="color:#0f172a; background:#f8fafc;">Ultima fecha</th>
+                    </tr>
+                  </thead>
+                  <tbody>${rows}</tbody>
+                </table>
+              </div>
+            </div>`
+          : '<div class="mov-empty">No hay detalle de materiales para este kit.</div>';
+
+        modal.style.display = 'flex';
+      }
+
+      function closeKitDetailModal() {
+        const modal = document.getElementById('kit-transfer-detail-modal');
+        if (!modal) return;
+        modal.style.display = 'none';
+      }
+
+      function renderHistory() {
+        const container = document.getElementById('kit-transfer-historial');
+        if (!container) return;
+
+        if (!state.historial.length) {
+          container.innerHTML = '<p style="margin:0; color:#64748b; text-align:center;">No hay kits con traslados registrados.</p>';
+          return;
+        }
+
+        container.innerHTML = state.historial.map((item) => `
+          <div style="border:1px solid #e2e8f0; border-radius:10px; padding:10px; margin-bottom:10px; background:white;">
+            <div style="display:flex; justify-content:space-between; gap:10px; align-items:center;">
+              <div style="font-size:13px; font-weight:700; color:#0f172a;">${escapeHtml(item.destino)}</div>
+              <div style="font-size:11px; color:#64748b;">${escapeHtml(item.fecha)}</div>
+            </div>
+            <div style="font-size:12px; color:#334155; margin-top:6px;">Ultimo traslado: <b>${escapeHtml(item.ultimoTraslado || '—')}</b></div>
+            <div style="font-size:12px; color:#475569; margin-top:4px;">Ultimo responsable: ${escapeHtml(item.responsable || '—')}</div>
+            <div style="font-size:12px; color:#475569; margin-top:4px;">Traslados: ${escapeHtml(String(item.traslados || 0))}</div>
+            <div style="font-size:12px; color:#475569; margin-top:4px;">Materiales: ${escapeHtml(String(item.materiales || 0))} · Unidades: ${escapeHtml(formatNumber(item.unidades || 0, Number.isInteger(Number(item.unidades || 0)) ? 0 : 2))}</div>
+            <div style="margin-top:10px; display:flex; justify-content:flex-end;">
+              <button class="mov-btn mov-btn-secondary kit-transfer-view-detail" data-destino="${escapeHtml(item.destino)}" style="width:auto;">Ver</button>
+            </div>
+          </div>`).join('');
+      }
+
+      async function loadHistory() {
+        const grouped = new Map();
+
+        for (const table of Object.values(MOVIMIENTO_TABLES)) {
+          try {
+            const { data, error } = await window.supabaseClient
+              .from(table)
+              .select('referencia_documento, fecha_movimiento, responsable, material_codigo, material_nombre, bodega_secundaria, cantidad, signo')
+              .eq('referencia_tipo', 'traslado_kit')
+              .eq('signo', 1)
+              .order('fecha_movimiento', { ascending: false })
+              .limit(80);
+
+            if (error) {
+              console.warn(`No se pudo cargar historial desde ${table}:`, error);
+              continue;
+            }
+
+            (data || []).forEach((row) => {
+              const destino = normalizeText(row.bodega_secundaria) || 'General';
+              const fecha = String(row.fecha_movimiento || '').slice(0, 10);
+              const traslado = row.referencia_documento || 'SIN-CODIGO';
+              if (!grouped.has(destino)) {
+                grouped.set(destino, {
+                  destino,
+                  fecha,
+                  responsable: row.responsable || '',
+                  ultimoTraslado: traslado,
+                  trasladosSet: new Set(),
+                  materialesSet: new Set(),
+                  unidades: 0,
+                  detallesMap: new Map()
+                });
+              }
+              const entry = grouped.get(destino);
+              entry.trasladosSet.add(traslado);
+              entry.materialesSet.add(row.material_codigo || '');
+              entry.unidades += Number(row.cantidad) || 0;
+
+              const materialKey = (row.material_codigo || '').toString();
+              if (materialKey) {
+                if (!entry.detallesMap.has(materialKey)) {
+                  entry.detallesMap.set(materialKey, {
+                    codigo: materialKey,
+                    nombre: row.material_nombre || materialKey,
+                    movimientos: 0,
+                    unidades: 0,
+                    ultimoTraslado: traslado,
+                    ultimaFecha: fecha
+                  });
+                }
+                const detail = entry.detallesMap.get(materialKey);
+                detail.movimientos += 1;
+                detail.unidades += Number(row.cantidad) || 0;
+                if (fecha >= detail.ultimaFecha) {
+                  detail.ultimaFecha = fecha;
+                  detail.ultimoTraslado = traslado;
+                  detail.nombre = row.material_nombre || detail.nombre || materialKey;
+                }
+              }
+
+              if (fecha >= entry.fecha) {
+                entry.fecha = fecha;
+                entry.responsable = row.responsable || entry.responsable || '';
+                entry.ultimoTraslado = traslado;
+              }
+            });
+          } catch (err) {
+            console.warn(`Error leyendo historial desde ${table}:`, err);
+          }
+        }
+
+        state.historial = Array.from(grouped.values())
+          .map((entry) => ({
+            destino: entry.destino,
+            fecha: entry.fecha,
+            responsable: entry.responsable,
+            ultimoTraslado: entry.ultimoTraslado,
+            traslados: entry.trasladosSet.size,
+            materiales: Array.from(entry.materialesSet).filter(Boolean).length,
+            unidades: entry.unidades,
+            detalles: Array.from(entry.detallesMap.values()).sort((a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' }))
+          }))
+          .sort((a, b) => String(b.fecha).localeCompare(String(a.fecha), 'es', { numeric: true }))
+          .slice(0, 20);
+        renderHistory();
+      }
+
+      function syncDestinationPreview() {
+        const destination = normalizeUpper(document.getElementById('kit-transfer-destino')?.value);
+        const preview = document.getElementById('kit-transfer-preview');
+        if (preview) preview.value = destination || '-';
+        renderSelected();
+      }
+
+      function addMaterial(key) {
+        if (state.seleccionados.some((item) => item.key === key)) {
+          showNotice('Ese material ya esta agregado al traslado.', 'info');
+          return;
+        }
+
+        const source = state.materiales.find((item) => getRowKey(item) === key);
+        if (!source) return;
+
+        const rawQty = modalQuantityDrafts[key] ?? (source.stock_actual >= 1 ? 1 : Number(source.stock_actual));
+        const quantity = Number(rawQty);
+        if (!Number.isFinite(quantity) || quantity <= 0) {
+          showNotice('Ingrese una cantidad valida antes de agregar el material.', 'error');
+          return;
+        }
+        if (quantity > Number(source.stock_actual)) {
+          showNotice(`La cantidad supera el stock disponible para ${source.codigo}.`, 'error');
+          return;
+        }
+
+        state.seleccionados.push({
+          ...source,
+          key,
+          cantidad: quantity
+        });
+        renderResults();
+        renderSelected();
+      }
+
+      function removeMaterial(index) {
+        state.seleccionados.splice(index, 1);
+        renderResults();
+        renderSelected();
+      }
+
+      function clearForm() {
+        state.seleccionados = [];
+        modalQuantityDrafts = {};
+        document.getElementById('kit-transfer-destino').value = '';
+        document.getElementById('kit-transfer-observaciones').value = '';
+        syncDestinationPreview();
+        renderResults();
+        renderSelected();
+      }
+
+      function validateSelection() {
+        const destination = normalizeUpper(document.getElementById('kit-transfer-destino')?.value);
+        const responsible = normalizeText(document.getElementById('kit-transfer-responsable')?.value);
+        const date = normalizeText(document.getElementById('kit-transfer-fecha')?.value);
+
+        if (!responsible) return 'Seleccione un responsable.';
+        if (!date) return 'Seleccione una fecha.';
+        if (!destination) return 'Ingrese el nombre del kit o bodega secundaria destino.';
+        if (!state.seleccionados.length) return 'Agregue al menos un material al traslado.';
+
+        const uniquePrincipals = Array.from(new Set(state.seleccionados.map((item) => normalizeNameKey(item.bodega_principal)).filter(Boolean)));
+        if (uniquePrincipals.length > 1) {
+          return 'Un traslado a kit solo puede trabajar con una bodega principal a la vez.';
+        }
+
+        for (const item of state.seleccionados) {
+          const qty = Number(item.cantidad);
+          if (!Number.isFinite(qty) || qty <= 0) {
+            return `Cantidad invalida para ${item.codigo}.`;
+          }
+          if (qty > Number(item.stock_actual)) {
+            return `La cantidad de ${item.codigo} supera el stock disponible.`;
+          }
+          if (normalizeUpper(item.bodega_secundaria) === destination) {
+            return `El material ${item.codigo} ya pertenece a esa bodega secundaria.`;
+          }
+        }
+
+        return '';
+      }
+
+      async function saveTransfer() {
+        const validationError = validateSelection();
+        if (validationError) {
+          showNotice(validationError, 'error');
+          return;
+        }
+
+        const code = document.getElementById('kit-transfer-codigo').value;
+        const responsible = normalizeText(document.getElementById('kit-transfer-responsable').value);
+        const date = normalizeText(document.getElementById('kit-transfer-fecha').value);
+        const destination = normalizeUpper(document.getElementById('kit-transfer-destino').value);
+        const notes = normalizeText(document.getElementById('kit-transfer-observaciones').value);
+        const nowIso = new Date().toISOString();
+        let principalInfo = null;
+        let destinationSecondary = null;
+        let destinationSecondaryCreated = false;
+        let allSecondaries = [];
+        const tablesPayload = {
+          movimientos_bodega_audiovisual: [],
+          movimientos_bodega_hierros: [],
+          movimientos_bodega_consumibles: []
+        };
+
+        setSavingState(true, 'Resolviendo bodega secundaria...');
+        try {
+          principalInfo = await resolvePrincipalForSelection();
+          const secondaryResult = await ensureSecondaryForTransfer(principalInfo.id, destination);
+          destinationSecondary = secondaryResult.secondary;
+          destinationSecondaryCreated = !!secondaryResult.created;
+          allSecondaries = secondaryResult.allSecondaries || [];
+
+          const sourceSecondaryByName = new Map(
+            allSecondaries.map((row) => [normalizeNameKey(row.nombre), row])
+          );
+
+          state.seleccionados.forEach((item) => {
+          const quantity = Number(item.cantidad);
+          const sourceSecondary = sourceSecondaryByName.get(normalizeNameKey(item.bodega_secundaria || '')) || null;
+          const common = {
+            material_codigo: item.codigo,
+            material_nombre: item.nombre,
+            fecha_movimiento: date,
+            bodega_principal: item.bodega_principal,
+            referencia_documento: code,
+            referencia_tipo: 'traslado_kit',
+            responsable: responsible,
+            estado: 'completado',
+            usuario_id: window.currentUser?.id,
+            precio: item.precio || 0,
+            fecha_compra: item.fecha_compra || null,
+            created_at: nowIso
+          };
+
+          tablesPayload[item.tabla_movimientos].push({
+            ...common,
+            bodega_secundaria: item.bodega_secundaria,
+            ubicacion_codigo: item.contenedor || null,
+            ubicacion_nombre: item.ubicacion_nombre || item.contenedor || item.bodega_secundaria || null,
+            tipo_movimiento: 'baja',
+            cantidad: quantity,
+            signo: -1,
+            observaciones: `Traslado interno ${code} desde ${item.bodega_secundaria} hacia ${destinationSecondary.nombre}.${notes ? ` ${notes}` : ''}`
+          });
+
+          tablesPayload[item.tabla_movimientos].push({
+            ...common,
+            bodega_secundaria: destinationSecondary.nombre,
+            ubicacion_codigo: null,
+            ubicacion_nombre: destinationSecondary.nombre,
+            tipo_movimiento: 'ingreso',
+            cantidad: quantity,
+            signo: 1,
+            observaciones: `Traslado interno ${code} recibido en ${destinationSecondary.nombre} desde ${item.bodega_secundaria}.${notes ? ` ${notes}` : ''}`
+          });
+        });
+
+          setSavingState(true, 'Guardando traslado interno...');
+          for (const [table, payload] of Object.entries(tablesPayload)) {
+            if (!payload.length) continue;
+            const { error } = await window.supabaseClient.from(table).insert(payload);
+            if (error) throw error;
+            if (typeof window.logAuditoria === 'function') {
+              payload.forEach((row) => window.logAuditoria('INSERT', table, null, row));
+            }
+          }
+
+          const actionLabel = destinationSecondary && destinationSecondary.id ? destinationSecondary.nombre : destination;
+          const secondaryMessage = destinationSecondaryCreated
+            ? ` y se dio de alta la bodega secundaria ${actionLabel}`
+            : '';
+          showNotice(`Traslado ${code} guardado hacia ${actionLabel}${secondaryMessage}.`, 'success');
+          clearForm();
+          document.getElementById('kit-transfer-codigo').value = await generateTransferCode();
+          await loadMaterials();
+          await loadHistory();
+        } catch (err) {
+          console.error('Error guardando traslado interno:', err);
+          showNotice(`No se pudo guardar el traslado: ${err.message || err}`, 'error');
+        } finally {
+          setSavingState(false);
+        }
+      }
+
+      function bindEvents() {
+        document.getElementById('kit-transfer-open-modal').addEventListener('click', openMaterialModal);
+        document.getElementById('kit-transfer-close-modal').addEventListener('click', closeMaterialModal);
+        document.getElementById('kit-transfer-detail-close').addEventListener('click', closeKitDetailModal);
+        document.getElementById('kit-transfer-busqueda').addEventListener('input', renderResults);
+        document.getElementById('kit-transfer-principal').addEventListener('change', renderResults);
+        document.getElementById('kit-transfer-origen').addEventListener('change', renderResults);
+        document.getElementById('kit-transfer-refresh').addEventListener('click', async () => {
+          await loadMaterials();
+          await loadHistory();
+          showNotice('Stock actualizado.', 'success');
+        });
+        document.getElementById('kit-transfer-destino').addEventListener('input', syncDestinationPreview);
+        document.getElementById('kit-transfer-guardar').addEventListener('click', saveTransfer);
+        document.getElementById('kit-transfer-limpiar').addEventListener('click', clearForm);
+
+        document.getElementById('kit-transfer-resultados').addEventListener('click', (event) => {
+          const button = event.target.closest('.kit-transfer-add');
+          if (!button) return;
+          addMaterial(button.dataset.key);
+        });
+
+        document.getElementById('kit-transfer-resultados').addEventListener('input', (event) => {
+          const input = event.target.closest('.kit-transfer-modal-qty');
+          if (!input) return;
+          modalQuantityDrafts[input.dataset.key] = input.value;
+        });
+
+        document.getElementById('kit-transfer-seleccionados').addEventListener('click', (event) => {
+          const button = event.target.closest('.kit-transfer-remove');
+          if (!button) return;
+          removeMaterial(Number(button.dataset.index));
+        });
+
+        document.getElementById('kit-transfer-historial').addEventListener('click', (event) => {
+          const button = event.target.closest('.kit-transfer-view-detail');
+          if (!button) return;
+          openKitDetailModal(button.dataset.destino || '');
+        });
+
+        document.getElementById('kit-transfer-seleccionados').addEventListener('input', (event) => {
+          const input = event.target.closest('.kit-transfer-qty');
+          if (!input) return;
+          const index = Number(input.dataset.index);
+          const item = state.seleccionados[index];
+          if (!item) return;
+          item.cantidad = input.value;
+        });
+
+        document.getElementById('kit-transfer-modal').addEventListener('click', (event) => {
+          if (event.target.id === 'kit-transfer-modal') {
+            closeMaterialModal();
+          }
+        });
+
+        document.getElementById('kit-transfer-detail-modal').addEventListener('click', (event) => {
+          if (event.target.id === 'kit-transfer-detail-modal') {
+            closeKitDetailModal();
+          }
+        });
+      }
+
+      async function init() {
+        document.getElementById('kit-transfer-fecha').value = new Date().toISOString().split('T')[0];
+        document.getElementById('kit-transfer-codigo').value = await generateTransferCode();
+        await loadEmployees();
+        await loadMaterials();
+        await loadHistory();
+        syncDestinationPreview();
+        renderSelected();
+        renderSelectionSummary();
+        bindEvents();
+      }
+
+      init().catch((err) => {
+        console.error('Error inicializando traslado a kits:', err);
+        showNotice('No se pudo inicializar la vista de traslado a kits.', 'error');
+      });
+    }, 50);
+  </script>
+</div>

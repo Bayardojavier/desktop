@@ -6,7 +6,8 @@
 </head>
 <body>
   <div class="movimientos-view">
-  <div class="mov-form-container">
+  <div id="ingreso-layout" style="display:flex; align-items:flex-start; gap:16px; width:100%;">
+  <div class="mov-form-container" style="flex:1; min-width:0;">
     <div class="mov-form-card">
       <h1 class="mov-form-title">📥 Ingreso de Materiales</h1>
       <p class="mov-form-subtitle">Registre la entrada de materiales a bodega desde órdenes de compra</p>
@@ -58,8 +59,27 @@
         <button id="btn-cambiar-tipo-cambio" class="mov-btn mov-btn-secondary" style="display: none;">💱 Tipo de Cambio</button>
         <button id="btn-imprimir-ingreso" class="mov-btn mov-btn-secondary" style="display: none;">🖨️ Imprimir</button>
       </div>
+
     </div>
   </div>
+
+  <aside id="panel-lateral-ingresos" style="position:sticky; top:16px; width:360px; max-height:calc(100vh - 40px); background:white; border:1px solid #dbeafe; border-radius:12px; box-shadow:0 10px 24px rgba(15,23,42,.15); display:flex; flex-direction:column; overflow:hidden; flex-shrink:0;">
+    <div style="padding:12px 14px; border-bottom:1px solid #e2e8f0; background:#f8fafc;">
+      <h2 style="margin:0; font-size:16px; color:#1e3a8a;">Ingresos Recientes</h2>
+      <p style="margin:4px 0 0 0; font-size:12px; color:#475569;">Historial rápido con reimpresión</p>
+    </div>
+    <div id="lista-ingresos-recientes" style="padding:12px; overflow:auto;">
+      <p style="margin:0; color:#64748b; text-align:center;">Cargando ingresos recientes...</p>
+    </div>
+  </aside>
+  </div>
+  </div>
+
+  <div id="ingreso-saving-overlay" style="display:none; position:fixed; inset:0; background:rgba(15, 23, 42, 0.28); z-index:1100; align-items:center; justify-content:center;">
+    <div style="background:white; border-radius:12px; padding:18px 22px; box-shadow:0 10px 25px rgba(15,23,42,.25); display:flex; align-items:center; gap:12px; min-width:280px;">
+      <div style="width:18px; height:18px; border:3px solid #d1fae5; border-top-color:#16a34a; border-radius:50%; animation: giroIngresoGuardado 0.8s linear infinite;"></div>
+      <div id="ingreso-saving-texto" style="font-weight:600; color:#166534;">El ingreso se está guardando...</div>
+    </div>
   </div>
 
   <!-- Modal de tipo de cambio -->
@@ -84,9 +104,255 @@
       let itemsOrdenSeleccionada = [];
       let ordenMoneda = 'USD';
       let modalTipoCambioMostrado = false; // Controla si el modal ya se mostró para la orden actual
+      let guardandoIngreso = false;
+      let ingresosRecientesMap = new Map();
+      const INGRESO_META_PREFIX = '[ING_META]';
+
+      const styleAnim = document.createElement('style');
+      styleAnim.textContent = `
+        @keyframes giroIngresoGuardado {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `;
+      document.head.appendChild(styleAnim);
+
       function fmt(n, dec = 2) {
         const num = Number(n) || 0;
         return num.toLocaleString('es-NI', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+      }
+
+      function componerObservacionConMeta(observacionItem, meta) {
+        const obsLimpia = (observacionItem || '').toString().trim();
+        const metaJson = `${INGRESO_META_PREFIX}${JSON.stringify(meta || {})}`;
+        return obsLimpia ? `${obsLimpia}\n${metaJson}` : metaJson;
+      }
+
+      function extraerObservacionYMeta(observacionesRaw) {
+        const texto = (observacionesRaw || '').toString();
+        const idx = texto.lastIndexOf(INGRESO_META_PREFIX);
+
+        if (idx === -1) {
+          return {
+            observacion: texto.trim(),
+            meta: {}
+          };
+        }
+
+        const observacion = texto.slice(0, idx).trim();
+        const metaTexto = texto.slice(idx + INGRESO_META_PREFIX.length).trim();
+
+        try {
+          const meta = metaTexto ? JSON.parse(metaTexto) : {};
+          return { observacion, meta: meta || {} };
+        } catch {
+          return { observacion: texto.trim(), meta: {} };
+        }
+      }
+
+      function setEstadoGuardando(activo, mensaje = 'El ingreso se está guardando...') {
+        const overlay = document.getElementById('ingreso-saving-overlay');
+        const texto = document.getElementById('ingreso-saving-texto');
+        const btnGuardar = document.getElementById('btn-guardar-ingreso');
+        const btnLimpiar = document.getElementById('btn-limpiar-ingreso');
+        const btnImprimir = document.getElementById('btn-imprimir-ingreso');
+        const btnTipoCambio = document.getElementById('btn-cambiar-tipo-cambio');
+
+        if (texto) texto.textContent = mensaje;
+        if (overlay) overlay.style.display = activo ? 'flex' : 'none';
+
+        if (btnGuardar) {
+          btnGuardar.disabled = activo;
+          btnGuardar.style.opacity = activo ? '0.7' : '1';
+          btnGuardar.textContent = activo ? 'Guardando...' : 'Guardar Ingreso';
+        }
+        if (btnLimpiar) btnLimpiar.disabled = activo;
+        if (btnImprimir) btnImprimir.disabled = activo;
+        if (btnTipoCambio) btnTipoCambio.disabled = activo;
+      }
+
+      function limpiarFormularioIngreso() {
+        itemsOrdenSeleccionada = [];
+        renderTablaIngreso();
+        document.getElementById('numero-orden').value = '';
+        document.getElementById('proveedor-orden').value = '';
+        document.getElementById('moneda-orden').value = '';
+        document.getElementById('numero-factura').value = '';
+        document.getElementById('btn-imprimir-ingreso').style.display = 'none';
+        document.getElementById('btn-guardar-ingreso').style.display = 'inline-block';
+        modalTipoCambioMostrado = false;
+        document.getElementById('btn-cambiar-tipo-cambio').style.display = 'none';
+      }
+
+      function renderIngresosRecientes(grupos) {
+        const contenedor = document.getElementById('lista-ingresos-recientes');
+        if (!contenedor) return;
+
+        if (!grupos || grupos.length === 0) {
+          contenedor.innerHTML = '<p style="margin:0; color:#64748b; text-align:center;">No hay ingresos recientes.</p>';
+          return;
+        }
+
+        let html = `
+          <div style="display:grid; gap:8px;">
+            <div style="display:grid; grid-template-columns: 1.1fr 1.2fr 1fr .8fr .8fr; font-size:12px; color:#334155; font-weight:700; padding:0 8px;">
+              <div>Fecha</div>
+              <div>Orden</div>
+              <div>Encargado</div>
+              <div class="despacho-td-center">Items</div>
+              <div class="despacho-td-center">Acción</div>
+            </div>`;
+
+        grupos.forEach((g) => {
+          html += `
+            <div style="display:grid; grid-template-columns: 1.1fr 1.2fr 1fr .8fr .8fr; align-items:center; background:white; border:1px solid #e2e8f0; border-radius:8px; padding:8px;">
+              <div style="font-size:13px; color:#0f172a;">${g.fecha || ''}</div>
+              <div style="font-size:13px; color:#0f172a; font-weight:600;">${g.orden || 'Sin referencia'}</div>
+              <div style="font-size:13px; color:#334155;">${g.encargado || '—'}</div>
+              <div style="font-size:13px; color:#334155; text-align:center;">${g.items.length}</div>
+              <div style="text-align:center;">
+                <button class="mov-btn mov-btn-secondary btn-reimprimir-ingreso" data-key="${g.key}" style="padding:6px 10px; font-size:12px;">🖨️ Reimprimir</button>
+              </div>
+            </div>`;
+        });
+
+        html += '</div>';
+        contenedor.innerHTML = html;
+      }
+
+      async function cargarIngresosRecientes() {
+        const contenedor = document.getElementById('lista-ingresos-recientes');
+        if (contenedor) {
+          contenedor.innerHTML = '<p style="margin:0; color:#64748b; text-align:center;">Actualizando ingresos recientes...</p>';
+        }
+
+        const tablasMov = [
+          'movimientos_bodega_hierros',
+          'movimientos_bodega_audiovisual',
+          'movimientos_bodega_consumibles'
+        ];
+
+        try {
+          const { data: ordenesCompra, error: errOrdenes } = await window.supabaseClient
+            .from('ordenes_compra')
+            .select('numero, proveedor');
+
+          if (errOrdenes) throw errOrdenes;
+
+          const ordenesCompraMap = new Map(
+            (ordenesCompra || []).map((oc) => [
+              (oc.numero || '').toString().trim(),
+              (oc.proveedor || '').toString().trim()
+            ])
+          );
+          const numerosOC = new Set(ordenesCompraMap.keys());
+
+          const resultados = await Promise.all(tablasMov.map(async (tabla) => {
+            const { data, error } = await window.supabaseClient
+              .from(tabla)
+              .select('material_codigo, material_nombre, cantidad, precio, referencia_documento, referencia_tipo, responsable, fecha_movimiento, observaciones')
+              .eq('tipo_movimiento', 'ingreso')
+              .eq('referencia_tipo', 'orden_compra')
+              .order('fecha_movimiento', { ascending: false })
+              .limit(120);
+
+            if (error) {
+              console.warn(`No se pudo consultar ${tabla}:`, error);
+              return [];
+            }
+
+            return (data || [])
+              .filter((r) => {
+                const numeroRef = (r.referencia_documento || '').toString().trim();
+                return !!numeroRef && numerosOC.has(numeroRef);
+              })
+              .map(r => ({ ...r, tabla_origen: tabla }));
+          }));
+
+          const rows = resultados.flat();
+          const grupos = new Map();
+
+          rows.forEach((r) => {
+            const { observacion, meta } = extraerObservacionYMeta(r.observaciones);
+            const orden = (r.referencia_documento || '').toString().trim() || 'Sin referencia';
+            const encargado = (r.responsable || '').toString().trim() || '—';
+            const fecha = (r.fecha_movimiento || '').toString().slice(0, 10);
+            const key = `${fecha}__${orden}__${encargado}`;
+
+            if (!grupos.has(key)) {
+              grupos.set(key, {
+                key,
+                fecha,
+                orden,
+                encargado,
+                proveedor: ordenesCompraMap.get(orden) || '',
+                numeroFactura: (meta.numero_factura || '').toString().trim(),
+                items: []
+              });
+            }
+
+            const grupo = grupos.get(key);
+            if (!grupo.numeroFactura && meta.numero_factura) {
+              grupo.numeroFactura = (meta.numero_factura || '').toString().trim();
+            }
+
+            grupo.items.push({
+              codigo: r.material_codigo,
+              nombre: r.material_nombre || r.material_codigo,
+              cantidadRecibida: Number(r.cantidad) || 0,
+              precioUnitario: Number(r.precio) || 0,
+              observacion: observacion || '',
+              tabla_origen: r.tabla_origen
+            });
+          });
+
+          const lista = Array.from(grupos.values())
+            .sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)))
+            .slice(0, 25);
+
+          ingresosRecientesMap = new Map(lista.map(g => [g.key, g]));
+          renderIngresosRecientes(lista);
+        } catch (err) {
+          console.error('Error cargando ingresos recientes:', err);
+          if (contenedor) {
+            contenedor.innerHTML = '<p style="margin:0; color:#b91c1c; text-align:center;">No se pudo cargar el historial de ingresos.</p>';
+          }
+        }
+      }
+
+      async function reimprimirIngresoReciente(key) {
+        const ingreso = ingresosRecientesMap.get(key);
+        if (!ingreso || !ingreso.items || ingreso.items.length === 0) {
+          alert('No se encontró la información de este ingreso para reimprimir.');
+          return;
+        }
+
+        const estadoActual = {
+          encargado: document.getElementById('encargado-ingreso').value,
+          fecha: document.getElementById('fecha-ingreso').value,
+          numeroOrden: document.getElementById('numero-orden').value,
+          proveedor: document.getElementById('proveedor-orden').value,
+          numeroFactura: document.getElementById('numero-factura').value,
+          items: itemsOrdenSeleccionada
+        };
+
+        try {
+          document.getElementById('encargado-ingreso').value = ingreso.encargado === '—' ? '' : ingreso.encargado;
+          document.getElementById('fecha-ingreso').value = ingreso.fecha || '';
+          document.getElementById('numero-orden').value = ingreso.orden === 'Sin referencia' ? '' : ingreso.orden;
+          document.getElementById('proveedor-orden').value = ingreso.proveedor || estadoActual.proveedor || '';
+          document.getElementById('numero-factura').value = ingreso.numeroFactura || '';
+          itemsOrdenSeleccionada = ingreso.items.map(i => ({ ...i }));
+
+          await generarPDFIngreso();
+        } finally {
+          document.getElementById('encargado-ingreso').value = estadoActual.encargado;
+          document.getElementById('fecha-ingreso').value = estadoActual.fecha;
+          document.getElementById('numero-orden').value = estadoActual.numeroOrden;
+          document.getElementById('proveedor-orden').value = estadoActual.proveedor;
+          document.getElementById('numero-factura').value = estadoActual.numeroFactura;
+          itemsOrdenSeleccionada = estadoActual.items;
+        }
       }
       async function ensureHtml2Pdf() {
         if (window.html2pdf) return;
@@ -186,10 +452,10 @@
               try {
                 const { data, error } = await window.supabaseClient
                   .from(tabla)
-                  .select('codigo, nombre, bodega_principal, bodega_secundaria')
+                  .select('codigo, nombre, bodega_principal, bodega_secundaria, contenedor')
                   .eq('codigo', item.material_codigo)
                   .maybeSingle();
-                
+
                 if (!error && data) {
                   mat = data;
                   tablaOrigen = tabla;
@@ -200,18 +466,19 @@
                 continue;
               }
             }
-            
+
             // Convertir precio si es en córdobas
             let precioDolares = item.precio_unitario;
             if (orden.moneda === 'NIO') {
               precioDolares = item.precio_unitario / tipoCambio;
             }
-            
+
             return {
               codigo: item.material_codigo,
               nombre: mat?.nombre || 'Material no encontrado',
               bodega_principal: mat?.bodega_principal || 'Desconocida',
               bodega_secundaria: mat?.bodega_secundaria || 'Sin clasificar',
+              contenedor: mat?.contenedor || null, // Columna 'contenedor' del catálogo
               tabla_origen: tablaOrigen, // Nueva propiedad para saber de qué tabla vino
               cantidad: item.cantidad,
               cantidadRecibida: item.cantidad,
@@ -305,6 +572,13 @@
 // 🔹 GUARDAR EN MOVIMIENTOS_BODEGA (CON PROVEEDOR Y FACTURA)
 // =============================================================================
 async function guardarIngreso() {
+  if (guardandoIngreso) {
+    return;
+  }
+
+  guardandoIngreso = true;
+  setEstadoGuardando(true, 'El ingreso se está guardando...');
+
   const encargado = document.getElementById('encargado-ingreso').value;
   const fecha = document.getElementById('fecha-ingreso').value;
   const numeroOrden = document.getElementById('numero-orden').value;
@@ -313,11 +587,15 @@ async function guardarIngreso() {
 
         if (!encargado || !fecha || !numeroOrden) {
           alert('⚠️ Complete todos los campos obligatorios.');
+          guardandoIngreso = false;
+          setEstadoGuardando(false);
           return;
         }
 
         if (!numeroFactura) {
           alert('⚠️ Ingrese el número de factura.');
+          guardandoIngreso = false;
+          setEstadoGuardando(false);
     return;
   }
 
@@ -327,6 +605,8 @@ async function guardarIngreso() {
 
   if (itemsValidos.length === 0) {
     alert('⚠️ Ingrese al menos una cantidad mayor a 0.');
+    guardandoIngreso = false;
+    setEstadoGuardando(false);
     return;
   }
 
@@ -385,6 +665,8 @@ async function guardarIngreso() {
         material_nombre: item.nombre,
         bodega_principal: item.bodega_principal,
         bodega_secundaria: item.bodega_secundaria,
+        ubicacion_codigo: item.contenedor || null, // Ubicación desde columna 'contenedor' del catálogo
+        ubicacion_nombre: item.contenedor || null, // Ubicación desde columna 'contenedor' del catálogo
         tipo_movimiento: 'ingreso',
         cantidad: item.cantidadRecibida,
         signo: 1,
@@ -392,7 +674,12 @@ async function guardarIngreso() {
         referencia_tipo: 'orden_compra',
         responsable: encargado,
         fecha_movimiento: fecha,
-        observaciones: item.observacion || '',  // Aquí van observaciones específicas del ítem
+        observaciones: componerObservacionConMeta(item.observacion, {
+          numero_factura: numeroFactura,
+          proveedor: proveedor,
+          orden_compra: numeroOrden,
+          guardado_en: new Date().toISOString()
+        }),
         precio: item.precioUnitario, // Usar 'precio' en lugar de 'precio_unitario' para tablas separadas
         // Nota: proveedor y numero_factura no existen en las tablas separadas
       };
@@ -423,8 +710,8 @@ async function guardarIngreso() {
     if (window.showSystemNotification) {
       window.showSystemNotification('Ingreso Registrado', `Se registró el ingreso de ${itemsValidos.length} material(es) exitosamente.`);
     }
-    document.getElementById('btn-imprimir-ingreso').style.display = 'inline-block';
-    document.getElementById('btn-guardar-ingreso').style.display = 'none';
+    await cargarIngresosRecientes();
+    limpiarFormularioIngreso();
 
   } catch (err) {
     console.error('Error al guardar ingreso:', err);
@@ -433,6 +720,9 @@ async function guardarIngreso() {
     if (window.showSystemNotification) {
       window.showSystemNotification('Error en Ingreso', 'No se pudo registrar el ingreso. Verifique los datos.');
     }
+  } finally {
+    guardandoIngreso = false;
+    setEstadoGuardando(false);
   }
 }
 
@@ -640,19 +930,7 @@ async function generarPDFIngreso() {
         document.getElementById('btn-guardar-ingreso').addEventListener('click', guardarIngreso);
         
         // Limpiar
-        document.getElementById('btn-limpiar-ingreso').addEventListener('click', () => {
-          itemsOrdenSeleccionada = [];
-          renderTablaIngreso();
-          document.getElementById('numero-orden').value = '';
-          document.getElementById('proveedor-orden').value = '';
-          document.getElementById('moneda-orden').value = '';
-          document.getElementById('numero-factura').value = '';
-          document.getElementById('btn-imprimir-ingreso').style.display = 'none';
-          document.getElementById('btn-guardar-ingreso').style.display = 'inline-block';
-          // Resetear variables de tipo de cambio
-          modalTipoCambioMostrado = false;
-          document.getElementById('btn-cambiar-tipo-cambio').style.display = 'none';
-        });
+        document.getElementById('btn-limpiar-ingreso').addEventListener('click', limpiarFormularioIngreso);
 
         document.getElementById('btn-imprimir-ingreso').addEventListener('click', async () => {
           await generarPDFIngreso();
@@ -681,11 +959,21 @@ async function generarPDFIngreso() {
         document.getElementById('btn-cambiar-tipo-cambio').addEventListener('click', () => {
           document.getElementById('modal-tipo-cambio').style.display = 'flex';
         });
+
+        // Reimprimir desde historial
+        document.getElementById('lista-ingresos-recientes').addEventListener('click', async (e) => {
+          const btn = e.target.closest('.btn-reimprimir-ingreso');
+          if (!btn) return;
+          const key = btn.dataset.key;
+          if (!key) return;
+          await reimprimirIngresoReciente(key);
+        });
       }
       
       // Iniciar
       cargarDatos();
       initEventos();
+      cargarIngresosRecientes();
     }, 50);
   </script>
 </body>

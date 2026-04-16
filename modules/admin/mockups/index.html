@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mockups Admin General · Ronda 3</title>
+  <style>
+    :root {
+      --bg: #09111f;
+      --panel: rgba(13, 24, 46, 0.76);
+      --stroke: rgba(120, 150, 210, 0.22);
+      --text: #e7eefc;
+      --muted: #8da2c8;
+      --accent: #6dd3ff;
+      --accent-2: #f4b860;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", "Trebuchet MS", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(20, 84, 170, 0.35), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(244, 184, 96, 0.22), transparent 24%),
+        linear-gradient(160deg, #050b16 0%, #0a1630 46%, #09111f 100%);
+      overflow: hidden;
+    }
+
+    .shell {
+      width: min(1180px, calc(100vw - 48px));
+      margin: 24px auto;
+      padding: 28px;
+      border-radius: 28px;
+      background: rgba(7, 14, 28, 0.68);
+      border: 1px solid var(--stroke);
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.36);
+      backdrop-filter: blur(20px);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.3fr 0.7fr;
+      gap: 22px;
+      align-items: stretch;
+      margin-bottom: 22px;
+    }
+
+    .hero-card,
+    .grid a {
+      border-radius: 24px;
+      border: 1px solid var(--stroke);
+      background: var(--panel);
+      backdrop-filter: blur(16px);
+    }
+
+    .hero-copy {
+      padding: 28px;
+    }
+
+    .kicker {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 800;
+    }
+
+    h1 {
+      margin: 16px 0 12px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(38px, 6vw, 66px);
+      line-height: 0.95;
+      letter-spacing: -0.05em;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.7;
+      max-width: 760px;
+    }
+
+    .hero-side {
+      padding: 24px;
+      display: grid;
+      gap: 18px;
+      align-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-side::before {
+      content: "";
+      position: absolute;
+      inset: -20% auto auto -10%;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(109, 211, 255, 0.28), transparent 70%);
+      animation: drift 8s ease-in-out infinite alternate;
+    }
+
+    .brand {
+      width: 178px;
+      justify-self: end;
+      opacity: 0.94;
+      filter: drop-shadow(0 18px 30px rgba(27, 105, 215, 0.28));
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .grid a {
+      position: relative;
+      display: block;
+      padding: 24px;
+      color: inherit;
+      text-decoration: none;
+      overflow: hidden;
+      transition: transform 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease;
+    }
+
+    .grid a:hover {
+      transform: translateY(-6px);
+      border-color: rgba(109, 211, 255, 0.48);
+      box-shadow: 0 24px 60px rgba(7, 18, 40, 0.42);
+    }
+
+    .grid a::after {
+      content: "";
+      position: absolute;
+      inset: auto -30% -50% auto;
+      width: 180px;
+      height: 180px;
+      background: radial-gradient(circle, rgba(255,255,255,0.12), transparent 68%);
+      transform: scale(0.7);
+      transition: transform 0.35s ease;
+    }
+
+    .grid a:hover::after { transform: scale(1); }
+
+    .card-title {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      margin-bottom: 8px;
+    }
+
+    .card-sub {
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--accent-2);
+      margin-bottom: 12px;
+    }
+
+    .card-copy {
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 52ch;
+      font-size: 14px;
+      margin-bottom: 18px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chips span {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      color: #d5def4;
+    }
+
+    @keyframes drift {
+      from { transform: translate(-6px, 0px) scale(0.96); }
+      to { transform: translate(18px, 12px) scale(1.08); }
+    }
+
+    @media (max-width: 900px) {
+      body { overflow: auto; }
+      .hero, .grid { grid-template-columns: 1fr; }
+      .shell { width: min(100vw - 20px, 1180px); padding: 18px; }
+      .brand { justify-self: start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <div class="hero-card hero-copy">
+        <div class="kicker">Administrador General · Laboratorio Visual</div>
+        <h1>Dos finalistas quedan arriba. Aqui entran dos retadores mas.</h1>
+        <p>Esta tercera ronda deja como finalistas a Sala de Crisis y Teatro de Senales. Les sumo dos conceptos nuevos, muy distintos a ambos, para que la decision final salga por personalidad real y no por variaciones menores.</p>
+      </div>
+      <aside class="hero-card hero-side">
+        <img class="brand" src="../../../assets/logo.png" alt="Absolute logo">
+        <p>Abrelas desde este indice o entra directo a cada archivo. Todo sigue como HTML estatico en el mismo puerto local, sin tocar la app principal.</p>
+      </aside>
+    </section>
+
+    <section class="grid">
+      <a href="crisis-room.html">
+        <div class="card-sub">Finalista 1</div>
+        <div class="card-title">Sala de Crisis</div>
+        <div class="card-copy">Centro de mando denso, técnico y urgente. Paneles, señales, alertas, barridos y una sensación fuerte de supervisión operativa.</div>
+        <div class="chips"><span>Consola</span><span>Alertas</span><span>Operación</span></div>
+      </a>
+
+      <a href="signal-theater.html">
+        <div class="card-sub">Finalista 2</div>
+        <div class="card-title">Teatro de Señales</div>
+        <div class="card-copy">Una sala de broadcast con pantallas, lower thirds, franjas en vivo y sensación de centro de transmisión ejecutiva.</div>
+        <div class="chips"><span>Broadcast</span><span>Pantallas</span><span>Escena</span></div>
+      </a>
+
+      <a href="glass-atrium.html">
+        <div class="card-sub">Retador nuevo 1</div>
+        <div class="card-title">Glass Atrium</div>
+        <div class="card-copy">Un atrio corporativo luminoso, vertical y elegante, con capas translúcidas, tarjetas suspendidas y desplazamientos suaves tipo lobby institucional.</div>
+        <div class="chips"><span>Atrio</span><span>Luminoso</span><span>Vertical</span></div>
+      </a>
+
+      <a href="executive-runway.html">
+        <div class="card-sub">Retador nuevo 2</div>
+        <div class="card-title">Executive Runway</div>
+        <div class="card-copy">Una pasarela horizontal de decisiones, con grandes paneles secuenciales, barras de avance, staging y sensación de recorrido ejecutivo.</div>
+        <div class="chips"><span>Secuencial</span><span>Runway</span><span>Flujo</span></div>
+      </a>
+    </section>
+  </div>
+</body>
+</html>

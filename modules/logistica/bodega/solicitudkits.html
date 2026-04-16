@@ -1,0 +1,714 @@
+<div class="logistica-container" style="display: flex; flex-direction: column; height: calc(85vh - 100px);">
+
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; background: rgba(0, 0, 0, 0.767); padding: 12px 24px; border-bottom: 5px solid var(--accent); margin-bottom: 12px; border-radius: 8px; gap: 16px;">
+    <div>
+      <h2 style="font-size: 16pt; margin: 0; color: #f5f6f7; display: flex; align-items: center; gap: 8px;">
+        <span>🧰</span>
+        Solicitud de Despacho por Kit
+      </h2>
+      <p style="color: #bebcbc; font-size: 12px; margin: 6px 0 0 0;">
+        Seleccione primero una bodega secundaria tipo kit y luego genere la solicitud con ese contenido ya abierto.
+      </p>
+    </div>
+    <button id="btn-enviar-kit" class="btn-submit" style="width: auto; padding: 8px 16px; font-size: 13px; height: fit-content; align-self: flex-end; display: none;">
+      🚀 ENVIAR A BODEGA
+    </button>
+  </div>
+
+  <div style="display: flex; gap: 20px; height: 700px; overflow: hidden;">
+
+    <div style="width: 290px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; background: rgba(0, 0, 0, 0.767); padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0;">
+      <div id="kit-empty-side" style="padding: 14px; background: #0f172a; border-radius: 8px; color: #cbd5e1; font-size: 12px; line-height: 1.6;">
+        <div style="font-size: 13px; font-weight: 700; color: #93c5fd; margin-bottom: 8px;">Proceso</div>
+        <div>1. Elija una bodega secundaria de tipo kit.</div>
+        <div>2. Revise los materiales que contiene.</div>
+        <div>3. Seleccione evento y encargado de bodega.</div>
+        <div>4. Envíe la solicitud de despacho a Bodega.</div>
+      </div>
+
+      <div id="kit-request-sidebar" style="display: none; flex-direction: column; gap: 16px;">
+        <div>
+          <label class="log-label" style="font-size: 12px; margin-bottom: 4px;">Kit Seleccionado:</label>
+          <input id="kit-selected-name" type="text" class="log-input" readonly style="font-size: 13px; background: #f8fafc;" />
+        </div>
+
+        <div>
+          <label class="log-label" style="font-size: 12px; margin-bottom: 4px;">Evento Destino:</label>
+          <select id="kit-evento" class="log-select" required style="font-size: 13px;">
+            <option value="">-- Seleccione un Evento --</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="log-label" style="font-size: 12px; margin-bottom: 4px;">Encargado de Bodega:</label>
+          <input type="text" id="kit-responsable" class="log-input" value="Erick Genet" style="font-size: 13px;">
+        </div>
+
+        <div>
+          <label class="log-label" style="font-size: 12px; margin-bottom: 4px;">Observaciones:</label>
+          <textarea id="kit-observaciones" class="log-input" rows="3" style="font-size: 13px; resize: vertical; min-height: 80px;" placeholder="Comentario opcional para la solicitud"></textarea>
+        </div>
+
+        <div id="panelResumenEventoKit" style="background: #0f172a; color: #f1f5f9; padding: 14px; border-radius: 8px; min-height: 180px; display: none;">
+          <h3 style="color: #93c5fd; font-size: 13pt; border-bottom: 2px solid #334155; padding-bottom: 6px; margin: 0 0 10px 0;">📋 Información del Evento</h3>
+          <div style="display: grid; grid-template-columns: 1fr; gap: 10px; font-size: 9.5pt;">
+            <div><div style="font-weight: bold; color: #94a3b8; margin-bottom: 2px;">Nombre</div><div id="kit-resumen-nombre">—</div></div>
+            <div><div style="font-weight: bold; color: #94a3b8; margin-bottom: 2px;">Cliente</div><div id="kit-resumen-cliente">—</div></div>
+            <div><div style="font-weight: bold; color: #94a3b8; margin-bottom: 2px;">Lugar</div><div id="kit-resumen-lugar">—</div></div>
+            <div><div style="font-weight: bold; color: #94a3b8; margin-bottom: 2px;">Servicio</div><div id="kit-resumen-descripcion">—</div></div>
+            <div><div style="font-weight: bold; color: #94a3b8; margin-bottom: 2px;">Montaje</div><div id="kit-resumen-montaje">—</div></div>
+            <div><div style="font-weight: bold; color: #94a3b8; margin-bottom: 2px;">Desmontaje</div><div id="kit-resumen-desmontaje">—</div></div>
+          </div>
+        </div>
+
+        <button id="btn-cambiar-kit" class="btn-add" style="width: 100%; background: #475569;">↩ Cambiar Kit</button>
+      </div>
+    </div>
+
+    <div style="flex: 1; overflow-y: auto; background: rgba(0, 0, 0, 0.767); padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0;">
+      <div id="kit-list-view">
+        <div style="display: flex; gap: 12px; align-items: end; flex-wrap: wrap; margin-bottom: 16px;">
+          <div style="flex: 1; min-width: 260px;">
+            <label class="log-label" style="font-size: 12px; margin-bottom: 4px;">Buscar kit</label>
+            <input id="kit-search" type="text" class="log-input" style="font-size: 13px;" placeholder="Nombre de bodega secundaria o material" />
+          </div>
+          <div style="min-width: 220px;">
+            <label class="log-label" style="font-size: 12px; margin-bottom: 4px;">Bodega principal</label>
+            <select id="kit-principal" class="log-select" style="font-size: 13px;">
+              <option value="">Todas</option>
+            </select>
+          </div>
+          <button id="btn-refresh-kits" class="btn-add" style="width: auto; height: 40px; padding: 8px 14px;">↻ Actualizar</button>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 12px; flex-wrap: wrap;">
+          <h3 style="font-size: 15px; margin: 0; color: #dfe2e6;">Bodegas secundarias con Kit</h3>
+          <div id="kit-list-caption" style="font-size: 12px; color: #cbd5e1;">Cargando kits...</div>
+        </div>
+
+        <div id="kit-listado"></div>
+      </div>
+
+      <div id="kit-request-view" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 12px; flex-wrap: wrap;">
+          <div>
+            <h3 style="font-size: 15px; margin: 0; color: #dfe2e6;">Materiales del Kit</h3>
+            <p id="kit-request-caption" style="font-size: 12px; color: #94a3b8; margin: 6px 0 0 0;">Lista abierta del kit seleccionado.</p>
+          </div>
+        </div>
+
+        <div id="kit-request-materials"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="kit-detail-modal" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.55); z-index: 2200; align-items: center; justify-content: center; padding: 20px;">
+    <div style="width: min(980px, 94vw); max-height: 88vh; background: white; border-radius: 14px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.35); display: flex; flex-direction: column;">
+      <div style="padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;">
+        <div>
+          <h3 id="kit-detail-title" style="margin: 0; font-size: 18px; color: #0f172a;">Detalle del kit</h3>
+          <p id="kit-detail-subtitle" style="margin: 6px 0 0 0; color: #64748b; font-size: 13px;">Materiales incluidos actualmente.</p>
+        </div>
+        <button id="btn-close-kit-detail" class="btn-add" style="width: auto; padding: 8px 12px;">Cerrar</button>
+      </div>
+      <div id="kit-detail-content" style="padding: 16px 20px; overflow: auto;"></div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const STOCK_SOURCES = [
+        { view: 'stock_hierros', principal: 'Hierros' },
+        { view: 'stock_audiovisual', principal: 'Audiovisual' },
+        { view: 'stock_consumibles', principal: 'Consumibles' }
+      ];
+      const MOVIMIENTO_TABLES = [
+        'movimientos_bodega_hierros',
+        'movimientos_bodega_audiovisual',
+        'movimientos_bodega_consumibles'
+      ];
+
+      const state = {
+        eventos: [],
+        eventosMap: new Map(),
+        kits: [],
+        selectedKitKey: ''
+      };
+
+      function normalizeText(value) {
+        return (value || '').toString().trim().replace(/\s+/g, ' ');
+      }
+
+      function normalizeUpper(value) {
+        return normalizeText(value).toUpperCase();
+      }
+
+      function normalizeKey(value) {
+        return normalizeUpper(value)
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^A-Z0-9 ]+/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
+
+      function escapeHtml(value) {
+        return String(value || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function formatNumber(value, decimals = 0) {
+        const numeric = Number(value) || 0;
+        return numeric.toLocaleString('es-NI', {
+          minimumFractionDigits: decimals,
+          maximumFractionDigits: decimals
+        });
+      }
+
+      function hasDecimals(value) {
+        return !Number.isInteger(Number(value));
+      }
+
+      function construirFechaLocal(fecha, hora = '00:00') {
+        if (!fecha) return null;
+
+        const fechaTexto = String(fecha).trim();
+        const match = fechaTexto.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (!match) {
+          const parsed = new Date(`${fechaTexto}${hora ? `T${hora}` : ''}`);
+          return Number.isNaN(parsed.getTime()) ? null : parsed;
+        }
+
+        const [, year, month, day] = match;
+        const [hours = '0', minutes = '0'] = String(hora || '00:00').split(':');
+        return new Date(
+          Number(year),
+          Number(month) - 1,
+          Number(day),
+          Number(hours) || 0,
+          Number(minutes) || 0,
+          0,
+          0
+        );
+      }
+
+      function eventoSigueVigente(evento) {
+        const ahora = new Date();
+        if (!evento?.fecha_desmontaje) return true;
+        const fechaLimite = construirFechaLocal(evento.fecha_desmontaje, evento.hora_desmontaje || '23:59');
+        if (!fechaLimite) return true;
+        fechaLimite.setDate(fechaLimite.getDate() + 1);
+        return fechaLimite >= ahora;
+      }
+
+      function formatDateTime(fecha, hora) {
+        return fecha && hora ? `${fecha} ${hora}` : '—';
+      }
+
+      function showNotice(message, type = 'info') {
+        const notif = document.createElement('div');
+        notif.style = `
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: ${type === 'error' ? '#dc2626' : type === 'success' ? '#16a34a' : '#2563eb'};
+          color: white;
+          padding: 12px 16px;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+          z-index: 10000;
+          font-size: 14px;
+          max-width: 420px;
+          word-wrap: break-word;
+        `;
+        notif.textContent = message;
+        document.body.appendChild(notif);
+        setTimeout(() => {
+          if (notif.parentNode) notif.parentNode.removeChild(notif);
+        }, 3200);
+      }
+
+      function getSelectedKit() {
+        return state.kits.find(kit => kit.key === state.selectedKitKey) || null;
+      }
+
+      async function obtenerFilasStockCompatibles(viewName) {
+        const columnasCompletas = 'material_codigo, material_nombre, precio, stock_actual, bodega_principal, bodega_secundaria, contenedor, ubicacion_nombre';
+        const columnasBasicas = 'material_codigo, material_nombre, stock_actual, bodega_principal, bodega_secundaria';
+
+        const { data, error } = await window.supabaseClient
+          .from(viewName)
+          .select(columnasCompletas)
+          .gt('stock_actual', 0);
+
+        if (!error) return data || [];
+
+        const { data: basicData, error: basicError } = await window.supabaseClient
+          .from(viewName)
+          .select(columnasBasicas)
+          .gt('stock_actual', 0);
+
+        if (basicError) throw basicError;
+
+        return (basicData || []).map(row => ({
+          ...row,
+          precio: 0,
+          contenedor: '',
+          ubicacion_nombre: row.bodega_secundaria || ''
+        }));
+      }
+
+      async function loadEventos() {
+        try {
+          const { data, error } = await window.supabaseClient
+            .from('eventos')
+            .select('id, nombre, cliente, lugar, descripcion, fecha_montaje, hora_montaje, fecha_desmontaje, hora_desmontaje')
+            .order('fecha_montaje', { ascending: true });
+
+          if (error) throw error;
+
+          state.eventos = (data || []).filter(eventoSigueVigente);
+          state.eventosMap = new Map(state.eventos.map(evento => [evento.nombre, evento]));
+
+          const select = document.getElementById('kit-evento');
+          select.innerHTML = '<option value="">-- Seleccione un Evento --</option>' + state.eventos.map(evento => (
+            `<option value="${escapeHtml(evento.nombre)}">${escapeHtml(evento.nombre)} - ${escapeHtml(evento.cliente || 'Sin cliente')}</option>`
+          )).join('');
+        } catch (err) {
+          console.error('Error cargando eventos:', err);
+          showNotice('No se pudieron cargar los eventos.', 'error');
+        }
+      }
+
+      function actualizarPanelEvento() {
+        const eventoNombre = document.getElementById('kit-evento').value;
+        const panel = document.getElementById('panelResumenEventoKit');
+        const evento = state.eventosMap.get(eventoNombre);
+
+        if (!evento) {
+          panel.style.display = 'none';
+          return;
+        }
+
+        document.getElementById('kit-resumen-nombre').textContent = evento.nombre || '—';
+        document.getElementById('kit-resumen-cliente').textContent = evento.cliente || '—';
+        document.getElementById('kit-resumen-lugar').textContent = evento.lugar || '—';
+        document.getElementById('kit-resumen-descripcion').textContent = Array.isArray(evento.descripcion)
+          ? evento.descripcion.filter(Boolean).join(', ')
+          : (evento.descripcion || '—');
+        document.getElementById('kit-resumen-montaje').textContent = formatDateTime(evento.fecha_montaje, evento.hora_montaje);
+        document.getElementById('kit-resumen-desmontaje').textContent = formatDateTime(evento.fecha_desmontaje, evento.hora_desmontaje);
+        panel.style.display = 'block';
+      }
+
+      async function loadKits() {
+        const caption = document.getElementById('kit-list-caption');
+        const container = document.getElementById('kit-listado');
+        caption.textContent = 'Cargando kits...';
+        container.innerHTML = '<p style="margin: 0; color: #cbd5e1; text-align: center; padding: 24px 0;">Cargando bodegas secundarias...</p>';
+
+        try {
+          const kitHistoryMap = new Map();
+
+          for (const table of MOVIMIENTO_TABLES) {
+            const { data, error } = await window.supabaseClient
+              .from(table)
+              .select('bodega_secundaria, fecha_movimiento, responsable, referencia_documento, material_codigo')
+              .eq('referencia_tipo', 'traslado_kit')
+              .eq('signo', 1)
+              .order('fecha_movimiento', { ascending: false })
+              .limit(400);
+
+            if (error) {
+              console.warn(`No se pudo cargar historial desde ${table}:`, error);
+              continue;
+            }
+
+            (data || []).forEach(row => {
+              const destino = normalizeText(row.bodega_secundaria);
+              const key = normalizeKey(destino);
+              if (!destino || !key || !key.includes('KIT')) return;
+
+              if (!kitHistoryMap.has(key)) {
+                kitHistoryMap.set(key, {
+                  key,
+                  destino,
+                  ultimaFecha: String(row.fecha_movimiento || '').slice(0, 10),
+                  ultimoTraslado: row.referencia_documento || '',
+                  responsable: row.responsable || '',
+                  materialesSet: new Set()
+                });
+              }
+
+              const current = kitHistoryMap.get(key);
+              current.materialesSet.add(row.material_codigo || '');
+              const fecha = String(row.fecha_movimiento || '').slice(0, 10);
+              if (fecha >= current.ultimaFecha) {
+                current.ultimaFecha = fecha;
+                current.ultimoTraslado = row.referencia_documento || current.ultimoTraslado;
+                current.responsable = row.responsable || current.responsable;
+                current.destino = destino || current.destino;
+              }
+            });
+          }
+
+          const stockRows = [];
+          for (const source of STOCK_SOURCES) {
+            try {
+              const rows = await obtenerFilasStockCompatibles(source.view);
+              rows.forEach(row => stockRows.push({
+                codigo: row.material_codigo,
+                nombre: row.material_nombre || row.material_codigo,
+                cantidad: Number(row.stock_actual) || 0,
+                bodega_principal: row.bodega_principal || source.principal,
+                bodega_secundaria: row.bodega_secundaria || 'General',
+                contenedor: row.contenedor || '',
+                ubicacion_nombre: row.ubicacion_nombre || row.contenedor || row.bodega_secundaria || 'General',
+                precio: Number(row.precio) || 0
+              }));
+            } catch (err) {
+              console.warn(`No se pudo cargar stock desde ${source.view}:`, err);
+            }
+          }
+
+          const grouped = new Map();
+          stockRows.forEach(row => {
+            if (row.cantidad <= 0) return;
+            const key = normalizeKey(row.bodega_secundaria);
+            if (!kitHistoryMap.has(key)) return;
+
+            if (!grouped.has(key)) {
+              const history = kitHistoryMap.get(key);
+              grouped.set(key, {
+                key,
+                destino: history.destino,
+                ultimaFecha: history.ultimaFecha,
+                ultimoTraslado: history.ultimoTraslado,
+                responsable: history.responsable,
+                items: [],
+                principalSet: new Set(),
+                unidades: 0,
+                materiales: history.materialesSet.size
+              });
+            }
+
+            const entry = grouped.get(key);
+            entry.items.push(row);
+            entry.principalSet.add(row.bodega_principal || 'Sin principal');
+            entry.unidades += Number(row.cantidad) || 0;
+          });
+
+          state.kits = Array.from(grouped.values())
+            .map(kit => ({
+              ...kit,
+              principales: Array.from(kit.principalSet).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' })),
+              items: kit.items.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' }))
+            }))
+            .sort((a, b) => String(b.ultimaFecha || '').localeCompare(String(a.ultimaFecha || '')) || a.destino.localeCompare(b.destino, 'es', { sensitivity: 'base' }));
+
+          renderPrincipalFilter();
+          renderKitList();
+          renderSelectedKitRequest();
+        } catch (err) {
+          console.error('Error cargando kits:', err);
+          caption.textContent = 'No se pudieron cargar los kits';
+          container.innerHTML = '<p style="margin: 0; color: #fca5a5; text-align: center; padding: 24px 0;">No se pudieron cargar las bodegas secundarias con kit.</p>';
+          showNotice('No se pudieron cargar los kits.', 'error');
+        }
+      }
+
+      function renderPrincipalFilter() {
+        const select = document.getElementById('kit-principal');
+        const currentValue = select.value;
+        const principals = Array.from(new Set(state.kits.flatMap(kit => kit.principales || [])))
+          .filter(Boolean)
+          .sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+
+        select.innerHTML = '<option value="">Todas</option>' + principals.map(value => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join('');
+        select.value = principals.includes(currentValue) ? currentValue : '';
+      }
+
+      function getFilteredKits() {
+        const search = normalizeText(document.getElementById('kit-search').value).toLowerCase();
+        const principal = normalizeText(document.getElementById('kit-principal').value);
+
+        return state.kits.filter(kit => {
+          if (principal && !(kit.principales || []).includes(principal)) return false;
+          if (!search) return true;
+
+          const haystack = [
+            kit.destino,
+            ...(kit.principales || []),
+            ...kit.items.map(item => `${item.codigo} ${item.nombre} ${item.ubicacion_nombre || ''}`)
+          ].join(' ').toLowerCase();
+
+          return haystack.includes(search);
+        });
+      }
+
+      function renderKitList() {
+        const filtered = getFilteredKits();
+        const container = document.getElementById('kit-listado');
+        const caption = document.getElementById('kit-list-caption');
+        caption.textContent = `${filtered.length} kit(s) disponibles.`;
+
+        if (!filtered.length) {
+          container.innerHTML = '<p style="margin: 0; color: #cbd5e1; text-align: center; padding: 24px 0;">No hay kits que coincidan con el filtro.</p>';
+          return;
+        }
+
+        container.innerHTML = filtered.map(kit => {
+          const selected = state.selectedKitKey === kit.key;
+          return `
+            <div style="border: 1px solid ${selected ? '#60a5fa' : '#334155'}; border-radius: 10px; padding: 12px; margin-bottom: 10px; background: ${selected ? '#eff6ff' : '#0f172a'};">
+              <div style="display: flex; justify-content: space-between; gap: 12px; align-items: flex-start;">
+                <div style="min-width: 0;">
+                  <div style="font-size: 14px; font-weight: 700; color: ${selected ? '#0f172a' : '#f8fafc'}; word-break: break-word;">${escapeHtml(kit.destino)}</div>
+                  <div style="font-size: 12px; color: ${selected ? '#475569' : '#94a3b8'}; margin-top: 3px;">${escapeHtml((kit.principales || []).join(', ') || 'Sin principal')}</div>
+                </div>
+                <span style="font-size: 11px; color: ${selected ? '#1d4ed8' : '#cbd5e1'}; background: ${selected ? '#dbeafe' : '#1e293b'}; border-radius: 999px; padding: 4px 10px; white-space: nowrap;">${selected ? 'Seleccionado' : 'Kit'}</span>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; font-size: 12px; color: ${selected ? '#334155' : '#e2e8f0'};">
+                <div style="background: ${selected ? '#f8fafc' : '#111827'}; border-radius: 8px; padding: 8px;">
+                  <div style="font-size: 11px; color: ${selected ? '#64748b' : '#94a3b8'};">Materiales</div>
+                  <div style="font-weight: 700; margin-top: 2px;">${escapeHtml(String(kit.materiales))}</div>
+                </div>
+                <div style="background: ${selected ? '#f8fafc' : '#111827'}; border-radius: 8px; padding: 8px;">
+                  <div style="font-size: 11px; color: ${selected ? '#64748b' : '#94a3b8'};">Unidades</div>
+                  <div style="font-weight: 700; margin-top: 2px;">${escapeHtml(formatNumber(kit.unidades, hasDecimals(kit.unidades) ? 2 : 0))}</div>
+                </div>
+                <div style="background: ${selected ? '#f8fafc' : '#111827'}; border-radius: 8px; padding: 8px;">
+                  <div style="font-size: 11px; color: ${selected ? '#64748b' : '#94a3b8'};">Último KITM</div>
+                  <div style="font-weight: 700; margin-top: 2px;">${escapeHtml(kit.ultimoTraslado || '—')}</div>
+                </div>
+              </div>
+              <div style="font-size: 12px; color: ${selected ? '#64748b' : '#94a3b8'}; margin-top: 10px;">Último movimiento: ${escapeHtml(kit.ultimaFecha || '—')} · Responsable: ${escapeHtml(kit.responsable || '—')}</div>
+              <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; flex-wrap: wrap;">
+                <button class="btn-add btn-view-kit" data-kit="${escapeHtml(kit.key)}" style="width: auto; padding: 6px 12px; background: #475569;">Ver detalle</button>
+                <button class="btn-add btn-select-kit" data-kit="${escapeHtml(kit.key)}" style="width: auto; padding: 6px 12px; background: #2563eb;">Abrir solicitud</button>
+              </div>
+            </div>`;
+        }).join('');
+      }
+
+      function openKitRequest(key) {
+        state.selectedKitKey = key;
+        renderSelectedKitRequest();
+      }
+
+      function resetKitRequest() {
+        state.selectedKitKey = '';
+        document.getElementById('kit-observaciones').value = '';
+        document.getElementById('kit-evento').value = '';
+        actualizarPanelEvento();
+        renderSelectedKitRequest();
+      }
+
+      function renderSelectedKitRequest() {
+        const selectedKit = getSelectedKit();
+        const listView = document.getElementById('kit-list-view');
+        const requestView = document.getElementById('kit-request-view');
+        const sidebar = document.getElementById('kit-request-sidebar');
+        const emptySide = document.getElementById('kit-empty-side');
+        const sendButton = document.getElementById('btn-enviar-kit');
+        const materialsContainer = document.getElementById('kit-request-materials');
+        const caption = document.getElementById('kit-request-caption');
+
+        if (!selectedKit) {
+          listView.style.display = 'block';
+          requestView.style.display = 'none';
+          sidebar.style.display = 'none';
+          emptySide.style.display = 'block';
+          sendButton.style.display = 'none';
+          renderKitList();
+          return;
+        }
+
+        document.getElementById('kit-selected-name').value = selectedKit.destino;
+        listView.style.display = 'none';
+        requestView.style.display = 'block';
+        sidebar.style.display = 'flex';
+        emptySide.style.display = 'none';
+        sendButton.style.display = 'inline-block';
+        caption.textContent = `${selectedKit.materiales} materiales · ${formatNumber(selectedKit.unidades, hasDecimals(selectedKit.unidades) ? 2 : 0)} unidades · ${(selectedKit.principales || []).join(', ')}`;
+
+        materialsContainer.innerHTML = `
+          <div style="border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: white;">
+            <table class="solicitud-table" style="font-size: 12px; width: 100%; margin: 0; min-width: 840px;">
+              <thead>
+                <tr>
+                  <th>Material</th>
+                  <th>Código</th>
+                  <th>Bodega Principal</th>
+                  <th>Ubicación</th>
+                  <th style="text-align: right;">Cantidad</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${selectedKit.items.map(item => `
+                  <tr>
+                    <td><strong>${escapeHtml(item.nombre)}</strong></td>
+                    <td>${escapeHtml(item.codigo)}</td>
+                    <td>${escapeHtml(item.bodega_principal || '—')}</td>
+                    <td>${escapeHtml(item.ubicacion_nombre || item.contenedor || item.bodega_secundaria || '—')}</td>
+                    <td style="text-align: right; font-weight: 700;">${escapeHtml(formatNumber(item.cantidad, hasDecimals(item.cantidad) ? 2 : 0))}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>`;
+      }
+
+      function openKitDetail(key) {
+        const kit = state.kits.find(entry => entry.key === key);
+        if (!kit) return;
+
+        document.getElementById('kit-detail-title').textContent = `Kit ${kit.destino}`;
+        document.getElementById('kit-detail-subtitle').textContent = `${(kit.principales || []).join(', ')} · ${kit.materiales} materiales · ${formatNumber(kit.unidades, hasDecimals(kit.unidades) ? 2 : 0)} unidades`;
+        document.getElementById('kit-detail-content').innerHTML = `
+          <div style="overflow: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <table class="solicitud-table" style="font-size: 12px; width: 100%; margin: 0; min-width: 760px;">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Nombre</th>
+                  <th>Bodega Principal</th>
+                  <th>Ubicación</th>
+                  <th style="text-align: right;">Cantidad</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${kit.items.map(item => `
+                  <tr>
+                    <td>${escapeHtml(item.codigo)}</td>
+                    <td>${escapeHtml(item.nombre)}</td>
+                    <td>${escapeHtml(item.bodega_principal || '—')}</td>
+                    <td>${escapeHtml(item.ubicacion_nombre || item.contenedor || '—')}</td>
+                    <td style="text-align: right; font-weight: 700;">${escapeHtml(formatNumber(item.cantidad, hasDecimals(item.cantidad) ? 2 : 0))}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>`;
+        document.getElementById('kit-detail-modal').style.display = 'flex';
+      }
+
+      function closeKitDetail() {
+        document.getElementById('kit-detail-modal').style.display = 'none';
+      }
+
+      async function sendKitRequest() {
+        const selectedKit = getSelectedKit();
+        const evento = normalizeText(document.getElementById('kit-evento').value);
+        const responsable = normalizeText(document.getElementById('kit-responsable').value);
+        const observaciones = normalizeText(document.getElementById('kit-observaciones').value);
+
+        if (!selectedKit) {
+          showNotice('Seleccione primero un kit.', 'error');
+          return;
+        }
+        if (!evento) {
+          showNotice('Seleccione un evento antes de enviar la solicitud.', 'error');
+          return;
+        }
+        if (!responsable) {
+          showNotice('Ingrese el encargado de bodega.', 'error');
+          return;
+        }
+
+        const items = selectedKit.items.map(item => ({
+          codigo: item.codigo,
+          nombre: item.nombre,
+          cantidad: Number(item.cantidad) || 0,
+          estado: 'pendiente',
+          observacion: `Kit completo: ${selectedKit.destino}${item.ubicacion_nombre ? ` | Ubicación: ${item.ubicacion_nombre}` : ''}`,
+          medidas: null,
+          color: null
+        })).filter(item => item.cantidad > 0);
+
+        if (!items.length) {
+          showNotice('El kit seleccionado no tiene materiales disponibles.', 'error');
+          return;
+        }
+
+        const button = document.getElementById('btn-enviar-kit');
+        const oldText = button.textContent;
+        button.disabled = true;
+        button.textContent = 'Enviando...';
+
+        try {
+          const response = await window.createSolicitudFromExternal({
+            tipo: 'despacho',
+            estado: 'pendiente_bodega',
+            evento,
+            encargado_evento: responsable,
+            prioridad: 'Normal',
+            modo_ingreso: 'item',
+            observaciones: `Solicitud de despacho del kit ${selectedKit.destino}.${observaciones ? ` ${observaciones}` : ''}`,
+            area: evento
+          }, items);
+
+          if (!response?.success) {
+            throw response?.error || new Error('No se pudo crear la solicitud.');
+          }
+
+          showNotice(`Solicitud ${response.solicitudId} creada para el kit ${selectedKit.destino}.`, 'success');
+          resetKitRequest();
+        } catch (err) {
+          console.error('Error creando solicitud por kit:', err);
+          showNotice(`No se pudo crear la solicitud: ${err.message || err}`, 'error');
+        } finally {
+          button.disabled = false;
+          button.textContent = oldText;
+        }
+      }
+
+      function bindEvents() {
+        document.getElementById('kit-search').addEventListener('input', renderKitList);
+        document.getElementById('kit-principal').addEventListener('change', renderKitList);
+        document.getElementById('btn-refresh-kits').addEventListener('click', loadKits);
+        document.getElementById('btn-cambiar-kit').addEventListener('click', resetKitRequest);
+        document.getElementById('kit-evento').addEventListener('change', actualizarPanelEvento);
+        document.getElementById('btn-enviar-kit').addEventListener('click', sendKitRequest);
+        document.getElementById('btn-close-kit-detail').addEventListener('click', closeKitDetail);
+
+        document.getElementById('kit-listado').addEventListener('click', (event) => {
+          const selectBtn = event.target.closest('.btn-select-kit');
+          if (selectBtn) {
+            openKitRequest(selectBtn.dataset.kit || '');
+            return;
+          }
+
+          const viewBtn = event.target.closest('.btn-view-kit');
+          if (viewBtn) {
+            openKitDetail(viewBtn.dataset.kit || '');
+          }
+        });
+
+        document.getElementById('kit-detail-modal').addEventListener('click', (event) => {
+          if (event.target.id === 'kit-detail-modal') {
+            closeKitDetail();
+          }
+        });
+      }
+
+      async function init() {
+        document.getElementById('kit-responsable').value = window.currentUser?.nombre || window.currentUser?.usuario || 'Erick Genet';
+        bindEvents();
+        await loadEventos();
+        await loadKits();
+        actualizarPanelEvento();
+      }
+
+      init().catch(err => {
+        console.error('Error inicializando solicitud de kits:', err);
+        showNotice('No se pudo inicializar la vista de solicitud por kits.', 'error');
+      });
+    })();
+  </script>
+</div>

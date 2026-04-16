@@ -255,6 +255,26 @@
         el._t = setTimeout(() => { el.style.display = 'none'; }, timeout);
       }
 
+      async function enviarNotificacionOrdenCompra(numeroOrden, proveedor) {
+        try {
+          await window.supabaseClient.functions.invoke('send-push-notification', {
+            body: {
+              title: 'Nueva orden de compra',
+              body: `${window.currentUser?.nombre || window.currentUser?.usuario || 'Usuario'} creó la orden ${numeroOrden} para ${proveedor}`,
+              data: {
+                type: 'orden_compra_creada',
+                numeroOrden,
+                proveedor,
+                usuario: window.currentUser?.nombre || window.currentUser?.usuario || 'Usuario',
+                timestamp: new Date().toISOString()
+              }
+            }
+          });
+        } catch (error) {
+          console.warn('No se pudo enviar notificación push de orden de compra:', error);
+        }
+      }
+
       // =============================================================================
       // 🔹 CARGAR DATOS DE SUPABASE
       // =============================================================================
@@ -842,6 +862,10 @@
             }
           } catch (logErr) {
             console.warn('No se pudo enviar log de auditoría:', logErr);
+          }
+
+          if (!editingId) {
+            await enviarNotificacionOrdenCompra(numeroActual, prov);
           }
 
           document.getElementById('modal-imprimir').style.display = 'flex';

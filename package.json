@@ -1,6 +1,6 @@
 {
   "name": "absolute-desktop",
-  "version": "1.4.0",
+  "version": "1.4.6",
   "description": "App de escritorio de Absolute de Nicaragua",
   "main": "main.js",
   "author": "Bayardo Davila",
@@ -13,8 +13,10 @@
     "package": "electron-forge package",
     "make": "electron-forge make",
     "make:archivar": "node scripts/archive-and-make.js",
-    "publish:win": "electron-builder --win --x64 --publish=always && rmdir /s /q temp_build"
-    ,"test:devolucion": "node scripts/test_devolucion_calculo.js",
+    "release:win:auto": "powershell -ExecutionPolicy Bypass -File scripts/release-win.ps1 -Bump patch",
+    "release:win:auto:dry": "powershell -ExecutionPolicy Bypass -File scripts/release-win.ps1 -Bump patch -DryRun",
+    "publish:win": "electron-builder --win --x64 --publish=always && if exist temp_build rmdir /s /q temp_build",
+    "test:devolucion": "node scripts/test_devolucion_calculo.js",
     "test:devolucion:db": "node scripts/test_devolucion_db.js"
   },
   "dependencies": {
@@ -84,7 +86,7 @@
         }
       ],
       "icon": "assets/icon.ico",
-      "signAndEditExecutable": false
+      "signAndEditExecutable": true
     },
     "nsis": {
       "oneClick": false,

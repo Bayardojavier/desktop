@@ -765,6 +765,19 @@
 
         // Cerrar modal
         const cerrar = () => { if (modal.parentNode) modal.parentNode.removeChild(modal); };
+        const obtenerCantidadEditada = (itemId, cantidadActual) => {
+          const inputCantidad = modal.querySelector(`input[data-item-id="${itemId}"]`);
+          if (!inputCantidad) {
+            return cantidadActual;
+          }
+
+          const cantidadParseada = parseInt(inputCantidad.value, 10);
+          if (!Number.isFinite(cantidadParseada) || cantidadParseada < 1) {
+            return cantidadActual;
+          }
+
+          return cantidadParseada;
+        };
         modal.querySelector('#btn-cerrar-modal').onclick = cerrar;
         modal.querySelector('#btn-cancelar').onclick = cerrar;
         modal.onclick = (e) => { if (e.target === modal) cerrar(); };
@@ -862,8 +875,7 @@
                 item.observacion === "Material adicional específico (fuera de receta)" && !itemsAEliminar.has(item.id.toString())
               );
               especificosOriginales.forEach((item) => {
-                const input = modal.querySelector(`[data-item-id="${item.id}"]`);
-                const nuevaCantidad = input ? parseInt(input.value) || 1 : item.cantidad_solicitada;
+                const nuevaCantidad = obtenerCantidadEditada(item.id, item.cantidad_solicitada);
                 nuevosItems.push({
                   solicitud_id: idSolicitud,
                   codigo_material: item.codigo_material,
@@ -881,8 +893,7 @@
                 item.observacion === "Plantilla adicional (fuera de receta)" && !itemsAEliminar.has(item.id.toString())
               );
               plantillasOriginales.forEach((item) => {
-                const input = modal.querySelector(`[data-item-id="${item.id}"]`);
-                const nuevaCantidad = input ? parseInt(input.value) || 1 : item.cantidad_solicitada;
+                const nuevaCantidad = obtenerCantidadEditada(item.id, item.cantidad_solicitada);
                 nuevosItems.push({
                   solicitud_id: idSolicitud,
                   codigo_material: item.codigo_material,
@@ -900,8 +911,7 @@
                 item.observacion && (item.observacion.includes('Herramienta adicional') || item.observacion.includes('Consumible adicional')) && !itemsAEliminar.has(item.id.toString())
               );
               consumiblesOriginales.forEach((item) => {
-                const input = modal.querySelector(`[data-item-id="${item.id}"]`);
-                const nuevaCantidad = input ? parseInt(input.value) || 1 : item.cantidad_solicitada;
+                const nuevaCantidad = obtenerCantidadEditada(item.id, item.cantidad_solicitada);
                 nuevosItems.push({
                   solicitud_id: idSolicitud,
                   codigo_material: item.codigo_material,
@@ -957,17 +967,14 @@
               );
 
               for (const item of itemsActuales) {
-                const input = modal.querySelector(`[data-item-id="${item.id}"]`);
-                if (input) {
-                  const nuevaCantidad = parseInt(input.value) || 1;
-                  if (nuevaCantidad !== item.cantidad_solicitada) {
-                    const { error } = await window.supabaseClient
-                      .from('items_solicitud_logistica')
-                      .update({ cantidad_solicitada: nuevaCantidad })
-                      .eq('id', item.id);
-                    if (error) {
-                      console.error('Error al actualizar item:', error);
-                    }
+                const nuevaCantidad = obtenerCantidadEditada(item.id, item.cantidad_solicitada);
+                if (nuevaCantidad !== item.cantidad_solicitada) {
+                  const { error } = await window.supabaseClient
+                    .from('items_solicitud_logistica')
+                    .update({ cantidad_solicitada: nuevaCantidad })
+                    .eq('id', item.id);
+                  if (error) {
+                    console.error('Error al actualizar item:', error);
                   }
                 }
               }

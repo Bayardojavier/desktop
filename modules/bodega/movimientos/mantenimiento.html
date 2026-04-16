@@ -431,14 +431,14 @@
                 // Para consumidos: usar las 3 vistas de stock separadas
                 let materialesStock = [];
                 const tablasStock = ['stock_hierros', 'stock_audiovisual', 'stock_consumibles'];
-                
+
                 for (const tabla of tablasStock) {
                   try {
                     const { data, error } = await window.supabaseClient
                       .from(tabla)
-                      .select('material_codigo, material_nombre, bodega_principal, stock_actual, precio')
+                      .select('material_codigo, material_nombre, bodega_principal, stock_actual, precio, contenedor')
                       .gt('stock_actual', 0); // Solo materiales con stock disponible
-                    
+
                     if (!error && data) {
                       // Agregar propiedad tabla_origen para saber de dónde viene
                       const materialesConOrigen = data.map(m => ({
@@ -452,27 +452,28 @@
                     continue;
                   }
                 }
-                
+
                 materiales = materialesStock.map(m => ({
                   material_codigo: m.material_codigo,
                   material_nombre: m.material_nombre,
                   bodega_principal: m.bodega_principal,
                   existencia: m.stock_actual,
                   precio_promedio: m.precio,
+                  contenedor: m.contenedor || null, // Columna 'contenedor' para ubicación
                   tabla_origen: m.tabla_origen
                 }));
             } else {
                 // Para mantenimiento: usar las 3 vistas de stock separadas (materiales existentes)
                 let materialesStock = [];
                 const tablasStock = ['stock_hierros', 'stock_audiovisual', 'stock_consumibles'];
-                
+
                 for (const tabla of tablasStock) {
                   try {
                     const { data, error } = await window.supabaseClient
                       .from(tabla)
-                      .select('material_codigo, material_nombre, bodega_principal, stock_actual, precio')
+                      .select('material_codigo, material_nombre, bodega_principal, stock_actual, precio, contenedor')
                       .gt('stock_actual', 0); // Solo materiales con stock disponible
-                    
+
                     if (!error && data) {
                       // Agregar propiedad tabla_origen para saber de dónde viene
                       const materialesConOrigen = data.map(m => ({
@@ -486,13 +487,14 @@
                     continue;
                   }
                 }
-                
+
                 materiales = materialesStock.map(m => ({
                   material_codigo: m.material_codigo,
                   material_nombre: m.material_nombre,
                   bodega_principal: m.bodega_principal,
                   existencia: m.stock_actual,
                   precio_promedio: m.precio,
+                  contenedor: m.contenedor || null, // Columna 'contenedor' para ubicación
                   tabla_origen: m.tabla_origen
                 }));
             }
@@ -1099,12 +1101,12 @@
           if (codigosCatalogo.length > 0) {
             const tablasStock = ['stock_hierros', 'stock_audiovisual', 'stock_consumibles'];
             let stockData = [];
-            
+
             for (const tabla of tablasStock) {
               try {
                 let query = window.supabaseClient
                   .from(tabla)
-                  .select('material_codigo, material_nombre, bodega_principal, stock_actual, precio');
+                  .select('material_codigo, material_nombre, bodega_principal, stock_actual, precio, contenedor');
                 if (codigosCatalogo.length === 1) {
                   query = query.eq('material_codigo', codigosCatalogo[0]);
                 } else {
@@ -1119,12 +1121,13 @@
                 continue;
               }
             }
-            
+
             (stockData || []).forEach(s => stockMap.set(s.material_codigo, {
               nombre: s.material_nombre,
               bodega_principal: s.bodega_principal,
               existencia: s.stock_actual || 0,
-              precio_promedio: s.precio || 0
+              precio_promedio: s.precio || 0,
+              contenedor: s.contenedor || null
             }));
           }
 
@@ -1134,6 +1137,7 @@
             existencia: stockMap.get(c.material_codigo)?.existencia ?? 0,
             precio_promedio: stockMap.get(c.material_codigo)?.precio_promedio ?? 0,
             cantidad: c.cantidad,
+            contenedor: stockMap.get(c.material_codigo)?.contenedor || null,
             observacion: c.observaciones || c.observacion || ''
           }));
 
@@ -1144,6 +1148,7 @@
             precio_promedio: stockMap.get(m.material_codigo)?.precio_promedio ?? 0,
             cantidad: m.cantidad,
             mano_obra: m.mano_obra || 0,
+            contenedor: stockMap.get(m.material_codigo)?.contenedor || null,
             observacion: m.observaciones || m.observacion || ''
           }));
 
@@ -1346,7 +1351,7 @@
               try {
                 let query = window.supabaseClient
                   .from(tabla)
-                  .select('material_codigo, material_nombre, bodega_principal, bodega_secundaria, precio');
+                  .select('material_codigo, material_nombre, bodega_principal, bodega_secundaria, precio, contenedor');
                 if (materialCodes.length === 1) {
                   query = query.eq('material_codigo', materialCodes[0]);
                 } else {
@@ -1358,7 +1363,8 @@
                     nombre: s.material_nombre,
                     bodega_principal: s.bodega_principal,
                     bodega_secundaria: s.bodega_secundaria,
-                    precio: s.precio || 0
+                    precio: s.precio || 0,
+                    contenedor: s.contenedor || null
                   }));
                 }
               } catch (e) {
@@ -1378,6 +1384,8 @@
                 material_nombre: info.nombre || item.nombre,
                 bodega_principal: info.bodega_principal || 'Principal',
                 bodega_secundaria: info.bodega_secundaria || 'General',
+                ubicacion_codigo: info.contenedor || item.contenedor || null,
+                ubicacion_nombre: info.contenedor || item.contenedor || null,
                 tipo_movimiento: 'baja',
                 cantidad: item.cantidad,
                 signo: -1,
@@ -1387,7 +1395,7 @@
                 fecha_movimiento: fecha,
                 observaciones: item.observacion || '',
                 estado: 'completado',
-                precio_base: item.precio_promedio,
+                precio: item.precio_promedio,
                 created_at: new Date().toISOString()
               };
             });
@@ -1409,6 +1417,8 @@
                 material_nombre: info.nombre || item.nombre,
                 bodega_principal: info.bodega_principal || 'Principal',
                 bodega_secundaria: info.bodega_secundaria || 'General',
+                ubicacion_codigo: info.contenedor || item.contenedor || null,
+                ubicacion_nombre: info.contenedor || item.contenedor || null,
                 tipo_movimiento: 'mantenimiento',
                 cantidad: item.cantidad,
                 signo: -1,
@@ -1418,7 +1428,7 @@
                 fecha_movimiento: fecha,
                 observaciones: item.observacion || '',
                 estado: 'pendiente', // Pendiente hasta completar el mantenimiento
-                precio_base: item.precio_promedio,
+                precio: item.precio_promedio,
                 mano_obra: item.mano_obra,
                 created_at: new Date().toISOString()
               };
@@ -1820,7 +1830,7 @@
 
               // actualizar estado y precio en materiales_mantenimiento
               try {
-                await window.supabaseClient.from('materiales_mantenimiento').update({ estado: 'reparado', precio_base: it.precio, precio_final: nuevoPrecio }).eq('id', it.id);
+                await window.supabaseClient.from('materiales_mantenimiento').update({ estado: 'reparado', precio: nuevoPrecio }).eq('id', it.id);
               } catch (e) { console.warn('No se pudo actualizar estado/precio mantenimiento', e); }
             }
           }

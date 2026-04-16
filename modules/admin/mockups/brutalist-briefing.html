@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Brutalist Briefing</title>
+  <style>
+    :root {
+      --bg: #ece7de;
+      --ink: #111111;
+      --paper: #f6f1e7;
+      --slate: #24262b;
+      --sand: #d7c6a9;
+      --orange: #ef6d22;
+      --red: #c33821;
+      --blue: #2158c3;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(180deg, #f3eee6 0%, var(--bg) 100%);
+      color: var(--ink);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .shell {
+      width: min(1320px, calc(100vw - 24px));
+      margin: 12px auto;
+      border: 2px solid var(--ink);
+      background: var(--paper);
+      box-shadow: 18px 18px 0 rgba(17,17,17,0.12);
+      overflow: hidden;
+    }
+
+    .mast {
+      display: grid;
+      grid-template-columns: 240px 1fr 240px;
+      border-bottom: 2px solid var(--ink);
+    }
+
+    .mast > div {
+      padding: 18px;
+      min-height: 170px;
+      border-right: 2px solid var(--ink);
+    }
+
+    .mast > div:last-child { border-right: none; }
+
+    .tag {
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+    }
+
+    .black { background: var(--ink); color: #fff; }
+    .sand { background: var(--sand); }
+    .orange { background: var(--orange); color: #fff; }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(52px, 8vw, 118px);
+      line-height: 0.9;
+      letter-spacing: -0.08em;
+      text-transform: uppercase;
+      animation: shove 0.7s ease;
+    }
+
+    .hero p,
+    .col p,
+    .banner small { line-height: 1.6; font-size: 15px; }
+
+    .banner {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      border-bottom: 2px solid var(--ink);
+    }
+
+    .banner > div {
+      padding: 18px;
+      border-right: 2px solid var(--ink);
+    }
+
+    .banner > div:last-child { border-right: none; }
+
+    .banner strong {
+      display: block;
+      font-size: 22px;
+      line-height: 1;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 0.9fr 1.2fr 0.9fr;
+    }
+
+    .col {
+      min-height: 540px;
+      border-right: 2px solid var(--ink);
+      padding: 18px;
+    }
+
+    .col:last-child { border-right: none; }
+
+    .kpi-wall {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .kpi {
+      border: 2px solid var(--ink);
+      padding: 14px;
+      min-height: 138px;
+      display: grid;
+      align-content: space-between;
+      background: #fff;
+      transition: transform 0.22s ease;
+    }
+
+    .kpi:hover { transform: translate(-4px, -4px); }
+
+    .kpi strong {
+      font-size: 52px;
+      line-height: 0.9;
+      letter-spacing: -0.08em;
+    }
+
+    .slab {
+      margin-top: 14px;
+      border: 2px solid var(--ink);
+      padding: 14px;
+      background: #fff;
+    }
+
+    .slab h2,
+    .col h2 {
+      margin: 0 0 10px;
+      font-size: 28px;
+      line-height: 0.95;
+      text-transform: uppercase;
+      letter-spacing: -0.05em;
+    }
+
+    .list {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .list-item {
+      padding: 12px;
+      border: 2px solid var(--ink);
+      background: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .list-item::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 10px;
+      background: var(--orange);
+    }
+
+    .list-item strong { display: block; margin-left: 14px; }
+    .list-item p { margin: 6px 0 0 14px; }
+
+    .diag {
+      margin-top: 18px;
+      padding: 18px;
+      background:
+        repeating-linear-gradient(-45deg, rgba(17,17,17,0.07) 0 14px, transparent 14px 28px),
+        #fff;
+      border: 2px solid var(--ink);
+      animation: stamp 1s ease;
+    }
+
+    .diag strong {
+      display: block;
+      font-size: 30px;
+      line-height: 0.95;
+      text-transform: uppercase;
+      max-width: 10ch;
+      margin-bottom: 10px;
+    }
+
+    @keyframes shove {
+      from { opacity: 0; transform: translateY(28px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes stamp {
+      from { transform: scale(0.94) rotate(-1deg); opacity: 0; }
+      to { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+
+    @media (max-width: 1080px) {
+      .mast, .banner, .grid, .kpi-wall { grid-template-columns: 1fr; }
+      .mast > div, .banner > div, .col { border-right: none; border-bottom: 2px solid var(--ink); }
+      .col:last-child { border-bottom: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="mast">
+      <div class="black">
+        <div class="tag">Administrador General</div>
+        <p>Un portal hecho como briefing duro, industrial y frontal.</p>
+      </div>
+      <div class="hero sand">
+        <div class="tag">Brutalist briefing</div>
+        <h1>Decision antes que decoracion.</h1>
+      </div>
+      <div class="orange">
+        <div class="tag">15 abril 2026</div>
+        <p>La propuesta usa peso tipografico, choque de bloques y una energia casi de cartel impreso.</p>
+      </div>
+    </header>
+
+    <section class="banner">
+      <div>
+        <strong>Si el administrador entra aqui, sabe de inmediato que esto no es un modulo mas.</strong>
+        <small>La estetica es cruda, rectangular, tajante y muy visible. Menos suavidad, mas presencia. En vez de parecer dashboard corporativo, parece tablero de direccion con voz propia.</small>
+      </div>
+      <div class="black">
+        <strong>7 eventos / 18 faltantes / 11 criticos / 4 bajas</strong>
+        <small>Una linea de mando visual, no una galeria de widgets blandos.</small>
+      </div>
+    </section>
+
+    <main class="grid">
+      <section class="col sand">
+        <div class="tag">Metrica compacta</div>
+        <div class="kpi-wall">
+          <article class="kpi"><span>eventos</span><strong>07</strong></article>
+          <article class="kpi"><span>faltantes</span><strong>18</strong></article>
+          <article class="kpi"><span>criticos</span><strong>11</strong></article>
+          <article class="kpi"><span>bajas</span><strong>04</strong></article>
+        </div>
+        <div class="diag">
+          <strong>La forma tambien comunica jerarquia.</strong>
+          <p>Aqui la forma no quiere ser elegante. Quiere ser firme.</p>
+        </div>
+      </section>
+
+      <section class="col">
+        <div class="tag">Placa central</div>
+        <h2>La operacion esta bajo presion y el administrador necesita una interfaz con caracter.</h2>
+        <p>Esta variante rompe con el lenguaje glass o premium. Se apoya en contraste duro, tipografia inmensa, lineas negras, bloques fisicos y una lectura casi de poster. Puede gustar mucho o nada, pero no se siente generica.</p>
+        <div class="slab">
+          <h2>Por que podria servir</h2>
+          <p>Porque transforma el modulo de admin en una pieza de identidad. No parece otra seccion del ERP: parece un espacio de comando con discurso visual propio.</p>
+        </div>
+        <div class="list">
+          <div class="list-item"><strong>Faltante prioritario</strong><p>Consola DMX y estructuras T290 siguen en observacion cruzada.</p></div>
+          <div class="list-item"><strong>Agenda comercial</strong><p>Gala Norte y Expo Plaza comprimen el margen de reaccion.</p></div>
+          <div class="list-item"><strong>Decision pendiente</strong><p>Material danado debe pasar a reparacion o baja definitiva.</p></div>
+        </div>
+      </section>
+
+      <section class="col orange">
+        <div class="tag">Tono de mando</div>
+        <h2>Mas cartel que dashboard.</h2>
+        <p>No pretende ser discreto. Pretende ser claro, pesado y memorable. Todo entra por impacto: titulares grandes, franjas macizas, advertencias visibles y sensacion de informe urgente.</p>
+        <div class="slab" style="background:#fff7ee; margin-top:18px;">
+          <h2>Lo distinto</h2>
+          <p>No compite con Sala de Crisis desde lo tecnico. Compite desde la identidad visual y la contundencia.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

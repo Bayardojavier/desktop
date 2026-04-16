@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Requisitos Funcionales - Absolute Nicaragua</title>
+  <style>
+    :root {
+      --primary: #1e40af;
+      --secondary: #3b82f6;
+      --success: #16a34a;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --text: #333;
+      --text-muted: #666;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 30px 20px;
+      color: var(--text);
+    }
+
+    .container { max-width: 1200px; margin: 0 auto; }
+
+    .header {
+      background: white;
+      border-radius: 8px;
+      padding: 30px;
+      margin-bottom: 25px;
+      border: 1px solid #ddd;
+    }
+
+    .header h1 { color: var(--primary); font-size: 28px; margin-bottom: 10px; }
+    .header .subtitle { color: #666; font-size: 15px; margin-bottom: 20px; }
+
+    .header .info-box {
+      background: #f0f7ff;
+      border-left: 3px solid var(--secondary);
+      padding: 15px 18px;
+      border-radius: 4px;
+      margin-top: 20px;
+    }
+
+    .header .info-box p { color: #333; font-size: 13px; line-height: 1.5; }
+
+    .module-section {
+      background: white;
+      border-radius: 8px;
+      padding: 25px;
+      margin-bottom: 20px;
+      border: 1px solid #ddd;
+    }
+
+    .module-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #eee;
+    }
+
+    .module-icon {
+      font-size: 32px;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--primary);
+      border-radius: 8px;
+      color: white;
+    }
+
+    .module-title h2 { color: var(--primary); font-size: 20px; margin-bottom: 4px; }
+    .module-title p { color: #666; font-size: 13px; }
+
+    .flowchart {
+      background: #fafafa;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+      overflow-x: auto;
+    }
+
+    .flowchart-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #666;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+
+    .flow-diagram {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+    }
+
+    .flow-step {
+      background: white;
+      border: 2px solid var(--secondary);
+      border-radius: 6px;
+      padding: 8px 14px;
+      text-align: center;
+      min-width: 120px;
+    }
+
+    .flow-step.critical { border-color: var(--danger); background: #fef2f2; }
+    .flow-arrow { color: var(--secondary); font-weight: bold; font-size: 16px; }
+
+    .requirements-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 12px;
+      margin-bottom: 15px;
+    }
+
+    .requirement-card {
+      background: #f9f9f9;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 14px;
+    }
+
+    .requirement-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .requirement-priority {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 3px;
+      text-transform: uppercase;
+    }
+
+    .priority-critical { background: #fef2f2; color: var(--danger); }
+    .priority-high { background: #fffbeb; color: var(--warning); }
+    .priority-medium { background: #f0fdf4; color: var(--success); }
+
+    .requirement-title { font-weight: 600; color: #333; font-size: 13px; flex: 1; }
+    .requirement-desc { color: #555; font-size: 12px; line-height: 1.4; margin-bottom: 8px; }
+
+    .requirement-depends {
+      background: white;
+      border: 1px solid #e8e8ff;
+      border-radius: 4px;
+      padding: 6px 10px;
+      font-size: 11px;
+      color: #666;
+    }
+
+    .requirement-depends strong { color: var(--primary); }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      background: white;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid #ddd;
+    }
+
+    .comparison-table th {
+      background: var(--primary);
+      color: white;
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .comparison-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #eee;
+      font-size: 12px;
+    }
+
+    .comparison-table tr:hover { background: #f9f9f9; }
+    .check { color: var(--success); font-weight: bold; }
+    .cross { color: var(--danger); font-weight: bold; }
+
+    .summary-section {
+      background: var(--primary);
+      color: white;
+      border-radius: 8px;
+      padding: 25px;
+      margin-top: 25px;
+    }
+
+    .summary-section h3 { font-size: 20px; margin-bottom: 15px; }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+    }
+
+    .summary-card {
+      background: rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 15px;
+    }
+
+    .summary-card .number { font-size: 32px; font-weight: 700; margin-bottom: 5px; }
+    .summary-card .label { font-size: 12px; opacity: 0.95; }
+
+    .legend { display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap; }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #333;
+      font-weight: 500;
+    }
+
+    .legend-color { width: 16px; height: 16px; border-radius: 3px; }
+    .legend-critical { background: #dc2626; border: 2px solid #991b1b; }
+    .legend-high { background: #d97706; border: 2px solid #92400e; }
+    .legend-medium { background: #16a34a; border: 2px solid #166534; }
+
+    .btn-print {
+      position: fixed;
+      bottom: 25px;
+      right: 25px;
+      background: var(--success);
+      color: white;
+      border: none;
+      padding: 14px 20px;
+      border-radius: 50px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    @media print {
+      body { background: white; padding: 0; }
+      .btn-print { display: none; }
+      .module-section, .header, .summary-section { break-inside: avoid; }
+    }
+
+    /* Móvil */
+    @media (max-width: 768px) {
+      body { padding: 15px 10px; }
+      .container { max-width: 100%; }
+      .header { padding: 20px 15px; }
+      .header h1 { font-size: 22px; }
+      .header .subtitle { font-size: 13px; }
+      .header .info-box { padding: 12px; }
+      .header .info-box p { font-size: 12px; }
+      
+      .module-section { padding: 20px 15px; margin-bottom: 15px; }
+      .module-header { flex-direction: column; text-align: left; gap: 10px; }
+      .module-icon { width: 45px; height: 45px; font-size: 28px; }
+      .module-title h2 { font-size: 18px; }
+      .module-title p { font-size: 12px; }
+      
+      .flowchart { padding: 12px; }
+      .flowchart-title { font-size: 11px; }
+      .flow-diagram { gap: 5px; }
+      .flow-step { min-width: 90px; padding: 6px 10px; font-size: 11px; }
+      .flow-arrow { font-size: 14px; }
+      
+      .requirements-grid { grid-template-columns: 1fr; gap: 10px; }
+      .requirement-card { padding: 12px; }
+      .requirement-title { font-size: 13px; }
+      .requirement-desc { font-size: 12px; }
+      .requirement-priority { font-size: 9px; padding: 2px 5px; }
+      .requirement-depends { font-size: 10px; padding: 5px 8px; }
+      
+      .comparison-table { font-size: 11px; }
+      .comparison-table th { padding: 8px 6px; font-size: 11px; }
+      .comparison-table td { padding: 8px 6px; }
+      .comparison-table th:nth-child(n+2),
+      .comparison-table td:nth-child(n+2) { text-align: center; }
+      
+      .summary-section { padding: 20px 15px; }
+      .summary-section h3 { font-size: 17px; }
+      .summary-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .summary-card { padding: 12px; }
+      .summary-card .number { font-size: 24px; }
+      .summary-card .label { font-size: 11px; }
+      
+      .legend { gap: 10px; }
+      .legend-item { font-size: 11px; }
+      .legend-color { width: 14px; height: 14px; }
+      
+      .btn-print {
+        bottom: 15px;
+        right: 15px;
+        padding: 12px 16px;
+        font-size: 13px;
+      }
+      
+      .flowchart-title, .module-title p { text-align: left; }
+      
+      div[style*="background: #fff7ed"],
+      div[style*="background: #fef2f2"],
+      div[style*="background: #eff6ff"] {
+        font-size: 12px !important;
+        padding: 10px 12px !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .header h1 { font-size: 19px; }
+      .module-title h2 { font-size: 16px; }
+      .summary-grid { grid-template-columns: 1fr; }
+      .flow-step { min-width: 80px; font-size: 10px; padding: 5px 8px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>📋 Requisitos Funcionales - Módulo de Bodega e Inventario</h1>
+      <p class="subtitle">Especificación técnica para evaluación de software de inventario - Absolute Nicaragua</p>
+
+      <div class="info-box">
+        <p>
+          <strong>⚠️ CONFIDENCIAL - USO INTERNO ÚNICAMENTE:</strong> Documento para evaluación interna de la gerencia.
+          <strong>NO compartir con proveedores de software.</strong>
+          <br/><br/>
+          <strong>Propósito:</strong> Este documento describe las funcionalidades que debe tener un módulo de bodega/inventario
+          para cubrir completamente las operaciones de nuestra empresa. Sirve como lista de verificación para evaluar
+          si el software contable con módulo de inventario que están ofreciendo satisface nuestras necesidades reales.
+          <br/><br/>
+          <strong>Nota sobre otros módulos:</strong> Los módulos de Contabilidad, RRHH, Ventas y Logística se mencionan
+          únicamente en lo que impacta DIRECTAMENTE el funcionamiento del inventario. Este documento NO evalúa sistemas
+          contables, de nómina o CRM completos.
+          <br/><br/>
+          <strong>¿Cómo usar este documento?</strong> Para cada funcionalidad listada, marque si el software propuesto:
+          ✅ (Lo tiene), ❌ (No lo tiene), ⚠️ (Parcialmente). Si hay ❌ en requisitos críticos de BODEGA,
+          el software NO es adecuado para nuestras operaciones.
+        </p>
+      </div>
+    </div>
+
+    <!-- Módulo de Bodega -->
+    <div class="module-section">
+      <div class="module-header">
+        <div class="module-icon">📦</div>
+        <div class="module-title">
+          <h2>Módulo de Bodega e Inventario</h2>
+          <p>Gestión completa de inventarios, catálogos y movimientos de materiales</p>
+        </div>
+      </div>
+
+      <!-- Flujograma -->
+      <div class="flowchart">
+        <div class="flowchart-title">🔄 Flujo Principal de Materiales</div>
+        <div class="flow-diagram">
+          <div class="flow-step">Proveedor</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step critical">Orden de Compra</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step critical">📥 Ingreso</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">Stock Bodega</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step critical">📤 Despacho</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">Evento/Cliente</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step critical">🔄 Devolución</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">Stock Bodega</div>
+        </div>
+      </div>
+
+      <div class="requirements-grid">
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-critical">Crítico</span>
+            <div class="requirement-title">Catálogo de Materiales Multi-Tipo</div>
+          </div>
+          <div class="requirement-desc">
+            Gestión de materiales con clasificación por tipos: Electrónicos, Hierros/Estructurales, Consumibles, Herramientas.
+            Cada tipo tiene campos específicos (voltaje, dimensiones, etc.). Soporte para contenedores (Burra, Canasta, Barril).
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Ninguna (es base del sistema)</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-critical">Crítico</span>
+            <div class="requirement-title">📥 Ingreso desde Órdenes de Compra</div>
+          </div>
+          <div class="requirement-desc">
+            Registrar entrada de materiales vinculados a órdenes de compra. Soporte para múltiples monedas (USD/C$),
+            tipo de cambio configurable, número de factura, proveedor. Genera PDF de ingreso.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Catálogo de Materiales, Órdenes de Compra</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-critical">Crítico</span>
+            <div class="requirement-title">🛠️ Fabricación / Transformación</div>
+          </div>
+          <div class="requirement-desc">
+            Proceso de manufactura donde se consumen materiales del inventario y se producen nuevos materiales.
+            Requiere aprobación de contabilidad. Genera solicitud con responsable y fecha.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Catálogo, Recetas (opcional), Stock disponible</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-critical">Crítico</span>
+            <div class="requirement-title">📤 Despacho con Solicitudes</div>
+          </div>
+          <div class="requirement-desc">
+            Gestión de salidas de materiales mediante solicitudes con correlativo secuencial.
+            Estados: Pendiente, En Proceso, Completada, Rechazada. Genera acta de despacho en PDF.
+            Soporte para devoluciones parciales.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Catálogo, Stock disponible, Eventos/Proyectos</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-critical">Crítico</span>
+            <div class="requirement-title">🔄 Devolución de Materiales</div>
+          </div>
+          <div class="requirement-desc">
+            Registro de materiales devueltos desde eventos/proyectos. Vinculación con despacho original.
+            Clasificación: Bueno, Dañado, Faltante. Genera PDF de devolución.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Despachos previos, Catálogo</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-high">Alta</span>
+            <div class="requirement-title">🔧 Mantenimiento de Materiales</div>
+          </div>
+          <div class="requirement-desc">
+            Registro de mantenimientos preventivos/correctivos a materiales. Historial por material.
+            Costos asociados, responsable, fecha próxima mantención.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Catálogo de Materiales</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-high">Alta</span>
+            <div class="requirement-title">📉 Bajas de Materiales</div>
+          </div>
+          <div class="requirement-desc">
+            Dar de baja materiales por daño, obsolescencia o pérdida. Requiere justificación y aprobación.
+            Registro en auditoría.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Catálogo, Stock</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-medium">Media</span>
+            <div class="requirement-title">💸 Ventas de Materiales</div>
+          </div>
+          <div class="requirement-desc">
+            Despacho de materiales para ventas activas. Vinculación con módulo de ventas.
+            Genera documento de salida.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Módulo de Ventas, Catálogo</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-high">Alta</span>
+            <div class="requirement-title">🏢 Múltiples Bodegas / Ubicaciones</div>
+          </div>
+          <div class="requirement-desc">
+            Soporte para bodegas principales y secundarias. Traslados entre bodegas.
+            Stock separado por ubicación física.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Catálogo</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-high">Alta</span>
+            <div class="requirement-title">📦 Gestión de Contenedores</div>
+          </div>
+          <div class="requirement-desc">
+            Materiales pueden estar dentro de contenedores (Burra, Canasta, Barril).
+            Trazabilidad material → contenedor → ubicación.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Catálogo, Multi-bodega</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-critical">Crítico</span>
+            <div class="requirement-title">📊 Stock en Tiempo Real</div>
+          </div>
+          <div class="requirement-desc">
+            Cálculo automático de stock basado en movimientos (ingresos - salidas).
+            Vistas por bodega, por ítem, por evento, por proveedor. Alertas de stock bajo.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Todos los movimientos registrados</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-medium">Media</span>
+            <div class="requirement-title">🪪 Generación de Etiquetas y Fichas</div>
+          </div>
+          <div class="requirement-desc">
+            Impresión de etiquetas con código QR/código de barras para materiales.
+            Fichas técnicas individuales y generación masiva.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Catálogo</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-high">Alta</span>
+            <div class="requirement-title">🔒 Auditoría y Trazabilidad</div>
+          </div>
+          <div class="requirement-desc">
+            Log de todas las operaciones: quién, cuándo, qué cambió.
+            Tabla logs_auditoria con usuario, tabla, operación, datos nuevos.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Sistema de usuarios</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Módulo de Logística y Recetas -->
+    <div class="module-section">
+      <div class="module-header">
+        <div class="module-icon">🚛</div>
+        <div class="module-title">
+          <h2>Módulo de Logística y Recetas</h2>
+          <p>Solo funcionalidades que impactan el control de inventario</p>
+        </div>
+      </div>
+
+      <div style="background: #fff7ed; border-left: 4px solid #f97316; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 13px;">
+        <strong>Nota:</strong> Este módulo solo incluye funcionalidades que impactan el control de inventario. No es un sistema completo de logística.
+      </div>
+
+      <div class="flowchart">
+        <div class="flowchart-title">🎪 Flujo de Solicitud para Eventos</div>
+        <div class="flow-diagram">
+          <div class="flow-step">Evento Programado</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step critical">📝 Solicitud Logística</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step critical">Usa Receta</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">Calcula Materiales</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step critical">Valida Stock</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step critical">📤 Despacho</div>
+        </div>
+      </div>
+
+      <div class="requirements-grid">
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-critical">Crítico</span>
+            <div class="requirement-title">📋 Recetas / Plantillas de Eventos</div>
+          </div>
+          <div class="requirement-desc">
+            Plantillas predefinidas de materiales por tipo de evento (boda, conferencia, concierto).
+            Recetas específicas por código de evento. Lista de materiales con cantidades estándar.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Catálogo de Materiales</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-high">Alta</span>
+            <div class="requirement-title">🎯 Recetas Específicas por Código</div>
+          </div>
+          <div class="requirement-desc">
+            Recetas personalizadas para eventos recurrentes. Se activan automáticamente
+            cuando se usa cierto código de evento. Materiales con cantidades fijas.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Recetas base, Catálogo</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-critical">Crítico</span>
+            <div class="requirement-title">📝 Solicitudes de Logística</div>
+          </div>
+          <div class="requirement-desc">
+            Solicitud formal de materiales para eventos. Estados: Pendiente Bodega, En Proceso,
+            Completada, Rechazada. Prioridades (Normal, Alta, Urgente). Modos: Por receta o manual.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Recetas, Eventos, Stock</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-high">Alta</span>
+            <div class="requirement-title">🚚 Seguimiento de Despachos</div>
+          </div>
+          <div class="requirement-desc">
+            Dashboard de logística con estado de todas las solicitudes.
+            Vista de pendientes, en proceso, completadas. Filtros por fecha, evento, encargado.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Solicitudes, Despachos</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-critical">Crítico</span>
+            <div class="requirement-title">🧮 Cálculo Automático desde Receta</div>
+          </div>
+          <div class="requirement-desc">
+            Al seleccionar una receta, automáticamente calcula cantidades totales
+            de materiales necesarios basado en número de personas/días del evento.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Recetas, Parámetros del evento</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Módulo de Ventas -->
+    <div class="module-section">
+      <div class="module-header">
+        <div class="module-icon">💼</div>
+        <div class="module-title">
+          <h2>Módulo de Ventas</h2>
+          <p>Solo lo que impacta el despacho de materiales</p>
+        </div>
+      </div>
+
+      <div style="background: #fff7ed; border-left: 4px solid #f97316; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 13px;">
+        <strong>Nota:</strong> Este módulo solo incluye funcionalidades que impactan el despacho de materiales. No es un sistema CRM o de ventas completo.
+      </div>
+
+      <div class="requirements-grid">
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-critical">Crítico</span>
+            <div class="requirement-title">👥 Gestión de Clientes</div>
+          </div>
+          <div class="requirement-desc">
+            CRUD completo de clientes: crear, modificar, listar.
+            Datos: nombre, contacto, RUC, dirección, teléfono, email.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Ninguna</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-critical">Crítico</span>
+            <div class="requirement-title">📝 Cotizaciones / Prefactura / Factura</div>
+          </div>
+          <div class="requirement-desc">
+            Crear cotizaciones con múltiples items. El mismo documento debe servir como prefactura o factura final.
+            Vinculación con clientes. Generación de PDF. Posibilidad de convertir cotización en factura directamente.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Clientes, Catálogo, Tarifarios</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-critical">Crítico</span>
+            <div class="requirement-title">📊 Tarifarios Múltiples (A, B, C)</div>
+          </div>
+          <div class="requirement-desc">
+            Sistema de tarifarios de servicios (A, B, C u otros). Cada cliente o cotización debe poder asociarse a un tarifario específico.
+            Precios diferenciados por tipo de cliente o volumen. Cambios de tarifario según negociación.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Catálogo de Servicios</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-high">Alta</span>
+            <div class="requirement-title">🔧 Servicios</div>
+          </div>
+          <div class="requirement-desc">
+            Catálogo de servicios ofrecidos. Crear y modificar servicios.
+            Precios, descripciones, códigos. Asociación con tarifarios.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Ninguna</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-critical">Crítico</span>
+            <div class="requirement-title">🏟️ Eventos / Proyectos</div>
+          </div>
+          <div class="requirement-desc">
+            Registro de eventos con cliente, fechas, ubicación, tipo.
+            Código único de evento. Vinculación con cotizaciones y despachos.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Clientes</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-critical">Crítico</span>
+            <div class="requirement-title">💰 Registro de Ventas y Facturación</div>
+          </div>
+          <div class="requirement-desc">
+            Registro de ventas activas. Vinculación con despachos de materiales.
+            Genera documentos fiscales. Historial de ventas por cliente, evento o período.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Clientes, Eventos, Bodega, Tarifarios</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-critical">Crítico</span>
+            <div class="requirement-title">📒 Control de Cartera y Cuentas por Cobrar</div>
+          </div>
+          <div class="requirement-desc">
+            Gestión de cuentas por cobrar por cliente. Registro de pagos parciales o totales.
+            Control de saldo pendiente, fechas de vencimiento. Reporte de cartera vencida.
+            Posibilidad de aplicar pagos a facturas específicas.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Ventas, Clientes</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-high">Alta</span>
+            <div class="requirement-title">📈 Reportes de Ventas</div>
+          </div>
+          <div class="requirement-desc">
+            Reportes de ventas por cliente, evento, período, vendedor.
+            Totales facturados, pendientes de cobro, estado de cartera.
+            Exportación a Excel.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Ventas, Cartera</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Módulo de RRHH -->
+    <div class="module-section">
+      <div class="module-header">
+        <div class="module-icon">👨‍💼</div>
+        <div class="module-title">
+          <h2>Módulo de Recursos Humanos</h2>
+          <p>Solo lo que impacta el control de inventario y responsables</p>
+        </div>
+      </div>
+
+      <div style="background: #fff7ed; border-left: 4px solid #f97316; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 13px;">
+        <strong>Nota:</strong> Este módulo solo incluye funcionalidades para: (1) saber quién recibe materiales, (2) quién realiza movimientos en bodega, (3) control de asistencia básico. No es un sistema completo de nómina o RRHH.
+      </div>
+
+      <div class="requirements-grid">
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-critical">Crítico</span>
+            <div class="requirement-title">👥 Gestión de Empleados</div>
+          </div>
+          <div class="requirement-desc">
+            CRUD de empleados: datos personales, cargo, departamento, salario,
+            fecha ingreso, estado (activo/inactivo). Código único de empleado.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Ninguna</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-critical">Crítico</span>
+            <div class="requirement-title">📆 Control de Asistencia</div>
+          </div>
+          <div class="requirement-desc">
+            Registro de entradas y salidas. Verificación de asistencia por empleado y fecha.
+            Cálculo de horas trabajadas, retardos, ausencias.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Empleados</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-high">Alta</span>
+            <div class="requirement-title">🏖️ Gestión de Vacaciones</div>
+          </div>
+          <div class="requirement-desc">
+            Solicitud de pago de vacaciones. Cálculo de días disponibles.
+            Historial de vacaciones tomadas. Reporte de vacaciones por empleado.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Empleados, Asistencia</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-critical">Crítico</span>
+            <div class="requirement-title">🧾 Cálculo de Planillas</div>
+          </div>
+          <div class="requirement-desc">
+            Generación de planillas por período. Cálculo de salario base,
+            horas extras, deducciones (INSS, IR). Reporte imprimible.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Empleados, Asistencia, Vacaciones</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-medium">Media</span>
+            <div class="requirement-title">📇 Tarjetas de Identificación</div>
+          </div>
+          <div class="requirement-desc">
+            Generación de tarjetas de empleado con foto, código, nombre, cargo.
+            Formato imprimible.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Empleados</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-high">Alta</span>
+            <div class="requirement-title">💰 Pagos a Personal Eventual</div>
+          </div>
+          <div class="requirement-desc">
+            Registro de pagos a personal temporal por evento.
+            Montos, fechas, conceptos. Reporte para contabilidad.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Empleados, Eventos</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-medium">Media</span>
+            <div class="requirement-title">💵 Control de Viáticos</div>
+          </div>
+          <div class="requirement-desc">
+            Registro y control de viáticos entregados a empleados.
+            Rendición de cuentas, comprobantes.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Empleados, Eventos</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Módulo de Contabilidad -->
+    <div class="module-section">
+      <div class="module-header">
+        <div class="module-icon">🧮</div>
+        <div class="module-title">
+          <h2>Módulo de Contabilidad</h2>
+          <p>Solo lo que impacta el control de inventario y aprobaciones</p>
+        </div>
+      </div>
+
+      <div style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 13px;">
+        <strong>NOTA:</strong> Este módulo NO es un sistema contable completo. NO incluye: libros diarios, balances, estados financieros, conciliaciones bancarias, impuestos, etc.
+        <br/><br/>
+        <strong>Lo que SÍ se necesita para bodega:</strong> Órdenes de compra (para ingresos), tipo de cambio (USD/C$), aprobaciones de movimientos de bodega, y reportes valorizados de inventario.
+      </div>
+
+      <div class="requirements-grid">
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-critical">Crítico</span>
+            <div class="requirement-title">📋 Órdenes de Compra</div>
+          </div>
+          <div class="requirement-desc">
+            Generación de órdenes de compra a proveedores. Múltiples items,
+            cantidades, precios. Moneda (USD/C$). Aprobación requerida.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Proveedores, Catálogo</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-critical">Crítico</span>
+            <div class="requirement-title">✅ Flujo de Aprobaciones</div>
+          </div>
+          <div class="requirement-desc">
+            Sistema de aprobaciones para: fabricación, bajas, órdenes de compra,
+            despachos grandes. Notificaciones a aprobadores.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Usuarios con roles</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-critical">Crítico</span>
+            <div class="requirement-title">💱 Tipo de Cambio Multi-moneda</div>
+          </div>
+          <div class="requirement-desc">
+            Manejo de dólares y córdobas. Tipo de cambio configurable.
+            Conversiones automáticas en reportes.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Ninguna</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-high">Alta</span>
+            <div class="requirement-title">📊 Reportes Contables</div>
+          </div>
+          <div class="requirement-desc">
+            Reportes de movimientos valorizados. Costos por evento.
+            Inventarios valorizados. Exportación a Excel.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Todos los movimientos registrados</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Características Transversales -->
+    <div class="module-section">
+      <div class="module-header">
+        <div class="module-icon">⚙️</div>
+        <div class="module-title">
+          <h2>Características Transversales del Sistema</h2>
+          <p>Funcionalidades que atraviesan todos los módulos</p>
+        </div>
+      </div>
+
+      <div class="requirements-grid">
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-critical">Crítico</span>
+            <div class="requirement-title">🔐 Usuarios y Roles</div>
+          </div>
+          <div class="requirement-desc">
+            Sistema de autenticación. Roles: Admin, Bodega, Logística, Ventas, RRHH, Contabilidad.
+            Permisos por rol. Usuario puede tener múltiples roles.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Ninguna</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-high">Alta</span>
+            <div class="requirement-title">📊 Exportación a Excel</div>
+          </div>
+          <div class="requirement-desc">
+            Exportar datos de todos los módulos a Excel (.xlsx).
+            Bodega, Ventas, RRHH, Logística. Formateado adecuado.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Datos de cada módulo</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-critical">Crítico</span>
+            <div class="requirement-title">📄 Generación de PDF</div>
+          </div>
+          <div class="requirement-desc">
+            Generar PDFs para: ingresos, despachos, devoluciones, fabricación,
+            cotizaciones, planillas, tarjetas. html2pdf o similar.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Datos de cada operación</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-medium">Media</span>
+            <div class="requirement-title">🔔 Notificaciones del Sistema</div>
+          </div>
+          <div class="requirement-desc">
+            Notificaciones push del sistema operativo. Alertas de:
+            aprobaciones pendientes, stock bajo, eventos próximos.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Eventos del sistema</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-high">Alta</span>
+            <div class="requirement-title">📈 Dashboards y KPIs</div>
+          </div>
+          <div class="requirement-desc">
+            Vistas gráficas con indicadores clave: stock por bodega,
+            movimientos recientes, eventos activos, pendientes de aprobación.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Todos los módulos</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-high">Alta</span>
+            <div class="requirement-title">🔍 Búsquedas y Filtros</div>
+          </div>
+          <div class="requirement-desc">
+            Búsqueda por código, nombre, apodo en catálogos.
+            Filtros por fecha, bodega, evento, estado. Búsqueda en tiempo real.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Índices de base de datos</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-high">Alta</span>
+            <div class="requirement-title">📜 Historial y Reimpresión</div>
+          </div>
+          <div class="requirement-desc">
+            Listado de documentos generados con opción a reimpresión.
+            Ingresos recientes, despachos históricos, devoluciones.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Tablas de movimientos</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-critical">Crítico</span>
+            <div class="requirement-title">🗄️ Base de Datos PostgreSQL</div>
+          </div>
+          <div class="requirement-desc">
+            PostgreSQL con Supabase. Tablas principales: catálogo (3 tipos),
+            movimientos (3 tipos), empleados, eventos, recetas, solicitudes, usuarios.
+            Vistas de stock actual. Triggers para actualizaciones automáticas.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Infraestructura cloud</div>
+        </div>
+
+        <div class="requirement-card">
+          <div class="requirement-header">
+            <span class="requirement-priority priority-high">Alta</span>
+            <div class="requirement-title">💻 Aplicación de Escritorio</div>
+          </div>
+          <div class="requirement-desc">
+            Electron con actualizaciones automáticas. Instalador Windows (.exe).
+            Barra de título personalizada. Notificaciones nativas. Offline-first.
+          </div>
+          <div class="requirement-depends"><strong>Dependencias:</strong> Base de datos remota</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabla de Resumen -->
+    <div class="module-section">
+      <div class="module-header">
+        <div class="module-icon">📊</div>
+        <div class="module-title">
+          <h2>Resumen de Requisitos por Módulo</h2>
+          <p>Enfoque principal: Bodega/Inventario. Otros módulos: solo lo esencial</p>
+        </div>
+      </div>
+
+      <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 16px; border-radius: 8px; margin-bottom: 20px; font-size: 14px;">
+        <strong>📌 Nota:</strong> Los módulos de Contabilidad, RRHH, Ventas y Logística se listan solo en lo que impacta el funcionamiento de BODEGA.
+        Este documento evalúa principalmente el módulo de inventario/bodega.
+      </div>
+
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>Módulo</th>
+            <th>Funcionalidades Críticas</th>
+            <th>Funcionalidades Altas</th>
+            <th>Funcionalidades Medias</th>
+            <th>Total</th>
+            <th>Impacto en Bodega</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="background: #f0fdf4; border-left: 4px solid #16a34a;">
+            <td><strong>📦 BODEGA (PRINCIPAL)</strong></td>
+            <td>5</td>
+            <td>4</td>
+            <td>2</td>
+            <td><strong>11</strong></td>
+            <td>✅ 100%</td>
+          </tr>
+          <tr>
+            <td><strong>🚛 Logística + Recetas</strong></td>
+            <td>4</td>
+            <td>1</td>
+            <td>0</td>
+            <td><strong>5</strong></td>
+            <td>✅ Define qué materiales salen/entran</td>
+          </tr>
+          <tr>
+            <td><strong>💼 Ventas</strong></td>
+            <td>6</td>
+            <td>2</td>
+            <td>0</td>
+            <td><strong>8</strong></td>
+            <td>✅ Genera despachos + Facturación + Cartera</td>
+          </tr>
+          <tr>
+            <td><strong>👨‍💼 RRHH</strong></td>
+            <td>3</td>
+            <td>2</td>
+            <td>2</td>
+            <td><strong>7</strong></td>
+            <td>⚠️ Solo responsables y asistencia</td>
+          </tr>
+          <tr>
+            <td><strong>🧮 Contabilidad</strong></td>
+            <td>3</td>
+            <td>1</td>
+            <td>0</td>
+            <td><strong>4</strong></td>
+            <td>⚠️ Solo OC, aprobaciones, tipo cambio</td>
+          </tr>
+          <tr>
+            <td><strong>⚙️ Transversales</strong></td>
+            <td>4</td>
+            <td>3</td>
+            <td>1</td>
+            <td><strong>8</strong></td>
+            <td>✅ Infraestructura del sistema</td>
+          </tr>
+          <tr style="background: #eff6ff; font-weight: bold;">
+            <td>TOTAL GENERAL</td>
+            <td>25</td>
+            <td>15</td>
+            <td>5</td>
+            <td><strong>45</strong></td>
+            <td>-</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-color legend-critical"></div>
+          <span>Crítico (22) - Sin esto NO es viable</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color legend-high"></div>
+          <span>Alta (13) - Importante tener</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color legend-medium"></div>
+          <span>Media (5) - Deseable</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary Section -->
+    <div class="summary-section">
+      <h3>📌 Criterios de Evaluación</h3>
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="number">45</div>
+          <div class="label">Funcionalidades Listadas</div>
+        </div>
+        <div class="summary-card">
+          <div class="number">14</div>
+          <div class="label">Requisitos Críticos de BODEGA</div>
+        </div>
+        <div class="summary-card">
+          <div class="number">1</div>
+          <div class="label">Módulo Principal: Bodega</div>
+        </div>
+        <div class="summary-card">
+          <div class="number">100%</div>
+          <div class="label">Cobertura Requerida en BODEGA</div>
+        </div>
+      </div>
+
+      <div style="margin-top: 30px; background: rgba(255,255,255,0.1); padding: 20px; border-radius: 12px;">
+        <h4 style="margin-bottom: 15px; font-size: 18px;">✅ El software es ADECUADO si:</h4>
+        <ul style="line-height: 1.8; margin-left: 20px;">
+          <li><strong>Cubre ≥95% de los 11 requisitos críticos de bodega</strong> (catálogo multi-tipo, ingresos, despachos, devoluciones, fabricación, stock en tiempo real)</li>
+          <li>Soporta multi-moneda (USD/C$) y tipo de cambio configurable</li>
+          <li>Permite flujos de aprobaciones para movimientos de inventario</li>
+          <li>Los reportes de inventario son completos y exportables</li>
+          <li>Existe trazabilidad de todos los movimientos (quién, cuándo, qué)</li>
+        </ul>
+
+        <h4 style="margin: 25px 0 15px; font-size: 18px;">❌ El software NO es ADECUADO si:</h4>
+        <ul style="line-height: 1.8; margin-left: 20px;">
+          <li><strong>Faltan ≥2 requisitos críticos de BODEGA</strong></li>
+          <li>No soporta contenedores o ubicaciones múltiples</li>
+          <li>No hay trazabilidad de movimientos</li>
+          <li>Requiere conexión a internet constante</li>
+          <li>El módulo de inventario es "básico" y no cubre flujos de fabricación, mantenimiento o bajas</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-print" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
+
+  <div style="text-align: center; padding: 40px 20px; color: rgba(0,0,0,0.5); font-size: 12px;">
+    <p>🔒 Documento interno de trabajo</p>
+    <p>Generado: <script>document.write(new Date().toLocaleDateString('es-NI'))</script></p>
+  </div>
+
+  <script>
+    document.querySelectorAll('.requirement-card').forEach(card => {
+      card.addEventListener('dblclick', function() {
+        this.classList.toggle('checked');
+      });
+    });
+  </script>
+</body>
+</html>

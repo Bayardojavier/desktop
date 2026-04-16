@@ -105,6 +105,16 @@
             </select>
           </div>
 
+          <!-- Botón para sincronizar servicios desde cotización -->
+          <div id="sync-servicios-container" style="margin-bottom: 16px; padding: 12px; background: #1e293b; border-radius: 6px; display: none;">
+            <p style="margin: 0 0 8px 0; font-size: 12px; color: #93c5fd;">
+              📋 Este evento está vinculado a una cotización
+            </p>
+            <button type="button" id="btn-sincronizar-servicios" class="ventas-btn-guardar" style="font-size: 12px; padding: 6px 12px;">
+              🔄 Sincronizar Servicios desde Cotización
+            </button>
+          </div>
+
           <div style="display: flex; gap: 12px; justify-content: flex-end;">
             <button type="button" id="btn-cancelar-editar" class="ventas-btn-nav">Cancelar</button>
             <button type="submit" class="ventas-btn-guardar">💾 Guardar Cambios</button>
@@ -120,6 +130,42 @@
   // =============================================================================
   // 🔹 CARGAR EVENTOS DESDE SUPABASE
   // =============================================================================
+  function formatearFechaEvento(valorFecha, locale = 'es-ES') {
+    if (!valorFecha) return '—';
+
+    const fechaTexto = String(valorFecha).trim();
+    const fechaDateOnly = fechaTexto.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+    if (fechaDateOnly) {
+      const [, year, month, day] = fechaDateOnly;
+      return new Date(Number(year), Number(month) - 1, Number(day)).toLocaleDateString(locale);
+    }
+
+    const fecha = new Date(fechaTexto);
+    return Number.isNaN(fecha.getTime()) ? fechaTexto : fecha.toLocaleDateString(locale);
+  }
+
+  function normalizarFechaInput(valorFecha) {
+    if (!valorFecha) return '';
+
+    const fechaTexto = String(valorFecha).trim();
+    const fechaDateOnly = fechaTexto.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+    if (fechaDateOnly) {
+      return fechaTexto;
+    }
+
+    const fecha = new Date(fechaTexto);
+    if (Number.isNaN(fecha.getTime())) {
+      return fechaTexto.slice(0, 10);
+    }
+
+    const year = fecha.getFullYear();
+    const month = String(fecha.getMonth() + 1).padStart(2, '0');
+    const day = String(fecha.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
   async function cargarEventos() {
     const contenedor = document.getElementById('lista-eventos');
 
@@ -149,7 +195,7 @@
       }
 
       contenedor.innerHTML = eventos.map(evento => {
-        const fechaMontaje = evento.fecha_montaje ? new Date(evento.fecha_montaje).toLocaleDateString('es-ES') : '—';
+        const fechaMontaje = formatearFechaEvento(evento.fecha_montaje);
         const horaMontaje = evento.hora_montaje || '—';
         const estadoColor = evento.estado === 'activo' ? '#10b981' : evento.estado === 'completado' ? '#3b82f6' : '#ef4444';
         const estadoTexto = evento.estado === 'activo' ? 'Activo' : evento.estado === 'completado' ? 'Completado' : 'Cancelado';
@@ -282,11 +328,11 @@
             </div>
             <div>
               <strong style="color: var(--accent);">Fecha Montaje:</strong><br>
-              <span>${evento.fecha_montaje ? new Date(evento.fecha_montaje).toLocaleDateString('es-ES') : '—'} ${evento.hora_montaje || ''}</span>
+              <span>${formatearFechaEvento(evento.fecha_montaje)} ${evento.hora_montaje || ''}</span>
             </div>
             <div>
               <strong style="color: var(--accent);">Fecha Desmontaje:</strong><br>
-              <span>${evento.fecha_desmontaje ? new Date(evento.fecha_desmontaje).toLocaleDateString('es-ES') : '—'} ${evento.hora_desmontaje || ''}</span>
+              <span>${formatearFechaEvento(evento.fecha_desmontaje)} ${evento.hora_desmontaje || ''}</span>
             </div>
             <div>
               <strong style="color: var(--accent);">Estado:</strong><br>
@@ -337,11 +383,21 @@
       document.getElementById('edit-lugar').value = evento.lugar || '';
       document.getElementById('edit-contacto').value = evento.contacto_evento || '';
       document.getElementById('edit-telefono').value = evento.telefono_evento || '';
-      document.getElementById('edit-fecha-montaje').value = evento.fecha_montaje || '';
+      document.getElementById('edit-fecha-montaje').value = normalizarFechaInput(evento.fecha_montaje);
       document.getElementById('edit-hora-montaje').value = evento.hora_montaje || '';
-      document.getElementById('edit-fecha-desmontaje').value = evento.fecha_desmontaje || '';
+      document.getElementById('edit-fecha-desmontaje').value = normalizarFechaInput(evento.fecha_desmontaje);
       document.getElementById('edit-hora-desmontaje').value = evento.hora_desmontaje || '';
       document.getElementById('edit-estado').value = evento.estado || 'activo';
+
+      // Mostrar botón de sincronizar si hay cotización vinculada
+      const syncContainer = document.getElementById('sync-servicios-container');
+      if (evento.cotizacion_id) {
+        syncContainer.style.display = 'block';
+        document.getElementById('btn-sincronizar-servicios').dataset.cotizacionId = evento.cotizacion_id;
+        document.getElementById('btn-sincronizar-servicios').dataset.eventoId = evento.id;
+      } else {
+        syncContainer.style.display = 'none';
+      }
 
       document.getElementById('modal-editar-evento').style.display = 'flex';
 
@@ -483,5 +539,144 @@
       }
     });
 
+    // =============================================================================
+    // 🔹 SINCRONIZAR SERVICIOS DESDE COTIZACIÓN
+    // =============================================================================
+    document.getElementById('btn-sincronizar-servicios')?.addEventListener('click', async () => {
+      const cotizacionId = document.getElementById('btn-sincronizar-servicios').dataset.cotizacionId;
+      const eventoId = document.getElementById('btn-sincronizar-servicios').dataset.eventoId;
+
+      if (!cotizacionId) {
+        alert('⚠️ No hay cotización vinculada.');
+        return;
+      }
+
+      try {
+        // Obtener servicios actualizados de la cotización
+        const { data: cotizacion, error: cotError } = await window.supabaseClient
+          .from('cotizaciones')
+          .select('servicios')
+          .eq('id', cotizacionId)
+          .single();
+
+        if (cotError || !cotizacion?.servicios) {
+          alert('❌ No se pudo obtener los servicios de la cotización.');
+          return;
+        }
+
+        // Actualizar descripción del evento con los nuevos servicios
+        const serviciosDescripcion = cotizacion.servicios.map(s => 
+          `${s.nombre} (Cantidad: ${s.cantidad || 1})`
+        );
+
+        const { error: updateError } = await window.supabaseClient
+          .from('eventos')
+          .update({
+            descripcion: serviciosDescripcion
+          })
+          .eq('id', eventoId);
+
+        if (updateError) {
+          alert('❌ Error al sincronizar los servicios.');
+          return;
+        }
+
+        alert('✅ Servicios sincronizados correctamente desde la cotización.');
+        
+        // Recargar la lista de eventos
+        await cargarEventos();
+      } catch (err) {
+        console.error('Error:', err);
+        alert('❌ Error al sincronizar los servicios.');
+      }
+    });
+
   }, 50);
 </script>
+
+<style>
+  /* =============================================================================
+     ESTILOS DEL MODAL DE EVENTOS
+     ============================================================================= */
+  .ventas-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+
+  .ventas-modal-content {
+    background: #1e293b;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow: hidden;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    border: 1px solid var(--border, #374151);
+  }
+
+  .ventas-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #334155;
+    background: #0f172a;
+  }
+
+  .ventas-modal-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #93c5fd;
+  }
+
+  .ventas-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ventas-modal-close:hover {
+    background: #334155;
+    color: #f1f5f9;
+  }
+
+  .ventas-modal-body {
+    padding: 24px;
+    max-height: calc(80vh - 80px);
+    overflow-y: auto;
+  }
+
+  .ventas-modal-body::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .ventas-modal-body::-webkit-scrollbar-track {
+    background: #1e293b;
+  }
+
+  .ventas-modal-body::-webkit-scrollbar-thumb {
+    background: #475569;
+    border-radius: 4px;
+  }
+
+  .ventas-modal-body::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+  }
+</style>

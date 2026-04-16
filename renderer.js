@@ -330,50 +330,322 @@ function loadDashboard() {
     style.id = 'dashboard-styles';
     style.textContent = `
       .dashboard-container {
-        max-width: 800px;
-        margin: 40px auto;
-        padding: 24px;
-        text-align: center;
+        position: relative;
+        max-width: 1320px;
+        margin: 18px auto;
+        padding: 18px;
+        color: #f6f7fb;
+        background:
+          radial-gradient(circle at top left, rgba(255, 79, 163, 0.16), transparent 28%),
+          radial-gradient(circle at bottom right, rgba(255, 155, 77, 0.14), transparent 24%),
+          linear-gradient(180deg, #070912 0%, #0a0f1d 100%);
+        border-radius: 30px;
+        overflow: hidden;
+        box-shadow: 0 24px 56px rgba(0,0,0,0.28);
       }
-      .dashboard-container h2 {
-        color: #1e40af;
-        margin-bottom: 24px;
-        font-size: 28px;
-        font-weight: 700;
+      .dashboard-scanline {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(180deg, transparent, rgba(89, 167, 255, 0.05), transparent);
+        mix-blend-mode: screen;
+        animation: dashboard-scanline 7s linear infinite;
       }
+      .dashboard-topbar,
+      .dashboard-newsbar,
+      .dashboard-grid,
+      .dashboard-side,
+      .dashboard-strip,
+      .dashboard-btn,
+      .dashboard-live-card,
+      .dashboard-module-note,
       .logout-btn {
-        padding: 8px 16px;
-        background: #dc2626;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
+        position: relative;
+        z-index: 1;
       }
-      .modules-grid {
+      .dashboard-topbar,
+      .dashboard-newsbar,
+      .dashboard-strip,
+      .dashboard-side-card,
+      .dashboard-btn,
+      .dashboard-live-card {
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 24px;
+        background: rgba(19, 22, 38, 0.86);
+        backdrop-filter: blur(16px);
+        box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
+      }
+      .dashboard-topbar {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 20px;
-        margin-top: 30px;
+        grid-template-columns: minmax(0, 1.2fr) auto;
+        gap: 18px;
+        padding: 18px 20px;
+      }
+      .dashboard-brand-block {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 16px;
+        align-items: center;
+      }
+      .dashboard-brand-switcher {
+        position: relative;
+        width: 260px;
+        height: 88px;
+        overflow: hidden;
+      }
+      .dashboard-brand-image {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        opacity: 0;
+        transform: scale(0.92);
+        filter: drop-shadow(0 12px 26px rgba(89, 167, 255, 0.24));
+        transition: opacity 0.6s ease, transform 0.6s ease;
+      }
+      .dashboard-brand-image.is-active {
+        opacity: 1;
+        transform: scale(1);
+      }
+      .dashboard-brand-image.fx-float-in {
+        animation: dashboard-brand-float-in 1.2s ease;
+      }
+      .dashboard-brand-image.fx-slide-diagonal {
+        animation: dashboard-brand-slide-diagonal 1.1s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      .dashboard-brand-image.fx-pop-spin {
+        animation: dashboard-brand-pop-spin 1s cubic-bezier(0.2, 0.9, 0.2, 1);
+      }
+      .dashboard-brand-image.fx-tilt-glow {
+        animation: dashboard-brand-tilt-glow 1.25s ease;
+      }
+      .dashboard-kicker,
+      .dashboard-card-kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: #ff4fa3;
+      }
+      .dashboard-title {
+        margin: 10px 0 8px;
+        font-size: clamp(34px, 5vw, 58px);
+        line-height: 0.94;
+        letter-spacing: -0.06em;
+        color: #f6f7fb;
+      }
+      .dashboard-subtitle {
+        margin: 0;
+        max-width: 70ch;
+        font-size: 15px;
+        line-height: 1.7;
+        color: #9ea7c0;
+      }
+      .dashboard-live-side {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+      .dashboard-live-card {
+        min-width: 156px;
+        padding: 12px 14px;
+      }
+      .dashboard-live-label {
+        display: block;
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: #ff4fa3;
+      }
+      .dashboard-live-value {
+        display: block;
+        margin-top: 10px;
+        font-size: 22px;
+        font-weight: 800;
+        color: #f6f7fb;
+      }
+      .dashboard-newsbar {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 14px;
+        align-items: center;
+        padding: 12px 16px;
+        margin-top: 14px;
+      }
+      .dashboard-news-message {
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #c7d3ef;
+      }
+      .dashboard-roles {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .dashboard-role-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.05);
+        color: #f1f5ff;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .dashboard-body {
+        display: grid;
+        grid-template-columns: 220px minmax(0, 1fr) 300px;
+        gap: 14px;
+        margin-top: 14px;
+      }
+      .dashboard-strip,
+      .dashboard-side {
+        display: grid;
+        gap: 12px;
+        align-content: start;
+      }
+      .dashboard-strip {
+        padding: 14px;
+      }
+      .dashboard-strip-head strong,
+      .dashboard-side-card h3 {
+        display: block;
+        margin-top: 8px;
+        font-size: 18px;
+        letter-spacing: -0.04em;
+        color: #f6f7fb;
+      }
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 14px;
       }
       .dashboard-btn {
-        padding: 16px;
-        background: #f1f5f9;
-        border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        font-weight: 600;
-        color: #1e40af;
-        cursor: pointer;
-        transition: all 0.2s;
-        height: 100px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
+        padding: 18px;
+        min-height: 170px;
+        text-align: left;
+        color: #f6f7fb;
+        transition: transform 0.22s ease, border-color 0.22s ease, background 0.22s ease;
       }
       .dashboard-btn:hover {
-        background: #e2e8f0;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        transform: translateY(-4px);
+        background: rgba(255,255,255,0.06);
+        border-color: rgba(89, 167, 255, 0.16);
+      }
+      .dashboard-btn-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 54px;
+        height: 54px;
+        border-radius: 18px;
+        background: rgba(255,255,255,0.05);
+        font-size: 28px;
+        margin-bottom: 16px;
+      }
+      .dashboard-btn-title {
+        display: block;
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: -0.04em;
+      }
+      .dashboard-btn-text {
+        display: block;
+        margin-top: 10px;
+        font-size: 13px;
+        line-height: 1.65;
+        color: #9ea7c0;
+      }
+      .dashboard-module-note,
+      .dashboard-side-card {
+        padding: 16px;
+      }
+      .dashboard-module-note {
+        border-radius: 18px;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.06);
+      }
+      .dashboard-module-note p,
+      .dashboard-side-card p {
+        margin: 0;
+        color: #9ea7c0;
+        line-height: 1.7;
+        font-size: 13px;
+      }
+      .logout-btn {
+        padding: 12px 16px;
+        background: linear-gradient(135deg, #ff4fa3, #ff9b4d);
+        color: white;
+        border: none;
+        border-radius: 16px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+      }
+      @keyframes dashboard-scanline {
+        from { transform: translateY(-100%); }
+        to { transform: translateY(100%); }
+      }
+      @keyframes dashboard-brand-float-in {
+        0% { opacity: 0; transform: translateY(10px) scale(0.84); }
+        60% { opacity: 1; transform: translateY(-2px) scale(1.02); }
+        100% { opacity: 1; transform: translateY(0) scale(1); }
+      }
+      @keyframes dashboard-brand-slide-diagonal {
+        0% { opacity: 0; transform: translate(-16px, 12px) scale(0.9); }
+        55% { opacity: 1; transform: translate(4px, -3px) scale(1.03); }
+        100% { opacity: 1; transform: translate(0, 0) scale(1); }
+      }
+      @keyframes dashboard-brand-pop-spin {
+        0% { opacity: 0; transform: rotate(-12deg) scale(0.72); }
+        65% { opacity: 1; transform: rotate(5deg) scale(1.04); }
+        100% { opacity: 1; transform: rotate(0deg) scale(1); }
+      }
+      @keyframes dashboard-brand-tilt-glow {
+        0% { opacity: 0; transform: perspective(300px) rotateX(18deg) scale(0.88); }
+        55% { opacity: 1; transform: perspective(300px) rotateX(-6deg) scale(1.03); }
+        100% { opacity: 1; transform: perspective(300px) rotateX(0deg) scale(1); }
+      }
+      @media (max-width: 1240px) {
+        .dashboard-body {
+          grid-template-columns: 1fr;
+        }
+        .dashboard-strip,
+        .dashboard-side {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+      @media (max-width: 920px) {
+        .dashboard-topbar,
+        .dashboard-newsbar {
+          grid-template-columns: 1fr;
+        }
+        .dashboard-brand-block {
+          grid-template-columns: 1fr;
+        }
+        .dashboard-live-side,
+        .dashboard-roles {
+          justify-content: flex-start;
+        }
+        .dashboard-brand-switcher {
+          width: 200px;
+          height: 68px;
+        }
+        .dashboard-strip,
+        .dashboard-side {
+          grid-template-columns: 1fr;
+        }
       }
     `;
     document.head.appendChild(style);
@@ -381,28 +653,122 @@ function loadDashboard() {
 
   const modules = [];
   if (userHasRole(user, 'bodega')) {
-    modules.push('<button class="dashboard-btn" data-module="bodega">📦 Bodega</button>');
+    modules.push({ module: 'bodega', icon: '📦', title: 'Bodega', text: 'Inventario, faltantes, movimientos y dashboards operativos.' });
   }
   if (userHasRole(user, 'logistica')) {
-    modules.push('<button class="dashboard-btn" data-module="logistica">🚚 Logística</button>');
+    modules.push({ module: 'logistica', icon: '🚚', title: 'Logística', text: 'Solicitudes, despachos, coordinación y seguimiento de rutas.' });
   }
   if (userHasRole(user, 'contabilidad')) {
-    modules.push('<button class="dashboard-btn" data-module="contabilidad">📊 Contabilidad</button>');
+    modules.push({ module: 'contabilidad', icon: '📊', title: 'Contabilidad', text: 'Compras, bajas, proveedores y control financiero.' });
   }
   if (userHasRole(user, 'rrhh')) {
-    modules.push('<button class="dashboard-btn" data-module="rrhh">👥 RRHH</button>');
+    modules.push({ module: 'rrhh', icon: '👥', title: 'RRHH', text: 'Personal, asistencia, reportes y seguimiento de talento.' });
   }
   if (userHasRole(user, 'ventas')) {
-    modules.push('<button class="dashboard-btn" data-module="ventas">💰 Ventas</button>');
+    modules.push({ module: 'ventas', icon: '💰', title: 'Ventas', text: 'Eventos, clientes, agenda comercial y cotizaciones.' });
   }
+  if (userHasRole(user, 'admin')) {
+    modules.push({ module: 'admin', icon: '🧭', title: 'Admin General', text: 'Vista ejecutiva transversal para revisar el sistema completo.' });
+  }
+
+  const roles = (user.roles || []).map(role => `<span class="dashboard-role-pill">${role}</span>`).join('');
+  const moduleCards = modules.map(item => `
+    <button class="dashboard-btn" data-module="${item.module}">
+      <span class="dashboard-btn-icon">${item.icon}</span>
+      <span class="dashboard-btn-title">${item.title}</span>
+      <span class="dashboard-btn-text">${item.text}</span>
+    </button>
+  `).join('');
 
   contentArea.innerHTML = `
     <div class="dashboard-container">
-      <h2>Bienvenido, ${user.nombre}</h2>
-      <p><button id="logout-btn" class="logout-btn">Cerrar Sesión</button></p>
-      <div class="modules-grid">${modules.join('')}</div>
+      <div class="dashboard-scanline" aria-hidden="true"></div>
+      <section class="dashboard-topbar">
+        <div class="dashboard-brand-block">
+          <div class="dashboard-brand-switcher" aria-hidden="true">
+            <img id="dashboard-brand-image-logo" class="dashboard-brand-image is-active" src="assets/logo.png" alt="Absolute logo">
+            <img id="dashboard-brand-image-icon" class="dashboard-brand-image" src="assets/icon.png" alt="Absolute icono">
+          </div>
+          <div>
+            <span class="dashboard-kicker">Panel principal de navegación</span>
+            <h2 class="dashboard-title">Bienvenido, ${user.nombre}</h2>
+            <p class="dashboard-subtitle">Desde aquí puedes entrar rápidamente a cada módulo con una vista unificada de la aplicación. El panel está pensado para llevarte directo a la operación, al seguimiento administrativo o al control general.</p>
+          </div>
+        </div>
+        <div class="dashboard-live-side">
+          <div class="dashboard-live-card"><span class="dashboard-live-label">Hora local</span><span class="dashboard-live-value" id="dashboard-live-clock">--:--:--</span></div>
+          <button id="logout-btn" class="logout-btn">Cerrar Sesión</button>
+        </div>
+      </section>
+      <section class="dashboard-newsbar">
+        <div class="dashboard-news-message">${modules.length} módulos disponibles para este usuario con acceso directo según sus permisos.</div>
+        <div class="dashboard-roles">${roles}</div>
+      </section>
+      <section class="dashboard-body">
+        <aside class="dashboard-strip">
+          <div class="dashboard-strip-head">
+            <span class="dashboard-card-kicker">Resumen rápido</span>
+            <strong>Acceso inmediato</strong>
+          </div>
+          <div class="dashboard-module-note"><span class="dashboard-card-kicker">Módulos activos</span><p>${modules.length} accesos visibles según el rol actual.</p></div>
+          <div class="dashboard-module-note"><span class="dashboard-card-kicker">Ruta sugerida</span><p>Entra primero a Admin General si necesitas una vista consolidada, o ve directo al módulo operativo que requiere atención.</p></div>
+        </aside>
+        <div class="dashboard-grid">${moduleCards}</div>
+        <aside class="dashboard-side">
+          <div class="dashboard-side-card"><span class="dashboard-card-kicker">Lectura ejecutiva</span><h3>Vista principal</h3><p>El tablero principal mantiene el mismo criterio visual del resto del sistema para que la navegación siga siendo consistente al volver desde cualquier módulo.</p></div>
+          <div class="dashboard-side-card"><span class="dashboard-card-kicker">Contexto</span><h3>Roles cargados</h3><p>${(user.roles || []).join(', ') || user.rol}</p></div>
+          <div class="dashboard-side-card"><span class="dashboard-card-kicker">Acción</span><h3>Navegación rápida</h3><p>Selecciona una tarjeta y la app te lleva directamente al módulo correspondiente sin pasar por menús adicionales.</p></div>
+        </aside>
+      </section>
     </div>
   `;
+
+  if (window._dashboardBrandTimeout) {
+    window.clearTimeout(window._dashboardBrandTimeout);
+    window._dashboardBrandTimeout = null;
+  }
+  if (window._dashboardClockInterval) {
+    window.clearInterval(window._dashboardClockInterval);
+    window._dashboardClockInterval = null;
+  }
+
+  const dashboardLogo = document.getElementById('dashboard-brand-image-logo');
+  const dashboardIcon = document.getElementById('dashboard-brand-image-icon');
+  if (dashboardLogo && dashboardIcon) {
+    const images = [dashboardLogo, dashboardIcon];
+    const effects = ['fx-float-in', 'fx-slide-diagonal', 'fx-pop-spin', 'fx-tilt-glow'];
+    let activeIndex = 0;
+    const randomEffect = () => effects[Math.floor(Math.random() * effects.length)];
+    const clearEffects = (image) => image.classList.remove('fx-float-in', 'fx-slide-diagonal', 'fx-pop-spin', 'fx-tilt-glow');
+    const switchDashboardBrand = () => {
+      const current = images[activeIndex];
+      activeIndex = activeIndex === 0 ? 1 : 0;
+      const next = images[activeIndex];
+      current.classList.remove('is-active');
+      clearEffects(current);
+      clearEffects(next);
+      next.classList.add('is-active');
+      const effect = randomEffect();
+      next.classList.add(effect);
+      window.setTimeout(() => next.classList.remove(effect), 1300);
+      window._dashboardBrandTimeout = window.setTimeout(switchDashboardBrand, 2800 + Math.floor(Math.random() * 2200));
+    };
+    const firstEffect = randomEffect();
+    dashboardLogo.classList.add(firstEffect);
+    window.setTimeout(() => dashboardLogo.classList.remove(firstEffect), 1300);
+    window._dashboardBrandTimeout = window.setTimeout(switchDashboardBrand, 2600 + Math.floor(Math.random() * 1200));
+  }
+
+  const clockEl = document.getElementById('dashboard-live-clock');
+  if (clockEl) {
+    const updateDashboardClock = () => {
+      clockEl.textContent = new Date().toLocaleTimeString('en-US', {
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+      });
+    };
+    updateDashboardClock();
+    window._dashboardClockInterval = window.setInterval(updateDashboardClock, 1000);
+  }
 
   document.getElementById('logout-btn')?.addEventListener('click', () => {
     logoutAndReload();
@@ -417,6 +783,7 @@ function loadDashboard() {
 
 function loadModule(moduleName) {
   const config = {
+    admin: { path: 'modules/admin/admin.html', script: 'modules/admin/admin.js', style: '' },
     ventas: { path: 'modules/ventas/ventas.html', script: 'modules/ventas/ventas.js', style: 'ventas-bg' },
     rrhh: { path: 'modules/rrhh/rrhh.html', script: 'modules/rrhh/rrhh.js', style: '' },
     bodega: { path: 'modules/bodega/bodega.html', script: 'modules/bodega/bodega.js', style: '' },
@@ -605,7 +972,8 @@ document.addEventListener('DOMContentLoaded', () => {
       'btn-bodega': ['bodega', 'admin'],
       'btn-rrhh': ['rrhh', 'admin'],
       'btn-logistica': ['logistica', 'admin'],
-      'btn-contabilidad': ['contabilidad', 'admin']
+      'btn-contabilidad': ['contabilidad', 'admin'],
+      'btn-admin': ['admin']
     };
 
     Object.entries(rolePermissions).forEach(([btnId, allowedRoles]) => {
@@ -617,6 +985,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Activar listeners de menú SOLO tras login
     const menuMap = {
+      'btn-admin': { module: 'admin', roles: ['admin'] },
       'btn-ventas': { module: 'ventas', roles: ['ventas', 'admin'] },
       'btn-rrhh': { module: 'rrhh', roles: ['rrhh', 'admin'] },
       'btn-bodega': { module: 'bodega', roles: ['bodega', 'admin'] },

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Glass Atrium</title>
+  <style>
+    :root {
+      --bg: #edf5fb;
+      --panel: rgba(255, 255, 255, 0.56);
+      --stroke: rgba(67, 110, 160, 0.16);
+      --text: #16202b;
+      --muted: #64768b;
+      --blue: #2e6cff;
+      --cyan: #61c8ff;
+      --mint: #d9fbf3;
+      --pearl: #f7fbff;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(97, 200, 255, 0.16), transparent 20%),
+        radial-gradient(circle at bottom right, rgba(46, 108, 255, 0.12), transparent 24%),
+        linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
+      overflow-x: hidden;
+    }
+
+    .shell {
+      width: min(1260px, calc(100vw - 28px));
+      margin: 14px auto;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 18px;
+    }
+
+    .hero,
+    .column,
+    .card,
+    .metric,
+    .floating-card {
+      border-radius: 30px;
+      border: 1px solid var(--stroke);
+      background: var(--panel);
+      backdrop-filter: blur(22px);
+      box-shadow: 0 30px 60px rgba(48, 79, 118, 0.08);
+    }
+
+    .hero {
+      position: relative;
+      padding: 30px 34px 34px;
+      overflow: hidden;
+      min-height: 260px;
+    }
+
+    .hero::before,
+    .hero::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(4px);
+      animation: drift 10s ease-in-out infinite alternate;
+    }
+
+    .hero::before {
+      width: 280px;
+      height: 280px;
+      top: -100px;
+      right: -70px;
+      background: radial-gradient(circle, rgba(97,200,255,0.24), transparent 70%);
+    }
+
+    .hero::after {
+      width: 240px;
+      height: 240px;
+      bottom: -100px;
+      left: -60px;
+      background: radial-gradient(circle, rgba(46,108,255,0.18), transparent 70%);
+      animation-delay: 1.4s;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-weight: 800;
+      color: var(--blue);
+    }
+
+    h1 {
+      margin: 14px 0 14px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(42px, 6vw, 74px);
+      line-height: 0.94;
+      letter-spacing: -0.06em;
+      max-width: 11ch;
+    }
+
+    .hero p,
+    .card p,
+    .floating-card p { margin: 0; color: var(--muted); line-height: 1.75; font-size: 16px; }
+
+    .hero-logo {
+      position: absolute;
+      top: 28px;
+      right: 32px;
+      width: 190px;
+      opacity: 0.92;
+      filter: drop-shadow(0 14px 24px rgba(46,108,255,0.12));
+    }
+
+    .stage {
+      display: grid;
+      grid-template-columns: 0.92fr 1.08fr;
+      gap: 18px;
+      min-height: 0;
+    }
+
+    .column {
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+      min-height: 0;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .metric {
+      padding: 16px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.68), rgba(245,250,255,0.58));
+      animation: rise 0.75s ease both;
+    }
+
+    .metric:nth-child(2) { animation-delay: 0.08s; }
+    .metric:nth-child(3) { animation-delay: 0.16s; }
+    .metric:nth-child(4) { animation-delay: 0.24s; }
+
+    .metric .label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .metric .value {
+      margin-top: 14px;
+      font-size: 40px;
+      font-weight: 900;
+      letter-spacing: -0.06em;
+    }
+
+    .card {
+      padding: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card strong,
+    .floating-card strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 18px;
+      letter-spacing: -0.03em;
+    }
+
+    .tower {
+      position: relative;
+      min-height: 100%;
+      padding: 20px 12px 12px;
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+
+    .floating-card {
+      padding: 16px 18px;
+      background: rgba(255,255,255,0.64);
+      transform: translateY(0);
+      animation: floatY 6s ease-in-out infinite alternate;
+    }
+
+    .floating-card:nth-child(2) { margin-left: 46px; animation-delay: 0.8s; }
+    .floating-card:nth-child(3) { margin-left: 18px; animation-delay: 1.6s; }
+    .floating-card:nth-child(4) { margin-left: 62px; animation-delay: 2.4s; }
+
+    .rail {
+      position: absolute;
+      top: 18px;
+      bottom: 18px;
+      left: 18px;
+      width: 2px;
+      background: linear-gradient(180deg, rgba(97,200,255,0.4), rgba(46,108,255,0.12));
+    }
+
+    @keyframes drift {
+      from { transform: translateY(-8px) scale(0.96); }
+      to { transform: translateY(14px) scale(1.08); }
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(22px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes floatY {
+      from { transform: translateY(-4px); }
+      to { transform: translateY(10px); }
+    }
+
+    @media (max-width: 1080px) {
+      .stage, .metrics { grid-template-columns: 1fr; }
+      .hero-logo { position: static; width: 160px; margin-top: 18px; }
+      .floating-card:nth-child(2), .floating-card:nth-child(3), .floating-card:nth-child(4) { margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="hero">
+      <div class="eyebrow">Administrador General · Atrio de cristal</div>
+      <h1>Glass Atrium</h1>
+      <p>Esta propuesta se siente como un lobby ejecutivo vertical, luminoso y elegante. En vez de dominar por urgencia o broadcast, domina por ascenso, transparencia, capas suaves y una lectura institucional de alto nivel.</p>
+      <img class="hero-logo" src="../../../assets/logo.png" alt="logo">
+    </header>
+
+    <main class="stage">
+      <section class="column">
+        <div class="metrics">
+          <article class="metric"><div class="label">eventos proximos</div><div class="value" style="color:var(--blue)">07</div></article>
+          <article class="metric"><div class="label">faltantes abiertos</div><div class="value" style="color:var(--cyan)">18</div></article>
+          <article class="metric"><div class="label">stock critico</div><div class="value" style="color:#2d9b81">11</div></article>
+          <article class="metric"><div class="label">bajas pendientes</div><div class="value" style="color:#335cd5">04</div></article>
+        </div>
+        <article class="card"><strong>Que transmite</strong><p>Un administrador que entra a un espacio sereno, institucional y premium, no a una consola de guerra. El modulo parece una pieza de direccion corporativa mas que una herramienta tecnica.</p></article>
+        <article class="card"><strong>Diferencia frente a los finalistas</strong><p>Se aleja por completo del ritmo denso de Sala de Crisis y del lenguaje de broadcast de Teatro de Senales. Aqui manda la verticalidad, la luz y la sensacion de ascenso.</p></article>
+      </section>
+
+      <section class="column tower">
+        <div class="rail"></div>
+        <article class="floating-card"><strong>Panorama general</strong><p>La operacion sigue firme, pero bodega y agenda comercial elevan el nivel de atencion para los proximos dias.</p></article>
+        <article class="floating-card"><strong>Foco del dia</strong><p>Conciliar materiales faltantes antes de que la presion de montajes cercanos arrastre a logistica y compras.</p></article>
+        <article class="floating-card"><strong>Lectura de talento</strong><p>RRHH sostiene cobertura amplia, aunque algunos equipos de salida concentran carga sensible.</p></article>
+        <article class="floating-card"><strong>Cierre visual</strong><p>Todo parece flotar dentro de un atrio corporativo de vidrio, con profundidad limpia y movimiento suave.</p></article>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
