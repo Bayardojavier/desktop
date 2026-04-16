@@ -27,8 +27,7 @@
     "git": "^0.1.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "tslib": "^2.8.1",
-    "xlsx": "^0.18.5"
+    "tslib": "^2.8.1"
   },
   "devDependencies": {
     "@electron-forge/cli": "^7.11.1",
@@ -39,7 +38,7 @@
     "@electron-forge/plugin-auto-unpack-natives": "^7.11.1",
     "@electron-forge/plugin-fuses": "^7.11.1",
     "@types/node": "^25.0.10",
-    "electron": "^28.0.0",
+    "electron": "^39.8.7",
     "electron-builder": "^24.13.3"
   },
   "build": {
