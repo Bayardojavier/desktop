@@ -21,7 +21,7 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build unsigned macOS app
         run: npm run dist:mac -- --publish=never
