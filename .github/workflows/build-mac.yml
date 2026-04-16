@@ -2,6 +2,10 @@ name: Build macOS Desktop App
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - master
+      - 'copilot/**'
 
 jobs:
   build-mac:
