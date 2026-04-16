@@ -7,16 +7,18 @@ jobs:
   build-mac:
     runs-on: macos-latest
     env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       CSC_IDENTITY_AUTO_DISCOVERY: false
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 18
           cache: npm
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
         run: npm install
