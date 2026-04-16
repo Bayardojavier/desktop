@@ -1,6 +1,6 @@
 {
   "name": "absolute-desktop",
-  "version": "1.4.6",
+  "version": "1.4.7",
   "description": "App de escritorio de Absolute de Nicaragua",
   "main": "main.js",
   "author": "Bayardo Davila",
@@ -27,7 +27,8 @@
     "git": "^0.1.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "tslib": "^2.8.1"
+    "tslib": "^2.8.1",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@electron-forge/cli": "^7.11.1",
@@ -156,5 +157,13 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/Bayardojavier/desktop.git"
+<<<<<<< HEAD
+=======
+  },
+  "publish": {
+    "provider": "github",
+    "owner": "Bayardojavier",
+    "repo": "desktop"
+>>>>>>> e41f155 (chore: bump version to 1.4.7)
   }
 }
